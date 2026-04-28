@@ -2783,7 +2783,8 @@ async function importRecentKBLinks(){
       const d=await r.json();
       await loadLinks();
       if(document.getElementById('page-links')?.classList.contains('active'))renderLinks();
-      toast(`KB 최근 5년 초기 데이터 등록 완료: 신규 ${d.added||0}건 / 중복 ${d.skipped||0}건`);
+      const mode=d.mode==='articles'?'KB article':'검색 링크';
+      toast(`KB 최근 5년 수집 완료: ${mode} 신규 ${d.added||0}건 / 중복 ${d.skipped||0}건 / 발견 ${d.discovered||0}건`);
       return;
     }
     toast('Worker 업데이트 후 사용 가능합니다',true);
@@ -3221,7 +3222,7 @@ function renderCaseRight(loading=false){
     <div class="case-ai-grid">
       <button class="btn btn-cyan" onclick="runCaseAI('summary')">요약</button>
       <button class="btn btn-purple" onclick="runCaseAI('tech')">기술 분석</button>
-      <button class="btn btn-green wide" onclick="runCaseAI('reply')">회신 초안</button>
+      <button class="btn btn-green" onclick="runCaseAI('reply')">회신</button>
       <button class="btn btn-indigo" onclick="runCaseAI('similar')">유사 이슈</button>
     </div>
     <div class="detail-link-row">
@@ -3234,7 +3235,7 @@ async function runCaseAI(mode='summary'){
   const c=CASE_SEL;
   await ensureIssueDetail(c);
   renderCaseRight(false);
-  const titles={summary:'📋 케이스 내용 요약',tech:'🧪 케이스 기술 분석',similar:'🔎 유사 이슈 검토',reply:'✉️ 고객 회신 초안'};
+  const titles={summary:'📋 케이스 내용 요약',tech:'🧪 케이스 기술 분석',similar:'🔎 유사 이슈 검토',reply:'✉️ 고객 회신'};
   openAIModal('📦',titles[mode]||'케이스 분석',c.caseNum,'<div class="loading">AI 분석 중...</div>');
   const days=daysSince(c.date);
   const commentText=(c.comments||[]).map(x=>`[${x.author}] ${x.bodyPlain||x.body}`).join('\n');
@@ -3896,7 +3897,7 @@ function injectV155Style(){
     .date-open-btn{height:36px;min-width:48px;border-radius:8px;border:1px solid rgba(103,232,249,.45);background:#dff8ff;color:#0f172a;font-size:11px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 0 12px rgba(103,232,249,.22);padding:0 10px}
     .date-open-btn:hover{background:#f2fdff;border-color:#a5f3fc}
     .detail-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px!important;margin-top:8px}
-    .detail-actions .btn,.case-ai-grid .btn{height:32px!important;min-height:32px;padding:0 10px!important;border-radius:8px!important;font-size:11px!important;width:100%!important;white-space:nowrap}
+    .detail-actions .btn,.case-ai-grid .btn{height:32px!important;min-height:32px;box-sizing:border-box!important;padding:0 10px!important;border-radius:8px!important;font-size:11px!important;line-height:1!important;width:100%!important;white-space:nowrap;display:flex!important;align-items:center!important;justify-content:center!important}
     .detail-actions .wide,.case-ai-grid .wide{grid-column:1/-1}
     .detail-link-row{display:flex;justify-content:flex-end;gap:6px;margin-top:7px}
     .detail-link-row .btn{width:auto!important;height:30px!important;min-height:30px;padding:0 11px!important;border-radius:8px!important;font-size:10.5px!important}
