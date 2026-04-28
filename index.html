@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.5.4 — ESCARE 보안기술팀 개발</title>
+<title>ENGR AI v1.5.4 — ESCARE 보안기술팀</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -719,7 +719,7 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
       <div class="admin-card">
         <h3>📥 초기 데이터</h3>
         <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">
-          SEP, DLP, ProxySG, Cloud SWG, CloudSOC 관련 Broadcom KB 검색 링크를 <strong style="color:#f0f4ff">최근 5년 기준</strong>으로 업무 링크에 자동 등록합니다.<br>
+          DLP, SEP, CASB, SWG, WSS, LUA, ProxySG Broadcom KB 검색 링크를 <strong style="color:#f0f4ff">최근 5년 기준</strong>으로 업무 링크에 자동 등록합니다.<br>
           최초 세팅 시 한 번만 실행하세요. 기존 링크와 중복되는 항목은 건너뜁니다.
         </p>
         <button id="kb-seed-btn" class="btn btn-green" onclick="importRecentKBLinks()" style="width:auto;padding:10px 20px">📥 KB 최근 5년 초기 데이터 가져오기</button>
@@ -751,7 +751,7 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
 </div>
 
 <script>
-const WORKERS='https://engr-hub-proxy-dev.mj-park.workers.dev';
+const WORKERS='https://engr-hub-proxy.mj-park.workers.dev';
 const SUPER_ADMIN='박민준';
 const MAX_FILE_SIZE=5*1024*1024;
 let ISSUES=[],SEL=null,CASE_SEL=null,PAGE=1;
@@ -1425,14 +1425,16 @@ function renderRightPanel(){
         전체화면
       </button>
     </div>
-    <div class="btn-group">
-      <button class="btn btn-indigo" id="summary-btn" onclick="runAI('summary')">📋 내용 요약</button>
-      <button class="btn btn-purple" id="analyze-btn" onclick="runAI('analyze')">🔍 기술 분석</button>
-      <button class="btn btn-cyan" id="similar-btn" onclick="runAI('similar')">🔗 유사 이슈</button>
-      <button class="btn btn-green" id="reply-btn" onclick="runAI('reply')">✉ 고객 회신 초안</button>
-      <button class="btn btn-ghost" id="handover-btn" onclick="runAI('handover')">🧾 인수인계 메모</button>
+    <div class="btn-group detail-actions">
+      <button class="btn btn-indigo" id="summary-btn" onclick="runAI('summary')">요약</button>
+      <button class="btn btn-purple" id="analyze-btn" onclick="runAI('analyze')">기술 분석</button>
+      <button class="btn btn-green" id="reply-btn" onclick="runAI('reply')">회신 초안</button>
+      <button class="btn btn-ghost" id="handover-btn" onclick="runAI('handover')">인수인계</button>
+      <button class="btn btn-cyan" id="similar-btn" onclick="runAI('similar')">유사 이슈</button>
+    </div>
+    <div class="detail-link-row">
       <a href="https://escare-engr.atlassian.net/browse/${i.key}" target="_blank" style="text-decoration:none">
-        <button class="btn btn-ghost">Jira에서 보기 →</button>
+        <button class="btn btn-ghost">Jira →</button>
       </a>
     </div>
   </div>`;
@@ -1442,7 +1444,7 @@ async function runAI(mode){
   if(!SEL)return;
   const i=SEL;
   const btnMap={summary:'summary-btn',analyze:'analyze-btn',similar:'similar-btn',reply:'reply-btn',handover:'handover-btn'};
-  const labelMap={summary:'📋 내용 요약',analyze:'🔍 기술 분석',similar:'🔗 유사 이슈',reply:'✉ 고객 회신 초안',handover:'🧾 인수인계 메모'};
+  const labelMap={summary:'요약',analyze:'기술 분석',similar:'유사 이슈',reply:'회신 초안',handover:'인수인계'};
   const iconMap={summary:'📋',analyze:'🔍',similar:'🔗',reply:'✉',handover:'🧾'};
   const btn=document.getElementById(btnMap[mode]);
   btn.disabled=true;btn.textContent='분석 중...';
@@ -3086,7 +3088,7 @@ function renderFilterTags(){
   if(pr)tags.push({label:`우선순위: ${pr}`,clear:()=>{document.getElementById('f-pri').value='';PAGE=1;renderIssues();}});
   if(lb)tags.push({label:`레이블: ${lb}`,clear:()=>{document.getElementById('f-lab').value='';PAGE=1;renderIssues();}});
   if(ass)tags.push({label:`담당자: ${ass}`,clear:()=>{document.getElementById('f-ass').value='';PAGE=1;renderIssues();}});
-  if(dt)tags.push({label:`기간: 최근 ${dt}일`,clear:()=>{document.getElementById('f-date').value='';PAGE=1;renderIssues();}});
+  if(dt)tags.push({label:`기간: ${v154LabelOfRange(dt)}`,clear:()=>{document.getElementById('f-date').value='';PAGE=1;renderIssues();}});
   const wrap=document.getElementById('active-filter-tags');
   if(!wrap)return;
   wrap.innerHTML=tags.map((t,i)=>`<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:var(--accent3);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">${escapeHtml(t.label)}<span onclick="window._filterClears[${i}]()" style="cursor:pointer;color:var(--accent2);font-size:14px;line-height:1">×</span></span>`).join('');
@@ -3217,12 +3219,14 @@ function renderCaseRight(loading=false){
     ${c.attachments&&c.attachments.length?`<div style="margin-bottom:12px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px">📎 첨부파일 (${c.attachments.length})</div>${c.attachments.map(a=>`<div class="rp-attach-item">📄 ${escapeHtml(a.name)} <span style="color:var(--text3);margin-left:auto">${(a.size/1024).toFixed(1)}KB</span></div>`).join('')}</div>`:''}
     ${c.comments&&c.comments.length?`<div class="rp-comments" style="margin-bottom:12px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px">💬 코멘트 (${c.comments.length})</div>${c.comments.map(cm=>`<div class="rp-comment-item"><div class="rp-comment-author">${escapeHtml(cm.author)} · ${fdt(cm.created)}</div><div class="rp-comment-body">${adfToHtml(cm.body)}</div></div>`).join('')}</div>`:''}
     <div class="case-ai-grid">
-      <button class="btn btn-cyan" onclick="runCaseAI('summary')">내용 요약</button>
+      <button class="btn btn-cyan" onclick="runCaseAI('summary')">요약</button>
       <button class="btn btn-purple" onclick="runCaseAI('tech')">기술 분석</button>
+      <button class="btn btn-green wide" onclick="runCaseAI('reply')">회신 초안</button>
       <button class="btn btn-indigo" onclick="runCaseAI('similar')">유사 이슈</button>
-      <button class="btn btn-green" onclick="runCaseAI('reply')">고객 회신 초안</button>
     </div>
-    <a href="https://escare-engr.atlassian.net/browse/${c.key}" target="_blank" style="text-decoration:none"><button class="btn btn-ghost">Jira에서 보기 →</button></a>
+    <div class="detail-link-row">
+      <a href="https://escare-engr.atlassian.net/browse/${c.key}" target="_blank" style="text-decoration:none"><button class="btn btn-ghost">Jira →</button></a>
+    </div>
   </div>`;
 }
 async function runCaseAI(mode='summary'){
@@ -3257,7 +3261,7 @@ function renderOverdueBanner(){
   if(!overdue.length){wrap.innerHTML='';return;}
   const byAss={};overdue.forEach(i=>{byAss[i.assignee]=(byAss[i.assignee]||0)+1;});
   const topAss=Object.entries(byAss).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([n,c])=>`${escapeHtml(n)} ${c}건`).join(', ');
-  wrap.innerHTML=`<div style="background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(248,113,113,.08));border:1px solid rgba(251,191,36,.3);border-radius:12px;padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px"><span style="font-size:22px">🚨</span><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:2px">${OVERDUE_DAYS}일 이상 미완료 일반 이슈 ${overdue.length}건</div><div style="font-size:11px;color:var(--text2)">주요 담당자: ${topAss}</div></div><button onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})" style="background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);color:var(--warn);padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700">이슈 보기 →</button></div>`;
+  wrap.innerHTML=`<div style="background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(248,113,113,.08));border:1px solid rgba(251,191,36,.3);border-radius:12px;padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px"><span style="font-size:22px">🚨</span><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:2px">${OVERDUE_DAYS}일 이상 미완료 일반 이슈 ${overdue.length}건</div><div style="font-size:11px;color:var(--text2)">필터 기준: 케이스 제외 · 미완료/진행 상태 · 접수/수정일 기준 ${OVERDUE_DAYS}일 이상 · 주요 담당자: ${topAss}</div></div><button title="7일 이상 미완료 일반 이슈 전체를 필터합니다" onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})" style="background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);color:var(--warn);padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700">전체 필터 →</button></div>`;
 }
 function renderOpsFocus(){
   const overdue=getGeneralIssues().filter(i=>isOpenStatus(i.status)&&daysSince(i.date)>=7).sort((a,b)=>daysSince(b.date)-daysSince(a.date)).slice(0,5);
@@ -3541,7 +3545,7 @@ function getFilteredIssues(){
   if(pri)arr=arr.filter(i=>i.pri===pri);
   if(lab)arr=arr.filter(i=>(i.labels||[]).includes(lab));
   if(ass)arr=arr.filter(i=>i.assignee===ass);
-  if(date){const days=parseInt(date,10);arr=arr.filter(i=>age(i.date)<=days);}
+  if(date)arr=arr.filter(i=>dateFilterMatches(i.date,date));
   return arr.sort((a,b)=>issueDateValue(b)-issueDateValue(a));
 }
 
@@ -3557,7 +3561,7 @@ function getFilteredCases(){
   if(st)arr=arr.filter(i=>st==='완료'?isDoneStatus(i.status):st==='진행 중'?isOpenStatus(i.status)&&String(i.status).includes('진행'):st==='미해결'?isOpenStatus(i.status):i.status===st);
   if(ass)arr=arr.filter(i=>i.assignee===ass);
   if(sla)arr=arr.filter(i=>isOpenStatus(i.status)&&age(i.date)>=parseInt(sla,10));
-  if(date){const days=parseInt(date,10);arr=arr.filter(i=>age(i.date)<=days);}
+  if(date)arr=arr.filter(i=>dateFilterMatches(i.date,date));
   return arr.sort((a,b)=>issueDateValue(b)-issueDateValue(a));
 }
 
@@ -3667,17 +3671,57 @@ function injectV154Style(){
   document.head.appendChild(st);
 }
 function escapeAttr(s){return escapeHtml(s).replace(/`/g,'&#96;');}
-function v154LabelOfRange(days){return days?`최근 ${days===7?'7일':days===30?'1개월':days===90?'3개월':days===180?'6개월':days===365?'1년':days+'일'}`:'';}
+function v154LabelOfRange(value){
+  const v=String(value||'');
+  if(v==='today')return '오늘';
+  if(v==='yesterday')return '어제';
+  const days=parseInt(v,10);
+  return days?`최근 ${days===7?'7일':days===30?'1개월':days===90?'3개월':days===180?'6개월':days===365?'1년':days+'일'}`:'';
+}
+function kstDateKey(input){
+  const d=input instanceof Date?input:new Date(input);
+  if(Number.isNaN(d.getTime()))return '';
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(d);
+  const obj=Object.fromEntries(parts.filter(p=>p.type!=='literal').map(p=>[p.type,p.value]));
+  return `${obj.year}-${obj.month}-${obj.day}`;
+}
+function relativeDateKey(offsetDays){
+  const d=new Date();
+  d.setDate(d.getDate()+offsetDays);
+  return kstDateKey(d);
+}
+function dateFilterMatches(itemDate,value){
+  const v=String(value||'');
+  if(!v)return true;
+  if(v==='today')return kstDateKey(itemDate)===relativeDateKey(0);
+  if(v==='yesterday')return kstDateKey(itemDate)===relativeDateKey(-1);
+  const days=parseInt(v,10);
+  return days?age(itemDate)<=days:true;
+}
+function ensureRelativeDateOptions(){
+  ['f-date','case-date'].forEach(id=>{
+    const sel=document.getElementById(id);
+    if(!sel||sel.dataset.relativeDates==='1')return;
+    const hadToday=[...sel.options].some(o=>o.value==='today');
+    if(!hadToday){
+      const today=new Option('오늘','today');
+      const yesterday=new Option('어제','yesterday');
+      sel.add(yesterday, sel.options[1]||null);
+      sel.add(today, sel.options[1]||null);
+    }
+    sel.dataset.relativeDates='1';
+  });
+}
 function v154ActiveIssueFilterText(){
   const xs=[];
   const q=document.getElementById('f-q')?.value?.trim();
   const stat=document.getElementById('f-stat')?.value; const pri=document.getElementById('f-pri')?.value; const lab=document.getElementById('f-lab')?.value; const ass=document.getElementById('f-ass')?.value; const date=document.getElementById('f-date')?.value;
-  if(q)xs.push('검색: '+q); if(stat)xs.push('상태: '+stat); if(pri)xs.push('우선순위: '+pri); if(lab)xs.push('레이블: '+lab); if(ass)xs.push('담당자: '+ass); if(date)xs.push(v154LabelOfRange(parseInt(date)));
+  if(q)xs.push('검색: '+q); if(stat)xs.push('상태: '+stat); if(pri)xs.push('우선순위: '+pri); if(lab)xs.push('레이블: '+lab); if(ass)xs.push('담당자: '+ass); if(date)xs.push(v154LabelOfRange(date));
   return xs;
 }
 function v154ActiveCaseFilterText(){
   const xs=[]; const q=document.getElementById('case-q')?.value?.trim(); const stat=document.getElementById('case-stat')?.value; const ass=document.getElementById('case-ass')?.value; const sla=document.getElementById('case-sla')?.value; const date=document.getElementById('case-date')?.value;
-  if(q)xs.push('검색: '+q); if(stat)xs.push('상태: '+stat); if(ass)xs.push('담당자: '+ass); if(sla)xs.push(`${sla}일 이상`); if(date)xs.push(v154LabelOfRange(parseInt(date)));
+  if(q)xs.push('검색: '+q); if(stat)xs.push('상태: '+stat); if(ass)xs.push('담당자: '+ass); if(sla)xs.push(`${sla}일 이상`); if(date)xs.push(v154LabelOfRange(date));
   return xs;
 }
 function v154FilterNoteHtml(list){return list?.length?`<div class="mini-filter-note">${list.map(x=>`<span class="tag">${escapeHtml(x)}</span>`).join('')}</div>`:'';}
@@ -3848,7 +3892,15 @@ function injectV155Style(){
     .case-chip.open{background:rgba(45,212,191,.16);border-color:rgba(45,212,191,.34);color:#5eead4}
     .case-chip.done{background:rgba(99,102,241,.16);border-color:rgba(129,140,248,.36);color:#c4b5fd}
     input[type="date"]{color-scheme:dark}
-    input[type="date"]::-webkit-calendar-picker-indicator{opacity:1;cursor:pointer;background:#dff8ff;border-radius:5px;padding:2px;filter:drop-shadow(0 0 5px rgba(103,232,249,.72))}
+    input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer}
+    .date-open-btn{height:36px;min-width:48px;border-radius:8px;border:1px solid rgba(103,232,249,.45);background:#dff8ff;color:#0f172a;font-size:11px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 0 12px rgba(103,232,249,.22);padding:0 10px}
+    .date-open-btn:hover{background:#f2fdff;border-color:#a5f3fc}
+    .detail-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px!important;margin-top:8px}
+    .detail-actions .btn,.case-ai-grid .btn{height:32px!important;min-height:32px;padding:0 10px!important;border-radius:8px!important;font-size:11px!important;width:100%!important;white-space:nowrap}
+    .detail-actions .wide,.case-ai-grid .wide{grid-column:1/-1}
+    .detail-link-row{display:flex;justify-content:flex-end;gap:6px;margin-top:7px}
+    .detail-link-row .btn{width:auto!important;height:30px!important;min-height:30px;padding:0 11px!important;border-radius:8px!important;font-size:10.5px!important}
+    .case-ai-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;margin-top:8px!important;margin-bottom:7px!important}
     .topbar-right .search-box,.btn-group #similar-btn,button[onclick="runPattern()"],button[onclick="runCaseAI('similar')"]{display:none!important}
     .sb-bottom .health-card{display:none!important}
     .top-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
@@ -3950,9 +4002,9 @@ function renderDash(){
     <div class="kpi" onclick="setCaseNavigationFilter({})"><div class="kpi-num">${c.length}</div><div class="kpi-label">케이스</div><div class="kpi-sub">진행 ${cOpen.length} / 완료 ${cDone.length}</div></div>`;
   const ops=document.getElementById('ops-focus');
   if(ops)ops.innerHTML=[
-    focusCardHtml('7일 이상 미완료 일반 이슈',stale,'대상 없음',i=>`<div class="dash-list-row" onclick="setIssueNavigationFilter({preset:{kind:'stale',label:'7일 이상 미완료 일반 이슈'}})"><span class="title"><b>${escapeHtml(i.key)}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,48)}</span><span>${daysSince(i.date)}일</span></div>`),
-    focusCardHtml('High 이상 미완료 일반 이슈',highOpen,'대상 없음',i=>`<div class="dash-list-row" onclick="setIssueNavigationFilter({preset:{kind:'high',label:'High 이상 미완료 일반 이슈'}})"><span class="title"><b>${escapeHtml(i.key)}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,48)}</span><span>${escapeHtml(i.pri)}</span></div>`),
-    focusCardHtml('진행 중 케이스',cOpen,'대상 없음',i=>`<div class="dash-list-row" onclick="v154GoCaseExact('${escapeAttr(i.key)}')"><span class="title"><b>${escapeHtml(i.caseNum||i.key)}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,48)}</span><span>${daysSince(i.date)}일</span></div>`)
+    focusCardHtml('7일 이상 미완료 일반 이슈',stale,'대상 없음',i=>`<div class="dash-list-row" onclick="v154GoIssueExact(${jsAttr(i.key)})"><span class="title"><b>${escapeHtml(i.key)}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,48)}</span><span>${daysSince(i.date)}일</span></div>`),
+    focusCardHtml('High 이상 미완료 일반 이슈',highOpen,'대상 없음',i=>`<div class="dash-list-row" onclick="v154GoIssueExact(${jsAttr(i.key)})"><span class="title"><b>${escapeHtml(i.key)}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,48)}</span><span>${escapeHtml(i.pri)}</span></div>`),
+    focusCardHtml('진행 중 케이스',cOpen,'대상 없음',i=>`<div class="dash-list-row" onclick="v154GoCaseExact(${jsAttr(i.key)})"><span class="title"><b>${escapeHtml(i.caseNum||i.key)}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,48)}</span><span>${daysSince(i.date)}일</span></div>`)
   ].join('');
   const handled=document.getElementById('rank-handled'); if(handled)handled.innerHTML=topAssigneeRows(g);
   const rate=document.getElementById('rank-rate'); if(rate)rate.innerHTML=completionRateRows(g);
@@ -4226,6 +4278,21 @@ function renderTopbarStatus(){
     <button class="top-logout" onclick="logout()">로그아웃</button>
   </div>`;
 }
+function enhanceDateButtons(){
+  document.querySelectorAll('input[type="date"]').forEach(input=>{
+    if(input.dataset.dateButton==='1')return;
+    input.dataset.dateButton='1';
+    const btn=document.createElement('button');
+    btn.type='button';
+    btn.className='date-open-btn';
+    btn.textContent='달력';
+    btn.title='달력 열기';
+    btn.onclick=()=>{
+      try{input.showPicker ? input.showPicker() : input.focus();}catch(_){input.focus();}
+    };
+    input.insertAdjacentElement('afterend',btn);
+  });
+}
 function renderCases(){
   normalizeAllIssueAliases();
   const wrap=document.getElementById('case-list'); if(!wrap)return;
@@ -4265,6 +4332,8 @@ function showPage(name,btn){
   const title=document.getElementById('page-title'); if(title)title.textContent=titleMap[name]||'HUB';
   const desc=document.getElementById('page-desc'); if(desc)desc.textContent=descMap[name]||'';
   renderCurrent();
+  ensureRelativeDateOptions();
+  setTimeout(enhanceDateButtons,0);
 }
 function hubApi(path,options={}){
   return fetch(`${WORKERS}${path}`,{
