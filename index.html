@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.5.4 — ESCARE 보안기술팀</title>
+<title>ENGR AI v1.5.5 — ESCARE 보안기술팀</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -104,6 +105,16 @@ main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 .icon-btn svg{width:15px;height:15px}
 .page{padding:24px;flex:1;display:none}
 .page.active{display:block}
+@media(max-width:700px){
+  #app{height:auto;min-height:100vh;display:none;flex-direction:column}
+  aside{position:relative;width:100%;height:auto;max-height:none;overflow:visible;border-right:none;border-bottom:1px solid var(--border2)}
+  .sb-top{padding:12px}.sb-brand{margin-bottom:10px;padding-bottom:10px}.sb-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+  .sb-btn{min-height:34px}.sb-divider{margin:8px 12px}.sb-bottom{padding:8px 12px;margin-top:0}
+  main{width:100%;overflow:visible}.topbar{position:relative;height:auto;min-height:58px;padding:10px 12px;align-items:flex-start;gap:10px;flex-direction:column}
+  .topbar-right{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.topbar-right>*{min-width:0}
+  .page{padding:14px}.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dash-focus{grid-template-columns:1fr!important}
+  .filter-row input,.filter-row select{width:100%;min-width:0}.two-col{grid-template-columns:1fr}
+}
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px}
 .kpi{background:linear-gradient(145deg,#242840,#1e2136);border:1px solid var(--border2);border-radius:14px;padding:18px;position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.2)}
 .kpi:hover{border-color:var(--border2)}
@@ -369,7 +380,7 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.5.4</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.5.5</span></div></div>
       </div>
       <div class="sb-section">메뉴</div>
       <div class="sb-nav">
@@ -723,7 +734,7 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
           <select id="pin-reset-user"><option value="">팀원 선택</option></select>
           <button class="btn btn-red" onclick="resetUserPin()" style="width:auto;padding:9px 16px">PIN 초기화</button>
         </div>
-        <div class="storage-toolbar-note">초기화 PIN: P@ssw0rdesc!@#</div>
+        <div class="storage-toolbar-note">초기화 PIN은 Worker 환경변수에서 관리됩니다.</div>
       </div>
       <div class="admin-card">
         <h3>📥 초기 데이터</h3>
@@ -842,7 +853,7 @@ async function login(){
     if(!d.ok){toast(d.message||'로그인 실패',true);btn.disabled=false;btn.textContent='접속하기 →';return;}
     CURRENT_USER=name;IS_ADMIN=d.isAdmin;IS_SUPER=d.isSuperAdmin;USER_ROLE=d.role||'user';SESSION_MIN=d.sessionMin||120;
     SESSION_DEADLINE=Date.now()+SESSION_MIN*60000;
-    localStorage.setItem('engr_user',name);localStorage.setItem('engr_pin',pin);
+    localStorage.setItem('engr_user',name);localStorage.removeItem('engr_pin');
     localStorage.setItem('engr_session_deadline',SESSION_DEADLINE);
     enterApp();
   }catch(e){toast('서버 연결 실패',true);btn.disabled=false;btn.textContent='접속하기 →';}
@@ -1437,10 +1448,10 @@ function renderRightPanel(){
     </div>
     <div class="btn-group detail-actions">
       <button class="btn btn-indigo" id="summary-btn" onclick="runAI('summary')">요약</button>
-      <button class="btn btn-purple" id="analyze-btn" onclick="runAI('analyze')">기술 분석</button>
-      <button class="btn btn-green" id="reply-btn" onclick="runAI('reply')">회신 초안</button>
+      <button class="btn btn-purple" id="analyze-btn" onclick="runAI('technical_analysis')">기술 분석</button>
+      <button class="btn btn-green" id="reply-btn" onclick="runAI('reply_draft')">회신 초안</button>
       <button class="btn btn-ghost" id="handover-btn" onclick="runAI('handover')">인수인계</button>
-      <button class="btn btn-cyan" id="similar-btn" onclick="runAI('similar')">유사 이슈</button>
+      <button class="btn btn-cyan" id="similar-btn" onclick="runAI('similar_issues')">유사 이슈</button>
     </div>
     <div class="detail-link-row">
       <a href="https://escare-engr.atlassian.net/browse/${i.key}" target="_blank" style="text-decoration:none">
@@ -1453,9 +1464,9 @@ function renderRightPanel(){
 async function runAI(mode){
   if(!SEL)return;
   const i=SEL;
-  const btnMap={summary:'summary-btn',analyze:'analyze-btn',similar:'similar-btn',reply:'reply-btn',handover:'handover-btn'};
-  const labelMap={summary:'요약',analyze:'기술 분석',similar:'유사 이슈',reply:'회신 초안',handover:'인수인계'};
-  const iconMap={summary:'📋',analyze:'🔍',similar:'🔗',reply:'✉',handover:'🧾'};
+  const btnMap={summary:'summary-btn',technical_analysis:'analyze-btn',similar_issues:'similar-btn',reply_draft:'reply-btn',handover:'handover-btn'};
+  const labelMap={summary:'\uC694\uC57D',technical_analysis:'\uAE30\uC220 \uBD84\uC11D',similar_issues:'\uC720\uC0AC \uC774\uC288',reply_draft:'\uD68C\uC2E0 \uCD08\uC548',handover:'\uC778\uC218\uC778\uACC4'};
+  const iconMap={summary:'AI',technical_analysis:'AI',similar_issues:'AI',reply_draft:'AI',handover:'AI'};
   const btn=document.getElementById(btnMap[mode]);
   btn.disabled=true;btn.textContent='분석 중...';
   openAIModal(iconMap[mode],labelMap[mode],i.key,'<div class="loading">AI 분석 중...</div>');
@@ -1479,7 +1490,7 @@ ${commentText||'(없음)'}`;
 4. 남은 과제
 
 ${fc}`;
-    }else if(mode==='analyze'){
+    }else if(mode==='technical_analysis'){
       prompt=`아래 이슈 전체를 4개 섹션으로 분석하세요:
 **🔍 상황 분석** (이슈 성격, 심각도, 기술 배경)
 **🧩 원인 및 기술 포인트** (추정 원인, 핵심 기술, 로그 키워드)
@@ -1487,7 +1498,7 @@ ${fc}`;
 **🛡 재발 방지** (정책, 모니터링, 예방)
 
 ${fc}`;
-    }else if(mode==='similar'){
+    }else if(mode==='similar_issues'){
       const similar=ISSUES.filter(x=>x.key!==i.key&&(x.labels.some(l=>i.labels.includes(l))||x.customer===i.customer)).slice(0,8);
       prompt=`현재 이슈와 유사 이슈를 비교 분석하세요.
 1.유사 케이스 공통점 2.반복 발생 패턴 3.과거 해결책 참고 4.종합 시사점
@@ -1511,7 +1522,7 @@ ${similar.map((x,n)=>`${n+1}.[${x.key}]${x.title}(${x.date},${x.status})\n${x.de
 
 ${fc}`;
     }
-    if(mode==='reply'){
+    if(mode==='reply_draft'){
       prompt=`아래 Jira 이슈를 바탕으로 고객에게 보낼 한국어 공식 회신 메일 초안을 작성해주세요.
 이슈: ${i.key} | ${i.title}
 고객사: ${i.customer||'-'} | 담당자(수신): 고객사 담당자 | 발신: ESCARE 보안기술팀
@@ -2175,8 +2186,9 @@ ${log.slice(0,15000)}`,'keywords',{product,files:fileNames});
 
 // ── VIRUSTOTAL ────────────────────────────────────
 async function vtLookup(){
-  const hash=document.getElementById('vt-input').value.trim();
+  const hash=document.getElementById('vt-input').value.trim().toLowerCase();
   if(!hash){toast('해시값 입력',true);return;}
+  if(!/^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64})$/i.test(hash)){toast('MD5/SHA-1/SHA-256 hash format only.',true);return;}
   const btn=document.getElementById('vt-btn'),res=document.getElementById('vt-result');
   btn.disabled=true;btn.textContent='조회 중...';
   res.innerHTML='<div class="loading">VirusTotal 조회 중...</div>';
@@ -2492,7 +2504,6 @@ async function changeMyPin(){
   if(newPin!==newPin2){toast('새 PIN 확인이 일치하지 않습니다',true);return;}
   try{
     await hubApi('/auth/change-pin',{method:'POST',body:JSON.stringify({oldPin,newPin})});
-    localStorage.setItem('engr_pin',newPin);
     closeGenModal();toast('PIN이 변경됐습니다');
   }catch(e){toast('PIN 변경 실패: '+e.message,true);}
 }
@@ -3025,7 +3036,7 @@ async function refreshStorageStats(){
 }
 
 // ── AI CALL ───────────────────────────────────────
-async function callAI(prompt,mode='analyze',detail={}){
+async function callAI(prompt,mode='technical_analysis',detail={}){
   const r=await fetch(`${WORKERS}/ai/generate`,{
     method:'POST',
     headers:{'Content-Type':'application/json','X-User':encUser(CURRENT_USER)},
@@ -3453,7 +3464,7 @@ function renderCustomerRight(){
   document.getElementById("cust-right").innerHTML=`<div class="rpanel"><div style="font-size:16px;font-weight:800;color:#f0f4ff;margin-bottom:14px">${escapeHtml(c.name)}</div><div class="rp-meta"><div class="rp-row"><span>제품</span><span style="flex-wrap:wrap;display:flex;gap:4px">${[...c.products].map(p=>`<span class="badge" style="background:${(LC_MAP[p]||"#94a3b8")}22;color:${(LC_MAP[p]||"#94a3b8")}">${escapeHtml(p)}</span>`).join("")||"-"}</span></div><div class="rp-row"><span>담당자</span><span>${escapeHtml([...c.assignees].join(", ")||"-")}</span></div><div class="rp-row"><span>일반 이슈</span><span>${c.general.length}건 (완료 ${done.length} / 미완료 ${open.length})</span></div><div class="rp-row"><span>케이스</span><span>${c.cases.length}건 (완료 ${caseDone.length} / 미완료 ${caseOpen.length})</span></div><div class="rp-row"><span>일반 이슈 완료율</span><span style="color:${rate>=80?"#2de6b8":rate>=50?"#fcd34d":"#fc8181"};font-weight:700">${rate}%</span></div></div><div class="jump-row"><button class="btn btn-ghost" onclick="setIssueNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사: '+c.name)}}})">일반 이슈 보기</button><button class="btn btn-ghost" onclick="setCaseNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사 케이스: '+c.name)}}})">케이스 보기</button></div>${eosForCust.length?`<div style="margin:12px 0"><div style="font-size:10px;color:#fcd34d;font-weight:700;margin-bottom:6px">⏰ EOS / 라이선스 (${eosForCust.length})</div>${eosForCust.map(e=>{const d2=daysUntil(e.expireDate);const col=d2<0?"#fc8181":d2<=30?"#fcd34d":"#2de6b8";return`<div style="display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.04);border-radius:8px;font-size:11px;margin-bottom:4px"><span style="color:#c5cee8">${escapeHtml(e.product)} ${escapeHtml(e.version||"")}</span><span style="color:${col};font-weight:700">${d2<0?"만료":"D-"+d2}</span></div>`;}).join("")}</div>`:""}<div style="font-size:10px;color:var(--text3);font-weight:700;margin:12px 0 8px;text-transform:uppercase">최근 일반 이슈 (최대 8건)</div>${recent.map(i=>{const col=SC[i.status]||"#94a3b8";return`<div style="padding:8px 10px;background:rgba(255,255,255,.04);border-left:3px solid ${col};border-radius:0 8px 8px 0;margin-bottom:5px;cursor:pointer" onclick="setIssueNavigationFilter({q:${jsAttr(i.key)}})"><div style="font-size:11px;font-weight:700;color:${col}">${i.key} <span style="color:var(--text3);font-weight:400">${fd(i.date)}</span></div><div style="font-size:12px;color:#c5cee8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(cleanTitle(i.title))}</div></div>`;}).join("")||'<div style="font-size:11px;color:var(--text3);padding:8px">최근 일반 이슈 없음</div>'}</div>`;
 }
 
-/* ── v1.5.4: case/customer/status/dashboard/sidebar stability patch ───────────── */
+/* ── v1.5.5: case/customer/status/dashboard/sidebar stability patch ───────────── */
 function applyV153Dom(){
   try{
     if(document.getElementById('v153-style'))return;
@@ -3793,16 +3804,15 @@ function buildCustomerData(){
 // ── INIT ──────────────────────────────────────────
 (function init(){
   const su=localStorage.getItem('engr_user');
-  const sp=localStorage.getItem('engr_pin');
   const sd=parseInt(localStorage.getItem('engr_session_deadline')||'0');
   if(sd&&sd<Date.now()){forceLogout();return;}
-  if(su&&sp){document.getElementById('l-name').value=su;document.getElementById('l-pin').value=sp;login();}
-  else if(su){document.getElementById('l-name').value=su;document.getElementById('l-pin').focus();}
+  localStorage.removeItem('engr_pin');
+  if(su){document.getElementById('l-name').value=su;document.getElementById('l-pin').focus();}
 })();
 
 
 /* =========================================================
-   v1.5.4 안정화 패치
+   v1.5.5 안정화 패치
    - 이슈 상세 자동 선택/표시 보강
    - 고객사 상세에 일반 이슈 + 케이스 동시 표시
    - 고객사 상세 항목 클릭 시 해당 건만 필터링 이동
