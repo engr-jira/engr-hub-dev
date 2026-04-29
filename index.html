@@ -4046,15 +4046,14 @@ function injectV155Style(){
     .top-status-card .label{font-size:9px;color:var(--text3);font-weight:800;letter-spacing:.2px}
     .top-status-card .value{font-size:11px;color:#f5f8ff;font-weight:900;white-space:nowrap}
     .top-status-card .ok{color:#2de6b8}.top-status-card .warn{color:#fcd34d}
-    .top-refresh,.top-logout{height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#eaf0ff;font-family:inherit;font-size:11px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px}
-    .top-refresh{width:36px;padding:0}.top-refresh svg{width:15px;height:15px}.top-refresh:hover,.top-logout:hover{background:rgba(129,140,248,.2);border-color:rgba(129,140,248,.42)}
+    .top-refresh,.top-logout,.top-pin{height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#eaf0ff;font-family:inherit;font-size:11px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px}
+    .top-pin{color:#dffbff;border-color:rgba(103,232,249,.28);background:rgba(103,232,249,.08)}
+    .top-refresh{width:36px;padding:0}.top-refresh svg{width:15px;height:15px}.top-refresh:hover,.top-logout:hover,.top-pin:hover{background:rgba(129,140,248,.2);border-color:rgba(129,140,248,.42)}
     #page-nav,#case-pager{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:6px!important;background:transparent!important;border:0!important;padding:8px 0!important}
     #page-nav button,#case-pager button{background:#262d47;border:1px solid rgba(129,140,248,.25);color:#dfe6ff;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer}
     #page-nav button.active,#case-pager button.active{background:#6366f1;border-color:#818cf8;color:#fff}
     #page-nav button:disabled,#case-pager button:disabled{opacity:.38;cursor:not-allowed}
     .private-layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px}
-    .private-page-head{display:flex;justify-content:flex-end;align-items:center;margin-bottom:10px}
-    .private-pin-btn{width:auto!important;height:34px!important;padding:0 13px!important;border-radius:9px!important;font-size:11px!important}
     .private-editor{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;align-self:start}
     .private-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.private-head strong{font-size:13px}.private-head span{font-size:10px;color:var(--text3)}
     .private-editor input,.private-editor textarea{width:100%;background:#1b2034;border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:10px 11px;margin-bottom:8px;font-family:inherit;font-size:12px}
@@ -4412,6 +4411,7 @@ function renderTopbarStatus(){
   const connected=!!(ISSUES&&ISSUES.length);
   right.innerHTML=`<div class="top-status">
     <div class="top-status-card"><span class="label">접속자</span><span class="value" id="top-user">${escapeHtml(CURRENT_USER||'-')}</span></div>
+    <button class="top-pin" onclick="openChangePinModal()">PIN 변경</button>
     <div class="top-status-card"><span class="label">Jira</span><span class="value ${connected?'ok':'warn'}" id="top-jira">${connected?'연결됨':'대기'}</span></div>
     <div class="top-status-card"><span class="label">동기화</span><span class="value" id="top-count">${gi||ci?`일반 ${gi} / 케이스 ${ci}`:'-'}</span></div>
     <button class="top-refresh" onclick="syncJira()" title="Jira 새로고침"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></button>
@@ -4492,9 +4492,6 @@ function injectPrivateHubDom(){
     const main=document.querySelector('main');
     if(main)main.insertAdjacentHTML('beforeend',`
       <div class="page" id="page-private">
-        <div class="private-page-head">
-          <button class="btn btn-ghost private-pin-btn" onclick="openChangePinModal()">내 PIN 변경</button>
-        </div>
         <div class="private-layout">
           <div class="private-editor">
             <div class="private-head"><strong>새 개인 기록</strong><span>나에게만 표시됩니다</span></div>
