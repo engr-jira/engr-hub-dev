@@ -719,10 +719,10 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
       <div class="admin-card">
         <h3>📥 초기 데이터</h3>
         <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">
-          DLP, SEP, CASB, SWG, WSS, LUA, ProxySG Broadcom KB 검색 링크를 <strong style="color:#f0f4ff">최근 5년 기준</strong>으로 업무 링크에 자동 등록합니다.<br>
-          최초 세팅 시 한 번만 실행하세요. 기존 링크와 중복되는 항목은 건너뜁니다.
+          검증된 기본 KB, 기존 업무 링크, Jira 이슈/댓글에 남아있는 Broadcom KB article을 모아 접근 가능한 문서만 업무 링크에 자동 등록합니다.<br>
+          유료 검색 API를 기본으로 사용하지 않습니다. 기존 링크와 중복되는 항목은 건너뜁니다.
         </p>
-        <button id="kb-seed-btn" class="btn btn-green" onclick="importRecentKBLinks()" style="width:auto;padding:10px 20px">📥 KB 최근 5년 초기 데이터 가져오기</button>
+        <button id="kb-seed-btn" class="btn btn-green" onclick="importRecentKBLinks()" style="width:auto;padding:10px 20px">📥 무료 KB article 수집</button>
       </div>
       <div class="admin-card">
         <h3>🗄 저장소 관리</h3>
@@ -2773,23 +2773,38 @@ const KB_SEED = [
 ];
 
 async function importRecentKBLinks(){
-  if(!confirm('Broadcom KB 검색 링크를 최근 5년 기준으로 초기 데이터에 자동 등록할까요?'))return;
+  if(!confirm('비용이 발생하지 않는 방식으로 Broadcom KB article을 수집해 업무 링크에 자동 등록할까요?'))return;
   const btn=document.getElementById('kb-seed-btn');
   const oldText=btn?btn.textContent:'';
-  if(btn){btn.disabled=true;btn.textContent='등록 중...';}
+  if(btn){btn.disabled=true;btn.textContent='KB 수집 준비...';}
+  let cursor='';
+  let imported=0,duplicated=0,inaccessible=0,scanned=0,attempts=0,errors=0,batch=0;
   try{
-    const r=await fetch(`${WORKERS}/links/kb/import?years=5`,{method:'POST',headers:{'X-User':encUser(CURRENT_USER)}});
-    if(r.ok){
+    do{
+      batch++;
+      const qs=new URLSearchParams({years:'5',limit:'20'});
+      if(cursor)qs.set('cursor',cursor);
+      if(btn)btn.textContent=`KB 수집 중... ${batch}차`;
+      const r=await fetch(`${WORKERS}/links/kb/import?${qs.toString()}`,{method:'POST',headers:{'X-User':encUser(CURRENT_USER)}});
+      if(!r.ok){toast('Worker 업데이트 후 사용 가능합니다',true);return;}
       const d=await r.json();
-      await loadLinks();
-      if(document.getElementById('page-links')?.classList.contains('active'))renderLinks();
-      const mode=d.mode==='articles'?'KB article':'검색 링크';
-      toast(`KB 최근 5년 수집 완료: ${mode} 신규 ${d.added||0}건 / 중복 ${d.skipped||0}건 / 발견 ${d.discovered||0}건`);
-      return;
-    }
-    toast('Worker 업데이트 후 사용 가능합니다',true);
+      if(d.ok===false){toast(d.message||'KB 수집 설정이 필요합니다',true);return;}
+      imported+=d.imported||d.added||0;
+      duplicated+=d.duplicated||d.skipped||0;
+      inaccessible+=d.inaccessible||0;
+      scanned+=d.scanned||0;
+      attempts+=d.attempts||0;
+      errors+=d.errors||0;
+      cursor=d.nextCursor||'';
+      if(btn)btn.textContent=`KB 수집 중... 신규 ${imported} / 확인 ${scanned}`;
+      if(cursor)await new Promise(r=>setTimeout(r,250));
+    }while(cursor);
+    await loadLinks();
+    if(document.getElementById('page-links')?.classList.contains('active'))renderLinks();
+    const searchNote=attempts?` / 검색 API ${attempts}회`:' / 검색 API 0회';
+    toast(`KB 무료 수집 완료: 신규 ${imported}건 / 중복 ${duplicated}건 / 접근불가 ${inaccessible}건${searchNote}${errors?` / 오류 ${errors}회`:''}`);
   }catch(e){toast('오류: '+e.message,true);}
-  finally{if(btn){btn.disabled=false;btn.textContent=oldText||'📥 KB 최근 5년 초기 데이터 가져오기';}}
+  finally{if(btn){btn.disabled=false;btn.textContent=oldText||'📥 무료 KB article 수집';}}
 }
 async function importKBSeed(){
   if(!confirm(`총 ${KB_SEED.length}개 KB 링크를 업무 링크에 등록합니다.\n기존 링크와 중복되는 것은 별도 체크하지 않습니다.\n\n계속하시겠어요?`))return;
