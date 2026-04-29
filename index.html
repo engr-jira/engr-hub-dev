@@ -316,7 +316,7 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
 <body>
 <div id="toast"></div>
 
-<div class="ai-modal-bg" id="ai-modal" onclick="if(event.target===this)closeAIModal()">
+<div class="ai-modal-bg" id="ai-modal">
   <div class="ai-modal">
     <div class="ai-modal-head">
       <div class="ai-modal-title">
@@ -337,7 +337,7 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
   </div>
 </div>
 
-<div class="modal-bg" id="gen-modal" onclick="if(event.target===this)closeGenModal()">
+<div class="modal-bg" id="gen-modal">
   <div class="modal">
     <div class="modal-head">
       <h3 id="gen-modal-title">제목</h3>
@@ -717,6 +717,15 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
         </div>
       </div>
       <div class="admin-card">
+        <h3>🔐 사용자 PIN 관리</h3>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">사용자가 PIN을 잊은 경우 선택한 사용자의 PIN을 초기값으로 되돌립니다.</p>
+        <div class="admin-add-row">
+          <select id="pin-reset-user"><option value="">팀원 선택</option></select>
+          <button class="btn btn-red" onclick="resetUserPin()" style="width:auto;padding:9px 16px">PIN 초기화</button>
+        </div>
+        <div class="storage-toolbar-note">초기화 PIN: P@ssw0rdesc!@#</div>
+      </div>
+      <div class="admin-card">
         <h3>📥 초기 데이터</h3>
         <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">
           검증된 기본 KB, 기존 업무 링크, Jira 이슈/댓글에 남아있는 Broadcom KB article을 모아 접근 가능한 문서만 업무 링크에 자동 등록합니다.<br>
@@ -735,6 +744,7 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
           <button id="storage-backup-btn" class="btn btn-green" onclick="downloadHubBackup()">⬇ 전체 HUB 데이터 백업</button>
           <button id="storage-cache-btn" class="btn btn-red" onclick="clearCache()">🧹 AI 응답 캐시 초기화</button>
           <button id="storage-audit-btn" class="btn btn-gray" onclick="cleanupOldAuditLogs()">🧹 감사 로그 90일 초과 정리</button>
+          <button id="storage-reset-btn" class="btn btn-red" onclick="resetAllHubData()">⚠ 전체 데이터 초기화</button>
         </div>
         <div class="storage-toolbar-note">백업은 링크/노하우/EOS/관리자 설정만 포함합니다. Secret, PIN, JIRA Token, Gemini Key 등 Cloudflare 환경 변수는 포함하지 않습니다.</div>
       </div>
@@ -1591,6 +1601,8 @@ function setAIModalBody(text,isError){
     s=s.replace(/^# (.+)$/gm,'<div style="font-size:15px;font-weight:800;color:var(--text);margin:20px 0 8px">$1</div>');
     // bold **
     s=s.replace(/\*\*([^*\n]+)\*\*/g,'<strong style="color:var(--accent3);font-weight:700">$1</strong>');
+    // links [text](url)
+    s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer" style="color:var(--cyan);text-decoration:none">$1 ↗</a>');
     // italic *
     s=s.replace(/\*([^*\n]+)\*/g,'<em style="color:var(--text2)">$1</em>');
     // --- 구분선
@@ -1647,9 +1659,10 @@ function openGenModal(title,bodyHTML,footHTML){
   document.getElementById('gen-modal-body').innerHTML=bodyHTML;
   document.getElementById('gen-modal-foot').innerHTML=footHTML||'';
   document.getElementById('gen-modal').classList.add('show');
+  setTimeout(enhanceDateButtons,0);
 }
 function closeGenModal(){document.getElementById('gen-modal').classList.remove('show');}
-document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeAIModal();closeGenModal();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')e.preventDefault();});
 
 // ── CASE ──────────────────────────────────────────
 function getCases(){
@@ -1688,7 +1701,7 @@ function renderCaseRight(){
     <div class="rp-meta">
       <div class="rp-row"><span>케이스</span><span style="color:var(--cyan);font-weight:700">${c.caseNum}</span></div>
       <div class="rp-row"><span>이슈키</span><span style="color:var(--accent3)">${c.key}</span></div>
-      <div class="rp-row"><span>고객사</span><span>${escapeHtml(c.customer||'-')}</span></div>
+      <div class="rp-row"><span>고객사</span><span>${escapeHtml(caseCustomerName(c)||'-')}</span></div>
       <div class="rp-row"><span>담당자</span><span>${escapeHtml(c.assignee)}</span></div>
       <div class="rp-row"><span>상태</span><span style="color:${sc}">${c.status}</span></div>
       <div class="rp-row"><span>경과일</span><span style="color:${days>=7?'#f87171':days>=3?'#fbbf24':'#22d3a5'};font-weight:700">${days}일</span></div>
@@ -1837,7 +1850,7 @@ function renderEosList(){
     else if(days<=30){rowClass='eos-warn-near';badgeBg='rgba(251,191,36,.2)';badgeColor='#fbbf24';badgeText='D-'+days;}
     else if(days<=60){badgeBg='rgba(251,191,36,.12)';badgeColor='#fbbf24';badgeText='D-'+days;}
     else {badgeBg='rgba(34,211,165,.15)';badgeColor='#22d3a5';badgeText='D-'+days;}
-    return `<tr class="${rowClass}">
+    return `<tr class="${rowClass}" onclick="openEosDetailModal('${it.id}')" style="cursor:pointer">
       <td><span class="badge" style="background:${it.type==='eos'?'rgba(167,139,250,.15)':'rgba(34,211,165,.15)'};color:${it.type==='eos'?'#a78bfa':'#22d3a5'}">${it.type==='eos'?'EOS':'라이선스'}</span></td>
       <td style="font-weight:700">${escapeHtml(it.customer||'-')}</td>
       <td>${escapeHtml(it.product||'-')} <span style="color:var(--text3)">${escapeHtml(it.version||'')}</span></td>
@@ -1846,12 +1859,33 @@ function renderEosList(){
       <td><span class="eos-day-badge" style="background:${badgeBg};color:${badgeColor}">${badgeText}</span></td>
       <td style="font-size:10px;color:var(--text3)">${escapeHtml(it.createdBy||'-')}</td>
       <td style="white-space:nowrap">
-        <button onclick="openEosEditModal('${it.id}')" style="background:none;border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:11px;padding:3px 8px;font-family:inherit;margin-right:4px">✎ 수정</button>
-        <button onclick="deleteEos('${it.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px">×</button>
+        <button onclick="event.stopPropagation();openEosEditModal('${it.id}')" style="background:none;border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:11px;padding:3px 8px;font-family:inherit;margin-right:4px">✎ 수정</button>
+        <button onclick="event.stopPropagation();deleteEos('${it.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px">×</button>
       </td>
     </tr>`;
   }).join('');
   renderPager('eos-pager','eos',list.length,'renderEosList');
+}
+function openEosDetailModal(id){
+  const it=EOS_ITEMS.find(x=>x.id===id);
+  if(!it){toast('항목을 찾을 수 없습니다',true);return;}
+  const d=daysUntil(it.expireDate);
+  const label=it.type==='license'?'라이선스':'EOS';
+  const color=d<0?'#f87171':d<=30?'#fbbf24':'#22d3a5';
+  openGenModal(`${label} 상세`,`
+  <div class="rp-meta">
+    <div class="rp-row"><span>유형</span><span>${label}</span></div>
+    <div class="rp-row"><span>고객사</span><span>${escapeHtml(it.customer||'-')}</span></div>
+    <div class="rp-row"><span>제품</span><span>${escapeHtml(it.product||'-')}</span></div>
+    <div class="rp-row"><span>버전</span><span>${escapeHtml(it.version||'-')}</span></div>
+    <div class="rp-row"><span>라이선스명</span><span>${escapeHtml(it.licenseName||'-')}</span></div>
+    <div class="rp-row"><span>만료일</span><span>${escapeHtml(it.expireDate||'-')}</span></div>
+    <div class="rp-row"><span>D-Day</span><span style="color:${color};font-weight:900">${d<0?'만료':`D-${d}`}</span></div>
+    <div class="rp-row"><span>등록</span><span>${escapeHtml(it.createdBy||'-')} · ${fd(it.createdAt)}</span></div>
+  </div>
+  ${it.memo?`<div class="rp-desc" style="margin-top:12px">${escapeHtml(it.memo)}</div>`:''}`,
+  `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">닫기</button>
+   <button class="btn btn-indigo" onclick="openEosEditModal('${id}')" style="width:auto;padding:8px 18px">수정</button>`);
 }
 function openEosModal(){
   const today=new Date().toISOString().slice(0,10);
@@ -2045,19 +2079,28 @@ async function handleFiles(files){
     const ext=f.name.split('.').pop().toLowerCase();
     if(ext==='zip'){
       try{
+        if(typeof JSZip==='undefined'){toast('ZIP 라이브러리 로드 실패. 압축을 풀어 업로드해주세요.',true);continue;}
         const zip=await JSZip.loadAsync(f);
         for(const [name,entry] of Object.entries(zip.files)){
           if(entry.dir)continue;
+          if(!/\.(log|txt|csv|xml|json|conf|ini|out|err)$/i.test(name))continue;
           const content=await entry.async('string');
-          LOG_FILES.push({name:`${f.name}/${name}`,size:content.length,content});
+          LOG_FILES.push({name:`${f.name}/${name}`,size:content.length,content:sampleLogContent(content,12000)});
+          if(LOG_FILES.length>=20){toast('ZIP 내 파일은 최대 20개까지만 분석에 포함합니다.');break;}
         }
       }catch(e){toast('ZIP 읽기 실패: '+e.message,true);}
     }else{
-      try{const content=await f.text();LOG_FILES.push({name:f.name,size:f.size,content});}
+      try{const content=await f.text();LOG_FILES.push({name:f.name,size:f.size,content:sampleLogContent(content,16000)});}
       catch(e){toast('파일 읽기 실패: '+e.message,true);}
     }
   }
   renderLogFiles();
+}
+function sampleLogContent(content,limit=12000){
+  const s=String(content||'');
+  if(s.length<=limit)return s;
+  const half=Math.floor((limit-180)/2);
+  return `${s.slice(0,half)}\n\n...[중간 ${s.length-limit}자 생략: 파일 끝부분 포함]...\n\n${s.slice(-half)}`;
 }
 function renderLogFiles(){
   const wrap=document.getElementById('log-file-list');
@@ -2073,7 +2116,7 @@ function clearLogInput(){document.getElementById('log-input').value='';const s=d
 function collectLogContent(){
   const t=document.getElementById('log-input').value.trim();
   const f=LOG_FILES.map(x=>`[파일: ${x.name}]\n${x.content}`).join('\n\n');
-  return [t,f].filter(Boolean).join('\n\n');
+  return [t,f].filter(Boolean).join('\n\n').slice(0,22000);
 }
 async function analyzeLogs(){
   const log=collectLogContent();
@@ -2192,8 +2235,12 @@ async function vtAIAnalysis(hash,mal,total){
 **🎯 종합 판정** (악성/오탐/안전)
 **📊 탐지율 해석**
 **⚡ 권장 조치**
+**📰 관련 공개 자료 확인**
+- 이 해시/파일명/탐지명으로 공개 기사, 벤더 권고, 보안 블로그를 찾아볼 때 쓸 검색 키워드
+- 검색 결과가 없을 때의 해석
 **📝 오탐 가능성**`,'vt',{hash:hash.slice(0,16),mal,total});
-    setAIModalBody(text);
+    const links=`\n\n### 관련 자료 빠른 검색\n- [Google에서 해시 검색](https://www.google.com/search?q=${encodeURIComponent(hash)})\n- [Google News에서 해시 검색](https://news.google.com/search?q=${encodeURIComponent(hash)})\n- [Broadcom KB에서 해시 검색](https://support.broadcom.com/web/ecx/search?searchString=${encodeURIComponent(hash)})`;
+    setAIModalBody(text+links);
     document.getElementById('ai-modal-meta').textContent=`${mal}/${total} 탐지`;
   }catch(e){setAIModalBody(`<div style="color:var(--danger);padding:20px">오류: ${e.message}</div>`,true);}
 }
@@ -2351,6 +2398,8 @@ async function loadSettings(){
     const adminNames=Object.keys(admins);
     const candidates=TEAM_NAMES.filter(n=>!adminNames.includes(n));
     document.getElementById('admin-add-name').innerHTML='<option value="">팀원 선택</option>'+candidates.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+    const pinReset=document.getElementById('pin-reset-user');
+    if(pinReset)pinReset.innerHTML='<option value="">팀원 선택</option>'+TEAM_NAMES.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
   }catch(e){wrap.innerHTML=`<div style="color:var(--danger);font-size:12px">로드 실패: ${e.message}</div>`;}
 }
 async function saveConfig(){
@@ -2424,6 +2473,54 @@ async function cleanupOldAuditLogs(){
     await refreshStorageStats();
   }catch(e){toast('정리 오류: '+e.message,true);}
   finally{if(btn){btn.disabled=false;btn.textContent=old||'🧹 감사 로그 90일 초과 정리';}}
+}
+function openChangePinModal(){
+  openGenModal('내 PIN 변경',`
+  <div class="modal-form">
+    <div class="full"><label>현재 PIN</label><input id="pin-old" type="password" autocomplete="current-password"></div>
+    <div class="full"><label>새 PIN</label><input id="pin-new" type="password" autocomplete="new-password" placeholder="6자 이상"></div>
+    <div class="full"><label>새 PIN 확인</label><input id="pin-new2" type="password" autocomplete="new-password"></div>
+  </div>`,
+  `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">취소</button>
+   <button class="btn btn-indigo" onclick="changeMyPin()" style="width:auto;padding:8px 18px">변경</button>`);
+}
+async function changeMyPin(){
+  const oldPin=document.getElementById('pin-old').value;
+  const newPin=document.getElementById('pin-new').value;
+  const newPin2=document.getElementById('pin-new2').value;
+  if(!oldPin||!newPin){toast('현재 PIN과 새 PIN을 입력하세요',true);return;}
+  if(newPin!==newPin2){toast('새 PIN 확인이 일치하지 않습니다',true);return;}
+  try{
+    await hubApi('/auth/change-pin',{method:'POST',body:JSON.stringify({oldPin,newPin})});
+    localStorage.setItem('engr_pin',newPin);
+    closeGenModal();toast('PIN이 변경됐습니다');
+  }catch(e){toast('PIN 변경 실패: '+e.message,true);}
+}
+async function resetUserPin(){
+  const target=document.getElementById('pin-reset-user')?.value||'';
+  if(!target){toast('팀원을 선택하세요',true);return;}
+  if(!confirm(`${target}님의 PIN을 초기값으로 변경할까요?`))return;
+  try{
+    await hubApi('/admin/user-pin/reset',{method:'POST',body:JSON.stringify({user:target})});
+    toast(`${target} PIN을 초기화했습니다`);
+  }catch(e){toast('PIN 초기화 실패: '+e.message,true);}
+}
+async function resetAllHubData(){
+  const msg='업무 링크, 노하우, EOS/라이선스, 개인 메모, VT 이력, AI 캐시/사용량/감사 로그를 초기화합니다. 관리자/시스템 설정은 유지됩니다.\n\n계속하려면 로그인 PIN을 입력해야 합니다.';
+  if(!confirm(msg))return;
+  const pin=prompt('현재 로그인 사용자의 PIN을 입력하세요');
+  if(!pin)return;
+  const btn=document.getElementById('storage-reset-btn');
+  const old=btn?.textContent;
+  if(btn){btn.disabled=true;btn.textContent='초기화 중...';}
+  try{
+    const d=await hubApi('/admin/storage/reset',{method:'POST',body:JSON.stringify({pin})});
+    LINKS=[];KNOWLEDGE=[];EOS_ITEMS=[];PRIVATE_ITEMS=[];VT_HISTORY=[];
+    localStorage.removeItem('vt_history');
+    toast(`초기화 완료: ${d.deleted||0}개 삭제${d.truncated?' · 일부 데이터가 남아 다시 실행 필요':''}`);
+    renderCurrent();
+  }catch(e){toast('초기화 실패: '+e.message,true);}
+  finally{if(btn){btn.disabled=false;btn.textContent=old||'⚠ 전체 데이터 초기화';}}
 }
 async function addAdmin(){
   const name=document.getElementById('admin-add-name').value;
@@ -2608,9 +2705,25 @@ function renderKnowledge(){
   if(!pageKnowledge.length){wrap.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3);font-size:13px">등록된 노하우가 없거나 조건에 맞는 노하우가 없습니다</div>`;renderPager('know-pager','knowledge',list.length,'renderKnowledge');return;}
   wrap.innerHTML=pageKnowledge.map(k=>{
     const href=normalizeExternalUrl(k.link||'');
-    return `<div class="card" style="padding:14px;position:relative"><div style="position:absolute;top:10px;right:10px;display:flex;gap:4px"><button onclick="openKnowledgeModal('${k.id}')" style="background:transparent;border:0;color:var(--text3);cursor:pointer">✎</button><button onclick="deleteKnowledge('${k.id}')" style="background:transparent;border:0;color:var(--danger);cursor:pointer">×</button></div><div style="display:flex;gap:6px;margin-bottom:8px"><span class="badge" style="background:${labelColor(k.product||'기타')}22;color:${labelColor(k.product||'기타')}">${escapeHtml(k.product||'기타')}</span><span class="badge" style="background:rgba(196,206,255,.12);color:#c4ceff">${escapeHtml(k.category||'')}</span></div><div style="font-size:14px;font-weight:800;color:#f0f4ff;margin-bottom:8px;padding-right:40px">${escapeHtml(k.title||'')}</div>${k.content?`<div style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;margin-bottom:10px">${escapeHtml(k.content)}</div>`:''}${href?`<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:var(--cyan);text-decoration:none">참고 링크 ↗</a>`:''}<div style="font-size:10px;color:var(--text3);margin-top:10px">${escapeHtml(k.createdBy||'-')} · ${k.updatedAt?'수정 '+fd(k.updatedAt):fd(k.createdAt)}</div></div>`;
+    return `<div class="card knowledge-card" onclick="openKnowledgeDetail('${k.id}')" style="padding:14px;position:relative;cursor:pointer"><div style="position:absolute;top:10px;right:10px;display:flex;gap:4px"><button onclick="event.stopPropagation();openKnowledgeModal('${k.id}')" style="background:transparent;border:0;color:var(--text3);cursor:pointer">✎</button><button onclick="event.stopPropagation();deleteKnowledge('${k.id}')" style="background:transparent;border:0;color:var(--danger);cursor:pointer">×</button></div><div style="display:flex;gap:6px;margin-bottom:8px"><span class="badge" style="background:${labelColor(k.product||'기타')}22;color:${labelColor(k.product||'기타')}">${escapeHtml(k.product||'기타')}</span><span class="badge" style="background:rgba(196,206,255,.12);color:#c4ceff">${escapeHtml(k.category||'')}</span></div><div style="font-size:14px;font-weight:800;color:#f0f4ff;margin-bottom:8px;padding-right:40px">${escapeHtml(k.title||'')}</div>${k.content?`<div class="knowledge-excerpt" style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;margin-bottom:10px">${escapeHtml(k.content)}</div>`:''}${href?`<a onclick="event.stopPropagation()" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:var(--cyan);text-decoration:none">참고 링크 ↗</a>`:''}<div style="font-size:10px;color:var(--text3);margin-top:10px">${escapeHtml(k.createdBy||'-')} · ${k.updatedAt?'수정 '+fd(k.updatedAt):fd(k.createdAt)}</div></div>`;
   }).join("");
   renderPager('know-pager','knowledge',list.length,'renderKnowledge');
+}
+
+function openKnowledgeDetail(id){
+  const k=KNOWLEDGE.find(x=>x.id===id);
+  if(!k)return;
+  const href=normalizeExternalUrl(k.link||'');
+  openGenModal(k.title||'노하우 상세',`
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+      <span class="badge" style="background:${labelColor(k.product||'기타')}22;color:${labelColor(k.product||'기타')}">${escapeHtml(k.product||'기타')}</span>
+      <span class="badge" style="background:rgba(196,206,255,.12);color:#c4ceff">${escapeHtml(k.category||'')}</span>
+    </div>
+    <div style="font-size:13px;color:var(--text2);line-height:1.75;white-space:pre-wrap">${escapeHtml(k.content||'내용 없음')}</div>
+    ${href?`<div style="margin-top:14px"><a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:var(--cyan);text-decoration:none">참고 링크 열기 ↗</a></div>`:''}
+    <div style="font-size:10px;color:var(--text3);margin-top:16px">${escapeHtml(k.createdBy||'-')} · ${k.updatedAt?'수정 '+fd(k.updatedAt):fd(k.createdAt)}</div>`,
+    `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">닫기</button>
+     <button class="btn btn-indigo" onclick="openKnowledgeModal('${id}')" style="width:auto;padding:8px 18px">수정</button>`);
 }
 
 function openKnowledgeModal(id){
@@ -3225,7 +3338,7 @@ function renderCaseRight(loading=false){
     <div class="rp-meta">
       <div class="rp-row"><span>케이스</span><span style="color:var(--cyan);font-weight:700">${c.caseNum}</span></div>
       <div class="rp-row"><span>Jira 이슈키</span><span style="color:var(--accent3)">${c.key}</span></div>
-      <div class="rp-row"><span>고객사</span><span>${escapeHtml(c.customer||'-')}</span></div>
+      <div class="rp-row"><span>고객사</span><span>${escapeHtml(caseCustomerName(c)||'-')}</span></div>
       <div class="rp-row"><span>담당자</span><span>${escapeHtml(c.assignee)}</span></div>
       <div class="rp-row"><span>상태</span><span style="color:${sc}">${c.status}</span></div>
       <div class="rp-row"><span>경과일</span><span style="color:${days>=7?'#f87171':days>=3?'#fbbf24':'#22d3a5'};font-weight:700">${days}일</span></div>
@@ -3255,7 +3368,7 @@ async function runCaseAI(mode='summary'){
   const days=daysSince(c.date);
   const commentText=(c.comments||[]).map(x=>`[${x.author}] ${x.bodyPlain||x.body}`).join('\n');
   const attachText=(c.attachments||[]).map(a=>`${a.name} (${Math.round((a.size||0)/1024)}KB)`).join(', ');
-  const common=`케이스 번호: ${c.caseNum}\nJira: ${c.key} | ${c.title}\n고객사: ${c.customer||'-'} | 담당자: ${c.assignee}\n현재 상태: ${c.status} | 접수일: ${c.date} | 경과: ${days}일\n첨부파일명: ${attachText||'(없음)'}\n본문: ${c.descPlain||'(없음)'}\n코멘트: ${commentText||'(없음)'}`;
+  const common=`케이스 번호: ${c.caseNum}\nJira: ${c.key} | ${c.title}\n고객사: ${caseCustomerName(c)||'-'} | 담당자: ${c.assignee}\n현재 상태: ${c.status} | 접수일: ${c.date} | 경과: ${days}일\n첨부파일명: ${attachText||'(없음)'}\n본문: ${c.descPlain||'(없음)'}\n코멘트: ${commentText||'(없음)'}`;
   const prompts={
     summary:`벤더 케이스 내용을 실무자가 빠르게 인수인계할 수 있게 요약해줘.\n${common}\n\n형식: 확인된 사실 / 현재 상태 / 남은 확인사항 / 다음 액션`,
     tech:`벤더 케이스를 기술 관점에서 분석해줘. 원인과 현상을 분리하고, 로그·첨부파일명·댓글에서 근거가 되는 관찰 포인트를 먼저 제시해줘.\n${common}\n\n형식: 확인된 사실 / 가능한 원인 / 재현 가능성 / 영향 범위 / 확인 방법 / 현실적인 조치안`,
@@ -3424,7 +3537,7 @@ function normalizeJiraIssue(i){
   const title=f.summary||'';
   const parentTitle=parentSummaryOf(f);
   const caseNum=getCasePrefixNum(title);
-  const customer=extractCustomer(title)||extractCustomer(parentTitle)||'';
+  const customer=caseNum ? (extractCustomer(parentTitle)||extractCustomer(title)||'') : (extractCustomer(title)||extractCustomer(parentTitle)||'');
   return {
     key:i.key,
     title,
@@ -3573,7 +3686,7 @@ function getFilteredCases(){
   const ass=document.getElementById('case-ass')?.value||'';
   const sla=document.getElementById('case-sla')?.value||'';
   const date=document.getElementById('case-date')?.value||'';
-  if(q)arr=arr.filter(i=>[i.key,i.caseNum,i.title,i.customer,i.assignee,i.parentKey,i.parentTitle,...(i.labels||[])].join(' ').toLowerCase().includes(q));
+  if(q)arr=arr.filter(i=>[i.key,i.caseNum,i.title,caseCustomerName(i),i.customer,i.assignee,i.parentKey,i.parentTitle,...(i.labels||[])].join(' ').toLowerCase().includes(q));
   if(st)arr=arr.filter(i=>st==='완료'?isDoneStatus(i.status):st==='진행 중'?isOpenStatus(i.status)&&String(i.status).includes('진행'):st==='미해결'?isOpenStatus(i.status):i.status===st);
   if(ass)arr=arr.filter(i=>i.assignee===ass);
   if(sla)arr=arr.filter(i=>isOpenStatus(i.status)&&age(i.date)>=parseInt(sla,10));
@@ -3647,7 +3760,7 @@ function buildCustomerData(){
   const map={};
   const ensure=(name)=>map[name]||(map[name]={name,products:new Set(),assignees:new Set(),general:[],cases:[]});
   getGeneralIssues().forEach(i=>{const c=i.customer||'미분류';const obj=ensure(c);obj.general.push(i);(i.labels||[]).forEach(l=>obj.products.add(l));if(i.assignee&&i.assignee!=='-')obj.assignees.add(i.assignee);});
-  getCaseIssueBase().forEach(i=>{const c=i.customer||'미분류';const obj=ensure(c);obj.cases.push(i);(i.labels||[]).forEach(l=>obj.products.add(l));if(i.assignee&&i.assignee!=='-')obj.assignees.add(i.assignee);});
+  getCaseIssueBase().forEach(i=>{const c=caseCustomerName(i)||'미분류';const obj=ensure(c);obj.cases.push(i);(i.labels||[]).forEach(l=>obj.products.add(l));if(i.assignee&&i.assignee!=='-')obj.assignees.add(i.assignee);});
   return Object.values(map).sort((a,b)=>(b.general.length+b.cases.length)-(a.general.length+a.cases.length));
 }
 
@@ -3756,6 +3869,7 @@ function v154GoCaseExact(key){
   setTimeout(()=>{const item=v154GetCaseByKey(key); if(item)selectCase(item);},20);
 }
 function setIssueNavigationFilter(opts={}){
+  ISSUE_PRESET=opts.preset||null;
   ['f-q','f-stat','f-pri','f-lab','f-ass','f-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   if(opts.exactKey){document.getElementById('f-q').value=opts.exactKey;}
   else if(opts.q){document.getElementById('f-q').value=opts.q;}
@@ -3767,6 +3881,7 @@ function setIssueNavigationFilter(opts={}){
   PAGE=1;showPage('issues');
 }
 function setCaseNavigationFilter(opts={}){
+  CASE_PRESET=opts.preset||null;
   ['case-q','case-stat','case-ass','case-sla','case-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   if(opts.exactKey){document.getElementById('case-q').value=opts.exactKey;}
   else if(opts.q){document.getElementById('case-q').value=opts.q;}
@@ -3815,7 +3930,7 @@ function renderCases(){
   const rows=cases.slice((PAGE_STATE.cases-1)*size,PAGE_STATE.cases*size);
   wrap.innerHTML=`${v154FilterNoteHtml(v154ActiveCaseFilterText())}`+rows.map(c=>`<div class="issue-item ${CASE_SEL&&CASE_SEL.key===c.key?'sel':''}" onclick="selectCase(v154GetCaseByKey('${escapeAttr(c.key)}'))">
     <div class="issue-title"><span class="issue-key">${escapeHtml(c.caseNum)}</span>${escapeHtml(c.title||'')}</div>
-    <div class="issue-meta"><span>${escapeHtml(c.key)}</span><span>${escapeHtml(c.customer||'고객사 없음')}</span><span>${escapeHtml(c.assignee||'미지정')}</span><span>${fmtDate(c.created)}</span><span>${c.age}일</span><span>${escapeHtml(c.status)}</span></div>
+    <div class="issue-meta"><span>${escapeHtml(c.key)}</span><span>${escapeHtml(caseCustomerName(c)||'고객사 없음')}</span><span>${escapeHtml(c.assignee||'미지정')}</span><span>${fmtDate(c.created)}</span><span>${c.age}일</span><span>${escapeHtml(c.status)}</span></div>
   </div>`).join('') || `<div class="empty">조건에 맞는 케이스가 없습니다.</div>`;
   document.getElementById('case-pager').innerHTML=Array.from({length:max},(_,idx)=>`<button class="${PAGE_STATE.cases===idx+1?'active':''}" onclick="PAGE_STATE.cases=${idx+1};renderCases()">${idx+1}</button>`).join('');
   renderCaseRight(false);
@@ -3911,6 +4026,13 @@ function injectV155Style(){
     input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer}
     .date-open-btn{height:36px;min-width:48px;border-radius:8px;border:1px solid rgba(103,232,249,.45);background:#dff8ff;color:#0f172a;font-size:11px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 0 12px rgba(103,232,249,.22);padding:0 10px}
     .date-open-btn:hover{background:#f2fdff;border-color:#a5f3fc}
+    .modal-form input[type="date"]{width:calc(100% - 62px)!important;display:inline-block!important;vertical-align:middle;margin-right:8px}
+    .modal-form input[type="date"]+.date-open-btn,.private-editor input[type="date"]+.date-open-btn{vertical-align:middle}
+    .private-editor .filter-row{display:grid!important;grid-template-columns:1fr 1fr minmax(130px,1fr) 48px;align-items:center;gap:8px}
+    .private-editor .filter-row select,.private-editor .filter-row input{height:36px!important;margin-bottom:0!important;min-width:0!important}
+    .private-editor .filter-row .date-open-btn{height:36px;margin:0;padding:0 9px}
+    .knowledge-card{min-height:186px;max-height:230px;overflow:hidden}
+    .knowledge-excerpt{display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden}
     .detail-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px!important;margin-top:8px}
     .detail-actions .btn,.case-ai-grid .btn{height:32px!important;min-height:32px;box-sizing:border-box!important;padding:0 10px!important;border-radius:8px!important;font-size:11px!important;line-height:1!important;width:100%!important;white-space:nowrap;display:flex!important;align-items:center!important;justify-content:center!important}
     .detail-actions .wide,.case-ai-grid .wide{grid-column:1/-1}
@@ -3931,6 +4053,8 @@ function injectV155Style(){
     #page-nav button.active,#case-pager button.active{background:#6366f1;border-color:#818cf8;color:#fff}
     #page-nav button:disabled,#case-pager button:disabled{opacity:.38;cursor:not-allowed}
     .private-layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px}
+    .private-page-head{display:flex;justify-content:flex-end;align-items:center;margin-bottom:10px}
+    .private-pin-btn{width:auto!important;height:34px!important;padding:0 13px!important;border-radius:9px!important;font-size:11px!important}
     .private-editor{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;align-self:start}
     .private-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.private-head strong{font-size:13px}.private-head span{font-size:10px;color:var(--text3)}
     .private-editor input,.private-editor textarea{width:100%;background:#1b2034;border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:10px 11px;margin-bottom:8px;font-family:inherit;font-size:12px}
@@ -4368,6 +4492,9 @@ function injectPrivateHubDom(){
     const main=document.querySelector('main');
     if(main)main.insertAdjacentHTML('beforeend',`
       <div class="page" id="page-private">
+        <div class="private-page-head">
+          <button class="btn btn-ghost private-pin-btn" onclick="openChangePinModal()">내 PIN 변경</button>
+        </div>
         <div class="private-layout">
           <div class="private-editor">
             <div class="private-head"><strong>새 개인 기록</strong><span>나에게만 표시됩니다</span></div>
