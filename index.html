@@ -740,7 +740,7 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
         </p>
         <div id="storage-stats-wrap" style="font-size:12px;color:var(--text3);line-height:1.8;margin-bottom:12px">아직 조회하지 않았습니다.</div>
         <div class="storage-actions">
-          <button id="storage-stats-btn" class="btn btn-indigo" onclick="refreshStorageStats()">🗄 저장소 현황 조회</button>
+        <button id="storage-stats-btn" class="btn btn-indigo" onclick="refreshStorageStats()">🗄 저장소 / KV 사용량 조회</button>
           <button id="storage-backup-btn" class="btn btn-green" onclick="downloadHubBackup()">⬇ 전체 HUB 데이터 백업</button>
           <button id="storage-cache-btn" class="btn btn-red" onclick="clearCache()">🧹 AI 응답 캐시 초기화</button>
           <button id="storage-audit-btn" class="btn btn-gray" onclick="cleanupOldAuditLogs()">🧹 감사 로그 90일 초과 정리</button>
@@ -2968,6 +2968,31 @@ async function refreshStorageStats(){
     const pct=quota>0?Math.min(100,(used/quota)*100):0;
     const itemCount=summary.itemCount||'-';
     const quotaLabel=summary.quotaLabel||fmtBytes(quota);
+    const ops=summary.operationBudget||{};
+    const limits=ops.dailyLimits||{};
+    const opPct=Number(ops.estimatedNewWritePct||0);
+    const opColor=opPct>=90?'var(--danger)':(opPct>=70?'var(--warn)':'var(--success)');
+    const opHtml=ops.dailyLimits?`
+      <div class="storage-summary" style="margin-top:10px">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px">
+          <div>
+            <div style="font-size:12px;font-weight:900;color:#eaf0ff">Cloudflare KV Operation 사용량</div>
+            <div class="storage-note">Free 기준 일일 한도: read ${Number(limits.reads||0).toLocaleString()} / write ${Number(limits.writes||0).toLocaleString()} / list ${Number(limits.lists||0).toLocaleString()} / delete ${Number(limits.deletes||0).toLocaleString()} · UTC ${escapeHtml(ops.resetAtUtc||'00:00')} 리셋</div>
+          </div>
+          <div style="text-align:right;font-size:11px;color:var(--text3)">AI 오늘 ${ops.aiToday||0}회 · 이번달 ${ops.aiMonth||0}회</div>
+        </div>
+        <div class="storage-summary-top">
+          <div class="storage-metric"><div class="label">AI 기준 예상 write</div><div class="value" style="color:${opColor}">${ops.estimatedNewAiWritesToday||0} / ${limits.writes||1000}</div></div>
+          <div class="storage-metric"><div class="label">기존 구조였다면</div><div class="value">${ops.estimatedOldAiWritesToday||0}</div></div>
+          <div class="storage-metric"><div class="label">오늘 절감 추정</div><div class="value" style="color:var(--success)">${ops.estimatedSavedWritesToday||0}</div></div>
+          <div class="storage-metric"><div class="label">AI 성공 / 실패</div><div class="value">${ops.aiSuccessToday||0} / ${ops.aiFailToday||0}</div></div>
+        </div>
+        <div class="storage-bar"><div class="storage-bar-fill" style="width:${Math.max(0.2,Math.min(100,opPct))}%;background:${opColor}"></div></div>
+        <div class="storage-grid" style="margin-top:10px">
+          ${(ops.reductions||[]).map(x=>`<div class="storage-item"><div class="storage-item-title">${escapeHtml(x.item)}</div><small>이전: ${escapeHtml(x.before)}</small><small style="color:var(--success)">현재: ${escapeHtml(x.after)}</small></div>`).join('')}
+        </div>
+        <div class="storage-note">${(ops.notes||[]).map(escapeHtml).join(' · ')}</div>
+      </div>`:'';
     const status=pct>=90?'위험':(pct>=70?'주의':'정상');
     const statusColor=pct>=90?'var(--danger)':(pct>=70?'var(--warn)':'var(--success)');
     const alertHtml=pct>=90
@@ -2985,6 +3010,7 @@ async function refreshStorageStats(){
         <div class="storage-bar"><div class="storage-bar-fill" style="width:${Math.max(0.2,pct)}%;background:${pct>=90?'var(--danger)':(pct>=70?'var(--warn)':'linear-gradient(90deg,#2de6b8,#818cf8)')}"></div></div>
         <div class="storage-note">기준: ${escapeHtml(summary.quotaNote||'Cloudflare Workers KV 기본 저장소 1GB 기준')} · 감사 로그/AI 캐시는 표본 기반 추정치가 포함될 수 있습니다.</div>
       </div>
+      ${opHtml}
       <div class="storage-grid">
         ${(d.items||[]).map(x=>`<div class="storage-item">
           <div class="storage-item-title">${escapeHtml(x.label)}</div>
