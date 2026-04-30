@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.5.6 — ESCARE 보안기술팀</title>
+<title>ENGR AI v1.5.6 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -4165,6 +4165,36 @@ function injectV155Style(){
     .private-done{opacity:.65}.private-done .title{text-decoration:line-through;color:var(--text3)}
     @media(max-width:1100px){.private-layout{grid-template-columns:1fr}}
     @media(max-width:1200px){.issue-main{grid-template-columns:auto auto minmax(0,1fr) auto}.issue-main .pri{display:none}}
+    @media(max-width:700px){
+      #app{min-height:100vh;background:var(--bg)}
+      aside{position:sticky;top:0;z-index:80;background:rgba(22,27,39,.98);box-shadow:0 8px 24px rgba(0,0,0,.28)}
+      .sb-top{padding:10px 10px 8px}
+      .sb-brand{margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08)}
+      .sb-icon{width:32px;height:32px;border-radius:10px}.sb-icon svg{width:17px;height:17px}
+      .sb-name{font-size:15px;letter-spacing:1.6px}.sb-sub{font-size:9px}
+      .sb-section,.sb-divider,.sb-bottom{display:none!important}
+      .sb-nav{display:flex!important;flex-direction:row!important;gap:6px!important;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+      .sb-nav::-webkit-scrollbar{display:none}
+      .sb-btn{flex:0 0 auto;width:auto!important;min-height:34px;padding:8px 10px;border-radius:999px;font-size:11px;white-space:nowrap;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
+      .sb-btn svg{width:13px;height:13px}.sb-btn .badge-warn{margin-left:4px}
+      main{min-width:0}
+      .topbar{position:sticky;top:92px;z-index:70;padding:10px 12px;background:rgba(20,25,40,.96);gap:8px}
+      .topbar-left h2{font-size:17px}.topbar-left p{font-size:10px}
+      .topbar-right{display:block!important;width:100%;overflow:hidden}
+      .top-status{justify-content:flex-start!important;flex-wrap:nowrap!important;overflow-x:auto;gap:6px;padding-bottom:1px;scrollbar-width:none}
+      .top-status::-webkit-scrollbar{display:none}
+      .top-status-card,.top-pin,.top-refresh,.top-logout{flex:0 0 auto;height:32px;min-height:32px;border-radius:999px;padding:0 9px}
+      .top-status-card .label{font-size:8.5px}.top-status-card .value{font-size:10.5px}
+      .top-refresh{width:32px;padding:0}
+      .page{padding:12px}
+      .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+      .kpi{padding:13px 12px;border-radius:10px}.kpi-val{font-size:23px}.kpi-label{font-size:11px}
+      .filter-row{gap:6px}.filter-row input,.filter-row select{height:36px;font-size:12px}
+      .issue-card{padding:10px;border-radius:8px}.issue-main{grid-template-columns:auto minmax(0,1fr) auto!important;gap:6px}
+      .issue-main .st,.issue-main .pri{display:none}.issue-main .title{font-size:12px}.issue-main .date{font-size:10px}
+      .private-editor .filter-row{grid-template-columns:1fr 1fr!important}
+      .private-editor .filter-row input[type="date"]{grid-column:1/2}.private-editor .filter-row .date-open-btn{grid-column:2/3;width:100%}
+    }
   `;
   document.head.appendChild(st);
 }
