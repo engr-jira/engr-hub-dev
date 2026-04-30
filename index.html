@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.5.6 - ESCARE Security Hub</title>
+<title>ENGR AI v1.5.7 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -232,6 +232,22 @@ main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 .audit-detail{font-size:11px;color:var(--text2);max-width:400px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .admin-card{background:#222538;border:1px solid var(--border2);border-radius:14px;padding:20px;margin-bottom:16px}
 .admin-card h3{font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px}
+
+.admin-section{background:rgba(255,255,255,.025);border:1px solid var(--border2);border-radius:14px;margin-bottom:12px;overflow:hidden}
+.admin-section>summary{list-style:none;cursor:pointer;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--text);font-size:13px;font-weight:900}
+.admin-section>summary::-webkit-details-marker{display:none}
+.admin-section>summary span{display:flex;align-items:center;gap:8px}
+.admin-section>summary small{color:var(--text3);font-size:10px;font-weight:700;white-space:nowrap}
+.admin-section>summary:after{content:'펼치기';font-size:10px;color:var(--accent3);font-weight:900;border:1px solid rgba(129,140,248,.24);border-radius:999px;padding:3px 8px;background:rgba(129,140,248,.08);white-space:nowrap}
+.admin-section[open]>summary{border-bottom:1px solid var(--border)}
+.admin-section[open]>summary:after{content:'접기'}
+.admin-section .admin-card{margin:12px}
+.admin-section .admin-card+.admin-card{margin-top:0}
+.admin-card.soft{background:rgba(99,102,241,.055)}
+.danger-section{border-color:rgba(248,113,113,.28)}
+.danger-section>summary:after{color:#fecaca;border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.08)}
+.danger-card{border-color:rgba(248,113,113,.28);background:rgba(248,113,113,.045)}
+.safe-actions .btn,.danger-actions .btn,.admin-add-row .btn{width:auto;padding:9px 14px}
 .storage-summary{border:1px solid rgba(99,102,241,.28);background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(45,230,184,.05));border-radius:12px;padding:12px;margin-bottom:10px}
 .storage-summary-top{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px;margin-bottom:10px}
 .storage-metric{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:8px 10px}
@@ -380,7 +396,7 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.5.6</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.5.7</span></div></div>
       </div>
       <div class="sb-section">메뉴</div>
       <div class="sb-nav">
@@ -688,96 +704,123 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
     </div>
 
     <div class="page" id="page-settings">
-      <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--accent3);margin-bottom:16px">⚙ 최상위 관리자 전용</div>
-      <div class="admin-card">
-        <h3>🔧 시스템 설정</h3>
-        <div class="admin-row">
-          <label>데이터 조회 기간</label>
-          <select id="cfg-range" class="admin-input" style="max-width:240px">
-            <option value="1">1개월</option><option value="2">2개월</option><option value="3" selected>3개월</option>
-            <option value="4">4개월</option><option value="5">5개월</option><option value="6">6개월</option><option value="12">1년</option>
-          </select>
+      <div class="sec-title">⚙ 관리자 설정</div>
+      <div class="alert warn">최상위 관리자 전용 설정입니다. 설정/계정/저장소/위험 작업을 접이식 섹션으로 분리했습니다.</div>
+
+      <details class="admin-section" open>
+        <summary><span>시스템 설정</span><small>조회 기간 · 세션 · EOS · AI 지침</small></summary>
+        <div class="admin-card">
+          <h3>🔧 시스템 설정</h3>
+          <div class="admin-row">
+            <label>데이터 조회 기간</label>
+            <select id="cfg-range" class="admin-input" style="max-width:240px">
+              <option value="1">1개월</option><option value="2">2개월</option><option value="3" selected>3개월</option>
+              <option value="4">4개월</option><option value="5">5개월</option><option value="6">6개월</option><option value="12">1년</option>
+            </select>
+          </div>
+          <div class="admin-row">
+            <label>세션 타임아웃</label>
+            <select id="cfg-session" class="admin-input" style="max-width:240px">
+              <option value="30">30분</option><option value="60">1시간</option><option value="120" selected>2시간</option>
+              <option value="240">4시간</option><option value="480">8시간</option>
+            </select>
+          </div>
+          <div class="admin-row">
+            <label>EOS 경고 일수</label>
+            <input id="cfg-eos-warn" class="admin-input" style="max-width:240px" placeholder="60,30,7">
+            <span style="font-size:10px;color:var(--text3)">콤마로 구분</span>
+          </div>
+          <div style="margin-top:14px">
+            <label style="font-size:11px;color:var(--text3);font-weight:700;display:block;margin-bottom:6px">AI 시스템 지침</label>
+            <textarea id="cfg-ai-system" class="admin-textarea" placeholder="당신은 ESCARE 보안기술팀의..."></textarea>
+          </div>
+          <div class="storage-actions safe-actions">
+            <button class="btn btn-indigo" onclick="saveConfig()">💾 저장</button>
+          </div>
         </div>
-        <div class="admin-row">
-          <label>세션 타임아웃</label>
-          <select id="cfg-session" class="admin-input" style="max-width:240px">
-            <option value="30">30분</option><option value="60">1시간</option><option value="120" selected>2시간</option>
-            <option value="240">4시간</option><option value="480">8시간</option>
-          </select>
+      </details>
+
+      <details class="admin-section">
+        <summary><span>사용자 / 권한 관리</span><small>사용자 계정 · 관리자 권한</small></summary>
+        <div class="admin-card">
+          <h3>👥 사용자 계정</h3>
+          <div id="user-list-wrap" style="margin-bottom:12px"></div>
+          <div class="admin-add-row">
+            <input id="user-add-id" placeholder="계정 ID (예: mj.park)" autocomplete="off" autocapitalize="none" spellcheck="false">
+            <input id="user-add-display" placeholder="표시 이름">
+            <select id="user-add-role"><option value="user">일반 사용자</option><option value="admin">관리자</option><option value="super">최상위 관리자</option></select>
+            <input id="user-add-pin" type="password" placeholder="초기 PIN (선택)">
+            <button class="btn btn-indigo" onclick="saveUserAccount()">사용자 저장</button>
+          </div>
         </div>
-        <div class="admin-row">
-          <label>EOS 경고 일수</label>
-          <input id="cfg-eos-warn" class="admin-input" style="max-width:240px" placeholder="60,30,7">
-          <span style="font-size:10px;color:var(--text3)">콤마로 구분</span>
+        <div class="admin-card">
+          <h3>👑 관리자 권한</h3>
+          <div id="admin-list-wrap"></div>
+          <div class="admin-add-row compact-admin-row">
+            <select id="admin-add-name"><option value="">팀원 선택</option></select>
+            <select id="admin-add-role"><option value="admin">일반 관리자</option><option value="super">최상위 관리자</option></select>
+            <button class="btn btn-indigo" onclick="addAdmin()">+ 추가</button>
+          </div>
         </div>
-        <div style="margin-top:14px">
-          <label style="font-size:11px;color:var(--text3);font-weight:700;display:block;margin-bottom:6px">AI 시스템 지침</label>
-          <textarea id="cfg-ai-system" class="admin-textarea" placeholder="당신은 ESCARE 보안기술팀의..."></textarea>
+        <div class="admin-card soft">
+          <h3>ℹ 권한 안내</h3>
+          <div style="font-size:12px;color:var(--text2);line-height:2">
+            <div>• <strong>일반 사용자</strong> — 대시보드, 이슈, 케이스 트래커, EOS, 로그 분석, VT, 업무 링크</div>
+            <div>• <strong style="color:var(--warn)">일반 관리자</strong> — + 감사 로그 열람, 업무 링크 등록/삭제</div>
+            <div>• <strong style="color:var(--accent3)">최상위 관리자</strong> — + 시스템 설정, 권한 부여</div>
+          </div>
         </div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="btn btn-indigo" onclick="saveConfig()" style="width:auto;padding:10px 20px">💾 저장</button>
+      </details>
+
+      <details class="admin-section">
+        <summary><span>PIN 관리</span><small>사용자 PIN 초기화</small></summary>
+        <div class="admin-card">
+          <h3>🔐 사용자 PIN 관리</h3>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">사용자가 PIN을 잊은 경우 선택한 사용자의 PIN을 초기값으로 되돌립니다.</p>
+          <div class="admin-add-row compact-admin-row">
+            <select id="pin-reset-user"><option value="">팀원 선택</option></select>
+            <button class="btn btn-red" onclick="resetUserPin()">PIN 초기화</button>
+          </div>
+          <div class="storage-toolbar-note">초기화 PIN은 Worker 환경변수에서 관리됩니다.</div>
         </div>
-      </div>
-      <div class="admin-card">
-        <h3>👥 사용자 계정</h3>
-        <div id="user-list-wrap" style="margin-bottom:12px"></div>
-        <div class="admin-add-row">
-          <input id="user-add-id" placeholder="계정 ID (예: mj.park)" autocomplete="off" autocapitalize="none" spellcheck="false">
-          <input id="user-add-display" placeholder="표시 이름">
-          <select id="user-add-role"><option value="user">일반 사용자</option><option value="admin">관리자</option><option value="super">최상위 관리자</option></select>
-          <input id="user-add-pin" type="password" placeholder="초기 PIN (선택)">
-          <button class="btn btn-indigo" onclick="saveUserAccount()" style="width:auto;padding:9px 16px">사용자 저장</button>
+      </details>
+
+      <details class="admin-section">
+        <summary><span>초기 데이터 / 저장소</span><small>KB 수집 · KV 현황 · 백업</small></summary>
+        <div class="admin-card">
+          <h3>📥 초기 데이터</h3>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">
+            검증된 기본 KB, 기존 업무 링크, Jira 이슈/댓글에 남아있는 Broadcom KB article을 모아 접근 가능한 문서만 업무 링크에 자동 등록합니다.<br>
+            유료 검색 API를 기본으로 사용하지 않습니다. 기존 링크와 중복되는 항목은 건너뜁니다.
+          </p>
+          <button id="kb-seed-btn" class="btn btn-green" onclick="importRecentKBLinks()">📥 무료 KB article 수집</button>
         </div>
-      </div>
-      <div class="admin-card">
-        <h3>👑 관리자 권한</h3>
-        <div id="admin-list-wrap"></div>
-        <div class="admin-add-row">
-          <select id="admin-add-name"><option value="">팀원 선택</option></select>
-          <select id="admin-add-role"><option value="admin">일반 관리자</option><option value="super">최상위 관리자</option></select>
-          <button class="btn btn-indigo" onclick="addAdmin()" style="width:auto;padding:9px 16px">+ 추가</button>
+        <div class="admin-card">
+          <h3>🗄 저장소 관리</h3>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">
+            Cloudflare KV에 저장된 HUB 데이터 현황과 사용량 기준을 조회합니다. 정리 작업은 관리자 확인 후 수동으로만 수행합니다.
+          </p>
+          <div id="storage-stats-wrap" style="font-size:12px;color:var(--text3);line-height:1.8;margin-bottom:12px">아직 조회하지 않았습니다.</div>
+          <div class="storage-actions safe-actions">
+            <button id="storage-stats-btn" class="btn btn-indigo" onclick="refreshStorageStats()">🗄 저장소 / KV 사용량 조회</button>
+            <button id="storage-backup-btn" class="btn btn-green" onclick="downloadHubBackup()">⬇ 전체 HUB 데이터 백업</button>
+          </div>
+          <div class="storage-toolbar-note">백업은 링크/노하우/EOS/관리자 설정만 포함합니다. Secret, PIN, JIRA Token, Gemini Key 등 Cloudflare 환경 변수는 포함하지 않습니다.</div>
         </div>
-      </div>
-      <div class="admin-card">
-        <h3>🔐 사용자 PIN 관리</h3>
-        <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">사용자가 PIN을 잊은 경우 선택한 사용자의 PIN을 초기값으로 되돌립니다.</p>
-        <div class="admin-add-row">
-          <select id="pin-reset-user"><option value="">팀원 선택</option></select>
-          <button class="btn btn-red" onclick="resetUserPin()" style="width:auto;padding:9px 16px">PIN 초기화</button>
+      </details>
+
+      <details class="admin-section danger-section">
+        <summary><span>위험 작업</span><small>캐시 · 감사 로그 · 전체 데이터 초기화</small></summary>
+        <div class="admin-card danger-card">
+          <h3>⚠ 위험 작업</h3>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">삭제성 작업입니다. 실행 전 전체 HUB 데이터 백업을 먼저 다운로드하세요.</p>
+          <div class="storage-actions danger-actions">
+            <button id="storage-cache-btn" class="btn btn-red" onclick="clearCache()">🧹 AI 응답 캐시 초기화</button>
+            <button id="storage-audit-btn" class="btn btn-gray" onclick="cleanupOldAuditLogs()">🧹 감사 로그 90일 초과 정리</button>
+            <button id="storage-reset-btn" class="btn btn-red" onclick="resetAllHubData()">⚠ 전체 데이터 초기화</button>
+          </div>
         </div>
-        <div class="storage-toolbar-note">초기화 PIN은 Worker 환경변수에서 관리됩니다.</div>
-      </div>
-      <div class="admin-card">
-        <h3>📥 초기 데이터</h3>
-        <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">
-          검증된 기본 KB, 기존 업무 링크, Jira 이슈/댓글에 남아있는 Broadcom KB article을 모아 접근 가능한 문서만 업무 링크에 자동 등록합니다.<br>
-          유료 검색 API를 기본으로 사용하지 않습니다. 기존 링크와 중복되는 항목은 건너뜁니다.
-        </p>
-        <button id="kb-seed-btn" class="btn btn-green" onclick="importRecentKBLinks()" style="width:auto;padding:10px 20px">📥 무료 KB article 수집</button>
-      </div>
-      <div class="admin-card">
-        <h3>🗄 저장소 관리</h3>
-        <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">
-          Cloudflare KV에 저장된 HUB 데이터 현황과 사용량 기준을 조회합니다. 정리 작업은 관리자 확인 후 수동으로만 수행합니다.
-        </p>
-        <div id="storage-stats-wrap" style="font-size:12px;color:var(--text3);line-height:1.8;margin-bottom:12px">아직 조회하지 않았습니다.</div>
-        <div class="storage-actions">
-        <button id="storage-stats-btn" class="btn btn-indigo" onclick="refreshStorageStats()">🗄 저장소 / KV 사용량 조회</button>
-          <button id="storage-backup-btn" class="btn btn-green" onclick="downloadHubBackup()">⬇ 전체 HUB 데이터 백업</button>
-          <button id="storage-cache-btn" class="btn btn-red" onclick="clearCache()">🧹 AI 응답 캐시 초기화</button>
-          <button id="storage-audit-btn" class="btn btn-gray" onclick="cleanupOldAuditLogs()">🧹 감사 로그 90일 초과 정리</button>
-          <button id="storage-reset-btn" class="btn btn-red" onclick="resetAllHubData()">⚠ 전체 데이터 초기화</button>
-        </div>
-        <div class="storage-toolbar-note">백업은 링크/노하우/EOS/관리자 설정만 포함합니다. Secret, PIN, JIRA Token, Gemini Key 등 Cloudflare 환경 변수는 포함하지 않습니다.</div>
-      </div>
-      <div class="admin-card">
-        <h3>ℹ 권한 안내</h3>
-        <div style="font-size:12px;color:var(--text2);line-height:2">
-          <div>• <strong>일반 사용자</strong> — 대시보드, 이슈, 케이스 트래커, EOS, 로그 분석, VT, 업무 링크 (등록/수정/삭제 포함)</div>
-          <div>• <strong style="color:var(--warn)">일반 관리자</strong> — + 감사 로그 열람, 업무 링크 등록/삭제</div>
-          <div>• <strong style="color:var(--accent3)">최상위 관리자</strong> — + 시스템 설정, 권한 부여</div>
-        </div>
-      </div>
+      </details>
     </div>
   </main>
 </div>
@@ -4166,34 +4209,51 @@ function injectV155Style(){
     @media(max-width:1100px){.private-layout{grid-template-columns:1fr}}
     @media(max-width:1200px){.issue-main{grid-template-columns:auto auto minmax(0,1fr) auto}.issue-main .pri{display:none}}
     @media(max-width:700px){
-      #app{min-height:100vh;background:var(--bg)}
-      aside{position:sticky;top:0;z-index:80;background:rgba(22,27,39,.98);box-shadow:0 8px 24px rgba(0,0,0,.28)}
+      *{box-sizing:border-box}
+      html,body{width:100%;max-width:100%;overflow-x:hidden}
+      #app{min-height:100vh;background:var(--bg);max-width:100%;overflow-x:hidden}
+      main{width:100%;max-width:100%;min-width:0;overflow-x:hidden;padding:10px!important}
+      .content,.page,.panel,.admin-card,.card,.issue-card,.case-card,.link-card,.k-card,.storage-summary,.file-drop{max-width:100%;min-width:0;overflow-wrap:anywhere}
+      .issue-main{display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;gap:6px!important;align-items:center!important}
+      .issue-main .title{grid-column:1/-1;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.45}
+      .issue-main .date{grid-column:1/-1}.issue-sub{flex-wrap:wrap;gap:6px}
+      .link-url,.link-title,.link-desc{word-break:break-all;overflow-wrap:anywhere}
+      aside{position:sticky;top:0;z-index:80;background:rgba(22,27,39,.98);box-shadow:0 8px 24px rgba(0,0,0,.28);max-width:100%;overflow:hidden}
       .sb-top{padding:10px 10px 8px}
       .sb-brand{margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08)}
-      .sb-icon{width:32px;height:32px;border-radius:10px}.sb-icon svg{width:17px;height:17px}
-      .sb-name{font-size:15px;letter-spacing:1.6px}.sb-sub{font-size:9px}
-      .sb-section,.sb-divider,.sb-bottom{display:none!important}
-      .sb-nav{display:flex!important;flex-direction:row!important;gap:6px!important;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
-      .sb-nav::-webkit-scrollbar{display:none}
-      .sb-btn{flex:0 0 auto;width:auto!important;min-height:34px;padding:8px 10px;border-radius:999px;font-size:11px;white-space:nowrap;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08)}
-      .sb-btn svg{width:13px;height:13px}.sb-btn .badge-warn{margin-left:4px}
-      main{min-width:0}
-      .topbar{position:sticky;top:92px;z-index:70;padding:10px 12px;background:rgba(20,25,40,.96);gap:8px}
-      .topbar-left h2{font-size:17px}.topbar-left p{font-size:10px}
-      .topbar-right{display:block!important;width:100%;overflow:hidden}
-      .top-status{justify-content:flex-start!important;flex-wrap:nowrap!important;overflow-x:auto;gap:6px;padding-bottom:1px;scrollbar-width:none}
-      .top-status::-webkit-scrollbar{display:none}
-      .top-status-card,.top-pin,.top-refresh,.top-logout{flex:0 0 auto;height:32px;min-height:32px;border-radius:999px;padding:0 9px}
-      .top-status-card .label{font-size:8.5px}.top-status-card .value{font-size:10.5px}
-      .top-refresh{width:32px;padding:0}
-      .page{padding:12px}
-      .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-      .kpi{padding:13px 12px;border-radius:10px}.kpi-val{font-size:23px}.kpi-label{font-size:11px}
-      .filter-row{gap:6px}.filter-row input,.filter-row select{height:36px;font-size:12px}
-      .issue-card{padding:10px;border-radius:8px}.issue-main{grid-template-columns:auto minmax(0,1fr) auto!important;gap:6px}
-      .issue-main .st,.issue-main .pri{display:none}.issue-main .title{font-size:12px}.issue-main .date{font-size:10px}
-      .private-editor .filter-row{grid-template-columns:1fr 1fr!important}
-      .private-editor .filter-row input[type="date"]{grid-column:1/2}.private-editor .filter-row .date-open-btn{grid-column:2/3;width:100%}
+      .sb-logo{width:32px;height:32px;border-radius:10px}.sb-logo svg{width:17px;height:17px}.sb-name{font-size:14px}.sb-sub{font-size:9px}
+      .sb-nav{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:2px 10px 10px 10px;margin:0 -10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+      .sb-nav::-webkit-scrollbar{height:0}
+      .sb-btn{flex:0 0 auto;width:auto;min-width:max-content;padding:8px 10px;border-radius:999px;font-size:11px;scroll-snap-align:start;white-space:nowrap}
+      .sb-btn svg{width:14px;height:14px;flex:0 0 14px}.sb-bottom{display:none!important}
+      header{position:sticky;top:0;z-index:70;margin:-10px -10px 10px;padding:8px 10px;background:rgba(15,18,28,.96);border-bottom:1px solid rgba(255,255,255,.08);backdrop-filter:blur(10px)}
+      .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;width:100%;min-width:0}
+      .top-left{min-width:0;flex:1}.top-title{font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.top-desc{display:none}
+      .top-status{display:flex!important;gap:6px;overflow-x:auto;overflow-y:hidden;max-width:54vw;padding-bottom:2px;-webkit-overflow-scrolling:touch;flex-wrap:nowrap}
+      .top-status::-webkit-scrollbar{height:0}
+      .top-status-card,.top-pin,.top-refresh,.top-logout{flex:0 0 auto;height:32px;min-height:32px;border-radius:999px;padding:0 9px;white-space:nowrap}
+      .top-status-card{gap:6px}.top-status-card .label{display:none}.top-status-card .value{font-size:10px}.top-status-card .dot{width:7px;height:7px}.top-pin,.top-logout{font-size:10px}.top-refresh{width:32px;padding:0}
+      .sec-title{font-size:15px;margin:6px 0 10px}.alert{padding:10px 12px;font-size:11px;line-height:1.55}
+      .chart-grid,.two-col,.storage-summary-top,.storage-grid,.link-grid{grid-template-columns:1fr!important;gap:10px!important}
+      .filter-row{display:grid!important;grid-template-columns:1fr!important;gap:6px!important;align-items:stretch!important}
+      .filter-row input,.filter-row select,.filter-row button,.page-size-select{width:100%!important;min-width:0!important;max-width:100%!important;height:36px;font-size:12px;margin:0!important}
+      .private-editor .filter-row{display:grid!important;grid-template-columns:1fr 1fr!important}
+      .private-editor .filter-row select{grid-column:1/-1}
+      .private-editor .filter-row input[type="date"]{grid-column:1/2}.private-editor .filter-row .date-open-btn{grid-column:2/3;width:100%!important}
+      .admin-section{border-radius:12px;margin-bottom:10px;max-width:100%}
+      .admin-section>summary{padding:12px;display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px;font-size:12px}
+      .admin-section>summary small{grid-column:1/-1;white-space:normal;font-size:9.5px;line-height:1.4}.admin-section>summary:after{grid-row:1;grid-column:2;font-size:9px;padding:3px 7px}
+      .admin-section .admin-card{margin:10px;padding:14px;border-radius:12px}.admin-card h3{font-size:12.5px}
+      .admin-row{display:grid!important;grid-template-columns:1fr!important;gap:6px!important;align-items:stretch!important}.admin-row label{min-width:0!important}
+      .admin-input,.admin-textarea,.admin-row input,.admin-row select,.admin-add-row input,.admin-add-row select{width:100%!important;min-width:0!important;max-width:100%!important}
+      .admin-add-row,.storage-actions,.safe-actions,.danger-actions{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}.admin-add-row .btn,.storage-actions .btn{width:100%!important;min-width:0!important;max-width:100%!important}
+      #kb-seed-btn,#log-btn{width:100%!important;max-width:100%!important}
+      #log-product{width:100%!important;min-width:0!important}.log-textarea,.admin-textarea{font-size:11px;min-height:130px}.file-drop{padding:14px!important}
+      #page-vt [style*="display:flex"],#page-log [style*="display:flex"]{flex-wrap:wrap!important}
+      #vt-input{width:100%!important;min-width:0!important;flex:1 1 100%!important}.vt-history-item,.vt-hist-row{grid-template-columns:1fr!important;gap:4px!important}.vt-history-item .hide-narrow{display:none!important}
+      .eos-table,.audit-table{display:block;width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-spacing:0}.eos-table thead,.eos-table tbody,.eos-table tr,.audit-table thead,.audit-table tbody,.audit-table tr{min-width:620px}.eos-table th,.eos-table td,.audit-table th,.audit-table td{white-space:nowrap}
+      .audit-detail{max-width:220px;white-space:nowrap}.pager{gap:6px;flex-wrap:wrap}.pager button{min-width:64px}
+      [style*="minmax(320px"],[style*="minmax(340px"],[style*="grid-template-columns:repeat(auto-fit,minmax(320px"],[style*="grid-template-columns:repeat(auto-fit,minmax(340px"]{grid-template-columns:1fr!important}
     }
   `;
   document.head.appendChild(st);
