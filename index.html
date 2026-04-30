@@ -831,6 +831,10 @@ function daysUntil(d){return d?Math.ceil((new Date(d)-Date.now())/86400000):0;}
 function toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.className=err?'err':'';t.style.display='block';setTimeout(()=>t.style.display='none',2800);}
 function copyText(text){navigator.clipboard.writeText(text).then(()=>toast('복사됐어요!')).catch(()=>{});}
 function encUser(n){try{return btoa(unescape(encodeURIComponent(n)));}catch{return btoa(n);}}
+function authHeaders(extra={}){
+  const token=localStorage.getItem('engr_session_token')||'';
+  return {...extra,'X-User':encUser(CURRENT_USER),...(token?{'X-Session-Token':token}:{})};
+}
 function escapeHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function normalizeExternalUrl(url){
   const raw=(url||'').trim();
@@ -854,6 +858,7 @@ async function login(){
     CURRENT_USER=name;IS_ADMIN=d.isAdmin;IS_SUPER=d.isSuperAdmin;USER_ROLE=d.role||'user';SESSION_MIN=d.sessionMin||120;
     SESSION_DEADLINE=Date.now()+SESSION_MIN*60000;
     localStorage.setItem('engr_user',name);localStorage.removeItem('engr_pin');
+    if(d.sessionToken)localStorage.setItem('engr_session_token',d.sessionToken);
     localStorage.setItem('engr_session_deadline',SESSION_DEADLINE);
     enterApp();
   }catch(e){toast('서버 연결 실패',true);btn.disabled=false;btn.textContent='접속하기 →';}
@@ -882,7 +887,7 @@ function startSessionTimer(){
 function extendSession(){SESSION_DEADLINE=Date.now()+SESSION_MIN*60000;localStorage.setItem('engr_session_deadline',SESSION_DEADLINE);}
 document.addEventListener('click',extendSession);
 document.addEventListener('keydown',extendSession);
-function forceLogout(){localStorage.removeItem('engr_user');localStorage.removeItem('engr_pin');localStorage.removeItem('engr_session_deadline');location.reload();}
+function forceLogout(){localStorage.removeItem('engr_user');localStorage.removeItem('engr_pin');localStorage.removeItem('engr_session_token');localStorage.removeItem('engr_session_deadline');location.reload();}
 function logout(){if(!confirm('로그아웃 하시겠어요?'))return;forceLogout();}
 
 // ── AI 사용량 ──────────────────────────────────────
@@ -939,7 +944,7 @@ async function loadAIUsage(options={}){
   if(reason==='login')applyCachedAIUsage();
   setAIUsageLoading(reason);
   try{
-    const r=await fetch(`${WORKERS}/kv/usage`,{headers:{'X-User':encUser(CURRENT_USER)}});
+    const r=await fetch(`${WORKERS}/kv/usage`,{headers:authHeaders()});
     if(!r.ok)throw new Error('usage endpoint unavailable');
     const usage=await r.json();
     applyAIUsage(usage);
@@ -1031,7 +1036,7 @@ function onGlobalSearch(q){showPage('issues',document.getElementById('nav-issues
 async function syncJira(){
   document.getElementById('jira-dot').innerHTML='<span class="dot" style="background:var(--warn)"></span>동기화중...';
   try{
-    const r=await fetch(`${WORKERS}/jira/search/jql`,{headers:{'X-User':encUser(CURRENT_USER)}});
+    const r=await fetch(`${WORKERS}/jira/search/jql`,{headers:authHeaders()});
     if(!r.ok)throw new Error('응답 오류: '+r.status);
     const d=await r.json();
     if(!d.issues)throw new Error('이슈 데이터 없음');
@@ -1065,7 +1070,7 @@ async function syncJira(){
 }
 async function fetchIssueDetail(key){
   const fields=['summary','status','priority','assignee','reporter','created','updated','description','labels','issuetype','attachment','comment'].join(',');
-  const r=await fetch(`${WORKERS}/jira/issue/${encodeURIComponent(key)}?fields=${encodeURIComponent(fields)}`,{headers:{'X-User':encUser(CURRENT_USER)}});
+  const r=await fetch(`${WORKERS}/jira/issue/${encodeURIComponent(key)}?fields=${encodeURIComponent(fields)}`,{headers:authHeaders()});
   if(!r.ok)throw new Error('상세 조회 오류: '+r.status);
   const i=await r.json();
   return {
@@ -1777,7 +1782,7 @@ async function loadEOS(){
 async function loadEosWarnDays(){
   if(!IS_ADMIN&&!IS_SUPER)return;
   try{
-    const r=await fetch(`${WORKERS}/admin/config`,{headers:{'X-User':encUser(CURRENT_USER)}});
+    const r=await fetch(`${WORKERS}/admin/config`,{headers:authHeaders()});
     const d=await r.json();
     if(d.ok&&d.eosWarnDays){EOS_WARN_DAYS=d.eosWarnDays.split(',').map(s=>parseInt(s.trim())).filter(x=>x>0);}
   }catch{}
@@ -1926,7 +1931,7 @@ async function saveEos(){
   const memo=document.getElementById('eos-form-memo').value.trim();
   if(!customer||!product||!expireDate){toast('고객사, 제품, 만료일은 필수입니다',true);return;}
   try{
-    const r=await fetch(`${WORKERS}/eos`,{method:'POST',headers:{'Content-Type':'application/json','X-User':encUser(CURRENT_USER)},body:JSON.stringify({type,customer,product,version,licenseName,expireDate,memo})});
+    const r=await fetch(`${WORKERS}/eos`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({type,customer,product,version,licenseName,expireDate,memo})});
     const d=await r.json();
     if(!d.ok){toast(d.message||'저장 실패',true);return;}
     toast('등록 완료');closeGenModal();await loadEOS();renderEosList();
@@ -1964,7 +1969,7 @@ async function updateEos(id){
   const memo=document.getElementById('eos-edit-memo').value.trim();
   if(!customer||!product||!expireDate){toast('고객사, 제품, 만료일은 필수입니다',true);return;}
   try{
-    const r=await fetch(`${WORKERS}/eos/${id}`,{method:'PUT',headers:{'Content-Type':'application/json','X-User':encUser(CURRENT_USER)},body:JSON.stringify({type,customer,product,version,licenseName,expireDate,memo})});
+    const r=await fetch(`${WORKERS}/eos/${id}`,{method:'PUT',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({type,customer,product,version,licenseName,expireDate,memo})});
     const d=await r.json();
     if(!d.ok){toast(d.message||'수정 실패',true);return;}
     toast('수정 완료');closeGenModal();await loadEOS();renderEosList();
@@ -1973,7 +1978,7 @@ async function updateEos(id){
 async function deleteEos(id){
   if(!confirm('삭제하시겠어요?'))return;
   try{
-    const r=await fetch(`${WORKERS}/eos/${id}`,{method:'DELETE',headers:{'X-User':encUser(CURRENT_USER)}});
+    const r=await fetch(`${WORKERS}/eos/${id}`,{method:'DELETE',headers:authHeaders()});
     const d=await r.json();
     if(!d.ok){toast(d.message||'실패',true);return;}
     toast('삭제됨');await loadEOS();renderEosList();
@@ -2030,7 +2035,7 @@ async function saveLink(){
   if(!title||!url){toast('제목과 URL은 필수',true);return;}
   if(!url.startsWith('http')){toast('URL은 http로 시작해야 합니다',true);return;}
   try{
-    const r=await fetch(`${WORKERS}/links`,{method:'POST',headers:{'Content-Type':'application/json','X-User':encUser(CURRENT_USER)},body:JSON.stringify({title,url,category,desc})});
+    const r=await fetch(`${WORKERS}/links`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({title,url,category,desc})});
     const d=await r.json();
     if(!d.ok){toast(d.message||'저장 실패',true);return;}
     toast('등록됨');closeGenModal();await loadLinks();renderLinks();
@@ -2057,7 +2062,7 @@ async function updateLink(id){
   if(!title||!url){toast('제목과 URL은 필수',true);return;}
   if(!url.startsWith('http')){toast('URL은 http로 시작해야 합니다',true);return;}
   try{
-    const r=await fetch(`${WORKERS}/links/${id}`,{method:'PUT',headers:{'Content-Type':'application/json','X-User':encUser(CURRENT_USER)},body:JSON.stringify({title,url,category,desc})});
+    const r=await fetch(`${WORKERS}/links/${id}`,{method:'PUT',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({title,url,category,desc})});
     const d=await r.json();
     if(!d.ok){toast(d.message||'수정 실패',true);return;}
     toast('수정 완료');closeGenModal();await loadLinks();renderLinks();
@@ -2066,7 +2071,7 @@ async function updateLink(id){
 async function deleteLink(id){
   if(!confirm('삭제하시겠어요?'))return;
   try{
-    const r=await fetch(`${WORKERS}/links/${id}`,{method:'DELETE',headers:{'X-User':encUser(CURRENT_USER)}});
+    const r=await fetch(`${WORKERS}/links/${id}`,{method:'DELETE',headers:authHeaders()});
     const d=await r.json();
     if(!d.ok){toast(d.message||'실패',true);return;}
     toast('삭제됨');await loadLinks();renderLinks();
@@ -2193,7 +2198,7 @@ async function vtLookup(){
   btn.disabled=true;btn.textContent='조회 중...';
   res.innerHTML='<div class="loading">VirusTotal 조회 중...</div>';
   try{
-    const r=await fetch(`${WORKERS}/vt/lookup`,{method:'POST',headers:{'Content-Type':'application/json','X-User':encUser(CURRENT_USER)},body:JSON.stringify({hash})});
+    const r=await fetch(`${WORKERS}/vt/lookup`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({hash})});
     const d=await r.json();
     if(d.error){res.innerHTML=`<div style="color:var(--danger);font-size:12px;padding:16px">${d.error.message||'조회 실패'}</div>`;btn.disabled=false;btn.textContent='🔍 조회';return;}
     const attrs=d.data?.attributes||{};
@@ -2312,7 +2317,7 @@ async function loadAudit(){
   const limit=document.getElementById('audit-limit')?.value||'100';
   try{
     const url=`${WORKERS}/kv/audit?limit=${limit}${filter?'&filter='+filter:''}`;
-    const r=await fetch(url,{headers:{'X-User':encUser(CURRENT_USER)}});
+    const r=await fetch(url,{headers:authHeaders()});
     const items=await r.json();
     document.getElementById('audit-count').textContent=items.length+'건';
     const ts={
@@ -2375,7 +2380,7 @@ async function loadAudit(){
 // ── SETTINGS ──────────────────────────────────────
 async function loadSettings(){
   try{
-    const r=await fetch(`${WORKERS}/admin/config`,{headers:{'X-User':encUser(CURRENT_USER)}});
+    const r=await fetch(`${WORKERS}/admin/config`,{headers:authHeaders()});
     const d=await r.json();
     if(d.ok){
       document.getElementById('cfg-range').value=d.rangeMonths;
@@ -2387,7 +2392,7 @@ async function loadSettings(){
   const wrap=document.getElementById('admin-list-wrap');
   wrap.innerHTML='<div class="loading">로딩...</div>';
   try{
-    const r=await fetch(`${WORKERS}/admin/list`,{headers:{'X-User':encUser(CURRENT_USER)}});
+    const r=await fetch(`${WORKERS}/admin/list`,{headers:authHeaders()});
     const d=await r.json();
     TEAM_NAMES=d.teamNames||[];
     const admins=d.admins||{};
@@ -2422,7 +2427,7 @@ async function saveConfig(){
     eosWarnDays:document.getElementById('cfg-eos-warn').value.trim()||'60,30,7',
   };
   try{
-    const r=await fetch(`${WORKERS}/admin/config`,{method:'POST',headers:{'Content-Type':'application/json','X-User':encUser(CURRENT_USER)},body:JSON.stringify(body)});
+    const r=await fetch(`${WORKERS}/admin/config`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify(body)});
     const d=await r.json();
     if(!d.ok){toast(d.message||'저장 실패',true);return;}
     toast('저장 완료. 일부 설정은 새로고침 후 반영됩니다.');
@@ -2435,7 +2440,7 @@ async function clearCache(){
   const old=btn?.textContent;
   if(btn){btn.disabled=true;btn.textContent='정리 중...';}
   try{
-    const r=await fetch(`${WORKERS}/admin/cache/clear`,{method:'POST',headers:{'X-User':encUser(CURRENT_USER)}});
+    const r=await fetch(`${WORKERS}/admin/cache/clear`,{method:'POST',headers:authHeaders()});
     const d=await r.json();
     if(!d.ok){toast(d.message||'실패',true);return;}
     toast(`AI 캐시 ${d.cleared}개 삭제${d.truncated?' · 추가 캐시가 남아있을 수 있습니다. 다시 실행하세요.':''}`);
@@ -2448,7 +2453,7 @@ async function downloadHubBackup(){
   const old=btn?.textContent;
   if(btn){btn.disabled=true;btn.textContent='백업 생성 중...';}
   try{
-    const r=await fetch(`${WORKERS}/admin/storage/backup`,{headers:{'X-User':encUser(CURRENT_USER)}});
+    const r=await fetch(`${WORKERS}/admin/storage/backup`,{headers:authHeaders()});
     const d=await r.json();
     if(!d.ok)throw new Error(d.message||'백업 실패');
     const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
@@ -2467,7 +2472,7 @@ async function cleanupOldAuditLogs(){
   const old=btn?.textContent;
   if(btn){btn.disabled=true;btn.textContent='대상 확인 중...';}
   try{
-    const headers={'Content-Type':'application/json','X-User':encUser(CURRENT_USER)};
+    const headers=authHeaders({'Content-Type':'application/json'});
     const dry=await fetch(`${WORKERS}/admin/storage/cleanup`,{method:'POST',headers,body:JSON.stringify({target:'audit-old',days:90,dryRun:true,max:500})});
     const dd=await dry.json();
     if(!dd.ok)throw new Error(dd.message||'정리 대상 확인 실패');
@@ -2538,7 +2543,7 @@ async function addAdmin(){
   const role=document.getElementById('admin-add-role').value;
   if(!name){toast('팀원을 선택해주세요',true);return;}
   try{
-    const r=await fetch(`${WORKERS}/admin/update`,{method:'POST',headers:{'Content-Type':'application/json','X-User':encUser(CURRENT_USER)},body:JSON.stringify({action:'add',user:name,role})});
+    const r=await fetch(`${WORKERS}/admin/update`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({action:'add',user:name,role})});
     const d=await r.json();
     if(!d.ok){toast(d.message||'실패',true);return;}
     toast(`${name} (${role==='super'?'최상위':'일반'} 관리자) 추가`);loadSettings();
@@ -2546,7 +2551,7 @@ async function addAdmin(){
 }
 async function changeRole(name,newRole){
   try{
-    const r=await fetch(`${WORKERS}/admin/update`,{method:'POST',headers:{'Content-Type':'application/json','X-User':encUser(CURRENT_USER)},body:JSON.stringify({action:'changeRole',user:name,role:newRole})});
+    const r=await fetch(`${WORKERS}/admin/update`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({action:'changeRole',user:name,role:newRole})});
     const d=await r.json();
     if(!d.ok){toast(d.message||'실패',true);loadSettings();return;}
     toast(`${name} 권한 변경`);
@@ -2555,7 +2560,7 @@ async function changeRole(name,newRole){
 async function removeAdmin(name){
   if(!confirm(`${name}의 관리자 권한을 회수하시겠어요?`))return;
   try{
-    const r=await fetch(`${WORKERS}/admin/update`,{method:'POST',headers:{'Content-Type':'application/json','X-User':encUser(CURRENT_USER)},body:JSON.stringify({action:'remove',user:name})});
+    const r=await fetch(`${WORKERS}/admin/update`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({action:'remove',user:name})});
     const d=await r.json();
     if(!d.ok){toast(d.message||'실패',true);return;}
     toast(`${name} 권한 회수`);loadSettings();
@@ -2758,17 +2763,17 @@ async function saveKnowledge(){
   const title=document.getElementById("know-form-title").value.trim();
   if(!title){toast("제목은 필수입니다",true);return;}
   const body={product:document.getElementById("know-form-prod").value,category:document.getElementById("know-form-cat").value,title,content:document.getElementById("know-form-content").value.trim(),link:normalizeExternalUrl(document.getElementById("know-form-link").value.trim())};
-  try{const r=await fetch(`${WORKERS}/knowledge`,{method:"POST",headers:{"Content-Type":"application/json","X-User":encUser(CURRENT_USER)},body:JSON.stringify(body)});const d=await r.json();if(!d.ok){toast(d.message||"저장 실패",true);return;}toast("등록 완료");closeGenModal();await loadKnowledge();renderKnowledge();}catch(e){toast("오류: "+e.message,true);}
+  try{const r=await fetch(`${WORKERS}/knowledge`,{method:"POST",headers:authHeaders({"Content-Type":"application/json"}),body:JSON.stringify(body)});const d=await r.json();if(!d.ok){toast(d.message||"저장 실패",true);return;}toast("등록 완료");closeGenModal();await loadKnowledge();renderKnowledge();}catch(e){toast("오류: "+e.message,true);}
 }
 async function updateKnowledge(id){
   const title=document.getElementById("know-form-title").value.trim();
   if(!title){toast("제목은 필수입니다",true);return;}
   const body={product:document.getElementById("know-form-prod").value,category:document.getElementById("know-form-cat").value,title,content:document.getElementById("know-form-content").value.trim(),link:normalizeExternalUrl(document.getElementById("know-form-link").value.trim())};
-  try{const r=await fetch(`${WORKERS}/knowledge/${id}`,{method:"PUT",headers:{"Content-Type":"application/json","X-User":encUser(CURRENT_USER)},body:JSON.stringify(body)});const d=await r.json();if(!d.ok){toast(d.message||"수정 실패",true);return;}toast("수정 완료");closeGenModal();await loadKnowledge();renderKnowledge();}catch(e){toast("오류: "+e.message,true);}
+  try{const r=await fetch(`${WORKERS}/knowledge/${id}`,{method:"PUT",headers:authHeaders({"Content-Type":"application/json"}),body:JSON.stringify(body)});const d=await r.json();if(!d.ok){toast(d.message||"수정 실패",true);return;}toast("수정 완료");closeGenModal();await loadKnowledge();renderKnowledge();}catch(e){toast("오류: "+e.message,true);}
 }
 async function deleteKnowledge(id){
   if(!confirm("삭제하시겠어요?"))return;
-  try{const r=await fetch(`${WORKERS}/knowledge/${id}`,{method:"DELETE",headers:{"X-User":encUser(CURRENT_USER)}});const d=await r.json();if(!d.ok){toast(d.message||"실패",true);return;}toast("삭제됨");await loadKnowledge();renderKnowledge();}catch(e){toast("오류: "+e.message,true);}
+  try{const r=await fetch(`${WORKERS}/knowledge/${id}`,{method:"DELETE",headers:authHeaders()});const d=await r.json();if(!d.ok){toast(d.message||"실패",true);return;}toast("삭제됨");await loadKnowledge();renderKnowledge();}catch(e){toast("오류: "+e.message,true);}
 }
 
 // ── 저장소 안내 ───────────────────────────────────
@@ -2909,7 +2914,7 @@ async function importRecentKBLinks(){
       const qs=new URLSearchParams({years:'5',limit:'20'});
       if(cursor)qs.set('cursor',cursor);
       if(btn)btn.textContent=`KB 수집 중... ${batch}차`;
-      const r=await fetch(`${WORKERS}/links/kb/import?${qs.toString()}`,{method:'POST',headers:{'X-User':encUser(CURRENT_USER)}});
+      const r=await fetch(`${WORKERS}/links/kb/import?${qs.toString()}`,{method:'POST',headers:authHeaders()});
       if(!r.ok){toast('Worker 업데이트 후 사용 가능합니다',true);return;}
       const d=await r.json();
       if(d.ok===false){toast(d.message||'KB 수집 설정이 필요합니다',true);return;}
@@ -2939,7 +2944,7 @@ async function importKBSeed(){
     try{
       const r=await fetch(`${WORKERS}/links`,{
         method:'POST',
-        headers:{'Content-Type':'application/json','X-User':encUser(CURRENT_USER)},
+        headers:authHeaders({'Content-Type':'application/json'}),
         body:JSON.stringify({title:item.title,url:item.url,category:item.category,desc:item.desc})
       });
       const d=await r.json();
@@ -2970,7 +2975,7 @@ async function refreshStorageStats(){
   btn.disabled=true;btn.textContent='조회 중...';
   wrap.innerHTML='<div class="loading">저장소 현황 조회 중...</div>';
   try{
-    const r=await fetch(`${WORKERS}/admin/storage/stats`,{headers:{'X-User':encUser(CURRENT_USER)}});
+    const r=await fetch(`${WORKERS}/admin/storage/stats`,{headers:authHeaders()});
     const d=await r.json();
     if(!d.ok)throw new Error(d.message||'조회 실패');
     const summary=d.summary||{};
@@ -3039,7 +3044,7 @@ async function refreshStorageStats(){
 async function callAI(prompt,mode='technical_analysis',detail={}){
   const r=await fetch(`${WORKERS}/ai/generate`,{
     method:'POST',
-    headers:{'Content-Type':'application/json','X-User':encUser(CURRENT_USER)},
+    headers:authHeaders({'Content-Type':'application/json'}),
     body:JSON.stringify({contents:[{parts:[{text:prompt}]}],mode,detail})
   });
   if(!r.ok){
@@ -3133,7 +3138,7 @@ async function syncJira(){
   const dot=document.getElementById('jira-dot');
   if(dot)dot.innerHTML='<span class="dot" style="background:var(--warn)"></span>동기화중...';
   try{
-    const r=await fetch(`${WORKERS}/jira/search/jql`,{headers:{'X-User':encUser(CURRENT_USER)}});
+    const r=await fetch(`${WORKERS}/jira/search/jql`,{headers:authHeaders()});
     if(!r.ok)throw new Error('응답 오류: '+r.status);
     const d=await r.json();
     if(!d.issues)throw new Error('이슈 데이터 없음');
@@ -3172,7 +3177,7 @@ async function syncJira(){
 
 async function fetchIssueDetail(key){
   const fields=['summary','status','priority','assignee','reporter','created','updated','description','labels','issuetype','attachment','comment'].join(',');
-  const r=await fetch(`${WORKERS}/jira/issue/${encodeURIComponent(key)}?fields=${encodeURIComponent(fields)}`,{headers:{'X-User':encUser(CURRENT_USER)}});
+  const r=await fetch(`${WORKERS}/jira/issue/${encodeURIComponent(key)}?fields=${encodeURIComponent(fields)}`,{headers:authHeaders()});
   if(!r.ok)throw new Error('상세 조회 오류: '+r.status);
   const i=await r.json();
   const title=i.fields.summary||'';
@@ -3624,7 +3629,7 @@ async function syncJira(){
   const dot=document.getElementById('jira-dot');
   if(dot)dot.innerHTML='<span class="dot" style="background:var(--warn)"></span><span class="warn">동기화중...</span>';
   try{
-    const r=await fetch(`${WORKERS}/jira/search/jql`,{headers:{'X-User':encUser(CURRENT_USER)}});
+    const r=await fetch(`${WORKERS}/jira/search/jql`,{headers:authHeaders()});
     if(!r.ok)throw new Error('응답 오류: '+r.status);
     const d=await r.json();
     if(!d.issues)throw new Error('이슈 데이터 없음');
@@ -3647,7 +3652,7 @@ async function syncJira(){
 
 async function fetchIssueDetail(key){
   const fields=['summary','status','priority','assignee','reporter','created','updated','description','labels','issuetype','attachment','comment','parent'].join(',');
-  const r=await fetch(`${WORKERS}/jira/issue/${encodeURIComponent(key)}?fields=${encodeURIComponent(fields)}`,{headers:{'X-User':encUser(CURRENT_USER)}});
+  const r=await fetch(`${WORKERS}/jira/issue/${encodeURIComponent(key)}?fields=${encodeURIComponent(fields)}`,{headers:authHeaders()});
   if(!r.ok)throw new Error('상세 조회 오류: '+r.status);
   const i=await r.json();
   const base=normalizeJiraIssue(i);
@@ -4514,7 +4519,7 @@ function showPage(name,btn){
 function hubApi(path,options={}){
   return fetch(`${WORKERS}${path}`,{
     ...options,
-    headers:{'Content-Type':'application/json','X-User':encUser(CURRENT_USER),...(options.headers||{})}
+    headers:authHeaders({'Content-Type':'application/json',...(options.headers||{})})
   }).then(async r=>{const d=await r.json().catch(()=>({ok:false,message:'응답 파싱 실패'}));if(!r.ok||d.ok===false)throw new Error(d.message||`HTTP ${r.status}`);return d;});
 }
 function api(path,options={}){return hubApi(path,options);}
