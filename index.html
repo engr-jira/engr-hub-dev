@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.5.5 — ESCARE 보안기술팀</title>
+<title>ENGR AI v1.5.6 — ESCARE 보안기술팀</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -367,7 +367,7 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
       <p>ESCARE 보안기술팀</p>
     </div>
     <div class="cfg-card">
-      <div class="cfg-field"><label>이름</label><input id="l-name" placeholder="홍길동" onkeydown="if(event.key==='Enter')document.getElementById('l-pin').focus()"></div>
+      <div class="cfg-field"><label>계정 ID</label><input id="l-name" placeholder="mj.park" autocomplete="username" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter')document.getElementById('l-pin').focus()"></div>
       <div class="cfg-field"><label>팀 PIN</label><input id="l-pin" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')login()"></div>
       <button class="cfg-btn" id="login-btn" onclick="login()">접속하기 →</button>
       <p class="cfg-note">ENGR AI 팀 전용 접속</p>
@@ -380,7 +380,7 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.5.5</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.5.6</span></div></div>
       </div>
       <div class="sb-section">메뉴</div>
       <div class="sb-nav">
@@ -773,10 +773,10 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
 
 <script>
 const WORKERS='https://engr-hub-proxy-dev.mj-park.workers.dev';
-const SUPER_ADMIN='박민준';
+const SUPER_ADMIN='mj.park';
 const MAX_FILE_SIZE=5*1024*1024;
 let ISSUES=[],SEL=null,CASE_SEL=null,PAGE=1;
-let CURRENT_USER='',IS_ADMIN=false,IS_SUPER=false,USER_ROLE='user';
+let CURRENT_USER='',CURRENT_DISPLAY='',IS_ADMIN=false,IS_SUPER=false,USER_ROLE='user';
 let SESSION_MIN=120, SESSION_DEADLINE=0, SESSION_TIMER=null;
 let AI_USAGE_LOADING=false, AI_USAGE_LAST=null;
 let VT_HISTORY=JSON.parse(localStorage.getItem('vt_history')||'[]');
@@ -848,23 +848,25 @@ function normalizeExternalUrl(url){
 async function login(){
   const name=document.getElementById('l-name').value.trim();
   const pin=document.getElementById('l-pin').value.trim();
-  if(!name||!pin){toast('이름과 PIN을 입력해주세요',true);return;}
+  if(!name||!pin){toast('계정 ID와 PIN을 입력해주세요',true);return;}
   const btn=document.getElementById('login-btn');
   btn.disabled=true;btn.textContent='확인 중...';
   try{
     const r=await fetch(`${WORKERS}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,pin})});
     const d=await r.json();
     if(!d.ok){toast(d.message||'로그인 실패',true);btn.disabled=false;btn.textContent='접속하기 →';return;}
-    CURRENT_USER=name;IS_ADMIN=d.isAdmin;IS_SUPER=d.isSuperAdmin;USER_ROLE=d.role||'user';SESSION_MIN=d.sessionMin||120;
+    CURRENT_USER=d.userId||d.name||name.toLowerCase();
+    CURRENT_DISPLAY=d.displayName||CURRENT_USER;
+    IS_ADMIN=d.isAdmin;IS_SUPER=d.isSuperAdmin;USER_ROLE=d.role||'user';SESSION_MIN=d.sessionMin||120;
     SESSION_DEADLINE=Date.now()+SESSION_MIN*60000;
-    localStorage.setItem('engr_user',name);localStorage.removeItem('engr_pin');
+    localStorage.setItem('engr_user',CURRENT_USER);localStorage.setItem('engr_display',CURRENT_DISPLAY);localStorage.removeItem('engr_pin');
     if(d.sessionToken)localStorage.setItem('engr_session_token',d.sessionToken);
     localStorage.setItem('engr_session_deadline',SESSION_DEADLINE);
     enterApp();
   }catch(e){toast('서버 연결 실패',true);btn.disabled=false;btn.textContent='접속하기 →';}
 }
 function enterApp(){
-  document.getElementById('user-label').textContent=CURRENT_USER;
+  document.getElementById('user-label').textContent=CURRENT_DISPLAY||CURRENT_USER;
   document.getElementById('cfg').style.display='none';
   document.getElementById('app').style.display='flex';
   document.getElementById('ai-dot').innerHTML='<span class="dot dot-green"></span><span style="color:var(--success)">준비됨</span>';
@@ -887,7 +889,7 @@ function startSessionTimer(){
 function extendSession(){SESSION_DEADLINE=Date.now()+SESSION_MIN*60000;localStorage.setItem('engr_session_deadline',SESSION_DEADLINE);}
 document.addEventListener('click',extendSession);
 document.addEventListener('keydown',extendSession);
-function forceLogout(){localStorage.removeItem('engr_user');localStorage.removeItem('engr_pin');localStorage.removeItem('engr_session_token');localStorage.removeItem('engr_session_deadline');location.reload();}
+function forceLogout(){localStorage.removeItem('engr_user');localStorage.removeItem('engr_display');localStorage.removeItem('engr_pin');localStorage.removeItem('engr_session_token');localStorage.removeItem('engr_session_deadline');location.reload();}
 function logout(){if(!confirm('로그아웃 하시겠어요?'))return;forceLogout();}
 
 // ── AI 사용량 ──────────────────────────────────────
@@ -2395,13 +2397,18 @@ async function loadSettings(){
     const r=await fetch(`${WORKERS}/admin/list`,{headers:authHeaders()});
     const d=await r.json();
     TEAM_NAMES=d.teamNames||[];
+    const userMap=Object.fromEntries((d.users||[]).map(u=>[u.id,u]));
+    const userLabel=id=>{
+      const u=userMap[id]||{};
+      return u.displayName?`${u.displayName} (${id})`:id;
+    };
     const admins=d.admins||{};
     wrap.innerHTML=Object.entries(admins).map(([name,role])=>{
       const isSuperRole=role==='super';
       return `<div class="admin-list-item">
         <div style="display:flex;align-items:center;gap:10px">
           <span style="font-size:10px;padding:2px 9px;border-radius:20px;background:${isSuperRole?'rgba(248,113,113,.15)':'rgba(99,102,241,.15)'};color:${isSuperRole?'#f87171':'var(--accent3)'};font-weight:700">${isSuperRole?'최상위':'관리자'}</span>
-          <span style="font-weight:700;color:var(--text)">${escapeHtml(name)}</span>
+          <span style="font-weight:700;color:var(--text)">${escapeHtml(userLabel(name))}</span>
         </div>
         ${name!==SUPER_ADMIN?`<div style="display:flex;gap:6px">
           <select onchange="changeRole('${escapeHtml(name)}',this.value)" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:11px;outline:none">
@@ -2414,9 +2421,9 @@ async function loadSettings(){
     }).join('');
     const adminNames=Object.keys(admins);
     const candidates=TEAM_NAMES.filter(n=>!adminNames.includes(n));
-    document.getElementById('admin-add-name').innerHTML='<option value="">팀원 선택</option>'+candidates.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+    document.getElementById('admin-add-name').innerHTML='<option value="">팀원 선택</option>'+candidates.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(userLabel(n))}</option>`).join('');
     const pinReset=document.getElementById('pin-reset-user');
-    if(pinReset)pinReset.innerHTML='<option value="">팀원 선택</option>'+TEAM_NAMES.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+    if(pinReset)pinReset.innerHTML='<option value="">팀원 선택</option>'+TEAM_NAMES.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(userLabel(n))}</option>`).join('');
   }catch(e){wrap.innerHTML=`<div style="color:var(--danger);font-size:12px">로드 실패: ${e.message}</div>`;}
 }
 async function saveConfig(){
@@ -3530,7 +3537,7 @@ function renderSidebarCompact(){
     </div>
     <div class="health-card">
       <div class="h-head"><div class="h-title">연결/동기화</div><span id="issue-count" style="font-size:10px;color:var(--text3)">-</span></div>
-      <div class="h-row"><span>접속자</span><span class="h-state">${escapeHtml(CURRENT_USER||'-')}</span></div>
+      <div class="h-row"><span>접속자</span><span class="h-state">${escapeHtml(CURRENT_DISPLAY||CURRENT_USER||'-')}</span></div>
       <div class="h-row"><span>Jira</span><span class="h-state" id="jira-dot"><span class="dot" style="background:var(--warn)"></span>대기</span></div>
       <div class="h-row"><span>AI</span><span class="h-state ok" id="ai-status">준비됨</span></div>
       <button class="btn btn-ghost sync-mini" onclick="syncJira()">↻ Jira 새로고침</button>
@@ -4147,7 +4154,7 @@ function renderSidebarCompact(){
     </div>
     <div class="health-card">
       <div class="h-head"><div class="h-title">연결/동기화</div><span id="issue-count" style="font-size:10px;color:var(--text3)">${gi||ci?`일반 ${gi} / 케이스 ${ci}`:'-'}</span></div>
-      <div class="h-row"><span>접속자</span><span class="h-state">${escapeHtml(CURRENT_USER||'-')}</span></div>
+      <div class="h-row"><span>접속자</span><span class="h-state">${escapeHtml(CURRENT_DISPLAY||CURRENT_USER||'-')}</span></div>
       <div class="h-row"><span>Jira</span><span class="h-state ${ISSUES&&ISSUES.length?'ok':''}" id="jira-dot">${jiraState}</span></div>
       <div class="h-row"><span>AI</span><span class="h-state ok" id="ai-status">준비됨</span></div>
       <button class="btn btn-ghost sync-mini" onclick="syncJira()">Jira 새로고침</button>
@@ -4451,7 +4458,7 @@ function renderTopbarStatus(){
   const gi=getGeneralIssues().length, ci=getCaseIssueBase().length;
   const connected=!!(ISSUES&&ISSUES.length);
   right.innerHTML=`<div class="top-status">
-    <div class="top-status-card"><span class="label">접속자</span><span class="value" id="top-user">${escapeHtml(CURRENT_USER||'-')}</span></div>
+    <div class="top-status-card"><span class="label">접속자</span><span class="value" id="top-user">${escapeHtml(CURRENT_DISPLAY||CURRENT_USER||'-')}</span></div>
     <button class="top-pin" onclick="openChangePinModal()">PIN 변경</button>
     <div class="top-status-card"><span class="label">Jira</span><span class="value ${connected?'ok':'warn'}" id="top-jira">${connected?'연결됨':'대기'}</span></div>
     <div class="top-status-card"><span class="label">동기화</span><span class="value" id="top-count">${gi||ci?`일반 ${gi} / 케이스 ${ci}`:'-'}</span></div>
