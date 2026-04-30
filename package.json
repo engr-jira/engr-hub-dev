@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "deploy:worker": "wrangler deploy",
+    "check:worker": "wrangler deploy --dry-run"
+  },
+  "devDependencies": {
+    "wrangler": "^4.86.0"
+  }
+}
