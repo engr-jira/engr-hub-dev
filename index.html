@@ -238,9 +238,9 @@ main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 .admin-section>summary::-webkit-details-marker{display:none}
 .admin-section>summary span{display:flex;align-items:center;gap:8px}
 .admin-section>summary small{color:var(--text3);font-size:10px;font-weight:700;white-space:nowrap}
-.admin-section>summary:after{content:'펼치기';font-size:10px;color:var(--accent3);font-weight:900;border:1px solid rgba(129,140,248,.24);border-radius:999px;padding:3px 8px;background:rgba(129,140,248,.08);white-space:nowrap}
+.admin-section>summary:after{content:'';width:9px;height:9px;border-right:2px solid var(--accent3);border-bottom:2px solid var(--accent3);transform:rotate(45deg);margin-right:4px;transition:transform .15s ease}
 .admin-section[open]>summary{border-bottom:1px solid var(--border)}
-.admin-section[open]>summary:after{content:'접기'}
+.admin-section[open]>summary:after{transform:rotate(225deg);margin-top:5px}
 .admin-section .admin-card{margin:12px}
 .admin-section .admin-card+.admin-card{margin-top:0}
 .admin-card.soft{background:rgba(99,102,241,.055)}
@@ -793,6 +793,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer
     --text:#f8faff!important;--text2:#c8d1ea!important;--text3:#8795b5!important;
   }
   html,body{background:var(--bg)!important;color:var(--text)!important;overflow-x:hidden!important}
+  body:not(.app-entered) #app{display:none!important}
   #app{background:var(--bg)!important;min-height:100vh!important;padding-bottom:78px!important;overflow-x:hidden!important}
   main{width:100%!important;max-width:100%!important;min-width:0!important;background:var(--bg)!important;padding:0 0 14px!important;overflow-x:hidden!important}
   .topbar{position:sticky!important;top:0!important;z-index:90!important;display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:8px!important;width:100%!important;min-height:auto!important;padding:10px 12px!important;background:rgba(17,22,36,.96)!important;border-bottom:1px solid rgba(129,140,248,.22)!important;box-shadow:0 8px 24px rgba(0,0,0,.28)!important;backdrop-filter:blur(14px)!important}
@@ -1437,6 +1438,7 @@ async function login(){
   }catch(e){toast('서버 연결 실패',true);btn.disabled=false;btn.textContent='접속하기 →';}
 }
 function enterApp(){
+  document.body.classList.add('app-entered');
   document.getElementById('user-label').textContent=CURRENT_DISPLAY||CURRENT_USER;
   document.getElementById('cfg').style.display='none';
   document.getElementById('app').style.display='flex';
@@ -5347,6 +5349,7 @@ updateSyncMeta=function(meta=SYNC_META){
   }
 };
 function enterApp(){
+  document.body.classList.add('app-entered');
   injectPrivateHubDom();
   document.getElementById('cfg').style.display='none';
   document.getElementById('app').style.display='flex';
