@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.5.8 - ESCARE Security Hub</title>
+<title>ENGR AI v1.5.9 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -853,6 +853,91 @@ input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer
 }
 </style>
 
+<script>
+(function(){
+  try {
+    var saved = localStorage.getItem('engr_theme');
+    document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');
+  } catch (_) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  }
+})();
+</script>
+<style id="theme-style">
+.top-theme{height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#eaf0ff;font-family:inherit;font-size:11px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;white-space:nowrap}
+.top-theme:hover{background:rgba(129,140,248,.2);border-color:rgba(129,140,248,.42)}
+.theme-icon{font-size:12px;line-height:1}
+html[data-theme="light"]{
+  --bg:#eef3fb;--sidebar:#f6f8fd;--panel:#f8fbff;--card:#ffffff;--card2:#eef4fb;
+  --border:#d8e2f0;--border2:#c8d5e6;--accent:#4f46e5;--accent2:#5b6ee1;--accent3:#4f46e5;
+  --success:#0f9f83;--warn:#b7791f;--danger:#dc2626;--purple:#6d5bd0;--pink:#be4b8b;--cyan:#0891b2;
+  --text:#111827;--text2:#334155;--text3:#64748b;
+}
+html[data-theme="light"] body{background:radial-gradient(circle at 18% 0%,#f7fbff 0,#eef3fb 44%,#e9eff8 100%);color:var(--text)}
+html[data-theme="light"] #cfg{background:radial-gradient(ellipse at 30% 32%,#eff6ff 0%,#f8fbff 45%,#e9eff8 100%)}
+html[data-theme="light"] .cfg-logo h1{color:#172033}
+html[data-theme="light"] .cfg-logo p{color:#64748b}
+html[data-theme="light"] .cfg-card{background:rgba(255,255,255,.72);border-color:#dbe5f2;box-shadow:0 24px 70px rgba(30,41,59,.12)}
+html[data-theme="light"] .cfg-field input{background:#ffffff;border-color:#cbd7e8;color:#111827}
+html[data-theme="light"] .cfg-field input:focus{background:#ffffff;box-shadow:0 0 0 3px rgba(79,70,229,.16)}
+html[data-theme="light"] aside{background:linear-gradient(180deg,#f8fbff,#eef4fb);border-right-color:#c8d5e6}
+html[data-theme="light"] .sb-name{color:#172033}
+html[data-theme="light"] .sb-brand{border-bottom-color:#d8e2f0}
+html[data-theme="light"] .sb-divider{background:#d8e2f0}
+html[data-theme="light"] .sb-btn{color:#475569}
+html[data-theme="light"] .sb-btn:hover{background:#e9f1ff;color:#1d4ed8}
+html[data-theme="light"] .sb-btn.active{background:linear-gradient(135deg,rgba(79,70,229,.13),rgba(8,145,178,.11));color:#3730a3;border-color:rgba(79,70,229,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.72)}
+html[data-theme="light"] .sb-status,html[data-theme="light"] .ai-usage-card{background:rgba(255,255,255,.66);border-color:#d8e2f0}
+html[data-theme="light"] .topbar{background:rgba(248,251,255,.92);border-bottom-color:#c8d5e6;box-shadow:0 8px 26px rgba(30,41,59,.08)}
+html[data-theme="light"] .topbar-left h2{color:#111827}
+html[data-theme="light"] .top-status-card,html[data-theme="light"] .top-pin,html[data-theme="light"] .top-refresh,html[data-theme="light"] .top-logout,html[data-theme="light"] .top-theme{background:rgba(255,255,255,.78);border-color:#cbd7e8;color:#334155;box-shadow:0 1px 6px rgba(30,41,59,.06)}
+html[data-theme="light"] .top-status-card .value{color:#111827}
+html[data-theme="light"] .top-status-card .ok{color:#059669}
+html[data-theme="light"] .top-status-card .warn{color:#b7791f}
+html[data-theme="light"] .top-pin{color:#0369a1;background:#eef8ff;border-color:#bae6fd}
+html[data-theme="light"] .top-theme{color:#4338ca;background:#eef2ff;border-color:#c7d2fe}
+html[data-theme="light"] .content,html[data-theme="light"] .panel,html[data-theme="light"] .admin-card,html[data-theme="light"] .kpi,html[data-theme="light"] .chart-card,html[data-theme="light"] .case-card,html[data-theme="light"] .issue-card,html[data-theme="light"] .irow,html[data-theme="light"] .link-card,html[data-theme="light"] .knowledge-card,html[data-theme="light"] .vt-result,html[data-theme="light"] .file-drop,html[data-theme="light"] .storage-summary,html[data-theme="light"] .storage-item,html[data-theme="light"] .private-editor,html[data-theme="light"] .rpanel,html[data-theme="light"] .modal,html[data-theme="light"] .ai-modal{background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(246,249,254,.96));border-color:#d8e2f0;color:#111827;box-shadow:0 10px 28px rgba(30,41,59,.08)}
+html[data-theme="light"] .kpi{background:linear-gradient(145deg,#ffffff,#f2f6fc)}
+html[data-theme="light"] .kpi-val,html[data-theme="light"] .kpi .num,html[data-theme="light"] .ititle,html[data-theme="light"] .rank-name,html[data-theme="light"] .link-title,html[data-theme="light"] .admin-card h3,html[data-theme="light"] .rp-title{color:#111827}
+html[data-theme="light"] .kpi-label,html[data-theme="light"] .kpi-sub,html[data-theme="light"] .imeta,html[data-theme="light"] .rank-stat,html[data-theme="light"] .link-desc,html[data-theme="light"] .link-url,html[data-theme="light"] .storage-note{color:#64748b}
+html[data-theme="light"] .filter-row input,html[data-theme="light"] .filter-row select,html[data-theme="light"] .admin-input,html[data-theme="light"] .admin-textarea,html[data-theme="light"] .log-textarea,html[data-theme="light"] .private-editor input,html[data-theme="light"] .private-editor textarea,html[data-theme="light"] .modal-form input,html[data-theme="light"] .modal-form select,html[data-theme="light"] .modal-form textarea{background:#ffffff;border-color:#cbd7e8;color:#111827}
+html[data-theme="light"] .btn-ghost,html[data-theme="light"] .filter-reset{background:#ffffff;border-color:#cbd7e8;color:#334155}
+html[data-theme="light"] .alert,html[data-theme="light"] .sync-banner,html[data-theme="light"] .dash-alert{background:linear-gradient(135deg,rgba(255,251,235,.86),rgba(239,246,255,.86));border-color:rgba(180,138,39,.26);color:#334155}
+html[data-theme="light"] .rp-desc,html[data-theme="light"] .rp-comment-item,html[data-theme="light"] .rp-meta,html[data-theme="light"] .rp-row{background:#f5f8fd;border-color:#d8e2f0;color:#334155}
+html[data-theme="light"] .rp-row span:last-child{color:#111827}
+html[data-theme="light"] .audit-table th,html[data-theme="light"] .eos-table th{background:#eef3fb;color:#475569}
+html[data-theme="light"] .audit-table td,html[data-theme="light"] .eos-table td{color:#334155;border-bottom-color:#d8e2f0}
+@media(max-width:700px){
+  .top-theme{width:100%!important;min-width:0!important;flex:initial!important;height:32px!important;min-height:32px!important;border-radius:999px!important;padding:0 8px!important;font-size:10px!important;overflow:hidden!important;text-overflow:ellipsis!important;justify-content:center!important}
+  .top-logout{grid-column:span 1!important}
+  html[data-theme="light"]{--bg:#edf3fb!important;--sidebar:#f7f9fd!important;--panel:#f8fbff!important;--card:#ffffff!important;--card2:#eef4fb!important;--border:#d8e2f0!important;--border2:#c8d5e6!important;--text:#111827!important;--text2:#334155!important;--text3:#64748b!important}
+  html[data-theme="light"] body{background:var(--bg)!important;color:var(--text)!important}
+  html[data-theme="light"] #cfg{background:radial-gradient(ellipse at 30% 32%,#eff6ff 0%,#f8fbff 46%,#e9eff8 100%)!important}
+  html[data-theme="light"] #cfg .cfg-logo h1{color:#172033!important}
+  html[data-theme="light"] #cfg .cfg-logo p{color:#64748b!important}
+  html[data-theme="light"] #cfg .cfg-card{background:rgba(255,255,255,.78)!important;border-color:#dbe5f2!important;box-shadow:0 24px 70px rgba(30,41,59,.14)!important}
+  html[data-theme="light"] #cfg .cfg-field label{color:#64748b!important}
+  html[data-theme="light"] #cfg .cfg-field input{background:#ffffff!important;border-color:#cbd7e8!important;color:#111827!important}
+  html[data-theme="light"] #cfg .cfg-note{color:#64748b!important}
+  html[data-theme="light"] #app,html[data-theme="light"] main{background:var(--bg)!important}
+  html[data-theme="light"] .topbar{background:rgba(248,251,255,.96)!important;border-bottom-color:#c8d5e6!important;box-shadow:0 8px 24px rgba(30,41,59,.09)!important}
+  html[data-theme="light"] .topbar-left h2{color:#111827!important}
+  html[data-theme="light"] .top-status-card,html[data-theme="light"] .top-pin,html[data-theme="light"] .top-refresh,html[data-theme="light"] .top-logout,html[data-theme="light"] .top-theme,html[data-theme="light"] .mob-search-btn{background:rgba(255,255,255,.88)!important;border-color:#cbd7e8!important;color:#334155!important;box-shadow:0 1px 6px rgba(30,41,59,.06)!important}
+  html[data-theme="light"] .top-status-card .value{color:#111827!important}
+  html[data-theme="light"] .top-pin{color:#0369a1!important;background:#eef8ff!important;border-color:#bae6fd!important}
+  html[data-theme="light"] .top-theme{color:#4338ca!important;background:#eef2ff!important;border-color:#c7d2fe!important}
+  html[data-theme="light"] aside{background:rgba(248,251,255,.97)!important;border-top-color:#c8d5e6!important;box-shadow:0 -10px 26px rgba(30,41,59,.13)!important}
+  html[data-theme="light"] .sb-btn{color:#64748b!important}
+  html[data-theme="light"] .sb-btn.active{color:#3730a3!important;background:linear-gradient(135deg,rgba(79,70,229,.15),rgba(8,145,178,.11))!important;border-color:rgba(79,70,229,.22)!important}
+  html[data-theme="light"] .mobile-more-backdrop{background:rgba(226,232,240,.58)!important}
+  html[data-theme="light"] .mobile-more-panel{background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(243,247,253,.98))!important;border-color:#cbd7e8!important;box-shadow:0 18px 42px rgba(30,41,59,.16)!important;color:#111827!important}
+  html[data-theme="light"] .mobile-more-head{color:#111827!important}
+  html[data-theme="light"] .mobile-more-close,html[data-theme="light"] .mobile-more-item{background:#ffffff!important;border-color:#d8e2f0!important;color:#334155!important}
+  html[data-theme="light"] .mobile-more-item.active{color:#3730a3!important;background:#eef2ff!important;border-color:#c7d2fe!important}
+  html[data-theme="light"] .content,html[data-theme="light"] .panel,html[data-theme="light"] .admin-card,html[data-theme="light"] .kpi,html[data-theme="light"] .chart-card,html[data-theme="light"] .case-card,html[data-theme="light"] .issue-card,html[data-theme="light"] .irow,html[data-theme="light"] .link-card,html[data-theme="light"] .knowledge-card,html[data-theme="light"] .vt-result,html[data-theme="light"] .file-drop,html[data-theme="light"] .storage-summary,html[data-theme="light"] .storage-item,html[data-theme="light"] .private-editor,html[data-theme="light"] .rpanel{background:linear-gradient(145deg,rgba(255,255,255,.98),rgba(246,249,254,.98))!important;border-color:#d8e2f0!important;color:#111827!important;box-shadow:0 8px 22px rgba(30,41,59,.08)!important}
+}
+</style>
+
 </head>
 <body>
 <div id="toast"></div>
@@ -923,7 +1008,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.5.8</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.5.9</span></div></div>
       </div>
       <div class="sb-section">메뉴</div>
       <div class="sb-nav">
@@ -1363,6 +1448,31 @@ let VT_HISTORY=JSON.parse(localStorage.getItem('vt_history')||'[]');
 let LINKS=[],EOS_ITEMS=[],TEAM_NAMES=[];
 let EOS_WARN_DAYS=[60,30,7];
 let LOG_FILES=[];
+const THEME_KEY='engr_theme';
+let UI_THEME=normalizeTheme(document.documentElement.getAttribute('data-theme')||'dark');
+
+function normalizeTheme(theme){return theme==='light'?'light':'dark';}
+function applyTheme(theme, opts={}){
+  UI_THEME=normalizeTheme(theme);
+  document.documentElement.setAttribute('data-theme',UI_THEME);
+  if(opts.persist!==false){
+    try{localStorage.setItem(THEME_KEY,UI_THEME);}catch(_){}
+  }
+  syncThemeToggle();
+}
+function toggleTheme(){applyTheme(UI_THEME==='light'?'dark':'light');}
+function syncThemeToggle(){
+  const btn=document.getElementById('theme-toggle');
+  if(!btn)return;
+  const light=UI_THEME==='light';
+  btn.setAttribute('aria-pressed',light?'true':'false');
+  btn.title=light?'다크 모드로 전환':'밝은 모드로 전환';
+  const icon=document.getElementById('theme-icon');
+  const label=document.getElementById('theme-label');
+  if(icon)icon.textContent=light?'☀':'☾';
+  if(label)label.textContent=light?'밝은':'다크';
+}
+applyTheme(UI_THEME,{persist:false});
 
 const PAGE_SIZES={issues:10,cases:10,customers:10,eos:10,links:10,knowledge:10,vt:10};
 const PAGE_STATE={issues:1,cases:1,customers:1,eos:1,links:1,knowledge:1,vt:1};
@@ -5193,6 +5303,23 @@ function renderTopbarStatus(){
     <button class="top-logout" onclick="logout()">로그아웃</button>
   </div>`;
 }
+function renderTopbarStatusV159(){
+  const right=document.querySelector('.topbar-right'); if(!right)return;
+  const gi=getGeneralIssues().length, ci=getCaseIssueBase().length;
+  const connected=!!(ISSUES&&ISSUES.length);
+  right.innerHTML=`<div class="top-status">
+    <div class="top-status-card"><span class="label">접속자</span><span class="value" id="top-user">${escapeHtml(CURRENT_DISPLAY||CURRENT_USER||'-')}</span></div>
+    <button class="top-pin" onclick="openChangePinModal()">PIN 변경</button>
+    <button class="top-theme" id="theme-toggle" type="button" onclick="toggleTheme()" title="화면 테마 전환"><span class="theme-icon" id="theme-icon">☾</span><span id="theme-label">다크</span></button>
+    <div class="top-status-card"><span class="label">Jira</span><span class="value ${connected?'ok':'warn'}" id="top-jira">${connected?'연결됨':'대기'}</span></div>
+    <div class="top-status-card"><span class="label">동기화</span><span class="value" id="top-count">${gi||ci?`일반 ${gi} / 케이스 ${ci}`:'-'}</span></div>
+    <button class="top-refresh" onclick="syncJira()" title="Jira 새로고침"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></button>
+    <button class="mob-search-btn" onclick="openMobSearch()" title="검색"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+    <button class="top-logout" onclick="logout()">로그아웃</button>
+  </div>`;
+  syncThemeToggle();
+}
+renderTopbarStatus=renderTopbarStatusV159;
 function enhanceDateButtons(){
   document.querySelectorAll('input[type="date"]').forEach(input=>{
     if(input.dataset.dateButton==='1')return;
@@ -5431,6 +5558,7 @@ function syncMobSheet(panelId){
 }
 
 /* ── v1.5.8: mobile app polish + admin alignment ───────────── */
+/* ── v1.5.9: soft light/dark theme toggle ───────────── */
 /* mobile primary nav + compact admin settings */
 const MOBILE_PRIMARY_NAV=['nav-dash','nav-issues','nav-cases','nav-customers'];
 const MOBILE_MORE_NAV=['nav-eos','nav-log','nav-vt','nav-links','nav-knowledge','nav-private','nav-audit','nav-settings'];
@@ -5635,6 +5763,8 @@ function injectV158Style(){
 injectV158Style();
 const codexMobileDarkStyle=document.getElementById('codex-mobile-dark');
 if(codexMobileDarkStyle) document.head.appendChild(codexMobileDarkStyle);
+const codexThemeStyle=document.getElementById('theme-style');
+if(codexThemeStyle) document.head.appendChild(codexThemeStyle);
 </script>
 </body>
 </html>
