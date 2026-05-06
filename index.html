@@ -786,6 +786,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer
 </style>
 
 <style id="codex-mobile-dark">
+.mobile-more-btn,.mobile-more-backdrop,.mobile-more-panel{display:none}
 @media(max-width:700px){
   :root{
     --bg:#111624!important;--sidebar:#141a2b!important;--panel:#1a2034!important;--card:#202743!important;--card2:#252e4d!important;
@@ -810,11 +811,20 @@ input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer
   .top-pin{color:#dffbff!important;border-color:rgba(103,232,249,.34)!important;background:rgba(103,232,249,.10)!important}.top-refresh,.mob-search-btn{padding:0!important}.top-logout{grid-column:span 2!important}
   aside{position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;z-index:120!important;width:100%!important;height:68px!important;background:rgba(18,24,39,.96)!important;border-top:1px solid rgba(129,140,248,.22)!important;box-shadow:0 -12px 30px rgba(0,0,0,.36)!important;overflow:hidden!important;backdrop-filter:blur(16px)!important}
   .sb-top{height:100%!important;padding:0!important}.sb-brand,.sb-section,.sb-divider,.sb-bottom{display:none!important}
-  .sb-nav{height:100%!important;display:flex!important;flex-direction:row!important;align-items:stretch!important;gap:4px!important;margin:0!important;padding:5px 8px!important;overflow-x:auto!important;overflow-y:hidden!important;scroll-snap-type:x proximity!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important}
+  .sb-nav{height:100%!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:stretch!important;gap:4px!important;margin:0!important;padding:5px 8px!important;overflow:visible!important;scroll-snap-type:none!important;scrollbar-width:none!important}
   .sb-nav::-webkit-scrollbar{display:none!important}
-  .sb-btn{flex:0 0 74px!important;width:74px!important;min-width:74px!important;height:58px!important;margin:0!important;padding:6px 4px!important;border-radius:16px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;color:var(--text3)!important;background:transparent!important;border:1px solid transparent!important;font-size:10px!important;font-weight:900!important;text-align:center!important;white-space:nowrap!important;word-break:keep-all!important;line-height:1.1!important;overflow:hidden!important;text-overflow:ellipsis!important;scroll-snap-align:start!important}
+  .sb-btn{flex:initial!important;width:100%!important;min-width:0!important;height:58px!important;margin:0!important;padding:6px 3px!important;border-radius:16px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;color:var(--text3)!important;background:transparent!important;border:1px solid transparent!important;font-size:10px!important;font-weight:900!important;text-align:center!important;white-space:nowrap!important;word-break:keep-all!important;line-height:1.1!important;overflow:hidden!important;text-overflow:ellipsis!important;scroll-snap-align:start!important}
   .sb-btn svg{width:18px!important;height:18px!important;flex:0 0 18px!important}
   .sb-btn.active{color:#e8edff!important;background:linear-gradient(135deg,rgba(99,102,241,.34),rgba(45,230,184,.13))!important;border-color:rgba(129,140,248,.36)!important}.sb-btn:hover{background:rgba(255,255,255,.08)!important;color:var(--text)!important}
+  .sb-btn.mobile-secondary{display:none!important}.mobile-more-btn{display:flex!important}
+  .mobile-more-backdrop{position:fixed!important;left:0!important;right:0!important;top:0!important;bottom:68px!important;z-index:118!important;background:rgba(5,8,16,.44)!important;backdrop-filter:blur(2px)!important}
+  .mobile-more-panel{position:fixed!important;left:12px!important;right:12px!important;bottom:78px!important;z-index:119!important;max-height:58vh!important;overflow:auto!important;background:linear-gradient(145deg,rgba(34,40,64,.98),rgba(25,31,51,.98))!important;border:1px solid rgba(129,140,248,.28)!important;border-radius:18px!important;box-shadow:0 20px 48px rgba(0,0,0,.42)!important;padding:12px!important;color:var(--text)!important}
+  body.mobile-more-open .mobile-more-backdrop,body.mobile-more-open .mobile-more-panel{display:block!important}
+  .mobile-more-head{display:flex!important;align-items:center!important;justify-content:space-between!important;margin-bottom:10px!important;color:var(--text)!important;font-size:13px!important;font-weight:900!important}
+  .mobile-more-close{border:1px solid rgba(129,140,248,.24)!important;background:rgba(255,255,255,.07)!important;color:var(--text2)!important;border-radius:999px!important;width:30px!important;height:30px!important;font-size:16px!important;line-height:1!important}
+  .mobile-more-list{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+  .mobile-more-item{min-height:48px!important;border:1px solid rgba(129,140,248,.22)!important;background:rgba(255,255,255,.045)!important;color:var(--text2)!important;border-radius:14px!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:8px!important;padding:0 11px!important;font-family:inherit!important;font-size:12px!important;font-weight:900!important;text-align:left!important}
+  .mobile-more-item svg{width:17px!important;height:17px!important;flex:0 0 17px!important;color:var(--accent3)!important}.mobile-more-item.active{color:var(--text)!important;background:rgba(99,102,241,.2)!important;border-color:rgba(129,140,248,.4)!important}
   .page{width:100%!important;max-width:100%!important;padding:12px!important;overflow-x:hidden!important}
   .sec-title{font-size:13px!important;color:var(--accent3)!important;margin:10px 0 10px!important}.sec-title::after{background:rgba(129,140,248,.24)!important}
   .content,.panel,.admin-card,.kpi,.chart-card,.case-card,.issue-card,.irow,.link-card,.knowledge-card,.vt-result,.file-drop,.storage-summary,.storage-item,.private-editor,.rpanel{background:linear-gradient(145deg,rgba(34,40,64,.98),rgba(25,31,51,.98))!important;border-color:rgba(129,140,248,.22)!important;color:var(--text)!important;box-shadow:0 10px 24px rgba(0,0,0,.22)!important;border-radius:16px!important;max-width:100%!important;min-width:0!important;overflow-wrap:anywhere!important}
@@ -5421,6 +5431,111 @@ function syncMobSheet(panelId){
 }
 
 /* ── v1.5.8: mobile app polish + admin alignment ───────────── */
+/* mobile primary nav + compact admin settings */
+const MOBILE_PRIMARY_NAV=['nav-dash','nav-issues','nav-cases','nav-customers'];
+const MOBILE_MORE_NAV=['nav-eos','nav-log','nav-vt','nav-links','nav-knowledge','nav-private','nav-audit','nav-settings'];
+const MOBILE_NAV_LABELS={eos:'EOS / 라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정'};
+function mobilePageNameFromNav(id){return String(id||'').replace(/^nav-/,'');}
+function canShowMobileMoreItem(id){
+  if(id==='nav-audit')return !!(IS_ADMIN||IS_SUPER);
+  if(id==='nav-settings')return !!IS_SUPER;
+  return !!document.getElementById(id);
+}
+function ensureMobileMoreMenu(){
+  injectPrivateHubDom();
+  const nav=document.querySelector('.sb-nav');
+  if(!nav)return;
+  [...MOBILE_PRIMARY_NAV,...MOBILE_MORE_NAV].forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.classList.toggle('mobile-primary',MOBILE_PRIMARY_NAV.includes(id));
+    el.classList.toggle('mobile-secondary',MOBILE_MORE_NAV.includes(id));
+  });
+  if(!document.getElementById('nav-more-mobile')){
+    nav.insertAdjacentHTML('beforeend',`<button class="sb-btn mobile-more-btn" id="nav-more-mobile" type="button" onclick="toggleMobileMoreMenu(event)" aria-label="더보기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>더보기</button>`);
+  }
+  if(!document.getElementById('mobile-more-panel')){
+    document.body.insertAdjacentHTML('beforeend',`<div class="mobile-more-backdrop" onclick="closeMobileMoreMenu()"></div><div class="mobile-more-panel" id="mobile-more-panel" role="dialog" aria-modal="true" aria-label="모바일 추가 메뉴"><div class="mobile-more-head"><span>더보기</span><button type="button" class="mobile-more-close" onclick="closeMobileMoreMenu()" aria-label="닫기">×</button></div><div class="mobile-more-list" id="mobile-more-list"></div></div>`);
+  }
+  renderMobileMoreMenu();
+}
+function renderMobileMoreMenu(){
+  const list=document.getElementById('mobile-more-list');
+  if(!list)return;
+  list.innerHTML=MOBILE_MORE_NAV.filter(canShowMobileMoreItem).map(id=>{
+    const page=mobilePageNameFromNav(id);
+    const src=document.getElementById(id);
+    const icon=src?.querySelector('svg')?.outerHTML||'<span></span>';
+    return `<button type="button" class="mobile-more-item" data-page="${page}" onclick="mobileMoreGo('${page}')">${icon}<span>${MOBILE_NAV_LABELS[page]||page}</span></button>`;
+  }).join('');
+  syncMobileMoreState();
+}
+function toggleMobileMoreMenu(ev){
+  ev?.stopPropagation();
+  ensureMobileMoreMenu();
+  document.body.classList.toggle('mobile-more-open');
+}
+function closeMobileMoreMenu(){
+  document.body.classList.remove('mobile-more-open');
+}
+function mobileMoreGo(page){
+  closeMobileMoreMenu();
+  const nav=document.getElementById('nav-'+page);
+  showPage(page,nav);
+}
+function syncMobileMoreState(page){
+  const activePage=page||document.querySelector('.page.active')?.id?.replace('page-','')||'';
+  const more=document.getElementById('nav-more-mobile');
+  if(more)more.classList.toggle('active',MOBILE_MORE_NAV.includes('nav-'+activePage));
+  document.querySelectorAll('.mobile-more-item').forEach(btn=>btn.classList.toggle('active',btn.dataset.page===activePage));
+}
+function normalizeAdminSettingsUI(){
+  const root=document.getElementById('page-settings');
+  if(!root)return;
+  const title=root.querySelector('.sec-title');
+  if(title)title.textContent='관리자 설정';
+  const summaries=[
+    ['기본 설정','조회 기간, 세션, EOS, AI 지침'],
+    ['사용자 / 권한','계정 등록과 역할 관리'],
+    ['PIN 관리','사용자 PIN 초기화'],
+    ['초기 데이터 / 저장소','KB 수집, KV 사용량, 백업'],
+    ['위험 작업','캐시, 감사 로그, 전체 초기화']
+  ];
+  root.querySelectorAll('.admin-section').forEach((section,idx)=>{
+    const s=section.querySelector('summary');
+    if(s&&summaries[idx])s.innerHTML=`<span>${summaries[idx][0]}</span><small>${summaries[idx][1]}</small>`;
+    if(idx>0)section.open=false;
+  });
+  const heads=['운영 기본값','사용자 계정','관리자 권한','권한 안내','사용자 PIN 초기화','초기 KB 데이터','저장소 / KV 사용량','주의 작업'];
+  root.querySelectorAll('.admin-card h3').forEach((h,idx)=>{if(heads[idx])h.textContent=heads[idx];});
+  const guide=root.querySelector('.admin-card.soft');
+  if(guide)guide.style.display='none';
+  const labels=[['cfg-range','데이터 조회 기간'],['cfg-session','세션 타임아웃'],['cfg-eos-warn','EOS 경고 일수']];
+  labels.forEach(([id,text])=>{const input=document.getElementById(id);const label=input?.closest('.admin-row')?.querySelector('label');if(label)label.textContent=text;});
+  const aiLabel=document.getElementById('cfg-ai-system')?.parentElement?.querySelector('label');
+  if(aiLabel)aiLabel.textContent='AI 시스템 지침';
+  const placeholders={'cfg-eos-warn':'60,30,7','user-add-id':'계정 ID (예: mj.park)','user-add-display':'표시 이름','user-add-pin':'초기 PIN (선택)'};
+  Object.entries(placeholders).forEach(([id,text])=>{const el=document.getElementById(id);if(el)el.placeholder=text;});
+  const btnText={'kb-seed-btn':'무료 KB article 수집','storage-stats-btn':'저장소 / KV 사용량 조회','storage-backup-btn':'전체 HUB 데이터 백업','storage-cache-btn':'AI 응답 캐시 초기화','storage-audit-btn':'감사 로그 90일 초과 정리','storage-reset-btn':'전체 데이터 초기화'};
+  Object.entries(btnText).forEach(([id,text])=>{const el=document.getElementById(id);if(el)el.textContent=text;});
+}
+const showPageBeforeMobilePolish=showPage;
+showPage=function(name,btn){
+  const pageName=name==='dashboard'?'dash':(name==='admin'?'settings':name);
+  const result=showPageBeforeMobilePolish(name,btn);
+  ensureMobileMoreMenu();
+  syncMobileMoreState(pageName);
+  normalizeAdminSettingsUI();
+  return result;
+};
+const enterAppBeforeMobilePolish=enterApp;
+enterApp=function(){
+  const result=enterAppBeforeMobilePolish();
+  ensureMobileMoreMenu();
+  normalizeAdminSettingsUI();
+  return result;
+};
+
 function injectV158Style(){
   if(document.getElementById('v158-style')) return;
   const st=document.createElement('style');
