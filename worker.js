@@ -1,4 +1,4 @@
-// ENGR HUB Cloudflare Worker v1.5.10
+// ENGR HUB Cloudflare Worker v1.5.11
 //
 //
 //
@@ -55,12 +55,28 @@ async function createSession(env, user, minutes = 120) {
   return token;
 }
 
+async function revokeUserSessions(env, user) {
+  const id = normalizeUserId(user);
+  if (!id) return;
+  await env.ENGR_KV.put(`session:revokedBefore:${id}`, new Date().toISOString(), { expirationTtl: 60 * 60 * 48 });
+}
+
 async function getSessionUser(env, token) {
   if (!token) return '';
   try {
     const hash = await sha256Hex(token);
     const raw = await env.ENGR_KV.get(`session:${hash}`);
-    return raw ? (JSON.parse(raw).user || '') : '';
+    if (!raw) return '';
+    const session = JSON.parse(raw);
+    const user = normalizeUserId(session.user || '');
+    if (!user) return '';
+    const revokedBefore = await env.ENGR_KV.get(`session:revokedBefore:${user}`);
+    if (revokedBefore) {
+      const createdAt = Date.parse(session.createdAt || 0);
+      const revokedAt = Date.parse(revokedBefore);
+      if (Number.isFinite(createdAt) && Number.isFinite(revokedAt) && createdAt <= revokedAt) return '';
+    }
+    return user;
   } catch (_) {
     return '';
   }
@@ -145,6 +161,7 @@ async function deactivateUserAccount(env, idRaw) {
   delete admins[id];
   admins[SUPER_ADMIN] = 'super';
   await env.ENGR_KV.put('config:admins', JSON.stringify(admins));
+  await revokeUserSessions(env, id);
   return users[id];
 }
 
