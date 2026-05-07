@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.5.9 - ESCARE Security Hub</title>
+<title>ENGR AI v1.5.10 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -168,6 +168,14 @@ main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 .rp-comment-item{padding:10px 12px;background:rgba(255,255,255,.02);border-left:3px solid var(--accent2);border-radius:0 8px 8px 0;margin-bottom:6px;font-size:11.5px}
 .rp-comment-author{font-size:10px;color:var(--accent3);font-weight:700;margin-bottom:4px}
 .rp-comment-body{color:var(--text2);line-height:1.6;white-space:pre-wrap}
+.item-comments{margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
+.item-comments h4{font-size:11px;color:var(--text3);font-weight:900;margin-bottom:8px}
+.item-comment{background:rgba(255,255,255,.035);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:0 10px 10px 0;padding:9px 11px;margin-bottom:7px}
+.item-comment-meta{display:flex;justify-content:space-between;gap:8px;font-size:10px;color:var(--text3);font-weight:800;margin-bottom:5px}
+.item-comment-body{font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap}
+.item-comment-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:10px}
+.item-comment-form textarea{min-height:48px!important;resize:vertical}
+.item-comment-del{border:0;background:transparent;color:var(--danger);font-size:13px;cursor:pointer;padding:0 2px}
 .btn-group{display:flex;flex-direction:column;gap:6px}
 .btn{border:none;border-radius:10px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;letter-spacing:.2px;transition:all .18s}
 .btn:hover{transform:translateY(-1px);opacity:.92}
@@ -257,6 +265,10 @@ main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 .storage-item{border:1px solid var(--border);border-radius:10px;padding:9px;background:rgba(255,255,255,.03);min-height:88px}.storage-item-title{font-weight:800;color:var(--text);margin-bottom:4px}
 .storage-item small{display:block;font-size:10px;color:var(--text3);margin-top:4px;line-height:1.35}
 .storage-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.storage-actions .btn{width:auto;padding:9px 14px}.storage-alert{border:1px solid rgba(251,191,36,.45);background:rgba(251,191,36,.1);border-radius:10px;padding:9px 10px;margin-bottom:10px;color:#fde68a;font-size:11px;line-height:1.6}.storage-alert.danger{border-color:rgba(248,113,113,.55);background:rgba(248,113,113,.11);color:#fecaca}.storage-toolbar-note{font-size:10px;color:var(--text3);line-height:1.5;margin-top:8px}
+.admin-action-status{display:none;border:1px solid rgba(45,230,184,.35);background:rgba(45,230,184,.09);color:var(--success);border-radius:12px;padding:10px 12px;margin:0 0 14px;font-size:12px;font-weight:800;line-height:1.5}
+.admin-action-status.show{display:block}
+.admin-action-status.err{border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.10);color:var(--danger)}
+.admin-action-status.info{border-color:rgba(129,140,248,.35);background:rgba(129,140,248,.10);color:var(--accent3)}
 @media(max-width:1200px){.storage-summary-top{grid-template-columns:repeat(2,minmax(120px,1fr))}}
 .admin-list-item{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--panel);border:1px solid var(--border);border-radius:10px;margin-bottom:8px}
 .admin-add-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
@@ -907,6 +919,28 @@ html[data-theme="light"] .rp-desc,html[data-theme="light"] .rp-comment-item,html
 html[data-theme="light"] .rp-row span:last-child{color:#111827}
 html[data-theme="light"] .audit-table th,html[data-theme="light"] .eos-table th{background:#eef3fb;color:#475569}
 html[data-theme="light"] .audit-table td,html[data-theme="light"] .eos-table td{color:#334155;border-bottom-color:#d8e2f0}
+html[data-theme="light"] .mini-card,html[data-theme="light"] .ops-focus-card,html[data-theme="light"] .rank-row,html[data-theme="light"] .vt-cell,html[data-theme="light"] .vt-hist-row,html[data-theme="light"] .admin-list-item{background:#ffffff;border-color:#d8e2f0;color:#111827;box-shadow:0 6px 18px rgba(30,41,59,.06)}
+html[data-theme="light"] .issue-card{background:linear-gradient(145deg,#ffffff,#f7faff);border-color:#d8e2f0;color:#111827;box-shadow:0 7px 20px rgba(30,41,59,.06)}
+html[data-theme="light"] .issue-card:hover,html[data-theme="light"] .issue-card.sel,html[data-theme="light"] .irow:hover,html[data-theme="light"] .case-card:hover{background:#f6f9fe!important;border-color:#b9c8dc!important}
+html[data-theme="light"] .issue-main .key,html[data-theme="light"] .issue-main .title,html[data-theme="light"] .ops-focus-card h4,html[data-theme="light"] .ops-focus-card .big,html[data-theme="light"] .vt-history-hash,html[data-theme="light"] .customer-work-row .k{color:#111827!important}
+html[data-theme="light"] .issue-sub,html[data-theme="light"] .ops-focus-card .small,html[data-theme="light"] .customer-work-row .t,html[data-theme="light"] .customer-work-row .m{color:#64748b!important}
+html[data-theme="light"] .dash-list-row{border-bottom-color:#d8e2f0}
+html[data-theme="light"] .dash-list-row:hover .title{color:#1d4ed8!important}
+html[data-theme="light"] .mini-filter-note .tag,html[data-theme="light"] .case-chip.done,html[data-theme="light"] .case-chip.open{background:#eef2ff!important;border-color:#c7d2fe!important;color:#3730a3!important}
+html[data-theme="light"] [onclick^="selectCustomer"]{background:linear-gradient(145deg,#ffffff,#f6f9fe)!important;border-color:#d8e2f0!important;color:#111827!important;box-shadow:0 7px 20px rgba(30,41,59,.06)}
+html[data-theme="light"] [onclick^="selectCustomer"]:hover{border-color:#b9c8dc!important;background:#f6f9fe!important}
+html[data-theme="light"] [onclick^="selectCustomer"] [style*="color:#f0f4ff"],html[data-theme="light"] #cust-right [style*="color:#f0f4ff"],html[data-theme="light"] #cust-right [style*="color:#c5cee8"],html[data-theme="light"] .knowledge-card [style*="color:#f0f4ff"],html[data-theme="light"] [style*="color:#f8faff"],html[data-theme="light"] [style*="color:#eaf0ff"],html[data-theme="light"] [style*="color:#cfe1ff"]{color:#111827!important}
+html[data-theme="light"] [style*="color:#c4ceff"],html[data-theme="light"] [style*="color:#dfe6ff"],html[data-theme="light"] [style*="color:#a5b4fc"]{color:#4338ca!important}
+html[data-theme="light"] [style*="background:rgba(196,206,255,.15)"]{background:#eef2ff!important;border:1px solid #c7d2fe!important}
+html[data-theme="light"] [style*="background:rgba(255,255,255,.02)"],html[data-theme="light"] [style*="background:rgba(255,255,255,.03)"],html[data-theme="light"] [style*="background:rgba(255,255,255,.04)"],html[data-theme="light"] [style*="background:rgba(255,255,255,.035)"]{background:#f5f8fd!important;border-color:#d8e2f0!important}
+html[data-theme="light"] [style*="color:#fde68a"]{color:#92400e!important}
+html[data-theme="light"] [style*="color:#fca5a5"]{color:#b91c1c!important}
+html[data-theme="light"] .item-comment{background:#f5f8fd;border-color:#d8e2f0;color:#334155}
+html[data-theme="light"] .item-comment-body{color:#334155}
+html[data-theme="light"] .item-comment-form textarea{background:#ffffff;border-color:#cbd7e8;color:#111827}
+html[data-theme="light"] .admin-action-status{background:#ecfdf5;border-color:#a7f3d0;color:#047857}
+html[data-theme="light"] .admin-action-status.err{background:#fef2f2;border-color:#fecaca;color:#b91c1c}
+html[data-theme="light"] .admin-action-status.info{background:#eef2ff;border-color:#c7d2fe;color:#3730a3}
 @media(max-width:700px){
   .top-theme{width:100%!important;min-width:0!important;flex:initial!important;height:32px!important;min-height:32px!important;border-radius:999px!important;padding:0 8px!important;font-size:10px!important;overflow:hidden!important;text-overflow:ellipsis!important;justify-content:center!important}
   .top-logout{grid-column:span 1!important}
@@ -1008,7 +1042,7 @@ html[data-theme="light"] .audit-table td,html[data-theme="light"] .eos-table td{
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.5.9</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.5.10</span></div></div>
       </div>
       <div class="sb-section">메뉴</div>
       <div class="sb-nav">
@@ -1317,6 +1351,7 @@ html[data-theme="light"] .audit-table td,html[data-theme="light"] .eos-table td{
 
     <div class="page" id="page-settings">
       <div class="sec-title">⚙ 관리자 설정</div>
+      <div id="admin-action-status" class="admin-action-status" role="status" aria-live="polite"></div>
 
       <details class="admin-section" open>
         <summary><span>시스템 설정</span><small>조회 기간 · 세션 · EOS · AI 지침</small></summary>
@@ -2718,15 +2753,76 @@ function renderLinks(){
   const cat=(document.getElementById('links-cat')||{}).value||'';
   const list=LINKS.filter(l=>{
     const itemCat=l.category||l.cat||'';
-    const txt=[l.title,l.desc,l.url,itemCat,l.createdBy].join(' ').toLowerCase();
+    const txt=[l.title,l.desc,l.url,itemCat,l.createdBy,(l.comments||[]).map(c=>c.text).join(' ')].join(' ').toLowerCase();
     return (!cat||itemCat===cat)&&(!q||txt.includes(q));
   });
   const pageLinks=sliceForPage(list,'links');
   const cnt=document.getElementById('links-count');if(cnt)cnt.textContent=pageCountText('links',list.length);
   const wrap=document.getElementById('links-grid');
   if(!pageLinks.length){wrap.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3);font-size:13px">등록된 링크가 없거나 조건에 맞는 링크가 없습니다</div>`;renderPager('links-pager','links',list.length,'renderLinks');return;}
-  wrap.innerHTML=pageLinks.map(l=>`<div class="link-card" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')"><div style="position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:0;transition:opacity .15s" class="link-actions"><button onclick="event.stopPropagation();openLinkEditModal('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">✎</button><button onclick="event.stopPropagation();deleteLink('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button></div><span class="link-cat">${escapeHtml(l.category||l.cat||'기타')}</span><div class="link-title">${escapeHtml(l.title||'')}</div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${escapeHtml(l.url||'')}</div><div class="link-meta"><span>by ${escapeHtml(l.createdBy||'-')}</span><span>${l.createdAt?fd(l.createdAt):''}</span></div></div>`).join('');
+  wrap.innerHTML=pageLinks.map(l=>{
+    const commentCount=(l.comments||[]).length;
+    return `<div class="link-card" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')"><div style="position:absolute;top:8px;right:8px;display:flex;gap:4px;opacity:0;transition:opacity .15s" class="link-actions"><button onclick="event.stopPropagation();openLinkDetail('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">댓글 ${commentCount}</button><button onclick="event.stopPropagation();openLinkEditModal('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">✎</button><button onclick="event.stopPropagation();deleteLink('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button></div><span class="link-cat">${escapeHtml(l.category||l.cat||'기타')}</span><div class="link-title">${escapeHtml(l.title||'')}</div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${escapeHtml(l.url||'')}</div><div class="link-meta"><span>by ${escapeHtml(l.createdBy||'-')}</span><span>${l.createdAt?fd(l.createdAt):''}${commentCount?` · 댓글 ${commentCount}`:''}</span></div></div>`;
+  }).join('');
   renderPager('links-pager','links',list.length,'renderLinks');
+}
+
+function itemCommentsHtml(kind,item){
+  const comments=item.comments||[];
+  const title=kind==='links'?'링크 의견':'노하우 의견';
+  const rows=comments.length?comments.map(c=>{
+    const canDelete=IS_ADMIN||c.createdBy===CURRENT_USER;
+    return `<div class="item-comment">
+      <div class="item-comment-meta"><span>${escapeHtml(c.createdBy||'-')} · ${fdt(c.createdAt)}</span>${canDelete?`<button class="item-comment-del" onclick="deleteItemComment('${kind}','${escapeHtml(item.id)}','${escapeHtml(c.id)}')">×</button>`:''}</div>
+      <div class="item-comment-body">${escapeHtml(c.text||'')}</div>
+    </div>`;
+  }).join(''):`<div style="font-size:12px;color:var(--text3);padding:10px 0">아직 댓글이 없습니다.</div>`;
+  return `<div class="item-comments">
+    <h4>${title} (${comments.length})</h4>
+    ${rows}
+    <div class="item-comment-form">
+      <textarea id="${kind}-comment-text-${escapeHtml(item.id)}" class="admin-textarea" placeholder="의견, 보완할 점, 참고 내용을 남겨주세요"></textarea>
+      <button class="btn btn-indigo" onclick="addItemComment('${kind}','${escapeHtml(item.id)}')" style="width:auto;padding:8px 16px">댓글</button>
+    </div>
+  </div>`;
+}
+function openLinkDetail(id){
+  const l=LINKS.find(x=>x.id===id);
+  if(!l){toast('링크를 찾을 수 없습니다',true);return;}
+  const href=normalizeExternalUrl(l.url||'');
+  openGenModal(l.title||'업무 링크 상세',`
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+      <span class="link-cat">${escapeHtml(l.category||l.cat||'기타')}</span>
+    </div>
+    ${l.desc?`<div style="font-size:13px;color:var(--text2);line-height:1.7;white-space:pre-wrap;margin-bottom:12px">${escapeHtml(l.desc)}</div>`:''}
+    <div class="link-url" style="margin-bottom:10px">${escapeHtml(l.url||'')}</div>
+    <div style="font-size:10px;color:var(--text3);margin-bottom:12px">${escapeHtml(l.createdBy||'-')} · ${l.updatedAt?'수정 '+fd(l.updatedAt):fd(l.createdAt)}</div>
+    ${itemCommentsHtml('links',l)}`,
+    `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none"><button class="btn btn-ghost" style="width:auto;padding:8px 18px">열기 →</button></a>
+     <button class="btn btn-indigo" onclick="openLinkEditModal('${id}')" style="width:auto;padding:8px 18px">수정</button>
+     <button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">닫기</button>`);
+}
+async function addItemComment(kind,id){
+  const text=document.getElementById(`${kind}-comment-text-${id}`)?.value.trim()||'';
+  if(!text){toast('댓글 내용을 입력하세요',true);return;}
+  const base=kind==='links'?'links':'knowledge';
+  try{
+    const d=await hubApi(`/${base}/${encodeURIComponent(id)}/comments`,{method:'POST',body:JSON.stringify({text})});
+    toast(`댓글 등록 완료`);
+    if(base==='links'){await loadLinks();renderLinks();openLinkDetail(id);}
+    else{await loadKnowledge();renderKnowledge();openKnowledgeDetail(id);}
+    return d;
+  }catch(e){toast('댓글 등록 실패: '+e.message,true);}
+}
+async function deleteItemComment(kind,id,commentId){
+  if(!confirm('댓글을 삭제할까요?'))return;
+  const base=kind==='links'?'links':'knowledge';
+  try{
+    await hubApi(`/${base}/${encodeURIComponent(id)}/comments/${encodeURIComponent(commentId)}`,{method:'DELETE'});
+    toast('댓글 삭제 완료');
+    if(base==='links'){await loadLinks();renderLinks();openLinkDetail(id);}
+    else{await loadKnowledge();renderKnowledge();openKnowledgeDetail(id);}
+  }catch(e){toast('댓글 삭제 실패: '+e.message,true);}
 }
 
 function openLinkModal(){
@@ -3092,6 +3188,12 @@ async function loadAudit(){
 }
 
 // ── SETTINGS ──────────────────────────────────────
+function setAdminActionStatus(message,type='ok'){
+  const el=document.getElementById('admin-action-status');
+  if(!el)return;
+  el.textContent=message;
+  el.className=`admin-action-status show ${type==='err'?'err':type==='info'?'info':''}`.trim();
+}
 async function loadSettings(){
   try{
     const r=await fetch(`${WORKERS}/admin/config`,{headers:authHeaders()});
@@ -3143,11 +3245,14 @@ function renderUserAccounts(users=[]){
   const wrap=document.getElementById('user-list-wrap');if(!wrap)return;
   wrap.innerHTML=users.map(u=>`<div class="admin-list-item">
     <div style="display:flex;align-items:center;gap:10px;min-width:0">
-      <span style="font-size:10px;padding:2px 9px;border-radius:20px;background:${u.role==='super'?'rgba(248,113,113,.15)':u.role==='admin'?'rgba(99,102,241,.15)':'rgba(45,230,184,.12)'};color:${u.role==='super'?'#f87171':u.role==='admin'?'var(--accent3)':'var(--accent2)'};font-weight:800">${u.role==='super'?'SUPER':u.role==='admin'?'ADMIN':'USER'}</span>
+      <span style="font-size:10px;padding:2px 9px;border-radius:20px;background:${u.active===false?'rgba(148,163,184,.14)':u.role==='super'?'rgba(248,113,113,.15)':u.role==='admin'?'rgba(99,102,241,.15)':'rgba(45,230,184,.12)'};color:${u.active===false?'var(--text3)':u.role==='super'?'#f87171':u.role==='admin'?'var(--accent3)':'var(--accent2)'};font-weight:800">${u.active===false?'비활성':u.role==='super'?'SUPER':u.role==='admin'?'ADMIN':'USER'}</span>
       <span style="font-weight:800;color:var(--text)">${escapeHtml(u.displayName||u.id)}</span>
       <span style="font-size:11px;color:var(--text3)">${escapeHtml(u.id)}</span>
     </div>
-    <button class="btn btn-ghost" onclick="fillUserForm('${escapeHtml(u.id)}','${escapeHtml(u.displayName||'')}','${escapeHtml(u.role||'user')}')" style="width:auto;padding:4px 12px;font-size:11px">수정</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="fillUserForm('${escapeHtml(u.id)}','${escapeHtml(u.displayName||'')}','${escapeHtml(u.role||'user')}')" style="width:auto;padding:4px 12px;font-size:11px">수정</button>
+      ${u.id!==SUPER_ADMIN&&u.active!==false?`<button class="btn btn-red" onclick="deleteUserAccount('${escapeHtml(u.id)}')" style="width:auto;padding:4px 12px;font-size:11px">로그인 차단</button>`:''}
+    </div>
   </div>`).join('')||'<div class="empty">등록된 사용자가 없습니다.</div>';
 }
 function fillUserForm(id,displayName,role){
@@ -3166,12 +3271,23 @@ async function saveUserAccount(){
   try{
     const r=await fetch(`${WORKERS}/admin/users`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({id,displayName,role,initialPin})});
     const d=await r.json();
-    if(!d.ok){toast(d.message||'사용자 저장 실패',true);return;}
+    if(!d.ok){toast(d.message||'사용자 저장 실패',true);setAdminActionStatus(d.message||'사용자 저장 실패','err');return;}
     toast('사용자 저장 완료');
+    setAdminActionStatus(`${id} 사용자 저장 완료`);
     ['user-add-id','user-add-display','user-add-pin'].forEach(x=>document.getElementById(x).value='');
     document.getElementById('user-add-role').value='user';
     loadSettings();
-  }catch(e){toast('사용자 저장 오류: '+e.message,true);}
+  }catch(e){toast('사용자 저장 오류: '+e.message,true);setAdminActionStatus('사용자 저장 실패: '+e.message,'err');}
+}
+async function deleteUserAccount(id){
+  if(!id||id===SUPER_ADMIN)return;
+  if(!confirm(`${id} 계정의 로그인을 차단할까요?\n등록자가 만든 업무 데이터는 삭제하지 않습니다.`))return;
+  try{
+    const d=await hubApi(`/admin/users/${encodeURIComponent(id)}`,{method:'DELETE'});
+    toast(`${d.user||id} 로그인 차단 완료`);
+    setAdminActionStatus(`${d.user||id} 계정 로그인을 차단했습니다. 기존 등록 데이터는 유지됩니다.`);
+    await loadSettings();
+  }catch(e){toast('사용자 삭제 실패: '+e.message,true);setAdminActionStatus('사용자 로그인 차단 실패: '+e.message,'err');}
 }
 async function saveConfig(){
   const body={
@@ -3183,10 +3299,11 @@ async function saveConfig(){
   try{
     const r=await fetch(`${WORKERS}/admin/config`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify(body)});
     const d=await r.json();
-    if(!d.ok){toast(d.message||'저장 실패',true);return;}
+    if(!d.ok){toast(d.message||'저장 실패',true);setAdminActionStatus(d.message||'시스템 설정 저장 실패','err');return;}
     toast('저장 완료. 일부 설정은 새로고침 후 반영됩니다.');
+    setAdminActionStatus('시스템 설정 저장 완료. 일부 설정은 새로고침 후 반영됩니다.');
     loadEosWarnDays();
-  }catch(e){toast('오류: '+e.message,true);}
+  }catch(e){toast('오류: '+e.message,true);setAdminActionStatus('시스템 설정 저장 실패: '+e.message,'err');}
 }
 async function clearCache(){
   if(!confirm(`AI 응답 캐시(ai:*)를 삭제하시겠어요?\n캐시만 삭제되며 업무 링크/노하우/Jira 데이터는 삭제되지 않습니다.`))return;
@@ -3196,10 +3313,11 @@ async function clearCache(){
   try{
     const r=await fetch(`${WORKERS}/admin/cache/clear`,{method:'POST',headers:authHeaders()});
     const d=await r.json();
-    if(!d.ok){toast(d.message||'실패',true);return;}
+    if(!d.ok){toast(d.message||'실패',true);setAdminActionStatus(d.message||'AI 응답 캐시 정리 실패','err');return;}
     toast(`AI 캐시 ${d.cleared}개 삭제${d.truncated?' · 추가 캐시가 남아있을 수 있습니다. 다시 실행하세요.':''}`);
+    setAdminActionStatus(`AI 응답 캐시 정리 완료: ${d.cleared}개 삭제${d.truncated?' · 남은 캐시가 있을 수 있습니다.':''}`);
     await refreshStorageStats();
-  }catch(e){toast('오류: '+e.message,true);}
+  }catch(e){toast('오류: '+e.message,true);setAdminActionStatus('AI 응답 캐시 정리 실패: '+e.message,'err');}
   finally{if(btn){btn.disabled=false;btn.textContent=old||'🧹 AI 응답 캐시 초기화';}}
 }
 async function downloadHubBackup(){
@@ -3218,7 +3336,8 @@ async function downloadHubBackup(){
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href),1000);
     toast('전체 HUB 데이터 백업 파일을 생성했습니다.');
-  }catch(e){toast('백업 오류: '+e.message,true);}
+    setAdminActionStatus('전체 HUB 데이터 백업 파일 생성 완료');
+  }catch(e){toast('백업 오류: '+e.message,true);setAdminActionStatus('백업 생성 실패: '+e.message,'err');}
   finally{if(btn){btn.disabled=false;btn.textContent=old||'⬇ 전체 HUB 데이터 백업';}}
 }
 async function cleanupOldAuditLogs(){
@@ -3230,7 +3349,7 @@ async function cleanupOldAuditLogs(){
     const dry=await fetch(`${WORKERS}/admin/storage/cleanup`,{method:'POST',headers,body:JSON.stringify({target:'audit-old',days:90,dryRun:true,max:500})});
     const dd=await dry.json();
     if(!dd.ok)throw new Error(dd.message||'정리 대상 확인 실패');
-    if(!dd.matched){toast('정리할 90일 초과 감사 로그가 없습니다.');return;}
+    if(!dd.matched){toast('정리할 90일 초과 감사 로그가 없습니다.');setAdminActionStatus('감사 로그 정리 대상 없음','info');return;}
     const msg=`90일 초과 감사 로그 인덱스/본문 ${dd.matched}개를 정리할 수 있습니다.
 이번 실행 최대 ${dd.scanned}개를 검사했습니다.
 
@@ -3241,8 +3360,9 @@ async function cleanupOldAuditLogs(){
     const d=await r.json();
     if(!d.ok)throw new Error(d.message||'정리 실패');
     toast(`감사 로그 정리 완료: ${d.deleted}개 삭제${d.truncated?' · 남은 대상이 있을 수 있습니다. 다시 실행하세요.':''}`);
+    setAdminActionStatus(`감사 로그 정리 완료: ${d.deleted}개 삭제${d.truncated?' · 남은 대상이 있을 수 있습니다.':''}`);
     await refreshStorageStats();
-  }catch(e){toast('정리 오류: '+e.message,true);}
+  }catch(e){toast('정리 오류: '+e.message,true);setAdminActionStatus('감사 로그 정리 실패: '+e.message,'err');}
   finally{if(btn){btn.disabled=false;btn.textContent=old||'🧹 감사 로그 90일 초과 정리';}}
 }
 function openChangePinModal(){
@@ -3273,7 +3393,8 @@ async function resetUserPin(){
   try{
     await hubApi('/admin/user-pin/reset',{method:'POST',body:JSON.stringify({user:target})});
     toast(`${target} PIN을 초기화했습니다`);
-  }catch(e){toast('PIN 초기화 실패: '+e.message,true);}
+    setAdminActionStatus(`${target} PIN 초기화 완료`);
+  }catch(e){toast('PIN 초기화 실패: '+e.message,true);setAdminActionStatus('PIN 초기화 실패: '+e.message,'err');}
 }
 async function resetAllHubData(){
   const msg='업무 링크, 노하우, EOS/라이선스, 개인 메모, VT 이력, AI 캐시/사용량/감사 로그를 초기화합니다. 관리자/시스템 설정은 유지됩니다.\n\n계속하려면 로그인 PIN을 입력해야 합니다.';
@@ -3288,8 +3409,9 @@ async function resetAllHubData(){
     LINKS=[];KNOWLEDGE=[];EOS_ITEMS=[];PRIVATE_ITEMS=[];VT_HISTORY=[];
     localStorage.removeItem('vt_history');
     toast(`초기화 완료: ${d.deleted||0}개 삭제${d.truncated?' · 일부 데이터가 남아 다시 실행 필요':''}`);
+    setAdminActionStatus(`전체 데이터 초기화 완료: ${d.deleted||0}개 삭제${d.truncated?' · 일부 데이터가 남아 다시 실행 필요':''}`);
     renderCurrent();
-  }catch(e){toast('초기화 실패: '+e.message,true);}
+  }catch(e){toast('초기화 실패: '+e.message,true);setAdminActionStatus('전체 데이터 초기화 실패: '+e.message,'err');}
   finally{if(btn){btn.disabled=false;btn.textContent=old||'⚠ 전체 데이터 초기화';}}
 }
 async function addAdmin(){
@@ -3299,26 +3421,29 @@ async function addAdmin(){
   try{
     const r=await fetch(`${WORKERS}/admin/update`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({action:'add',user:name,role})});
     const d=await r.json();
-    if(!d.ok){toast(d.message||'실패',true);return;}
+    if(!d.ok){toast(d.message||'실패',true);setAdminActionStatus(d.message||'관리자 권한 추가 실패','err');return;}
     toast(`${name} (${role==='super'?'최상위':'일반'} 관리자) 추가`);loadSettings();
-  }catch(e){toast('오류: '+e.message,true);}
+    setAdminActionStatus(`${name} 관리자 권한 추가 완료`);
+  }catch(e){toast('오류: '+e.message,true);setAdminActionStatus('관리자 권한 추가 실패: '+e.message,'err');}
 }
 async function changeRole(name,newRole){
   try{
     const r=await fetch(`${WORKERS}/admin/update`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({action:'changeRole',user:name,role:newRole})});
     const d=await r.json();
-    if(!d.ok){toast(d.message||'실패',true);loadSettings();return;}
+    if(!d.ok){toast(d.message||'실패',true);setAdminActionStatus(d.message||'관리자 권한 변경 실패','err');loadSettings();return;}
     toast(`${name} 권한 변경`);
-  }catch(e){toast('오류: '+e.message,true);}
+    setAdminActionStatus(`${name} 관리자 권한 변경 완료`);
+  }catch(e){toast('오류: '+e.message,true);setAdminActionStatus('관리자 권한 변경 실패: '+e.message,'err');}
 }
 async function removeAdmin(name){
   if(!confirm(`${name}의 관리자 권한을 회수하시겠어요?`))return;
   try{
     const r=await fetch(`${WORKERS}/admin/update`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({action:'remove',user:name})});
     const d=await r.json();
-    if(!d.ok){toast(d.message||'실패',true);return;}
+    if(!d.ok){toast(d.message||'실패',true);setAdminActionStatus(d.message||'관리자 권한 회수 실패','err');return;}
     toast(`${name} 권한 회수`);loadSettings();
-  }catch(e){toast('오류: '+e.message,true);}
+    setAdminActionStatus(`${name} 관리자 권한 회수 완료`);
+  }catch(e){toast('오류: '+e.message,true);setAdminActionStatus('관리자 권한 회수 실패: '+e.message,'err');}
 }
 
 
@@ -3466,7 +3591,7 @@ function renderKnowledge(){
   const cat=document.getElementById("know-cat")?.value||"";
   const q=(document.getElementById("know-q")?.value||"").toLowerCase();
   let list=KNOWLEDGE.filter(k=>{
-    const txt=[k.title,k.content,k.category,k.product,k.link,k.createdBy].join(" ").toLowerCase();
+    const txt=[k.title,k.content,k.category,k.product,k.link,k.createdBy,(k.comments||[]).map(c=>c.text).join(' ')].join(" ").toLowerCase();
     return (!prod||k.product===prod)&&(!cat||k.category===cat)&&(!q||txt.includes(q));
   });
   const cnt=document.getElementById('know-count');if(cnt)cnt.textContent=`총 ${list.length}건 · ${PAGE_SIZES.knowledge}건씩 표시`;
@@ -3475,7 +3600,8 @@ function renderKnowledge(){
   if(!pageKnowledge.length){wrap.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3);font-size:13px">등록된 노하우가 없거나 조건에 맞는 노하우가 없습니다</div>`;renderPager('know-pager','knowledge',list.length,'renderKnowledge');return;}
   wrap.innerHTML=pageKnowledge.map(k=>{
     const href=normalizeExternalUrl(k.link||'');
-    return `<div class="card knowledge-card" onclick="openKnowledgeDetail('${k.id}')" style="padding:14px;position:relative;cursor:pointer"><div style="position:absolute;top:10px;right:10px;display:flex;gap:4px"><button onclick="event.stopPropagation();openKnowledgeModal('${k.id}')" style="background:transparent;border:0;color:var(--text3);cursor:pointer">✎</button><button onclick="event.stopPropagation();deleteKnowledge('${k.id}')" style="background:transparent;border:0;color:var(--danger);cursor:pointer">×</button></div><div style="display:flex;gap:6px;margin-bottom:8px"><span class="badge" style="background:${labelColor(k.product||'기타')}22;color:${labelColor(k.product||'기타')}">${escapeHtml(k.product||'기타')}</span><span class="badge" style="background:rgba(196,206,255,.12);color:#c4ceff">${escapeHtml(k.category||'')}</span></div><div style="font-size:14px;font-weight:800;color:#f0f4ff;margin-bottom:8px;padding-right:40px">${escapeHtml(k.title||'')}</div>${k.content?`<div class="knowledge-excerpt" style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;margin-bottom:10px">${escapeHtml(k.content)}</div>`:''}${href?`<a onclick="event.stopPropagation()" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:var(--cyan);text-decoration:none">참고 링크 ↗</a>`:''}<div style="font-size:10px;color:var(--text3);margin-top:10px">${escapeHtml(k.createdBy||'-')} · ${k.updatedAt?'수정 '+fd(k.updatedAt):fd(k.createdAt)}</div></div>`;
+    const commentCount=(k.comments||[]).length;
+    return `<div class="card knowledge-card" onclick="openKnowledgeDetail('${k.id}')" style="padding:14px;position:relative;cursor:pointer"><div style="position:absolute;top:10px;right:10px;display:flex;gap:4px"><button onclick="event.stopPropagation();openKnowledgeDetail('${k.id}')" style="background:transparent;border:0;color:var(--text3);cursor:pointer;font-size:11px">댓글 ${commentCount}</button><button onclick="event.stopPropagation();openKnowledgeModal('${k.id}')" style="background:transparent;border:0;color:var(--text3);cursor:pointer">✎</button><button onclick="event.stopPropagation();deleteKnowledge('${k.id}')" style="background:transparent;border:0;color:var(--danger);cursor:pointer">×</button></div><div style="display:flex;gap:6px;margin-bottom:8px"><span class="badge" style="background:${labelColor(k.product||'기타')}22;color:${labelColor(k.product||'기타')}">${escapeHtml(k.product||'기타')}</span><span class="badge" style="background:rgba(196,206,255,.12);color:#c4ceff">${escapeHtml(k.category||'')}</span></div><div style="font-size:14px;font-weight:800;color:#f0f4ff;margin-bottom:8px;padding-right:70px">${escapeHtml(k.title||'')}</div>${k.content?`<div class="knowledge-excerpt" style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;margin-bottom:10px">${escapeHtml(k.content)}</div>`:''}${href?`<a onclick="event.stopPropagation()" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:var(--cyan);text-decoration:none">참고 링크 ↗</a>`:''}<div style="font-size:10px;color:var(--text3);margin-top:10px">${escapeHtml(k.createdBy||'-')} · ${k.updatedAt?'수정 '+fd(k.updatedAt):fd(k.createdAt)}${commentCount?` · 댓글 ${commentCount}`:''}</div></div>`;
   }).join("");
   renderPager('know-pager','knowledge',list.length,'renderKnowledge');
 }
@@ -3491,7 +3617,8 @@ function openKnowledgeDetail(id){
     </div>
     <div style="font-size:13px;color:var(--text2);line-height:1.75;white-space:pre-wrap">${escapeHtml(k.content||'내용 없음')}</div>
     ${href?`<div style="margin-top:14px"><a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:var(--cyan);text-decoration:none">참고 링크 열기 ↗</a></div>`:''}
-    <div style="font-size:10px;color:var(--text3);margin-top:16px">${escapeHtml(k.createdBy||'-')} · ${k.updatedAt?'수정 '+fd(k.updatedAt):fd(k.createdAt)}</div>`,
+    <div style="font-size:10px;color:var(--text3);margin-top:16px">${escapeHtml(k.createdBy||'-')} · ${k.updatedAt?'수정 '+fd(k.updatedAt):fd(k.createdAt)}</div>
+    ${itemCommentsHtml('knowledge',k)}`,
     `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">닫기</button>
      <button class="btn btn-indigo" onclick="openKnowledgeModal('${id}')" style="width:auto;padding:8px 18px">수정</button>`);
 }
@@ -3669,9 +3796,9 @@ async function importRecentKBLinks(){
       if(cursor)qs.set('cursor',cursor);
       if(btn)btn.textContent=`KB 수집 중... ${batch}차`;
       const r=await fetch(`${WORKERS}/links/kb/import?${qs.toString()}`,{method:'POST',headers:authHeaders()});
-      if(!r.ok){toast('Worker 업데이트 후 사용 가능합니다',true);return;}
+      if(!r.ok){toast('Worker 업데이트 후 사용 가능합니다',true);setAdminActionStatus('KB 수집 실패: Worker 업데이트 후 사용 가능합니다','err');return;}
       const d=await r.json();
-      if(d.ok===false){toast(d.message||'KB 수집 설정이 필요합니다',true);return;}
+      if(d.ok===false){toast(d.message||'KB 수집 설정이 필요합니다',true);setAdminActionStatus(d.message||'KB 수집 설정이 필요합니다','err');return;}
       imported+=d.imported||d.added||0;
       duplicated+=d.duplicated||d.skipped||0;
       inaccessible+=d.inaccessible||0;
@@ -3686,7 +3813,8 @@ async function importRecentKBLinks(){
     if(document.getElementById('page-links')?.classList.contains('active'))renderLinks();
     const searchNote=attempts?` / 검색 API ${attempts}회`:' / 검색 API 0회';
     toast(`KB 무료 수집 완료: 신규 ${imported}건 / 중복 ${duplicated}건 / 접근불가 ${inaccessible}건${searchNote}${errors?` / 오류 ${errors}회`:''}`);
-  }catch(e){toast('오류: '+e.message,true);}
+    setAdminActionStatus(`KB 수집 완료: 신규 ${imported}건 / 중복 ${duplicated}건 / 접근불가 ${inaccessible}건${errors?` / 오류 ${errors}회`:''}`);
+  }catch(e){toast('오류: '+e.message,true);setAdminActionStatus('KB 수집 실패: '+e.message,'err');}
   finally{if(btn){btn.disabled=false;btn.textContent=oldText||'📥 무료 KB article 수집';}}
 }
 async function importKBSeed(){
@@ -3710,6 +3838,7 @@ async function importKBSeed(){
   btn.disabled=false;
   btn.textContent=`📥 KB 초기 데이터 가져오기 (${KB_SEED.length}건)`;
   toast(`완료: 성공 ${ok}건 / 실패 ${fail}건`);
+  setAdminActionStatus(`KB 초기 데이터 등록 완료: 성공 ${ok}건 / 실패 ${fail}건`,fail?'info':'ok');
   await loadLinks();
   if(document.getElementById('page-links').classList.contains('active'))renderLinks();
 }
@@ -3790,7 +3919,8 @@ async function refreshStorageStats(){
         </div>`).join('')}
       </div>
       <div style="margin-top:8px;font-size:10px;color:var(--text3)">갱신 ${fmtClock(d.asOf)} · 삭제/정리 작업은 수행하지 않음</div>`;
-  }catch(e){wrap.innerHTML=`<span style="color:var(--danger)">조회 실패: ${escapeHtml(e.message)}</span>`;}
+    setAdminActionStatus('저장소 / KV 사용량 조회 완료');
+  }catch(e){wrap.innerHTML=`<span style="color:var(--danger)">조회 실패: ${escapeHtml(e.message)}</span>`;setAdminActionStatus('저장소 / KV 사용량 조회 실패: '+e.message,'err');}
   finally{btn.disabled=false;btn.textContent=old;}
 }
 
@@ -5558,7 +5688,7 @@ function syncMobSheet(panelId){
 }
 
 /* ── v1.5.8: mobile app polish + admin alignment ───────────── */
-/* ── v1.5.9: soft light/dark theme toggle ───────────── */
+/* ── v1.5.10: light theme hardening + shared comments ───────────── */
 /* mobile primary nav + compact admin settings */
 const MOBILE_PRIMARY_NAV=['nav-dash','nav-issues','nav-cases','nav-customers'];
 const MOBILE_MORE_NAV=['nav-eos','nav-log','nav-vt','nav-links','nav-knowledge','nav-private','nav-audit','nav-settings'];
