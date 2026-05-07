@@ -2,8 +2,26 @@
 //
 //
 //
+const ALLOWED_ORIGINS = [
+  'https://engr-jira.github.io',
+  'https://engr-jira.github.io/engr-hub',
+  'https://engr-jira.github.io/engr-hub-dev',
+];
+
+function getCorsHeaders(request) {
+  const origin = request?.headers?.get('Origin') || '';
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allowed,
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User, X-Session-Token',
+    'Vary': 'Origin',
+  };
+}
+
+// Legacy static headers (OPTIONS preflight 전용)
 const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'https://engr-jira.github.io',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-User, X-Session-Token',
 };
@@ -21,10 +39,11 @@ const DEFAULT_USERS = [
 ];
 const DEFAULT_KV_STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024; // Cloudflare Workers KV default 1GB basis
 
-function corsResponse(body, status = 200) {
+function corsResponse(body, status = 200, request = null) {
+  const headers = request ? getCorsHeaders(request) : CORS_HEADERS;
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json; charset=utf-8' },
+    headers: { ...headers, 'Content-Type': 'application/json; charset=utf-8' },
   });
 }
 
@@ -1142,7 +1161,7 @@ async function resetHubData(env) {
 //
 export default {
   async fetch(request, env) {
-    if (request.method === 'OPTIONS') return new Response(null, { headers: CORS_HEADERS });
+    if (request.method === 'OPTIONS') return new Response(null, { headers: getCorsHeaders(request) });
 
     const url = new URL(request.url);
     const path = url.pathname;
@@ -1159,7 +1178,10 @@ export default {
 
       //
       if (path === '/debug/ai') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        if (!await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 사용할 수 있습니다.' }, 403);
         const result = await callAI(env, 'Reply with test success in Korean.', 'debug');
+        await auditLog(env, user, 'AI_DEBUG', { path: '/debug/ai' });
         return corsResponse({ ok: true, text: result?.candidates?.[0]?.content?.parts?.[0]?.text });
       }
 
@@ -1247,6 +1269,7 @@ export default {
         return corsResponse({ sessionMin: parseInt(sessionRaw || '120') || 120, rangeMonths: parseInt(rangeRaw || '6') || 6, lastSync });
       }
       if (path === '/kv/usage' && request.method === 'GET') {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 접근할 수 있습니다.' }, 403);
         return corsResponse(await getUsage(env, user));
       }
       if (path === '/links/kb/import' && request.method === 'POST') {
@@ -1283,6 +1306,19 @@ export default {
         const { contents, mode = 'technical_analysis', detail = {} } = body;
         const prompt = contents?.[0]?.parts?.[0]?.text;
         if (!prompt) return corsResponse({ ok: false, message: '\uD504\uB86C\uD504\uD2B8\uAC00 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.' }, 400);
+
+        // AI daily rate limit check
+        const AI_DAILY_LIMIT = parseInt(env.AI_DAILY_LIMIT || '300', 10);
+        const AI_USER_DAILY_LIMIT = parseInt(env.AI_USER_DAILY_LIMIT || '80', 10);
+        try {
+          const usageNow = await readUsageCounter(env, user);
+          if ((usageNow.teamToday || 0) >= AI_DAILY_LIMIT) {
+            return corsResponse({ ok: false, message: `\ud300 \uc77c\uc77c AI \uc694\uccad \ud55c\ub3c4(${AI_DAILY_LIMIT}\ud68c)\uc5d0 \ub3c4\ub2ec\ud588\uc2b5\ub2c8\ub2e4.` }, 429);
+          }
+          if ((usageNow.today || 0) >= AI_USER_DAILY_LIMIT) {
+            return corsResponse({ ok: false, message: `\uac1c\uc778 \uc77c\uc77c AI \uc694\uccad \ud55c\ub3c4(${AI_USER_DAILY_LIMIT}\ud68c)\uc5d0 \ub3c4\ub2ec\ud588\uc2b5\uB2C8\uB2E4.` }, 429);
+          }
+        } catch (_) {}
 
         const reqId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
         try {
@@ -1547,6 +1583,7 @@ export default {
 
       //
       if (path === '/links' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
         const raw = await env.ENGR_KV.get('config:links');
         return corsResponse({ ok: true, links: raw ? JSON.parse(raw) : [] });
       }
@@ -1618,6 +1655,7 @@ export default {
 
       //
       if (path === '/knowledge' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
         const raw = await env.ENGR_KV.get('config:knowledge');
         return corsResponse({ ok: true, items: raw ? JSON.parse(raw) : [] });
       }
@@ -1795,5 +1833,3 @@ export default {
     }
   },
 };
-
-

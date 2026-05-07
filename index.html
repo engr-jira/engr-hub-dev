@@ -1020,6 +1020,156 @@ html[data-theme="light"] .label-chip,
 html[data-theme="light"] .case-chip{color:inherit}
 </style>
 
+<style id="light-fix">
+/* ══════════════════════════════════════════════════
+   LIGHT MODE COMPREHENSIVE FIX — v1.5.11-patch
+   하드코딩된 다크 색상 전체 라이트 오버라이드
+   ══════════════════════════════════════════════════ */
+
+/* ── 사이드바 AI 사용량 / 헬스카드 ── */
+html[data-theme="light"] .usage-card .u-title,
+html[data-theme="light"] .health-card .h-title { color:#1e40af !important; }
+
+html[data-theme="light"] .usage-card .u-val,
+html[data-theme="light"] .health-card .u-val { color:#111827 !important; }
+
+html[data-theme="light"] .health-card .h-row { color:#475569 !important; }
+
+html[data-theme="light"] .health-card .sync-mini {
+  background:#e0f2fe !important;
+  border-color:#bae6fd !important;
+  color:#0369a1 !important;
+}
+
+/* ── AI 사용량 v155 카드 ── */
+html[data-theme="light"] .ai-usage-v155 .u-title { color:#0891b2 !important; }
+
+html[data-theme="light"] .ai-usage-v155 .pill-btn {
+  color:#0369a1 !important;
+  background:#e0f2fe !important;
+  border-color:#bae6fd !important;
+}
+
+html[data-theme="light"] .ai-usage-v155 .usage-total b { color:#111827 !important; }
+
+html[data-theme="light"] .usage-card.ai-usage-v155 {
+  border-color:rgba(14,165,233,.3) !important;
+  background:linear-gradient(180deg,rgba(224,242,254,.7),rgba(240,249,255,.7)) !important;
+}
+
+html[data-theme="light"] .ai-usage-v155 .usage-meter {
+  background:rgba(14,165,233,.18) !important;
+}
+
+html[data-theme="light"] .ai-usage-v155 .u-mini {
+  border-color:#bae6fd !important;
+  background:rgba(224,242,254,.6) !important;
+}
+
+html[data-theme="light"] .ai-usage-v155 .u-mini b { color:#0c4a6e !important; }
+
+/* ── 대시보드 KPI 카드 ── */
+html[data-theme="light"] .kpi .num { color:#111827 !important; }
+html[data-theme="light"] .kpi .label { color:#475569 !important; }
+html[data-theme="light"] .kpi .sub { color:#64748b !important; }
+
+/* ── 대시보드 섹션 타이틀 ── */
+html[data-theme="light"] .dash-section .sec-title { color:#3730a3 !important; }
+html[data-theme="light"] .dash-section .sec-title:after { background:#c7d2fe !important; }
+
+/* ── 대시보드 리스트 행 ── */
+html[data-theme="light"] .dash-list-row {
+  border-bottom-color:#e2e8f0 !important;
+}
+html[data-theme="light"] .dash-list-row:hover .title { color:#1d4ed8 !important; }
+
+/* ── EOS 배너 ── */
+html[data-theme="light"] .eos-banner-title { color:#b91c1c !important; }
+
+/* ── 운영 포커스 인라인 색상 ── */
+html[data-theme="light"] [style*="color:#e8edff"] { color:#1e293b !important; }
+html[data-theme="light"] [style*="color:#f87171"] { color:#dc2626 !important; }
+html[data-theme="light"] [style*="color:#c5cee8"]:not([id="cust-right"] *) { color:#334155 !important; }
+
+/* ── 검색박스 ── */
+html[data-theme="light"] .search-box input { color:#334155 !important; }
+html[data-theme="light"] .search-box { background:rgba(255,255,255,.78) !important; border-color:#cbd7e8 !important; }
+
+/* ── date input ── */
+html[data-theme="light"] input[type="date"] { color-scheme:light; color:#111827 !important; }
+html[data-theme="light"] .date-open-btn {
+  border-color:rgba(14,165,233,.5) !important;
+  background:#e0f2fe !important;
+  color:#0369a1 !important;
+  box-shadow:0 0 8px rgba(14,165,233,.15) !important;
+}
+
+/* ── VT 해시 / 히스토리 ── */
+html[data-theme="light"] .vt-history-hash { color:#1e40af !important; }
+
+/* ── 고객사 패널 EOS 섹션 (JS 렌더링) ── */
+html[data-theme="light"] #cust-right [style*="color:#c5cee8"],
+html[data-theme="light"] #cust-right [style*="color:#f0f4ff"] { color:#111827 !important; }
+html[data-theme="light"] #cust-right [style*="background:rgba(255,255,255,.04)"] {
+  background:#f1f5f9 !important;
+  border-color:#e2e8f0 !important;
+}
+
+/* ── 운영 포커스 sec() 헬퍼 인라인 배경 ── */
+html[data-theme="light"] [style*="background:rgba(255,255,255,.03)"] {
+  background:#f8fafc !important;
+  border-color:#e2e8f0 !important;
+}
+
+/* ── mini-filter-note 태그 ── */
+html[data-theme="light"] .mini-filter-note .tag {
+  color:#3730a3 !important;
+  background:#eef2ff !important;
+  border-color:#c7d2fe !important;
+}
+
+/* ── case-chip 기본 상태 (open/done은 기존 처리) ── */
+html[data-theme="light"] .case-chip:not(.done):not(.open) {
+  color:#475569 !important;
+  background:#f1f5f9 !important;
+  border-color:#cbd5e1 !important;
+}
+
+/* ── pager 버튼 ── */
+html[data-theme="light"] .pager button {
+  background:#ffffff !important;
+  border-color:#cbd7e8 !important;
+  color:#334155 !important;
+}
+html[data-theme="light"] .pager button:hover { background:#eef2ff !important; color:#3730a3 !important; }
+
+/* ── sync-banner ── */
+html[data-theme="light"] .sync-banner {
+  background:linear-gradient(135deg,rgba(238,242,255,.9),rgba(224,242,254,.9)) !important;
+  border-color:rgba(79,70,229,.22) !important;
+  color:#334155 !important;
+}
+
+/* ── AI 모달 footer ── */
+html[data-theme="light"] .ai-modal-foot { color:#64748b !important; border-top-color:#e2e8f0 !important; }
+html[data-theme="light"] .ai-modal-foot span { color:#94a3b8 !important; }
+
+/* ── 로그 분석 textarea ── */
+html[data-theme="light"] .log-textarea {
+  background:#ffffff !important;
+  border-color:#cbd7e8 !important;
+  color:#111827 !important;
+}
+
+/* ── customer-work-row ── */
+html[data-theme="light"] .customer-work-row .k { color:#1e40af !important; }
+
+/* ── 가독성 보완: bar-lbl, rank-pos ── */
+html[data-theme="light"] .bar-lbl { color:#475569 !important; }
+html[data-theme="light"] .rank-pos:not(.top1):not(.top2):not(.top3) { color:#94a3b8 !important; }
+html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
+</style>
+
 </head>
 <body>
 <div id="toast"></div>
@@ -1528,6 +1678,19 @@ const MAX_FILE_SIZE=5*1024*1024;
 let ISSUES=[],SEL=null,CASE_SEL=null,PAGE=1;
 let CURRENT_USER='',CURRENT_DISPLAY='',IS_ADMIN=false,IS_SUPER=false,USER_ROLE='user';
 let SESSION_MIN=120, SESSION_DEADLINE=0, SESSION_TIMER=null;
+
+// ── 전역 에러 핸들러 ──────────────────────────────
+window.addEventListener('unhandledrejection',e=>{
+  const msg=e?.reason?.message||String(e?.reason||'알 수 없는 오류');
+  if(msg.includes('세션')||msg.includes('401')||msg.includes('403'))return;
+  console.error('[HUB] Unhandled rejection:',e.reason);
+  const t=document.getElementById('toast');
+  if(t&&t.style.display!=='block'){t.textContent='오류가 발생했습니다: '+msg.slice(0,60);t.className='err';t.style.display='block';setTimeout(()=>t.style.display='none',3500);}
+});
+window.onerror=(msg,src,line,col,err)=>{
+  console.error('[HUB] Global error:',msg,src,line,err);
+  return false;
+};
 let AI_USAGE_LOADING=false, AI_USAGE_LAST=null;
 let VT_HISTORY=JSON.parse(localStorage.getItem('vt_history')||'[]');
 let LINKS=[],EOS_ITEMS=[],TEAM_NAMES=[];
@@ -1662,11 +1825,16 @@ function enterApp(){
 }
 function startSessionTimer(){
   if(SESSION_TIMER)clearInterval(SESSION_TIMER);
+  let _warned5=false,_warned1=false;
   SESSION_TIMER=setInterval(()=>{
     const remain=SESSION_DEADLINE-Date.now();
-    if(remain<=0){clearInterval(SESSION_TIMER);toast('세션 만료',true);setTimeout(forceLogout,1500);return;}
+    if(remain<=0){clearInterval(SESSION_TIMER);toast('세션이 만료되었습니다. 다시 로그인해주세요.',true);setTimeout(forceLogout,1800);return;}
     const m=Math.floor(remain/60000),s=Math.floor((remain%60000)/1000);
     document.getElementById('session-timer').textContent=`세션 ${m}:${String(s).padStart(2,'0')}`;
+    if(!_warned5&&remain<=300000&&remain>298000){_warned5=true;toast('⏰ 세션이 5분 후 만료됩니다. 화면을 클릭하면 연장됩니다.');}
+    if(!_warned1&&remain<=60000&&remain>58000){_warned1=true;toast('⚠️ 세션이 1분 후 만료됩니다!',true);}
+    if(remain>310000){_warned5=false;}
+    if(remain>70000){_warned1=false;}
   },1000);
 }
 function extendSession(){SESSION_DEADLINE=Date.now()+SESSION_MIN*60000;localStorage.setItem('engr_session_deadline',SESSION_DEADLINE);}
@@ -3538,50 +3706,7 @@ function buildCustomers(){
   return Object.values(map).sort((a,b)=>b.issues.length-a.issues.length);
 }
 let CUST_SEL=null;
-function renderCustomers(){
-  const q=(document.getElementById("cust-q")||{}).value?.toLowerCase()||"";
-  const prod=(document.getElementById("cust-prod")||{}).value||"";
-  const ass=(document.getElementById("cust-ass")||{}).value||"";
-  let custs=buildCustomers();
-  const allProds=new Set();
-  const allAss=new Set();
-  buildCustomers().forEach(c=>{
-    c.products.forEach(p=>allProds.add(p));
-    c.assignees.forEach(a=>allAss.add(a));
-  });
-  const pdSel=document.getElementById("cust-prod");
-  if(pdSel){const cur=pdSel.value;pdSel.innerHTML='<option value="">전체 제품</option>'+Array.from(allProds).sort().map(p=>`<option ${p===cur?"selected":""}>${escapeHtml(p)}</option>`).join("");}
-  const assSel=document.getElementById("cust-ass");
-  if(assSel){const cur=assSel.value;assSel.innerHTML='<option value="">전체 담당자</option>'+Array.from(allAss).sort().map(a=>`<option ${a===cur?"selected":""}>${escapeHtml(a)}</option>`).join("");}
-  if(prod)custs=custs.filter(c=>c.products.has(prod));
-  if(ass)custs=custs.filter(c=>c.assignees.has(ass));
-  if(q)custs=custs.filter(c=>[c.name,[...c.products].join(" "),[...c.assignees].join(" ")].join(" ").toLowerCase().includes(q));
-  const wrap=document.getElementById("cust-list");
-  const pageCusts=sliceForPage(custs,'customers');
-  document.getElementById("cust-count").textContent=pageCountText('customers',custs.length,'개');
-  if(!pageCusts.length){wrap.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">Jira 동기화 후 자동 집계되거나 조건에 맞는 고객사가 없습니다</div>`;renderPager('cust-pager','customers',custs.length,'renderCustomers');return;}
-  wrap.innerHTML=pageCusts.map((c,idx)=>{
-    const done=c.issues.filter(i=>i.status==="완료").length;
-    const open=c.issues.filter(i=>i.status!=="완료").length;
-    const rate=c.issues.length?Math.round(done/c.issues.length*100):0;
-    const prods=[...c.products].join(", ")||"-";
-    const isSel=CUST_SEL&&CUST_SEL.name===c.name;
-    return `<div onclick="selectCustomer(${idx},this.dataset.name)" data-name="${escapeHtml(c.name)}" style="background:#262d47;border:1.5px solid ${isSel?"var(--accent)":"var(--border)"};border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:13px;font-weight:700;color:#f0f4ff">${escapeHtml(c.name)}</span>
-        <span style="font-size:10px;background:rgba(196,206,255,.15);color:#c4ceff;padding:2px 9px;border-radius:20px;font-weight:700">${c.issues.length}건</span>
-      </div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${escapeHtml(prods)}</div>
-      <div style="display:flex;gap:10px;font-size:11px">
-        <span style="color:#2de6b8">완료 ${done}</span>
-        <span style="color:#fc8181">진행 ${open}</span>
-        <span style="color:var(--text3);margin-left:auto">완료율 ${rate}%</span>
-      </div>
-    </div>`;
-  }).join("");
-  renderPager('cust-pager','customers',custs.length,'renderCustomers');
-}
-
+// renderCustomers: duplicate removed, using definition below
 function selectCustomer(idx,name){
   CUST_SEL=buildCustomers().find(c=>c.name===name)||buildCustomers()[idx];
   renderCustomers();
