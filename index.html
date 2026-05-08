@@ -3594,9 +3594,9 @@ async function loadEmailUserList(){
   const sel=document.getElementById('email-push-user');
   if(!sel||sel.dataset.loaded)return;
   try{
-    const d=await hubApi('/admin/users');
-    const users=d.users||[];
-    sel.innerHTML='<option value="">팀원 선택...</option>'+users.map(u=>`<option value="${u.id}">${u.id}${u.name?` (${u.name})`:''}</option>`).join('');
+    const d=await hubApi('/admin/list');
+    const users=(d.users||[]).filter(u=>u.active!==false);
+    sel.innerHTML='<option value="">팀원 선택...</option>'+users.map(u=>`<option value="${u.id}">${u.id}${u.displayName&&u.displayName!==u.id?` (${u.displayName})`:''}</option>`).join('');
     sel.dataset.loaded='1';
   }catch(_){}
 }
@@ -3728,7 +3728,7 @@ function previewTemplate(){
   if(currentTmplKey==='comment'){
     preview=html.replace(/\{\{author\}\}/g,'hong.gildong').replace(/\{\{kind\}\}/g,'팀노하우').replace(/\{\{kind_upper\}\}/g,'팀노하우').replace(/\{\{item_title\}\}/g,'SEP 14 업그레이드 절차').replace(/\{\{commenter\}\}/g,'kim.minsu').replace(/\{\{comment_text\}\}/g,'확인했습니다. 내일 적용하겠습니다.').replace(/\{\{hub_url\}\}/g,'#');
   }else{
-    preview=html.replace(/\{\{assignee\}\}/g,'hong.gildong').replace(/\{\{sent_by\}\}/g,SESSION_USER||'admin').replace(/\{\{sent_date\}\}/g,'2026년 5월 8일').replace(/\{\{jira_section\}\}/g,'<div style="margin-bottom:16px;padding:12px;border:1px solid #e2e8f0;border-radius:8px"><b>📌 Jira 이슈 (2건)</b><br><br>ENGR-123 · SEP 업그레이드 계획<br>ENGR-456 · 고객사 정책 검토</div>').replace(/\{\{case_section\}\}/g,'').replace(/\{\{eos_section\}\}/g,'').replace(/\{\{hub_url\}\}/g,'#');
+    preview=html.replace(/\{\{assignee\}\}/g,'hong.gildong').replace(/\{\{sent_by\}\}/g,CURRENT_USER||'admin').replace(/\{\{sent_date\}\}/g,'2026년 5월 8일').replace(/\{\{jira_section\}\}/g,'<div style="margin-bottom:16px;padding:12px;border:1px solid #e2e8f0;border-radius:8px"><b>📌 Jira 이슈 (2건)</b><br><br>ENGR-123 · SEP 업그레이드 계획<br>ENGR-456 · 고객사 정책 검토</div>').replace(/\{\{case_section\}\}/g,'').replace(/\{\{eos_section\}\}/g,'').replace(/\{\{hub_url\}\}/g,'#');
   }
   iframe.srcdoc=preview;
   pw.style.display='block';
