@@ -114,9 +114,8 @@ main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
   .topbar-right{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.topbar-right>*{min-width:0}
   .page{padding:14px}.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dash-focus{grid-template-columns:1fr!important}
   .filter-row input,.filter-row select{width:100%;min-width:0}.two-col{grid-template-columns:1fr}
-  /* 업무링크 리스트 모바일: URL·설명 숨기고 제목+메타만 표시 */
-  .link-desc,.link-url{display:none!important}
-  .link-meta{display:none!important}
+  /* 업무링크 리스트 모바일: 카테고리+제목만 표시 */
+  .link-desc,.link-url,.link-meta{display:none!important}
   .link-card{gap:8px;min-height:38px;padding:6px 10px}
   .link-cat{min-width:52px!important;font-size:8px}
   /* 터치 기기: 액션 버튼 항상 표시 */
@@ -301,11 +300,12 @@ main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 .link-card{background:#222538;border:none;border-bottom:1px solid var(--border2);border-radius:0;padding:8px 14px;cursor:pointer;position:relative;transition:background .15s;display:flex;align-items:center;gap:10px;min-height:42px;overflow:hidden}
 .link-card:first-child{border-radius:12px 12px 0 0}.link-card:last-child{border-bottom:none;border-radius:0 0 12px 12px}
 .link-card:hover{background:#2a2e4a;transform:none;box-shadow:none}
-.link-cat{display:inline-block;font-size:9px;padding:2px 8px;border-radius:12px;background:rgba(99,102,241,.15);color:var(--accent3);font-weight:700;flex-shrink:0;min-width:64px;text-align:center;margin-bottom:0}
-.link-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.link-desc{font-size:11px;color:var(--text3);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:0}
+.link-cat{display:inline-block;font-size:9px;padding:2px 8px;border-radius:12px;background:rgba(99,102,241,.15);color:var(--accent3);font-weight:700;flex-shrink:0;min-width:64px;text-align:center}
+.link-info{flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;gap:2px}
+.link-title{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.link-meta{font-size:10px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.link-desc{font-size:11px;color:var(--text3);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .link-url{font-size:10px;color:var(--text3);font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1.2;min-width:0}
-.link-meta{font-size:10px;color:var(--text3);flex-shrink:0;white-space:nowrap;margin-top:0}
 .link-del{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--danger);font-size:14px;cursor:pointer;opacity:0}
 .link-card:hover .link-del{opacity:1}
 .link-card:hover .link-actions{opacity:1 !important}
@@ -3026,7 +3026,7 @@ function renderLinks(){
     const title=escapeHtml(l.title||'');
     const url=escapeHtml(l.url||'');
     const meta=`by ${escapeHtml(l.createdBy||'-')}${l.createdAt?' · '+fd(l.createdAt):''}${commentCount?' · 댓글 '+commentCount:''}`;
-    return `<div class="link-card" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')"><span class="link-cat">${cat}</span><div class="link-title">${title}</div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${url}</div><div class="link-meta">${meta}</div><div class="link-actions" style="flex-shrink:0;display:flex;gap:4px;opacity:0;transition:opacity .15s"><button onclick="event.stopPropagation();openLinkDetail('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">댓글 ${commentCount}</button><button onclick="event.stopPropagation();openLinkEditModal('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">✎</button><button onclick="event.stopPropagation();deleteLink('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button></div></div>`;
+    return `<div class="link-card" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')"><span class="link-cat">${cat}</span><div class="link-info"><div class="link-title">${title}</div><div class="link-meta">${meta}</div></div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${url}</div><div class="link-actions" style="flex-shrink:0;display:flex;gap:4px;opacity:0;transition:opacity .15s"><button onclick="event.stopPropagation();openLinkDetail('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">댓글 ${commentCount}</button><button onclick="event.stopPropagation();openLinkEditModal('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">✎</button><button onclick="event.stopPropagation();deleteLink('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button></div></div>`;
   }).join('');
   renderPager('links-pager','links',list.length,'renderLinks');
 }
@@ -5303,8 +5303,7 @@ function injectV155Style(){
       .eos-table,.audit-table{display:block;width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-spacing:0}.eos-table thead,.eos-table tbody,.eos-table tr,.audit-table thead,.audit-table tbody,.audit-table tr{min-width:620px}.eos-table th,.eos-table td,.audit-table th,.audit-table td{white-space:nowrap}
       .audit-detail{max-width:220px;white-space:nowrap}.pager{gap:6px;flex-wrap:wrap}.pager button{min-width:64px}
       [style*="minmax(320px"],[style*="minmax(340px"],[style*="grid-template-columns:repeat(auto-fit,minmax(320px"],[style*="grid-template-columns:repeat(auto-fit,minmax(340px"]{grid-template-columns:1fr!important}
-      .link-desc,.link-url{display:none!important}
-      .link-meta{display:none!important}
+      .link-desc,.link-url,.link-meta{display:none!important}
       .link-card{gap:8px;min-height:38px;padding:6px 10px}
       .link-cat{min-width:52px!important;font-size:8px}
       .link-card .link-actions{opacity:1!important}
