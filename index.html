@@ -825,6 +825,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer
   html,body{background:var(--bg)!important;color:var(--text)!important;overflow-x:hidden!important}
   body:not(.app-entered) #app{display:none!important}
   body:not(.is-admin) #nav-audit{display:none!important}
+  body:not(.is-admin) #nav-email{display:none!important}
   body:not(.is-super) #nav-settings{display:none!important}
   #app{background:var(--bg)!important;min-height:100vh!important;padding-bottom:78px!important;overflow-x:hidden!important}
   main{width:100%!important;max-width:100%!important;min-width:0!important;background:var(--bg)!important;padding:0 0 14px!important;overflow-x:hidden!important}
@@ -1030,6 +1031,15 @@ html[data-theme="light"] .case-chip{color:inherit}
 html[data-theme="light"] .link-grid{border-color:#e3e8f2!important;background:#fff}
 html[data-theme="light"] .link-card{background:#fff!important;border-bottom:1px solid #e3e8f2!important;box-shadow:none!important}
 html[data-theme="light"] .link-card:hover{background:#f8fafc!important}
+/* 메일 관리 탭 */
+.email-tabs{display:flex;gap:2px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:16px}
+.email-tab{flex:1;padding:7px 10px;border-radius:9px;border:none;background:transparent;color:var(--text3);font-size:12px;font-weight:600;cursor:pointer;transition:background .15s,color .15s}
+.email-tab.active{background:rgba(99,102,241,.18);color:#a5b4fc}
+.email-tab-content{display:block}
+.email-count-pill{background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--text2)}
+.email-count-pill strong{color:var(--text);font-weight:700}
+html[data-theme="light"] .email-tab.active{background:rgba(79,70,229,.12);color:#4f46e5}
+html[data-theme="light"] .email-count-pill{background:rgba(79,70,229,.08);border-color:rgba(79,70,229,.15);color:#334155}
 </style>
 
 <style id="light-fix">
@@ -1270,6 +1280,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>팀 노하우
         </button>
         <button class="sb-btn" id="nav-audit" onclick="showPage('audit',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>감사 로그</button>
+        <button class="sb-btn" id="nav-email" onclick="showPage('email',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>메일 관리</button>
         <button class="sb-btn" id="nav-settings" onclick="showPage('settings',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>관리자 설정</button>
       </div>
     </div>
@@ -1561,6 +1572,96 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
       </div>
     </div>
 
+    <div class="page" id="page-email">
+      <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:#a5b4fc;margin-bottom:16px">📧 관리자 전용 이메일 발송 관리</div>
+
+      <!-- 탭 네비게이션 -->
+      <div class="email-tabs" id="emailTabBar">
+        <button class="email-tab active" onclick="switchEmailTab('push',this)">미완료 Push</button>
+        <button class="email-tab" onclick="switchEmailTab('history',this)">발송 이력</button>
+        <button class="email-tab" onclick="switchEmailTab('templates',this)">템플릿 편집</button>
+      </div>
+
+      <!-- Push 탭 -->
+      <div id="email-tab-push" class="email-tab-content">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">📋 미완료 업무 내역 발송</div>
+          <div style="font-size:12px;color:var(--text3);margin-bottom:16px">대상 팀원의 미완료 Jira 이슈, 케이스, EOS 만료 임박 항목을 이메일로 발송합니다.</div>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+            <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px">
+              <label style="font-size:11px;color:var(--text3);font-weight:700">대상 팀원 (Jira ID)</label>
+              <input id="email-push-user" placeholder="예: hong.gildong" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--input-bg,#1a1d2e);color:var(--text);font-size:13px">
+            </div>
+            <div style="display:flex;gap:8px;align-items:flex-end;padding-bottom:0">
+              <button onclick="doEmailPushPreview()" class="btn btn-ghost" style="width:auto;padding:8px 16px;font-size:13px">미리보기</button>
+              <button onclick="doEmailPush()" class="btn btn-primary" style="width:auto;padding:8px 18px;font-size:13px">발송</button>
+            </div>
+          </div>
+        </div>
+        <div id="email-push-status" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;font-size:13px"></div>
+        <div id="email-push-counts" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px">조회 결과</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap">
+            <div class="email-count-pill" id="ecp-jira">📌 Jira 이슈 <strong>-</strong>건</div>
+            <div class="email-count-pill" id="ecp-cases">🎫 케이스 <strong>-</strong>건</div>
+            <div class="email-count-pill" id="ecp-eos">⏰ EOS 임박 <strong>-</strong>건</div>
+          </div>
+        </div>
+        <div id="email-push-preview" style="display:none">
+          <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">메일 미리보기</div>
+          <iframe id="email-push-iframe" style="width:100%;height:520px;border:1px solid var(--border);border-radius:12px;background:#fff"></iframe>
+        </div>
+      </div>
+
+      <!-- 이력 탭 -->
+      <div id="email-tab-history" class="email-tab-content" style="display:none">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+          <input id="email-hist-q" placeholder="수신자 / 유형 / 제목 검색..." oninput="renderEmailHistory()" style="flex:1;min-width:200px;padding:7px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--input-bg,#1a1d2e);color:var(--text);font-size:12px">
+          <select id="email-hist-type" onchange="renderEmailHistory()" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--input-bg,#1a1d2e);color:var(--text);font-size:12px">
+            <option value="">전체</option><option value="comment">댓글 알림</option><option value="push">업무 Push</option>
+          </select>
+          <button onclick="loadEmailHistory()" class="btn btn-ghost" style="width:auto;padding:7px 14px;font-size:12px">새로고침</button>
+          <span id="email-hist-count" style="font-size:11px;color:var(--text3)"></span>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+          <table style="width:100%;border-collapse:collapse">
+            <thead><tr style="background:rgba(99,102,241,.08)">
+              <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border)">유형</th>
+              <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border)">수신자</th>
+              <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border)">제목</th>
+              <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border)">발송자</th>
+              <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border)">결과</th>
+              <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border)">일시</th>
+            </tr></thead>
+            <tbody id="email-hist-tbody"><tr><td colspan="6" style="padding:24px;text-align:center;color:var(--text3);font-size:13px">새로고침을 눌러 이력을 불러오세요</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 템플릿 편집 탭 -->
+      <div id="email-tab-templates" class="email-tab-content" style="display:none">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">
+          이메일 HTML 템플릿을 편집합니다. <code style="background:rgba(99,102,241,.15);color:#a5b4fc;padding:2px 6px;border-radius:4px">{{변수}}</code> 형태로 변수를 사용하세요.<br>
+          <span style="color:var(--text3);font-size:11px">댓글: {{author}} {{kind}} {{kind_upper}} {{item_title}} {{commenter}} {{comment_text}} {{hub_url}}</span><br>
+          <span style="color:var(--text3);font-size:11px">Push: {{assignee}} {{sent_by}} {{sent_date}} {{jira_section}} {{case_section}} {{eos_section}} {{hub_url}}</span>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
+          <select id="tmpl-select" onchange="switchTemplate(this.value)" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--input-bg,#1a1d2e);color:var(--text);font-size:12px">
+            <option value="comment">댓글 알림 템플릿</option>
+            <option value="push">업무 Push 템플릿</option>
+          </select>
+          <button onclick="resetTemplate()" class="btn btn-ghost" style="width:auto;padding:7px 14px;font-size:12px">기본값으로 초기화</button>
+          <button onclick="previewTemplate()" class="btn btn-ghost" style="width:auto;padding:7px 14px;font-size:12px">미리보기</button>
+          <button onclick="saveTemplate()" class="btn btn-primary" style="width:auto;padding:7px 18px;font-size:12px">저장</button>
+        </div>
+        <textarea id="tmpl-editor" style="width:100%;height:280px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:monospace;font-size:12px;padding:14px;resize:vertical;box-sizing:border-box;line-height:1.5" placeholder="HTML 템플릿 로딩 중..."></textarea>
+        <div id="tmpl-preview-wrap" style="display:none;margin-top:12px">
+          <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">템플릿 미리보기 (샘플 데이터)</div>
+          <iframe id="tmpl-preview-iframe" style="width:100%;height:480px;border:1px solid var(--border);border-radius:12px;background:#fff"></iframe>
+        </div>
+      </div>
+    </div>
+
     <div class="page" id="page-settings">
       <div class="sec-title">⚙ 관리자 설정</div>
       <div id="admin-action-status" class="admin-action-status" role="status" aria-live="polite"></div>
@@ -1828,7 +1929,7 @@ function enterApp(){
   document.getElementById('cfg').style.display='none';
   document.getElementById('app').style.display='flex';
   document.getElementById('ai-dot').innerHTML='<span class="dot dot-green"></span><span style="color:var(--success)">준비됨</span>';
-  if(IS_ADMIN||IS_SUPER)document.getElementById('nav-audit').style.display='flex';
+  if(IS_ADMIN||IS_SUPER){document.getElementById('nav-audit').style.display='flex';const em=document.getElementById('nav-email');if(em)em.style.display='flex';}
   if(IS_SUPER)document.getElementById('nav-settings').style.display='flex';
   // 링크 등록은 전체 팀원 가능
   startSessionTimer();
@@ -3381,6 +3482,160 @@ async function runPattern(){
     setAIModalBody(text);
     document.getElementById('ai-modal-meta').textContent=`상위 ${topCus.length}개 고객사`;
   }catch(e){setAIModalBody(`<div style="color:var(--danger);padding:20px">오류: ${e.message}</div>`,true);}
+}
+
+// ── EMAIL MANAGEMENT ──────────────────────────────
+let emailHistoryCache=[];
+let emailTemplatesCache={};
+let currentTmplKey='comment';
+
+function switchEmailTab(tab,btn){
+  ['push','history','templates'].forEach(t=>{
+    const el=document.getElementById(`email-tab-${t}`);
+    if(el)el.style.display=t===tab?'block':'none';
+  });
+  document.querySelectorAll('#emailTabBar .email-tab').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  if(tab==='history')loadEmailHistory();
+  if(tab==='templates')loadEmailTemplates();
+}
+
+async function loadEmailHistory(){
+  const tbody=document.getElementById('email-hist-tbody');
+  if(tbody)tbody.innerHTML=`<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--text3);font-size:13px">로딩 중...</td></tr>`;
+  try{
+    const d=await hubApi('/admin/email/history');
+    emailHistoryCache=d.log||[];
+    renderEmailHistory();
+  }catch(e){
+    if(tbody)tbody.innerHTML=`<tr><td colspan="6" style="padding:24px;text-align:center;color:#f87171;font-size:13px">로딩 실패: ${e.message}</td></tr>`;
+  }
+}
+
+function renderEmailHistory(){
+  const tbody=document.getElementById('email-hist-tbody');
+  if(!tbody)return;
+  const q=(document.getElementById('email-hist-q')?.value||'').toLowerCase();
+  const typeF=(document.getElementById('email-hist-type')?.value||'');
+  let rows=emailHistoryCache.filter(e=>{
+    if(typeF&&e.type!==typeF)return false;
+    if(q&&!(`${e.to}${e.subject}${e.sentBy}${e.type}`).toLowerCase().includes(q))return false;
+    return true;
+  });
+  const countEl=document.getElementById('email-hist-count');
+  if(countEl)countEl.textContent=`${rows.length}건`;
+  if(!rows.length){tbody.innerHTML=`<tr><td colspan="6" style="padding:24px;text-align:center;color:var(--text3);font-size:13px">이력이 없습니다</td></tr>`;return;}
+  tbody.innerHTML=rows.map(e=>{
+    const typeLabel=e.type==='comment'?'💬 댓글':e.type==='push'?'📋 Push':'기타';
+    const okBadge=e.ok?'<span style="color:#4ade80;font-weight:700">성공</span>':'<span style="color:#f87171;font-weight:700">실패</span>';
+    const dt=e.sentAt?new Date(e.sentAt).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}):'';
+    const subj=(e.subject||'').slice(0,40);
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:8px 12px;font-size:12px;color:var(--text2)">${typeLabel}</td>
+      <td style="padding:8px 12px;font-size:12px;color:var(--text)">${e.to||''}</td>
+      <td style="padding:8px 12px;font-size:12px;color:var(--text3)" title="${escapeHtml(e.subject||'')}">${escapeHtml(subj)}</td>
+      <td style="padding:8px 12px;font-size:12px;color:var(--text3)">${e.sentBy||''}</td>
+      <td style="padding:8px 12px;font-size:12px">${okBadge}</td>
+      <td style="padding:8px 12px;font-size:11px;color:var(--text3);white-space:nowrap">${dt}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function loadEmailTemplates(){
+  const editor=document.getElementById('tmpl-editor');
+  if(!editor)return;
+  editor.value='로딩 중...';
+  try{
+    const d=await hubApi('/admin/email/templates');
+    emailTemplatesCache=d.templates||{};
+    window._emailTemplateDefaults=d.defaults||{};
+    currentTmplKey=document.getElementById('tmpl-select')?.value||'comment';
+    editor.value=emailTemplatesCache[currentTmplKey]||'';
+  }catch(e){
+    editor.value='로딩 실패: '+e.message;
+  }
+}
+
+function switchTemplate(key){
+  if(emailTemplatesCache[currentTmplKey]!==undefined){
+    emailTemplatesCache[currentTmplKey]=document.getElementById('tmpl-editor')?.value||'';
+  }
+  currentTmplKey=key;
+  const editor=document.getElementById('tmpl-editor');
+  if(editor)editor.value=emailTemplatesCache[key]||'';
+  const pw=document.getElementById('tmpl-preview-wrap');
+  if(pw)pw.style.display='none';
+}
+
+function resetTemplate(){
+  const def=(window._emailTemplateDefaults||{})[currentTmplKey]||'';
+  const editor=document.getElementById('tmpl-editor');
+  if(editor)editor.value=def;
+  emailTemplatesCache[currentTmplKey]=def;
+  toast('기본값으로 초기화했습니다. 저장하려면 저장 버튼을 누르세요.');
+}
+
+function previewTemplate(){
+  const html=document.getElementById('tmpl-editor')?.value||'';
+  const iframe=document.getElementById('tmpl-preview-iframe');
+  const pw=document.getElementById('tmpl-preview-wrap');
+  if(!iframe||!pw)return;
+  let preview=html;
+  if(currentTmplKey==='comment'){
+    preview=html.replace(/\{\{author\}\}/g,'hong.gildong').replace(/\{\{kind\}\}/g,'팀노하우').replace(/\{\{kind_upper\}\}/g,'팀노하우').replace(/\{\{item_title\}\}/g,'SEP 14 업그레이드 절차').replace(/\{\{commenter\}\}/g,'kim.minsu').replace(/\{\{comment_text\}\}/g,'확인했습니다. 내일 적용하겠습니다.').replace(/\{\{hub_url\}\}/g,'#');
+  }else{
+    preview=html.replace(/\{\{assignee\}\}/g,'hong.gildong').replace(/\{\{sent_by\}\}/g,SESSION_USER||'admin').replace(/\{\{sent_date\}\}/g,'2026년 5월 8일').replace(/\{\{jira_section\}\}/g,'<div style="margin-bottom:16px;padding:12px;border:1px solid #e2e8f0;border-radius:8px"><b>📌 Jira 이슈 (2건)</b><br><br>ENGR-123 · SEP 업그레이드 계획<br>ENGR-456 · 고객사 정책 검토</div>').replace(/\{\{case_section\}\}/g,'').replace(/\{\{eos_section\}\}/g,'').replace(/\{\{hub_url\}\}/g,'#');
+  }
+  iframe.srcdoc=preview;
+  pw.style.display='block';
+}
+
+async function saveTemplate(){
+  const editor=document.getElementById('tmpl-editor');
+  const val=editor?.value||'';
+  emailTemplatesCache[currentTmplKey]=val;
+  try{
+    await hubApi('/admin/email/templates',{method:'PUT',body:JSON.stringify(emailTemplatesCache)});
+    toast('템플릿이 저장되었습니다.');
+  }catch(e){toast('저장 오류: '+e.message,true);}
+}
+
+async function doEmailPushPreview(){
+  const targetUser=(document.getElementById('email-push-user')?.value||'').trim();
+  if(!targetUser){toast('대상 팀원 ID를 입력하세요.',true);return;}
+  const statusEl=document.getElementById('email-push-status');
+  const countsEl=document.getElementById('email-push-counts');
+  const previewWrap=document.getElementById('email-push-preview');
+  statusEl.style.display='block';statusEl.innerHTML='<div class="loading" style="font-size:13px">조회 중...</div>';
+  countsEl.style.display='none';previewWrap.style.display='none';
+  try{
+    const d=await hubApi('/admin/email/push',{method:'POST',body:JSON.stringify({targetUser,preview:true})});
+    if(d.empty){statusEl.innerHTML=`<span style="color:#4ade80">✓ ${escapeHtml(d.message||'미완료 건이 없습니다.')}</span>`;return;}
+    const c=d.counts||{};
+    document.getElementById('ecp-jira').innerHTML=`📌 Jira 이슈 <strong>${c.jira||0}</strong>건`;
+    document.getElementById('ecp-cases').innerHTML=`🎫 케이스 <strong>${c.cases||0}</strong>건`;
+    document.getElementById('ecp-eos').innerHTML=`⏰ EOS 임박 <strong>${c.eos||0}</strong>건`;
+    countsEl.style.display='block';
+    statusEl.innerHTML=`<span style="color:var(--text3)">수신자: <strong style="color:var(--text)">${d.to}</strong> · 제목: ${escapeHtml((d.subject||'').slice(0,60))}</span>`;
+    const iframe=document.getElementById('email-push-iframe');
+    if(iframe&&d.html)iframe.srcdoc=d.html;
+    previewWrap.style.display='block';
+  }catch(e){statusEl.innerHTML=`<span style="color:#f87171">오류: ${e.message}</span>`;}
+}
+
+async function doEmailPush(){
+  const targetUser=(document.getElementById('email-push-user')?.value||'').trim();
+  if(!targetUser){toast('대상 팀원 ID를 입력하세요.',true);return;}
+  if(!confirm(`${targetUser}@escare.co.kr로 미완료 업무 내역 이메일을 발송하시겠습니까?`))return;
+  const statusEl=document.getElementById('email-push-status');
+  statusEl.style.display='block';statusEl.innerHTML='<div class="loading" style="font-size:13px">발송 중...</div>';
+  try{
+    const d=await hubApi('/admin/email/push',{method:'POST',body:JSON.stringify({targetUser,preview:false})});
+    const c=d.counts||{};
+    if(d.empty){statusEl.innerHTML=`<span style="color:#fbbf24">⚠ ${escapeHtml(d.message||'미완료 건이 없습니다.')}</span>`;return;}
+    statusEl.innerHTML=`<span style="color:#4ade80">✓ ${escapeHtml(d.message||'발송 요청 완료')} (Jira ${c.jira}건 / 케이스 ${c.cases}건 / EOS ${c.eos}건)</span>`;
+    toast(`${targetUser}에게 미완료 업무 내역 메일이 발송되었습니다.`);
+  }catch(e){statusEl.innerHTML=`<span style="color:#f87171">오류: ${e.message}</span>`;}
 }
 
 // ── AUDIT ─────────────────────────────────────────
@@ -5731,8 +5986,8 @@ function showPage(name,btn){
   const page=document.getElementById('page-'+name); if(page)page.classList.add('active');
   document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
   const nav=btn||document.getElementById('nav-'+name); if(nav)nav.classList.add('active');
-  const titleMap={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'EOS / 라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정'};
-  const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',eos:'제품 EOS 및 라이선스 체크',log:'로그 업로드 및 증상 기반 AI 분석',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',private:'로그인 사용자 전용 일정, 팁, 할일, 개인 참고',audit:'사용자 작업 이력',settings:'초기 데이터 및 저장소 관리'};
+  const titleMap={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'EOS / 라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',email:'메일 관리',settings:'관리자 설정'};
+  const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',eos:'제품 EOS 및 라이선스 체크',log:'로그 업로드 및 증상 기반 AI 분석',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',private:'로그인 사용자 전용 일정, 팁, 할일, 개인 참고',audit:'사용자 작업 이력',email:'이메일 발송 Push · 발송 이력 · 템플릿 편집',settings:'초기 데이터 및 저장소 관리'};
   const title=document.getElementById('page-title'); if(title)title.textContent=titleMap[name]||'HUB';
   const desc=document.getElementById('page-desc'); if(desc)desc.textContent=descMap[name]||'';
   renderCurrent();
@@ -5859,7 +6114,7 @@ function enterApp(){
   injectPrivateHubDom();
   document.getElementById('cfg').style.display='none';
   document.getElementById('app').style.display='flex';
-  if(IS_ADMIN||IS_SUPER){const audit=document.getElementById('nav-audit');if(audit)audit.style.display='flex';}
+  if(IS_ADMIN||IS_SUPER){const audit=document.getElementById('nav-audit');if(audit)audit.style.display='flex';const em=document.getElementById('nav-email');if(em)em.style.display='flex';}
   if(IS_SUPER){const settings=document.getElementById('nav-settings');if(settings)settings.style.display='flex';}
   renderSidebarCompact();
   const ai=document.getElementById('ai-status');if(ai){ai.textContent='준비됨';ai.className='h-state ok';}
@@ -5923,11 +6178,12 @@ function syncMobSheet(panelId){
 /* ── v1.5.11: session revoke + comment feed ───────────── */
 /* mobile primary nav + compact admin settings */
 const MOBILE_PRIMARY_NAV=['nav-dash','nav-issues','nav-cases','nav-customers'];
-const MOBILE_MORE_NAV=['nav-eos','nav-log','nav-vt','nav-links','nav-knowledge','nav-private','nav-audit','nav-settings'];
-const MOBILE_NAV_LABELS={eos:'EOS / 라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정'};
+const MOBILE_MORE_NAV=['nav-eos','nav-log','nav-vt','nav-links','nav-knowledge','nav-private','nav-audit','nav-email','nav-settings'];
+const MOBILE_NAV_LABELS={eos:'EOS / 라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',email:'메일 관리',settings:'관리자 설정'};
 function mobilePageNameFromNav(id){return String(id||'').replace(/^nav-/,'');}
 function canShowMobileMoreItem(id){
   if(id==='nav-audit')return !!(IS_ADMIN||IS_SUPER);
+  if(id==='nav-email')return !!(IS_ADMIN||IS_SUPER);
   if(id==='nav-settings')return !!IS_SUPER;
   return !!document.getElementById(id);
 }
