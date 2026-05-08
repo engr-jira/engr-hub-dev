@@ -1038,8 +1038,25 @@ html[data-theme="light"] .link-card:hover{background:#f8fafc!important}
 .email-tab-content{display:block}
 .email-count-pill{background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--text2)}
 .email-count-pill strong{color:var(--text);font-weight:700}
+.email-label{display:block;font-size:11px;color:var(--text3);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.email-input{padding:8px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--card2,var(--card));color:var(--text);font-size:13px;outline:none;width:100%;box-sizing:border-box}
+.email-input:focus{border-color:rgba(99,102,241,.5)}
+.email-select{padding:7px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--card2,var(--card));color:var(--text);font-size:12px;outline:none}
+.email-select:focus{border-color:rgba(99,102,241,.5)}
+.email-check-label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text2);cursor:pointer;user-select:none}
+.email-check-label input{accent-color:#6366f1;width:15px;height:15px;cursor:pointer}
+.email-hist-table thead tr{background:rgba(99,102,241,.08)}
+.email-hist-table th{padding:10px 12px;text-align:left;font-size:11px;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border)}
+.tmpl-var{display:inline-block;background:rgba(99,102,241,.12);color:#a5b4fc;padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11px;margin:1px}
+.email-tmpl-editor{width:100%;height:360px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Consolas','Courier New',monospace;font-size:12px;padding:14px;resize:vertical;box-sizing:border-box;line-height:1.6;white-space:pre;overflow:auto}
+.sched-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;flex-wrap:wrap}
+.sched-row:last-child{border-bottom:none}
 html[data-theme="light"] .email-tab.active{background:rgba(79,70,229,.12);color:#4f46e5}
 html[data-theme="light"] .email-count-pill{background:rgba(79,70,229,.08);border-color:rgba(79,70,229,.15);color:#334155}
+html[data-theme="light"] .email-input{background:#fff;color:#1e293b;border-color:#cbd5e1}
+html[data-theme="light"] .email-select{background:#fff;color:#1e293b;border-color:#cbd5e1}
+html[data-theme="light"] .email-tmpl-editor{background:#f8fafc;color:#1e293b}
+html[data-theme="light"] .tmpl-var{background:rgba(79,70,229,.1);color:#4f46e5}
 </style>
 
 <style id="light-fix">
@@ -1585,23 +1602,64 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
       <!-- Push 탭 -->
       <div id="email-tab-push" class="email-tab-content">
         <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">
-          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px">📋 미완료 업무 내역 발송</div>
-          <div style="font-size:12px;color:var(--text3);margin-bottom:16px">대상 팀원의 미완료 Jira 이슈, 케이스, EOS 만료 임박 항목을 이메일로 발송합니다.</div>
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:200px">
-              <label style="font-size:11px;color:var(--text3);font-weight:700">대상 팀원 (Jira ID)</label>
-              <input id="email-push-user" placeholder="예: hong.gildong" style="padding:8px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--input-bg,#1a1d2e);color:var(--text);font-size:13px">
-            </div>
-            <div style="display:flex;gap:8px;align-items:flex-end;padding-bottom:0">
-              <button onclick="doEmailPushPreview()" class="btn btn-ghost" style="width:auto;padding:8px 16px;font-size:13px">미리보기</button>
-              <button onclick="doEmailPush()" class="btn btn-primary" style="width:auto;padding:8px 18px;font-size:13px">발송</button>
+          <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px">📋 미완료 업무 내역 발송</div>
+
+          <!-- 대상 팀원 선택 -->
+          <div style="margin-bottom:14px">
+            <label class="email-label">대상 팀원</label>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <select id="email-push-user" class="email-select" style="flex:1;min-width:180px">
+                <option value="">팀원 선택...</option>
+              </select>
+              <span style="font-size:11px;color:var(--text3)">또는</span>
+              <input id="email-push-user-manual" class="email-input" placeholder="직접 입력 (Jira ID)" style="flex:1;min-width:160px">
             </div>
           </div>
+
+          <!-- 항목 선택 -->
+          <div style="margin-bottom:14px">
+            <label class="email-label">발송 항목</label>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px">
+              <label class="email-check-label"><input type="checkbox" id="ept-jira" checked> 📌 Jira 이슈</label>
+              <label class="email-check-label"><input type="checkbox" id="ept-cases" checked> 🎫 케이스</label>
+              <label class="email-check-label"><input type="checkbox" id="ept-eos" checked> ⏰ EOS 만료 임박</label>
+            </div>
+          </div>
+
+          <!-- 발송 방식 -->
+          <div style="margin-bottom:16px">
+            <label class="email-label">발송 방식</label>
+            <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px">
+              <label class="email-check-label"><input type="radio" name="email-send-type" value="now" id="est-now" checked onchange="toggleScheduleOptions()"> 즉시 발송</label>
+              <label class="email-check-label"><input type="radio" name="email-send-type" value="daily" id="est-daily" onchange="toggleScheduleOptions()"> 일단위 (매일)</label>
+              <label class="email-check-label"><input type="radio" name="email-send-type" value="weekly" id="est-weekly" onchange="toggleScheduleOptions()"> 주단위</label>
+            </div>
+            <div id="schedule-options" style="display:none;margin-top:10px;padding:12px;background:var(--bg);border:1px solid var(--border2);border-radius:10px">
+              <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+                <div id="schedule-dow-wrap">
+                  <label class="email-label" style="margin-bottom:4px">요일</label>
+                  <select id="schedule-dow" class="email-select" style="width:120px">
+                    <option value="1">월요일</option><option value="2">화요일</option><option value="3">수요일</option>
+                    <option value="4">목요일</option><option value="5">금요일</option><option value="0">일요일</option><option value="6">토요일</option>
+                  </select>
+                </div>
+                <div style="font-size:11px;color:var(--text3);line-height:1.5">발송 시각: 매일 오전 10시 (KST)<br>Cloudflare Cron 기준 UTC 01:00</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 버튼 영역 -->
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="doEmailPushPreview()" class="btn btn-ghost" style="width:auto;padding:8px 16px;font-size:13px">🔍 미리보기</button>
+            <button onclick="doEmailPushOrSchedule()" class="btn btn-primary" style="width:auto;padding:8px 20px;font-size:13px" id="email-send-btn">✉ 즉시 발송</button>
+          </div>
         </div>
-        <div id="email-push-status" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:16px;font-size:13px"></div>
-        <div id="email-push-counts" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:16px">
-          <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:10px">조회 결과</div>
-          <div style="display:flex;gap:12px;flex-wrap:wrap">
+
+        <!-- 결과 상태 -->
+        <div id="email-push-status" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:14px;font-size:13px"></div>
+        <div id="email-push-counts" style="display:none;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em">조회 결과</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
             <div class="email-count-pill" id="ecp-jira">📌 Jira 이슈 <strong>-</strong>건</div>
             <div class="email-count-pill" id="ecp-cases">🎫 케이스 <strong>-</strong>건</div>
             <div class="email-count-pill" id="ecp-eos">⏰ EOS 임박 <strong>-</strong>건</div>
@@ -1611,27 +1669,33 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
           <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">메일 미리보기</div>
           <iframe id="email-push-iframe" style="width:100%;height:520px;border:1px solid var(--border);border-radius:12px;background:#fff"></iframe>
         </div>
+
+        <!-- 스케줄 목록 -->
+        <div style="margin-top:20px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:700;color:var(--text)">🗓 등록된 스케줄</div>
+            <button onclick="loadEmailSchedules()" class="btn btn-ghost" style="width:auto;padding:5px 12px;font-size:11px">새로고침</button>
+          </div>
+          <div id="email-schedules-list" style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden">
+            <div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">새로고침을 눌러 스케줄 목록을 불러오세요</div>
+          </div>
+        </div>
       </div>
 
       <!-- 이력 탭 -->
       <div id="email-tab-history" class="email-tab-content" style="display:none">
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
-          <input id="email-hist-q" placeholder="수신자 / 유형 / 제목 검색..." oninput="renderEmailHistory()" style="flex:1;min-width:200px;padding:7px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--input-bg,#1a1d2e);color:var(--text);font-size:12px">
-          <select id="email-hist-type" onchange="renderEmailHistory()" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border2);background:var(--input-bg,#1a1d2e);color:var(--text);font-size:12px">
+          <input id="email-hist-q" placeholder="수신자 / 유형 / 제목 검색..." oninput="renderEmailHistory()" class="email-input" style="flex:1;min-width:200px">
+          <select id="email-hist-type" onchange="renderEmailHistory()" class="email-select">
             <option value="">전체</option><option value="comment">댓글 알림</option><option value="push">업무 Push</option>
           </select>
           <button onclick="loadEmailHistory()" class="btn btn-ghost" style="width:auto;padding:7px 14px;font-size:12px">새로고침</button>
           <span id="email-hist-count" style="font-size:11px;color:var(--text3)"></span>
         </div>
         <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden">
-          <table style="width:100%;border-collapse:collapse">
-            <thead><tr style="background:rgba(99,102,241,.08)">
-              <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border)">유형</th>
-              <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border)">수신자</th>
-              <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border)">제목</th>
-              <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border)">발송자</th>
-              <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border)">결과</th>
-              <th style="padding:10px 12px;text-align:left;font-size:11px;color:var(--text3);font-weight:700;border-bottom:1px solid var(--border)">일시</th>
+          <table class="email-hist-table" style="width:100%;border-collapse:collapse">
+            <thead><tr>
+              <th>유형</th><th>수신자</th><th>제목</th><th>발송자</th><th>결과</th><th>일시</th>
             </tr></thead>
             <tbody id="email-hist-tbody"><tr><td colspan="6" style="padding:24px;text-align:center;color:var(--text3);font-size:13px">새로고침을 눌러 이력을 불러오세요</td></tr></tbody>
           </table>
@@ -1640,24 +1704,25 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
 
       <!-- 템플릿 편집 탭 -->
       <div id="email-tab-templates" class="email-tab-content" style="display:none">
-        <div style="font-size:12px;color:var(--text3);margin-bottom:12px;line-height:1.6">
-          이메일 HTML 템플릿을 편집합니다. <code style="background:rgba(99,102,241,.15);color:#a5b4fc;padding:2px 6px;border-radius:4px">{{변수}}</code> 형태로 변수를 사용하세요.<br>
-          <span style="color:var(--text3);font-size:11px">댓글: {{author}} {{kind}} {{kind_upper}} {{item_title}} {{commenter}} {{comment_text}} {{hub_url}}</span><br>
-          <span style="color:var(--text3);font-size:11px">Push: {{assignee}} {{sent_by}} {{sent_date}} {{jira_section}} {{case_section}} {{eos_section}} {{hub_url}}</span>
+        <div style="background:rgba(99,102,241,.06);border:1px solid rgba(99,102,241,.15);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.8">
+          <div style="font-weight:700;margin-bottom:4px">사용 가능한 변수 <code style="background:rgba(99,102,241,.15);color:#a5b4fc;padding:1px 5px;border-radius:3px">{{변수명}}</code></div>
+          <div><strong style="color:var(--text3)">댓글 알림:</strong> <span class="tmpl-var">{{author}}</span> <span class="tmpl-var">{{kind}}</span> <span class="tmpl-var">{{kind_upper}}</span> <span class="tmpl-var">{{item_title}}</span> <span class="tmpl-var">{{commenter}}</span> <span class="tmpl-var">{{comment_text}}</span> <span class="tmpl-var">{{hub_url}}</span></div>
+          <div><strong style="color:var(--text3)">업무 Push:</strong> <span class="tmpl-var">{{assignee}}</span> <span class="tmpl-var">{{sent_by}}</span> <span class="tmpl-var">{{sent_date}}</span> <span class="tmpl-var">{{jira_section}}</span> <span class="tmpl-var">{{case_section}}</span> <span class="tmpl-var">{{eos_section}}</span> <span class="tmpl-var">{{hub_url}}</span></div>
         </div>
-        <div style="display:flex;gap:10px;margin-bottom:8px;flex-wrap:wrap;align-items:center">
-          <select id="tmpl-select" onchange="switchTemplate(this.value)" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border2);background:var(--input-bg,#1a1d2e);color:var(--text);font-size:12px">
-            <option value="comment">댓글 알림 템플릿</option>
-            <option value="push">업무 Push 템플릿</option>
+        <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center">
+          <select id="tmpl-select" onchange="switchTemplate(this.value)" class="email-select">
+            <option value="comment">💬 댓글 알림 템플릿</option>
+            <option value="push">📋 업무 Push 템플릿</option>
           </select>
-          <button onclick="resetTemplate()" class="btn btn-ghost" style="width:auto;padding:7px 14px;font-size:12px">기본값으로 초기화</button>
-          <button onclick="previewTemplate()" class="btn btn-ghost" style="width:auto;padding:7px 14px;font-size:12px">미리보기</button>
+          <button onclick="formatTemplateHtml()" class="btn btn-ghost" style="width:auto;padding:7px 14px;font-size:12px">✨ 포맷</button>
+          <button onclick="resetTemplate()" class="btn btn-ghost" style="width:auto;padding:7px 14px;font-size:12px">초기화</button>
+          <button onclick="previewTemplate()" class="btn btn-ghost" style="width:auto;padding:7px 14px;font-size:12px">🔍 미리보기</button>
           <button onclick="saveTemplate()" class="btn btn-primary" style="width:auto;padding:7px 18px;font-size:12px">저장</button>
         </div>
-        <textarea id="tmpl-editor" style="width:100%;height:280px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:monospace;font-size:12px;padding:14px;resize:vertical;box-sizing:border-box;line-height:1.5" placeholder="HTML 템플릿 로딩 중..."></textarea>
-        <div id="tmpl-preview-wrap" style="display:none;margin-top:12px">
-          <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">템플릿 미리보기 (샘플 데이터)</div>
-          <iframe id="tmpl-preview-iframe" style="width:100%;height:480px;border:1px solid var(--border);border-radius:12px;background:#fff"></iframe>
+        <textarea id="tmpl-editor" class="email-tmpl-editor" placeholder="HTML 템플릿 로딩 중..."></textarea>
+        <div id="tmpl-preview-wrap" style="display:none;margin-top:14px">
+          <div style="font-size:12px;font-weight:700;color:var(--text3);margin-bottom:8px">미리보기 (샘플 데이터)</div>
+          <iframe id="tmpl-preview-iframe" style="width:100%;height:500px;border:1px solid var(--border);border-radius:12px;background:#fff"></iframe>
         </div>
       </div>
     </div>
@@ -3498,6 +3563,42 @@ function switchEmailTab(tab,btn){
   if(btn)btn.classList.add('active');
   if(tab==='history')loadEmailHistory();
   if(tab==='templates')loadEmailTemplates();
+  if(tab==='push'){loadEmailSchedules();loadEmailUserList();}
+}
+
+function toggleScheduleOptions(){
+  const val=document.querySelector('input[name="email-send-type"]:checked')?.value||'now';
+  const opts=document.getElementById('schedule-options');
+  const dowWrap=document.getElementById('schedule-dow-wrap');
+  const btn=document.getElementById('email-send-btn');
+  if(opts)opts.style.display=val==='now'?'none':'block';
+  if(dowWrap)dowWrap.style.display=val==='weekly'?'flex':'none';
+  if(btn)btn.textContent=val==='now'?'✉ 즉시 발송':'🗓 스케줄 등록';
+}
+
+async function loadEmailUserList(){
+  const sel=document.getElementById('email-push-user');
+  if(!sel||sel.dataset.loaded)return;
+  try{
+    const d=await hubApi('/admin/users');
+    const users=d.users||[];
+    sel.innerHTML='<option value="">팀원 선택...</option>'+users.map(u=>`<option value="${u.id}">${u.id}${u.name?` (${u.name})`:''}</option>`).join('');
+    sel.dataset.loaded='1';
+  }catch(_){}
+}
+
+function getEmailPushUser(){
+  const manual=(document.getElementById('email-push-user-manual')?.value||'').trim();
+  const sel=(document.getElementById('email-push-user')?.value||'').trim();
+  return manual||sel;
+}
+
+function getEmailPushTypes(){
+  const types=[];
+  if(document.getElementById('ept-jira')?.checked)types.push('jira');
+  if(document.getElementById('ept-cases')?.checked)types.push('cases');
+  if(document.getElementById('ept-eos')?.checked)types.push('eos');
+  return types.length?types:['jira','cases','eos'];
 }
 
 async function loadEmailHistory(){
@@ -3551,6 +3652,7 @@ async function loadEmailTemplates(){
     window._emailTemplateDefaults=d.defaults||{};
     currentTmplKey=document.getElementById('tmpl-select')?.value||'comment';
     editor.value=emailTemplatesCache[currentTmplKey]||'';
+    formatTemplateHtml();
   }catch(e){
     editor.value='로딩 실패: '+e.message;
   }
@@ -3567,11 +3669,39 @@ function switchTemplate(key){
   if(pw)pw.style.display='none';
 }
 
+function formatTemplateHtml(){
+  const editor=document.getElementById('tmpl-editor');
+  if(!editor)return;
+  try{
+    let html=editor.value;
+    // 태그 사이 줄바꿈 삽입
+    html=html.replace(/>\s*</g,'>\n<').replace(/>\s*\{\{/g,'>\n{{').replace(/\}\}\s*</g,'}}\n<');
+    const voidTags=/^(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)$/i;
+    let indent=0;
+    const lines=html.split('\n');
+    const result=lines.map(raw=>{
+      const line=raw.trim();
+      if(!line)return '';
+      // 닫힘 태그면 먼저 인덴트 감소
+      if(/^<\//.test(line))indent=Math.max(0,indent-1);
+      const pad='  '.repeat(indent);
+      const out=pad+line;
+      // 여는 태그면 인덴트 증가 (void 태그 및 셀프클로징 제외)
+      const tagM=line.match(/^<([a-zA-Z][^\s/>]*)/);
+      if(tagM&&!line.startsWith('</')&&!line.endsWith('/>'))if(!voidTags.test(tagM[1]))indent++;
+      return out;
+    }).filter(Boolean).join('\n');
+    editor.value=result;
+    emailTemplatesCache[currentTmplKey]=result;
+    toast('HTML이 정리되었습니다.');
+  }catch(e){toast('포맷 오류: '+e.message,true);}
+}
+
 function resetTemplate(){
   const def=(window._emailTemplateDefaults||{})[currentTmplKey]||'';
   const editor=document.getElementById('tmpl-editor');
-  if(editor)editor.value=def;
-  emailTemplatesCache[currentTmplKey]=def;
+  if(editor){editor.value=def;formatTemplateHtml();}
+  emailTemplatesCache[currentTmplKey]=document.getElementById('tmpl-editor')?.value||def;
   toast('기본값으로 초기화했습니다. 저장하려면 저장 버튼을 누르세요.');
 }
 
@@ -3601,15 +3731,16 @@ async function saveTemplate(){
 }
 
 async function doEmailPushPreview(){
-  const targetUser=(document.getElementById('email-push-user')?.value||'').trim();
-  if(!targetUser){toast('대상 팀원 ID를 입력하세요.',true);return;}
+  const targetUser=getEmailPushUser();
+  if(!targetUser){toast('대상 팀원을 선택하거나 입력하세요.',true);return;}
+  const types=getEmailPushTypes();
   const statusEl=document.getElementById('email-push-status');
   const countsEl=document.getElementById('email-push-counts');
   const previewWrap=document.getElementById('email-push-preview');
   statusEl.style.display='block';statusEl.innerHTML='<div class="loading" style="font-size:13px">조회 중...</div>';
   countsEl.style.display='none';previewWrap.style.display='none';
   try{
-    const d=await hubApi('/admin/email/push',{method:'POST',body:JSON.stringify({targetUser,preview:true})});
+    const d=await hubApi('/admin/email/push',{method:'POST',body:JSON.stringify({targetUser,types,preview:true})});
     if(d.empty){statusEl.innerHTML=`<span style="color:#4ade80">✓ ${escapeHtml(d.message||'미완료 건이 없습니다.')}</span>`;return;}
     const c=d.counts||{};
     document.getElementById('ecp-jira').innerHTML=`📌 Jira 이슈 <strong>${c.jira||0}</strong>건`;
@@ -3623,19 +3754,77 @@ async function doEmailPushPreview(){
   }catch(e){statusEl.innerHTML=`<span style="color:#f87171">오류: ${e.message}</span>`;}
 }
 
-async function doEmailPush(){
-  const targetUser=(document.getElementById('email-push-user')?.value||'').trim();
-  if(!targetUser){toast('대상 팀원 ID를 입력하세요.',true);return;}
-  if(!confirm(`${targetUser}@escare.co.kr로 미완료 업무 내역 이메일을 발송하시겠습니까?`))return;
-  const statusEl=document.getElementById('email-push-status');
-  statusEl.style.display='block';statusEl.innerHTML='<div class="loading" style="font-size:13px">발송 중...</div>';
+async function doEmailPushOrSchedule(){
+  const sendType=document.querySelector('input[name="email-send-type"]:checked')?.value||'now';
+  const targetUser=getEmailPushUser();
+  if(!targetUser){toast('대상 팀원을 선택하거나 입력하세요.',true);return;}
+  const types=getEmailPushTypes();
+
+  if(sendType==='now'){
+    if(!confirm(`${targetUser}@escare.co.kr로 미완료 업무 내역 이메일을 즉시 발송하시겠습니까?`))return;
+    const statusEl=document.getElementById('email-push-status');
+    statusEl.style.display='block';statusEl.innerHTML='<div class="loading" style="font-size:13px">발송 중...</div>';
+    try{
+      const d=await hubApi('/admin/email/push',{method:'POST',body:JSON.stringify({targetUser,types,preview:false})});
+      const c=d.counts||{};
+      if(d.empty){statusEl.innerHTML=`<span style="color:#fbbf24">⚠ ${escapeHtml(d.message||'미완료 건이 없습니다.')}</span>`;return;}
+      statusEl.innerHTML=`<span style="color:#4ade80">✓ 발송 요청 완료 (Jira ${c.jira}건 / 케이스 ${c.cases}건 / EOS ${c.eos}건)</span>`;
+      toast(`${targetUser}에게 미완료 업무 내역 메일이 발송되었습니다.`);
+    }catch(e){statusEl.innerHTML=`<span style="color:#f87171">오류: ${e.message}</span>`;}
+  } else {
+    const dow=parseInt(document.getElementById('schedule-dow')?.value||'1');
+    if(!confirm(`${targetUser}에게 ${sendType==='daily'?'매일':'매주'} 자동 발송 스케줄을 등록하시겠습니까?`))return;
+    try{
+      await hubApi('/admin/email/schedules',{method:'POST',body:JSON.stringify({targetUser,types,frequency:sendType,dayOfWeek:dow})});
+      toast(`스케줄이 등록되었습니다.`);
+      loadEmailSchedules();
+    }catch(e){toast('스케줄 등록 실패: '+e.message,true);}
+  }
+}
+
+async function loadEmailSchedules(){
+  const list=document.getElementById('email-schedules-list');
+  if(!list)return;
   try{
-    const d=await hubApi('/admin/email/push',{method:'POST',body:JSON.stringify({targetUser,preview:false})});
-    const c=d.counts||{};
-    if(d.empty){statusEl.innerHTML=`<span style="color:#fbbf24">⚠ ${escapeHtml(d.message||'미완료 건이 없습니다.')}</span>`;return;}
-    statusEl.innerHTML=`<span style="color:#4ade80">✓ ${escapeHtml(d.message||'발송 요청 완료')} (Jira ${c.jira}건 / 케이스 ${c.cases}건 / EOS ${c.eos}건)</span>`;
-    toast(`${targetUser}에게 미완료 업무 내역 메일이 발송되었습니다.`);
-  }catch(e){statusEl.innerHTML=`<span style="color:#f87171">오류: ${e.message}</span>`;}
+    const d=await hubApi('/admin/email/schedules');
+    const scheds=d.schedules||[];
+    if(!scheds.length){
+      list.innerHTML='<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px">등록된 스케줄이 없습니다</div>';
+      return;
+    }
+    const dows=['일','월','화','수','목','금','토'];
+    list.innerHTML=scheds.map(s=>{
+      const typeLabels=(s.types||[]).map(t=>t==='jira'?'Jira':t==='cases'?'케이스':'EOS').join(', ');
+      const freqLabel=s.frequency==='daily'?'매일':s.frequency==='weekly'?`매주 ${dows[s.dayOfWeek||1]}요일`:'';
+      const enableBadge=s.enabled?'<span style="color:#4ade80;font-size:10px;font-weight:700">ON</span>':'<span style="color:#f87171;font-size:10px;font-weight:700">OFF</span>';
+      return `<div class="sched-row">
+        <div style="flex:1;min-width:120px"><strong style="color:var(--text)">${s.targetUser}</strong><br><span style="color:var(--text3);font-size:11px">${typeLabels}</span></div>
+        <div style="color:var(--text2);min-width:100px">${freqLabel}</div>
+        <div>${enableBadge}</div>
+        <div style="color:var(--text3);font-size:11px">${s.createdBy||''}</div>
+        <button onclick="toggleScheduleEnabled('${s.id}',${!s.enabled})" class="btn btn-ghost" style="width:auto;padding:4px 10px;font-size:11px">${s.enabled?'비활성화':'활성화'}</button>
+        <button onclick="deleteSchedule('${s.id}')" class="btn btn-ghost" style="width:auto;padding:4px 10px;font-size:11px;color:#f87171">삭제</button>
+      </div>`;
+    }).join('');
+  }catch(e){
+    list.innerHTML=`<div style="padding:20px;text-align:center;color:#f87171;font-size:13px">로딩 실패: ${e.message}</div>`;
+  }
+}
+
+async function toggleScheduleEnabled(id,enabled){
+  try{
+    await hubApi('/admin/email/schedules',{method:'PUT',body:JSON.stringify({id,enabled})});
+    loadEmailSchedules();
+  }catch(e){toast('업데이트 실패: '+e.message,true);}
+}
+
+async function deleteSchedule(id){
+  if(!confirm('이 스케줄을 삭제하시겠습니까?'))return;
+  try{
+    await hubApi(`/admin/email/schedules?id=${encodeURIComponent(id)}`,{method:'DELETE'});
+    toast('스케줄이 삭제되었습니다.');
+    loadEmailSchedules();
+  }catch(e){toast('삭제 실패: '+e.message,true);}
 }
 
 // ── AUDIT ─────────────────────────────────────────
@@ -5684,6 +5873,7 @@ function renderCurrent(){
   else if(id==='knowledge')renderKnowledge();
   else if(id==='private'){if(!PRIVATE_LOADED)loadPrivateItems();else renderPrivateItems();}
   else if(id==='audit')loadAudit();
+  else if(id==='email'){loadEmailUserList();loadEmailSchedules();}
   else if(id==='settings')loadSettings();
   else if(id==='vt')loadSharedVTHistory();
 }

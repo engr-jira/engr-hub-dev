@@ -1941,46 +1941,51 @@ export default {
         const body = await request.json().catch(() => ({}));
         const targetUser = (body.targetUser || '').trim();
         const preview = body.preview === true;
+        const types = Array.isArray(body.types) && body.types.length ? body.types : ['jira', 'cases', 'eos'];
         if (!targetUser) return corsResponse({ ok: false, message: '\uB300\uC0C1 \uD300\uC6D0\uC744 \uC9C0\uC815\uD558\uC138\uC694.' }, 400);
         const toEmail = `${targetUser}@escare.co.kr`;
         const jiraAuth = 'Basic ' + btoa('mj.park@escare.co.kr:' + env.JIRA_TOKEN);
         const jiraBase = 'https://escare-engr.atlassian.net/rest/api/3';
 
-        // 1. Jira \uBBF8\uC644\uB8CC \uC774\uC288 \uC870\uD68C (\uB2F4\uB2F9\uC790 \uAE30\uC900)
+        // 1. Jira \uBBF8\uC644\uB8CC \uC774\uC288 \uC870\uD68C (\uB2F4\uB2F9\uC790 \uAE30\uC900, types\uC5D0 jira \uB610\uB294 cases \uD3EC\uD568 \uC2DC)
         let allIssues = [], startAt = 0;
-        try {
-          while (true) {
-            const jql = encodeURIComponent(`project=ENGR AND assignee="${targetUser}@escare.co.kr" AND resolution=Unresolved ORDER BY created DESC`);
-            const res = await fetch(`${jiraBase}/search?jql=${jql}&maxResults=50&startAt=${startAt}&fields=summary,status,priority,created,issuetype`, {
-              headers: { 'Authorization': jiraAuth, 'Accept': 'application/json' },
-            });
-            if (!res.ok) break;
-            const data = await res.json();
-            allIssues = allIssues.concat(data.issues || []);
-            if (allIssues.length >= (data.total || 0) || (data.issues || []).length === 0) break;
-            startAt += data.issues.length;
-            if (allIssues.length >= 200) break;
-          }
-        } catch (_) {}
+        if (types.includes('jira') || types.includes('cases')) {
+          try {
+            while (true) {
+              const jql = encodeURIComponent(`project=ENGR AND assignee="${targetUser}@escare.co.kr" AND resolution=Unresolved ORDER BY created DESC`);
+              const res = await fetch(`${jiraBase}/search?jql=${jql}&maxResults=50&startAt=${startAt}&fields=summary,status,priority,created,issuetype`, {
+                headers: { 'Authorization': jiraAuth, 'Accept': 'application/json' },
+              });
+              if (!res.ok) break;
+              const data = await res.json();
+              allIssues = allIssues.concat(data.issues || []);
+              if (allIssues.length >= (data.total || 0) || (data.issues || []).length === 0) break;
+              startAt += data.issues.length;
+              if (allIssues.length >= 200) break;
+            }
+          } catch (_) {}
+        }
 
         // 2. \uCF00\uC774\uC2A4 vs \uC77C\uBC18 \uC774\uC288 \uBD84\uB9AC (\uCF00\uC774\uC2A4: summary\uC5D0 7\uC790\uB9AC \uC774\uC0C1 \uC22B\uC790 \uD3EC\uD568)
         const caseRe = /\b\d{7,}\b/;
-        const cases = allIssues.filter(i => caseRe.test(i.fields?.summary || ''));
-        const jiraIssues = allIssues.filter(i => !caseRe.test(i.fields?.summary || ''));
+        const cases = types.includes('cases') ? allIssues.filter(i => caseRe.test(i.fields?.summary || '')) : [];
+        const jiraIssues = types.includes('jira') ? allIssues.filter(i => !caseRe.test(i.fields?.summary || '')) : [];
 
         // 3. EOS \uB9CC\uB8CC \uC784\uBC15 \uD56D\uBAA9 (90\uC77C \uC774\uB0B4)
         let eosItems = [];
-        try {
-          const eosRaw = await env.ENGR_KV.get('config:eos');
-          const eosList = eosRaw ? JSON.parse(eosRaw) : [];
-          const now = Date.now();
-          const days90 = 90 * 24 * 60 * 60 * 1000;
-          eosItems = eosList.filter(e => {
-            if (!e.expireDate) return false;
-            const exp = new Date(e.expireDate).getTime();
-            return exp > now && exp - now <= days90;
-          }).sort((a, b) => new Date(a.expireDate) - new Date(b.expireDate));
-        } catch (_) {}
+        if (types.includes('eos')) {
+          try {
+            const eosRaw = await env.ENGR_KV.get('config:eos');
+            const eosList = eosRaw ? JSON.parse(eosRaw) : [];
+            const now = Date.now();
+            const days90 = 90 * 24 * 60 * 60 * 1000;
+            eosItems = eosList.filter(e => {
+              if (!e.expireDate) return false;
+              const exp = new Date(e.expireDate).getTime();
+              return exp > now && exp - now <= days90;
+            }).sort((a, b) => new Date(a.expireDate) - new Date(b.expireDate));
+          } catch (_) {}
+        }
 
         // 4. HTML \uC139\uC158 \uBE4C\uB4DC \uD5EC\uD37C
         function issueRow(i) {
@@ -2037,9 +2042,162 @@ export default {
         return corsResponse({ ok: true, message: `${toEmail}\uB85C \uBC1C\uC1A1 \uC694\uCCAD\uB418\uC5C8\uC2B5\uB2C8\uB2E4.`, counts });
       }
 
+      // \u2500\u2500 \uC774\uBA54\uC77C \uC2A4\uCF00\uC904 \uC124\uC815 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+      if (path === '/admin/email/schedules') {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC811\uADFC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
+        if (request.method === 'GET') {
+          const raw = await env.ENGR_KV.get('config:email_schedules');
+          return corsResponse({ ok: true, schedules: raw ? JSON.parse(raw) : [] });
+        }
+        if (request.method === 'POST') {
+          const body = await request.json();
+          const raw = await env.ENGR_KV.get('config:email_schedules');
+          const schedules = raw ? JSON.parse(raw) : [];
+          const newSched = {
+            id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+            targetUser: (body.targetUser || '').trim(),
+            types: Array.isArray(body.types) ? body.types : ['jira', 'cases', 'eos'],
+            frequency: body.frequency || 'weekly',  // 'daily' | 'weekly'
+            dayOfWeek: body.dayOfWeek ?? 1,          // 0=\uC77C,1=\uC6D4...6=\uD1A0
+            enabled: true,
+            createdBy: user,
+            createdAt: new Date().toISOString(),
+          };
+          if (!newSched.targetUser) return corsResponse({ ok: false, message: '\uB300\uC0C1 \uD300\uC6D0\uC744 \uC9C0\uC815\uD558\uC138\uC694.' }, 400);
+          schedules.push(newSched);
+          await env.ENGR_KV.put('config:email_schedules', JSON.stringify(schedules));
+          await auditLog(env, user, 'EMAIL_SCHEDULE_ADD', { targetUser: newSched.targetUser, frequency: newSched.frequency });
+          return corsResponse({ ok: true, schedule: newSched });
+        }
+        if (request.method === 'PUT') {
+          const body = await request.json();
+          const raw = await env.ENGR_KV.get('config:email_schedules');
+          let schedules = raw ? JSON.parse(raw) : [];
+          schedules = schedules.map(s => s.id === body.id ? { ...s, ...body } : s);
+          await env.ENGR_KV.put('config:email_schedules', JSON.stringify(schedules));
+          return corsResponse({ ok: true });
+        }
+        if (request.method === 'DELETE') {
+          const id = url.searchParams.get('id');
+          const raw = await env.ENGR_KV.get('config:email_schedules');
+          let schedules = raw ? JSON.parse(raw) : [];
+          schedules = schedules.filter(s => s.id !== id);
+          await env.ENGR_KV.put('config:email_schedules', JSON.stringify(schedules));
+          return corsResponse({ ok: true });
+        }
+      }
+
       return corsResponse({ ok: false, message: '\uC5C6\uB294 \uACBD\uB85C\uC785\uB2C8\uB2E4.' }, 404);
     } catch (err) {
       return corsResponse({ ok: false, message: err.message || '\uC11C\uBC84 \uC624\uB958' }, 500);
     }
   },
+
+  // \u2500\u2500 Cron Scheduled Handler \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runScheduledEmailPush(env));
+  },
 };
+
+async function runScheduledEmailPush(env) {
+  try {
+    const raw = await env.ENGR_KV.get('config:email_schedules');
+    if (!raw) return;
+    const schedules = JSON.parse(raw);
+    const now = new Date();
+    const todayDow = now.getUTCDay(); // 0=Sun...6=Sat (cron runs in UTC)
+
+    for (const sched of schedules) {
+      if (!sched.enabled || !sched.targetUser) continue;
+      // \uC8FC\uB2E8\uC704: \uC624\uB298\uC774 \uC124\uC815\uB41C \uC694\uC77C\uC778\uC9C0 \uD655\uC778
+      if (sched.frequency === 'weekly' && sched.dayOfWeek !== todayDow) continue;
+      // \uC77C\uB2E8\uC704: \uB9E4\uC77C \uC2E4\uD589
+      try {
+        await executeEmailPush(env, {
+          targetUser: sched.targetUser,
+          types: sched.types || ['jira', 'cases', 'eos'],
+          sentBy: sched.createdBy || 'system',
+        });
+      } catch (_) {}
+    }
+  } catch (_) {}
+}
+
+async function executeEmailPush(env, { targetUser, types, sentBy }) {
+  const jiraAuth = 'Basic ' + btoa('mj.park@escare.co.kr:' + env.JIRA_TOKEN);
+  const jiraBase = 'https://escare-engr.atlassian.net/rest/api/3';
+
+  let allIssues = [], startAt = 0;
+  if (types.includes('jira') || types.includes('cases')) {
+    try {
+      while (true) {
+        const jql = encodeURIComponent(`project=ENGR AND assignee="${targetUser}@escare.co.kr" AND resolution=Unresolved ORDER BY created DESC`);
+        const res = await fetch(`${jiraBase}/search?jql=${jql}&maxResults=50&startAt=${startAt}&fields=summary,status,priority,created,issuetype`, {
+          headers: { 'Authorization': jiraAuth, 'Accept': 'application/json' },
+        });
+        if (!res.ok) break;
+        const data = await res.json();
+        allIssues = allIssues.concat(data.issues || []);
+        if (allIssues.length >= (data.total || 0) || (data.issues || []).length === 0) break;
+        startAt += data.issues.length;
+        if (allIssues.length >= 200) break;
+      }
+    } catch (_) {}
+  }
+
+  const caseRe = /\b\d{7,}\b/;
+  const cases = types.includes('cases') ? allIssues.filter(i => caseRe.test(i.fields?.summary || '')) : [];
+  const jiraIssues = types.includes('jira') ? allIssues.filter(i => !caseRe.test(i.fields?.summary || '')) : [];
+
+  let eosItems = [];
+  if (types.includes('eos')) {
+    try {
+      const eosRaw = await env.ENGR_KV.get('config:eos');
+      const eosList = eosRaw ? JSON.parse(eosRaw) : [];
+      const now = Date.now();
+      const days90 = 90 * 24 * 60 * 60 * 1000;
+      eosItems = eosList.filter(e => {
+        if (!e.expireDate) return false;
+        const exp = new Date(e.expireDate).getTime();
+        return exp > now && exp - now <= days90;
+      }).sort((a, b) => new Date(a.expireDate) - new Date(b.expireDate));
+    } catch (_) {}
+  }
+
+  if (!jiraIssues.length && !cases.length && !eosItems.length) return;
+
+  function issueRow(i) {
+    const key = i.key || '';
+    const summary = (i.fields?.summary || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const status = i.fields?.status?.name || '';
+    const priority = i.fields?.priority?.name || '';
+    return `<tr><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#3b82f6;font-weight:700">${key}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#334155">${summary}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;color:#64748b">${status}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;color:#64748b">${priority}</td></tr>`;
+  }
+  const th = `<table style="width:100%;border-collapse:collapse;background:#fff"><thead><tr style="background:#f8fafc"><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uD0A4</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uC81C\uBAA9</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uC0C1\uD0DC</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uC6B0\uC120\uC21C\uC704</th></tr></thead><tbody>`;
+
+  let jiraSection = jiraIssues.length ? `<div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden"><div style="font-size:13px;font-weight:700;color:#1e293b;padding:10px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0">\uD83D\uDCCC Jira \uC774\uC288 (${jiraIssues.length}\uAC74)</div>${th}${jiraIssues.map(issueRow).join('')}</tbody></table></div>` : '';
+  let caseSection = cases.length ? `<div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden"><div style="font-size:13px;font-weight:700;color:#1e293b;padding:10px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0">\uD83C\uDFAB \uCF00\uC774\uC2A4 (${cases.length}\uAC74)</div>${th}${cases.map(issueRow).join('')}</tbody></table></div>` : '';
+  let eosSection = '';
+  if (eosItems.length) {
+    const eosRows = eosItems.map(e => {
+      const daysLeft = Math.ceil((new Date(e.expireDate) - new Date()) / 86400000);
+      const cust = (e.customer || '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+      const prod = (e.product || '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
+      const dColor = daysLeft <= 30 ? '#dc2626' : '#d97706';
+      return `<tr><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#1e293b">${cust}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#334155">${prod} ${e.version||''}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;color:#64748b">${e.expireDate||''}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;color:${dColor};font-weight:700">D-${daysLeft}</td></tr>`;
+    }).join('');
+    const eth = `<table style="width:100%;border-collapse:collapse;background:#fff"><thead><tr style="background:#f8fafc"><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uACE0\uAC1D\uC0AC</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uC81C\uD488/\uBC84\uC804</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uB9CC\uB8CC\uC77C</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">D-day</th></tr></thead><tbody>`;
+    eosSection = `<div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden"><div style="font-size:13px;font-weight:700;color:#1e293b;padding:10px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0">\u23F0 EOS/\uB77C\uC774\uC120\uC2A4 \uB9CC\uB8CC \uC784\uBC15 (${eosItems.length}\uAC74)</div>${eth}${eosRows}</tbody></table></div>`;
+  }
+
+  const sentDate = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+  const templates = await getEmailTemplates(env);
+  const html = applyTemplate(templates.push, {
+    assignee: targetUser, sent_by: sentBy, sent_date: sentDate,
+    jira_section: jiraSection, case_section: caseSection, eos_section: eosSection,
+    hub_url: 'https://engr-jira.github.io/engr-hub-dev/',
+  });
+  const subject = `[ENGR HUB] ${targetUser}\uB2D8\uC758 \uBBF8\uC644\uB8CC \uC5C5\uBB34 \uD604\uD669 (${sentDate})`;
+  const counts = { jira: jiraIssues.length, cases: cases.length, eos: eosItems.length };
+  await sendEmail(env, { to: `${targetUser}@escare.co.kr`, subject, html, type: 'push', sentBy, meta: { targetUser, counts, auto: true } });
+}

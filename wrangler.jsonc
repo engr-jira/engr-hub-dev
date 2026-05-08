@@ -16,5 +16,8 @@
   ],
   "vars": {
     "KB_ALLOW_PAID_SEARCH": "false"
+  },
+  "triggers": {
+    "crons": ["0 1 * * *"]
   }
 }
