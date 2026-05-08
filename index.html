@@ -1898,8 +1898,8 @@ async function loadAIUsage(options={}){
   if(reason==='login')applyCachedAIUsage();
   setAIUsageLoading(reason);
   try{
-    const r=await fetch(`${WORKERS}/kv/usage`,{headers:authHeaders()});
-    if(r.status===403){setAIUsageText('ai-usage-state','관리자 전용');finishAIUsageLoading();AI_USAGE_LOADING=false;return;}
+    const usageEndpoint=(IS_ADMIN||IS_SUPER)?'/kv/usage':'/kv/usage/me';
+    const r=await fetch(`${WORKERS}${usageEndpoint}`,{headers:authHeaders()});
     if(!r.ok)throw new Error('usage endpoint unavailable');
     const usage=await r.json();
     applyAIUsage(usage);
@@ -1941,7 +1941,7 @@ function showPage(id,btn){
   if(id==='cases')renderCases();
   if(id==='customers')renderCustomers();
   if(id==='eos')renderEosList();
-  if(id==='links')renderLinks();
+  if(id==='links'){loadLinks().then(renderLinks);}
   if(id==='knowledge'){loadKnowledge().then(renderKnowledge);}
   if(id==='audit')loadAudit();
   if(id==='settings')loadSettings();
@@ -2211,7 +2211,8 @@ function renderOpsFocus(){
     </div>`;
 }
 
-function renderDash(){
+// renderDash — v1.5.5 최종 정의는 파일 하단에 있음 (중복 제거됨)
+function renderDash_legacy_v1(){
   const total=ISSUES.length;
   const done=ISSUES.filter(i=>i.status==='완료').length;
   const prog=ISSUES.filter(i=>['진행 중','진행중','In Progress'].includes(i.status)).length;
@@ -2332,7 +2333,7 @@ function filteredIssues(){
     return true;
   });
 }
-function renderIssues(){
+function renderIssues_legacy_v1(){
   renderFilterTags();
   const fi=filteredIssues();
   const pgSize=parseInt(document.getElementById('f-pg')?.value||'20');
@@ -2652,7 +2653,7 @@ document.addEventListener('keydown',e=>{
 function getCases(){
   return ISSUES.filter(i=>i.caseNums&&i.caseNums.length>0).flatMap(i=>i.caseNums.map(cn=>({...i,caseNum:cn})));
 }
-function renderCases(){
+function renderCases_legacy_v1(){
   const q=(document.getElementById('case-q')||{}).value?.toLowerCase()||'';
   const cStat=document.getElementById('case-stat')?.value||'';
   const cAss=document.getElementById('case-ass')?.value||'';
@@ -3848,13 +3849,19 @@ function openKnowledgeModal(id){
 async function saveKnowledge(){
   const title=document.getElementById("know-form-title").value.trim();
   if(!title){toast("제목은 필수입니다",true);return;}
-  const body={product:document.getElementById("know-form-prod").value,category:document.getElementById("know-form-cat").value,title,content:document.getElementById("know-form-content").value.trim(),link:normalizeExternalUrl(document.getElementById("know-form-link").value.trim())};
+  const rawLink=document.getElementById("know-form-link").value.trim();
+  const link=normalizeExternalUrl(rawLink);
+  if(link&&!link.includes('broadcom.com')&&!confirm('입력한 링크가 broadcom.com 도메인이 아닙니다.\n계속 등록하시겠어요?'))return;
+  const body={product:document.getElementById("know-form-prod").value,category:document.getElementById("know-form-cat").value,title,content:document.getElementById("know-form-content").value.trim(),link};
   try{const r=await fetch(`${WORKERS}/knowledge`,{method:"POST",headers:authHeaders({"Content-Type":"application/json"}),body:JSON.stringify(body)});const d=await r.json();if(!d.ok){toast(d.message||"저장 실패",true);return;}toast("등록 완료");closeGenModal();await loadKnowledge();renderKnowledge();}catch(e){toast("오류: "+e.message,true);}
 }
 async function updateKnowledge(id){
   const title=document.getElementById("know-form-title").value.trim();
   if(!title){toast("제목은 필수입니다",true);return;}
-  const body={product:document.getElementById("know-form-prod").value,category:document.getElementById("know-form-cat").value,title,content:document.getElementById("know-form-content").value.trim(),link:normalizeExternalUrl(document.getElementById("know-form-link").value.trim())};
+  const rawLink=document.getElementById("know-form-link").value.trim();
+  const link=normalizeExternalUrl(rawLink);
+  if(link&&!link.includes('broadcom.com')&&!confirm('입력한 링크가 broadcom.com 도메인이 아닙니다.\n계속 수정하시겠어요?'))return;
+  const body={product:document.getElementById("know-form-prod").value,category:document.getElementById("know-form-cat").value,title,content:document.getElementById("know-form-content").value.trim(),link};
   try{const r=await fetch(`${WORKERS}/knowledge/${id}`,{method:"PUT",headers:authHeaders({"Content-Type":"application/json"}),body:JSON.stringify(body)});const d=await r.json();if(!d.ok){toast(d.message||"수정 실패",true);return;}toast("수정 완료");closeGenModal();await loadKnowledge();renderKnowledge();}catch(e){toast("오류: "+e.message,true);}
 }
 async function deleteKnowledge(id){
@@ -4392,7 +4399,7 @@ function issueRow(i){
   const caseHtml=cases.length?`<span class="imeta">케이스</span>${cases.map(c=>`<span class="case-chip ${c.done?'done':(c.status==='미동기화'?'':'open')}" title="${escapeHtml(c.status)}${c.key?' · '+escapeHtml(c.key):''}">${escapeHtml(c.num)} · ${escapeHtml(c.status)}</span>`).join('')}`:'';
   return `<div class="irow${active}" data-key="${escapeHtml(i.key)}" style="--lc:${sc}"><div class="irow-top"><span class="ikey">${i.key}</span><span class="badge" style="background:${sc}22;color:${sc}">${i.status}</span><span class="badge" style="background:${pc}22;color:${pc}">${i.pri}</span><span class="ititle">${escapeHtml(cleanTitle(i.title))}</span><span class="imeta">${escapeHtml(i.customer||'-')}</span></div><div class="irow-bot">${(i.labels||[]).map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join('')}<span class="imeta">@${escapeHtml(i.assignee)}</span><span class="imeta">${fd(i.date)}</span>${caseHtml}</div></div>`;
 }
-function renderIssues(){
+function renderIssues_legacy_v2(){
   const list=filteredIssues();
   list.sort((a,b)=>new Date(b.date)-new Date(a.date));
   const size=parseInt(document.getElementById('f-pg')?.value||'10');
@@ -4428,7 +4435,7 @@ async function selectCase(c){
   renderCaseRight(false);
   if(window.innerWidth<=700)syncMobSheet('case-right');
 }
-function renderCases(){
+function renderCases_legacy_v2(){
   const q=(document.getElementById('case-q')||{}).value?.toLowerCase()||'';
   const cStat=document.getElementById('case-stat')?.value||'';
   const cAss=document.getElementById('case-ass')?.value||'';
@@ -4848,7 +4855,7 @@ function refreshFilters(){
   applyV151Dom();
 }
 
-function renderDash(){
+function renderDash_legacy_v2(){
   applyV153Dom();
   const g=getGeneralIssues();
   const c=getCaseIssueBase();
@@ -5063,7 +5070,7 @@ function setCaseNavigationFilter(opts={}){
   if(opts.dateDays&&document.getElementById('case-date'))document.getElementById('case-date').value=String(opts.dateDays);
   PAGE_STATE.cases=1;showPage('cases');
 }
-function renderIssues(){
+function renderIssues_legacy_v3(){
   const wrap=document.getElementById('issue-list-wrap'); if(!wrap)return;
   const arr=getFilteredIssues(); const size=parseInt(document.getElementById('f-pg')?.value||'10');
   const max=Math.max(1,Math.ceil(arr.length/size)); if(PAGE>max)PAGE=max; if(PAGE<1)PAGE=1;
@@ -5085,7 +5092,7 @@ function renderIssues(){
   renderIssueFilterTags(); renderRightPanel(false);
   if(SEL&&!SEL._detailLoaded){ensureIssueDetail(SEL).then(()=>renderRightPanel(false));}
 }
-function renderCases(){
+function renderCases_legacy_v3(){
   const q=(document.getElementById('case-q')||{}).value?.toLowerCase()||'';
   const cStat=document.getElementById('case-stat')?.value||''; const cAss=document.getElementById('case-ass')?.value||''; const cSla=parseInt(document.getElementById('case-sla')?.value||'0'); const cDate=parseInt(document.getElementById('case-date')?.value||'0');
   let cases=getCases().filter(c=>{
@@ -5436,7 +5443,7 @@ function renderIssues(){
   renderIssueFilterTags();
   renderRightPanel(false);
 }
-function renderCases(){
+function renderCases_legacy_v4(){
   normalizeAllIssueAliases();
   const wrap=document.getElementById('case-list'); if(!wrap)return;
   const arr=getFilteredCases();

@@ -1272,6 +1272,12 @@ export default {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 접근할 수 있습니다.' }, 403);
         return corsResponse(await getUsage(env, user));
       }
+      // 일반 유저용 개인 AI 사용량 (팀 통계 미포함)
+      if (path === '/kv/usage/me' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        const usage = await getUsage(env, user);
+        return corsResponse({ ok: true, me: usage.me, asOf: usage.asOf, timezone: usage.timezone, source: usage.source });
+      }
       if (path === '/links/kb/import' && request.method === 'POST') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: 'Forbidden' }, 403);
         const years = Math.max(1, Math.min(10, parseInt(url.searchParams.get('years') || '5', 10) || 5));
