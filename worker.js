@@ -2058,7 +2058,8 @@ export default {
             targetUser: (body.targetUser || '').trim(),
             types: Array.isArray(body.types) ? body.types : ['jira', 'cases', 'eos'],
             frequency: body.frequency || 'weekly',  // 'daily' | 'weekly'
-            dayOfWeek: body.dayOfWeek ?? 1,          // 0=\uC77C,1=\uC6D4...6=\uD1A0
+            dayOfWeek: body.dayOfWeek ?? 1,          // 0=\uC77C,1=\uC6D4...6=\uD1A0 (\uC8FC\uB2E8\uC704\uC6A9)
+            hourKST: body.hourKST ?? 10,             // \uBC1C\uC1A1 \uC2DC\uAC01 (KST \uAE30\uC900 0~23, \uAE30\uBCF8 \uC624\uC804 10\uC2DC)
             enabled: true,
             createdBy: user,
             createdAt: new Date().toISOString(),
@@ -2105,13 +2106,18 @@ async function runScheduledEmailPush(env) {
     if (!raw) return;
     const schedules = JSON.parse(raw);
     const now = new Date();
-    const todayDow = now.getUTCDay(); // 0=Sun...6=Sat (cron runs in UTC)
+    const nowUtcHour = now.getUTCHours();
+    const nowKstHour = (nowUtcHour + 9) % 24; // KST = UTC+9
+    const todayDowKst = new Date(now.getTime() + 9 * 3600 * 1000).getUTCDay(); // 0=Sun...6=Sat
 
     for (const sched of schedules) {
       if (!sched.enabled || !sched.targetUser) continue;
-      // \uC8FC\uB2E8\uC704: \uC624\uB298\uC774 \uC124\uC815\uB41C \uC694\uC77C\uC778\uC9C0 \uD655\uC778
-      if (sched.frequency === 'weekly' && sched.dayOfWeek !== todayDow) continue;
-      // \uC77C\uB2E8\uC704: \uB9E4\uC77C \uC2E4\uD589
+      // \uBC1C\uC1A1 \uC2DC\uAC01 \uCCB4\uD06C (\uC124\uC815\uB41C KST \uC2DC\uAC01\uACFC \uD604\uC7AC KST \uC2DC\uAC01 \uBE44\uAD50, \uAE30\uBCF8 10\uC2DC)
+      const schedHour = sched.hourKST ?? 10;
+      if (nowKstHour !== schedHour) continue;
+      // \uC8FC\uB2E8\uC704: \uC624\uB298\uC774 \uC124\uC815\uB41C \uC694\uC77C(KST \uAE30\uC900)\uC778\uC9C0 \uD655\uC778
+      if (sched.frequency === 'weekly' && sched.dayOfWeek !== todayDowKst) continue;
+      // \uC77C\uB2E8\uC704: \uB9E4\uC77C \uBC1C\uC1A1 \uC2DC\uAC01\uC5D0 \uC2E4\uD589
       try {
         await executeEmailPush(env, {
           targetUser: sched.targetUser,
