@@ -224,6 +224,43 @@ async function canModifyItem(env, user, item) {
 function cleanCommentText(text = '') {
   return String(text || '').trim().slice(0, 2000);
 }
+async function sendCommentNotification(env, { kind, item, comment, commenter }) {
+  try {
+    if (!env.RESEND_API_KEY) return;
+    const author = item.createdBy;
+    if (!author || author === commenter) return; // 자기 글에 자기 댓글 시 발송 안 함
+    const toEmail = `${author}@escare.co.kr`;
+    const kindLabel = kind === 'knowledge' ? '팀노하우' : '업무링크';
+    const itemTitle = item.title || item.url || '(제목 없음)';
+    const subject = `[ENGR HUB] '${itemTitle}' ${kindLabel}에 댓글이 달렸습니다`;
+    const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f1f5f9;font-family:'Malgun Gothic','Segoe UI',sans-serif">
+<div style="max-width:560px;margin:32px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)">
+  <div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:24px 28px">
+    <div style="color:#c7d2fe;font-size:11px;font-weight:700;letter-spacing:.08em;margin-bottom:4px">ENGR HUB 알림</div>
+    <div style="color:#fff;font-size:18px;font-weight:700">새 댓글이 달렸습니다 💬</div>
+  </div>
+  <div style="padding:24px 28px">
+    <p style="margin:0 0 16px;color:#475569;font-size:14px"><strong style="color:#1e293b">${author}</strong>님이 등록한 ${kindLabel}에 댓글이 달렸습니다.</p>
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:20px">
+      <div style="font-size:11px;color:#94a3b8;font-weight:700;margin-bottom:6px">${kindLabel.toUpperCase()}</div>
+      <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:14px;line-height:1.4">${itemTitle}</div>
+      <div style="border-top:1px solid #e2e8f0;padding-top:14px">
+        <div style="font-size:12px;color:#64748b;margin-bottom:6px">💬 <strong>${commenter}</strong>님의 댓글</div>
+        <div style="font-size:14px;color:#334155;line-height:1.7;white-space:pre-wrap">${comment.text}</div>
+      </div>
+    </div>
+    <a href="https://engr-jira.github.io/engr-hub-dev/" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:11px 22px;border-radius:8px;font-size:13px;font-weight:700">ENGR HUB에서 확인하기 →</a>
+  </div>
+  <div style="padding:16px 28px;border-top:1px solid #f1f5f9;font-size:11px;color:#94a3b8">이 메일은 ENGR HUB 댓글 알림 시스템에서 자동 발송되었습니다. 수신을 원하지 않으시면 관리자에게 문의하세요.</div>
+</div></body></html>`;
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: 'ENGR HUB <onboarding@resend.dev>', to: [toEmail], subject, html }),
+    });
+  } catch (_) { /* 알림 실패 시 조용히 무시 — 댓글 등록에 영향 없음 */ }
+}
+
 async function addCollectionComment(env, key, id, user, text, auditType) {
   const body = cleanCommentText(text);
   if (!body) return { status: 400, body: { ok: false, message: '\uB313\uAE00 \uB0B4\uC6A9\uC744 \uC785\uB825\uD558\uC138\uC694.' } };
@@ -244,7 +281,7 @@ async function addCollectionComment(env, key, id, user, text, auditType) {
   target.updatedAt = now;
   await env.ENGR_KV.put(key, JSON.stringify(items));
   await auditLog(env, user, auditType, { id, commentId: comment.id });
-  return { status: 200, body: { ok: true, comment } };
+  return { status: 200, body: { ok: true, comment }, item: target };
 }
 async function deleteCollectionComment(env, key, id, commentId, user, auditType) {
   const raw = await env.ENGR_KV.get(key);
@@ -1160,7 +1197,7 @@ async function resetHubData(env) {
 
 //
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') return new Response(null, { headers: getCorsHeaders(request) });
 
     const url = new URL(request.url);
@@ -1621,6 +1658,7 @@ export default {
         if (request.method === 'POST') {
           const body = await request.json().catch(() => ({}));
           const result = await addCollectionComment(env, 'config:links', id, user, body.text, 'LINK_COMMENT_ADD');
+          if (result.item) ctx.waitUntil(sendCommentNotification(env, { kind: 'links', item: result.item, comment: result.body.comment, commenter: user }));
           return corsResponse(result.body, result.status);
         }
         if (request.method === 'DELETE') {
@@ -1740,6 +1778,7 @@ export default {
         if (request.method === 'POST') {
           const body = await request.json().catch(() => ({}));
           const result = await addCollectionComment(env, 'config:knowledge', id, user, body.text, 'KNOWLEDGE_COMMENT_ADD');
+          if (result.item) ctx.waitUntil(sendCommentNotification(env, { kind: 'knowledge', item: result.item, comment: result.body.comment, commenter: user }));
           return corsResponse(result.body, result.status);
         }
         if (request.method === 'DELETE') {
