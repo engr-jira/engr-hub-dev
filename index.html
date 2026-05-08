@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.5.11 - ESCARE Security Hub</title>
+<title>ENGR AI v1.5.19 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -3573,7 +3573,7 @@ function switchEmailTab(tab,btn){
   if(btn)btn.classList.add('active');
   if(tab==='history')loadEmailHistory();
   if(tab==='templates')loadEmailTemplates();
-  if(tab==='push'){loadEmailSchedules();loadEmailUserList();}
+  if(tab==='push'){loadEmailSchedules();loadEmailUserList();toggleScheduleOptions();}
 }
 
 function toggleScheduleOptions(){
@@ -3769,7 +3769,8 @@ async function doEmailPushPreview(){
 }
 
 async function doEmailPushOrSchedule(){
-  const sendType=document.querySelector('input[name="email-send-type"]:checked')?.value||'now';
+  const sendType=document.querySelector('input[name="email-send-type"]:checked')?.value||'none';
+  if(sendType==='none'){toast('발송 방식을 선택하세요.',true);return;}
   const targetUser=getEmailPushUser();
   if(!targetUser){toast('대상 팀원을 선택하거나 입력하세요.',true);return;}
   const types=getEmailPushTypes();
@@ -3785,7 +3786,7 @@ async function doEmailPushOrSchedule(){
       statusEl.innerHTML=`<span style="color:#4ade80">✓ 발송 요청 완료 (Jira ${c.jira}건 / 케이스 ${c.cases}건 / EOS ${c.eos}건)</span>`;
       toast(`${targetUser}에게 미완료 업무 내역 메일이 발송되었습니다.`);
     }catch(e){statusEl.innerHTML=`<span style="color:#f87171">오류: ${e.message}</span>`;}
-  } else {
+  } else if(sendType==='daily'||sendType==='weekly'){
     const dow=parseInt(document.getElementById('schedule-dow')?.value||'1');
     const hourKST=parseInt(document.getElementById('schedule-hour')?.value||'10');
     const hourLabel=hourKST<12?`오전 ${hourKST}시`:hourKST===12?'낮 12시':`오후 ${hourKST-12}시`;
