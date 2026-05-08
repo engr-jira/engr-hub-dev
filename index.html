@@ -1630,7 +1630,8 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
           <div style="margin-bottom:16px">
             <label class="email-label">발송 방식</label>
             <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px">
-              <label class="email-check-label"><input type="radio" name="email-send-type" value="now" id="est-now" checked onchange="toggleScheduleOptions()"> 즉시 발송</label>
+              <label class="email-check-label"><input type="radio" name="email-send-type" value="none" id="est-none" checked onchange="toggleScheduleOptions()"> 발송안함</label>
+              <label class="email-check-label"><input type="radio" name="email-send-type" value="now" id="est-now" onchange="toggleScheduleOptions()"> 즉시 발송</label>
               <label class="email-check-label"><input type="radio" name="email-send-type" value="daily" id="est-daily" onchange="toggleScheduleOptions()"> 일단위 (매일)</label>
               <label class="email-check-label"><input type="radio" name="email-send-type" value="weekly" id="est-weekly" onchange="toggleScheduleOptions()"> 주단위</label>
             </div>
@@ -3576,13 +3577,17 @@ function switchEmailTab(tab,btn){
 }
 
 function toggleScheduleOptions(){
-  const val=document.querySelector('input[name="email-send-type"]:checked')?.value||'now';
+  const val=document.querySelector('input[name="email-send-type"]:checked')?.value||'none';
   const opts=document.getElementById('schedule-options');
   const dowWrap=document.getElementById('schedule-dow-wrap');
   const btn=document.getElementById('email-send-btn');
-  if(opts)opts.style.display=val==='now'?'none':'block';
+  if(opts)opts.style.display=(val==='daily'||val==='weekly')?'block':'none';
   if(dowWrap)dowWrap.style.display=val==='weekly'?'flex':'none';
-  if(btn)btn.textContent=val==='now'?'✉ 즉시 발송':'🗓 스케줄 등록';
+  if(btn){
+    btn.textContent=val==='now'?'✉ 즉시 발송':val==='none'?'발송안함':'🗓 스케줄 등록';
+    btn.disabled=(val==='none');
+    btn.style.opacity=(val==='none')?'0.4':'1';
+  }
 }
 
 async function loadEmailUserList(){
