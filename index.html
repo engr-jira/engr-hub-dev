@@ -2955,7 +2955,7 @@ async function deleteEos(id){
 // ── LINKS ─────────────────────────────────────────
 async function loadLinks(){
   try{
-    const r=await fetch(`${WORKERS}/links`);
+    const r=await fetch(`${WORKERS}/links`,{headers:authHeaders()});
     const d=await r.json();
     LINKS=d.links||[];
   }catch{}
@@ -3787,7 +3787,7 @@ function renderCustomerRight(){
 // ── 팀 노하우 ─────────────────────────────────────
 let KNOWLEDGE=[];
 async function loadKnowledge(){
-  try{const r=await fetch(`${WORKERS}/knowledge`);const d=await r.json();KNOWLEDGE=d.items||[];}catch{}
+  try{const r=await fetch(`${WORKERS}/knowledge`,{headers:authHeaders()});const d=await r.json();KNOWLEDGE=d.items||[];}catch{}
 }
 function renderKnowledge(){
   renderCommentFeed('knowledge-comment-feed','knowledge',KNOWLEDGE);
