@@ -1944,26 +1944,11 @@ export default {
         const types = Array.isArray(body.types) && body.types.length ? body.types : ['jira', 'cases', 'eos'];
         if (!targetUser) return corsResponse({ ok: false, message: '\uB300\uC0C1 \uD300\uC6D0\uC744 \uC9C0\uC815\uD558\uC138\uC694.' }, 400);
         const toEmail = `${targetUser}@escare.co.kr`;
-        const jiraAuth = 'Basic ' + btoa('mj.park@escare.co.kr:' + env.JIRA_TOKEN);
-        const jiraBase = 'https://escare-engr.atlassian.net/rest/api/3';
 
         // 1. Jira \uBBF8\uC644\uB8CC \uC774\uC288 \uC870\uD68C (\uB2F4\uB2F9\uC790 \uAE30\uC900, types\uC5D0 jira \uB610\uB294 cases \uD3EC\uD568 \uC2DC)
-        let allIssues = [], startAt = 0;
+        let allIssues = [];
         if (types.includes('jira') || types.includes('cases')) {
-          try {
-            while (true) {
-              const jql = encodeURIComponent(`project=ENGR AND assignee="${targetUser}@escare.co.kr" AND resolution=Unresolved ORDER BY created DESC`);
-              const res = await fetch(`${jiraBase}/search?jql=${jql}&maxResults=50&startAt=${startAt}&fields=summary,status,priority,created,issuetype`, {
-                headers: { 'Authorization': jiraAuth, 'Accept': 'application/json' },
-              });
-              if (!res.ok) break;
-              const data = await res.json();
-              allIssues = allIssues.concat(data.issues || []);
-              if (allIssues.length >= (data.total || 0) || (data.issues || []).length === 0) break;
-              startAt += data.issues.length;
-              if (allIssues.length >= 200) break;
-            }
-          } catch (_) {}
+          allIssues = await fetchJiraUnresolvedByUser(env, targetUser);
         }
 
         // 2. \uCF00\uC774\uC2A4 vs \uC77C\uBC18 \uC774\uC288 \uBD84\uB9AC (\uCF00\uC774\uC2A4: summary\uC5D0 7\uC790\uB9AC \uC774\uC0C1 \uC22B\uC790 \uD3EC\uD568)
@@ -2129,26 +2114,40 @@ async function runScheduledEmailPush(env) {
   } catch (_) {}
 }
 
-async function executeEmailPush(env, { targetUser, types, sentBy }) {
+// Jira 미완료 이슈 전체 조회 후 assignee 이메일로 클라이언트 필터링
+// (JQL assignee 이메일 검색이 Jira Cloud에서 불안정하므로 전체 조회 후 필터)
+async function fetchJiraUnresolvedByUser(env, targetUser) {
   const jiraAuth = 'Basic ' + btoa('mj.park@escare.co.kr:' + env.JIRA_TOKEN);
-  const jiraBase = 'https://escare-engr.atlassian.net/rest/api/3';
+  const targetEmail = `${targetUser}@escare.co.kr`;
+  const jql = 'project=ENGR AND resolution=Unresolved ORDER BY created DESC';
+  let allIssues = [], nextPageToken = undefined;
+  try {
+    for (let page = 0; page < 10; page++) {
+      const body = { jql, maxResults: 100, fieldsByKeys: false, fields: ['summary', 'status', 'priority', 'assignee', 'created', 'issuetype'] };
+      if (nextPageToken) body.nextPageToken = nextPageToken;
+      const res = await fetch('https://escare-engr.atlassian.net/rest/api/3/search/jql', {
+        method: 'POST',
+        headers: { 'Authorization': jiraAuth, 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) break;
+      const data = await res.json();
+      const batch = (data.issues || []).filter(i =>
+        i.fields?.assignee?.emailAddress === targetEmail ||
+        (i.fields?.assignee?.emailAddress || '').toLowerCase() === targetEmail.toLowerCase()
+      );
+      allIssues = allIssues.concat(batch);
+      nextPageToken = data.nextPageToken;
+      if (!nextPageToken || (data.issues || []).length === 0) break;
+    }
+  } catch (_) {}
+  return allIssues;
+}
 
-  let allIssues = [], startAt = 0;
+async function executeEmailPush(env, { targetUser, types, sentBy }) {
+  let allIssues = [];
   if (types.includes('jira') || types.includes('cases')) {
-    try {
-      while (true) {
-        const jql = encodeURIComponent(`project=ENGR AND assignee="${targetUser}@escare.co.kr" AND resolution=Unresolved ORDER BY created DESC`);
-        const res = await fetch(`${jiraBase}/search?jql=${jql}&maxResults=50&startAt=${startAt}&fields=summary,status,priority,created,issuetype`, {
-          headers: { 'Authorization': jiraAuth, 'Accept': 'application/json' },
-        });
-        if (!res.ok) break;
-        const data = await res.json();
-        allIssues = allIssues.concat(data.issues || []);
-        if (allIssues.length >= (data.total || 0) || (data.issues || []).length === 0) break;
-        startAt += data.issues.length;
-        if (allIssues.length >= 200) break;
-      }
-    } catch (_) {}
+    allIssues = await fetchJiraUnresolvedByUser(env, targetUser);
   }
 
   const caseRe = /\b\d{7,}\b/;
