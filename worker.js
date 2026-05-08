@@ -2114,29 +2114,49 @@ async function runScheduledEmailPush(env) {
   } catch (_) {}
 }
 
-// Jira 미완료 이슈 전체 조회 후 assignee 이메일로 클라이언트 필터링
-// (JQL assignee 이메일 검색이 Jira Cloud에서 불안정하므로 전체 조회 후 필터)
+// Jira 사용자 accountId 조회 → accountId 기반 JQL로 이슈 검색
+// Jira Cloud는 emailAddress를 숨길 수 있어 email 기반 필터가 불안정함
+// accountId를 JQL에 사용하면 항상 신뢰성 있게 동작함
 async function fetchJiraUnresolvedByUser(env, targetUser) {
   const jiraAuth = 'Basic ' + btoa('mj.park@escare.co.kr:' + env.JIRA_TOKEN);
+  const jiraApiBase = 'https://escare-engr.atlassian.net/rest/api/3';
   const targetEmail = `${targetUser}@escare.co.kr`;
-  const jql = 'project=ENGR AND resolution=Unresolved ORDER BY created DESC';
+
+  // Step 1: 이메일로 Jira 계정 검색 → accountId 획득
+  let assigneeJql = `"${targetEmail}"`; // 기본: 이메일 직접 사용
+  try {
+    const userRes = await fetch(
+      `${jiraApiBase}/user/search?query=${encodeURIComponent(targetEmail)}&maxResults=5`,
+      { headers: { 'Authorization': jiraAuth, 'Accept': 'application/json' } }
+    );
+    if (userRes.ok) {
+      const users = await userRes.json();
+      // 이메일 일치 또는 첫 번째 결과의 accountId 사용
+      const match = users.find(u =>
+        (u.emailAddress || '').toLowerCase() === targetEmail.toLowerCase()
+      ) || users[0];
+      if (match?.accountId) assigneeJql = `"${match.accountId}"`;
+    }
+  } catch (_) {}
+
+  // Step 2: accountId(또는 이메일) 기반 JQL로 미완료 이슈 조회
+  const jql = `project=ENGR AND resolution=Unresolved AND assignee=${assigneeJql} ORDER BY created DESC`;
   let allIssues = [], nextPageToken = undefined;
   try {
     for (let page = 0; page < 10; page++) {
-      const body = { jql, maxResults: 100, fieldsByKeys: false, fields: ['summary', 'status', 'priority', 'assignee', 'created', 'issuetype'] };
+      const body = {
+        jql, maxResults: 100, fieldsByKeys: false,
+        fields: ['summary', 'status', 'priority', 'assignee', 'created', 'issuetype'],
+      };
       if (nextPageToken) body.nextPageToken = nextPageToken;
-      const res = await fetch('https://escare-engr.atlassian.net/rest/api/3/search/jql', {
+      const res = await fetch(`${jiraApiBase}/search/jql`, {
         method: 'POST',
         headers: { 'Authorization': jiraAuth, 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(body),
       });
       if (!res.ok) break;
       const data = await res.json();
-      const batch = (data.issues || []).filter(i =>
-        i.fields?.assignee?.emailAddress === targetEmail ||
-        (i.fields?.assignee?.emailAddress || '').toLowerCase() === targetEmail.toLowerCase()
-      );
-      allIssues = allIssues.concat(batch);
+      allIssues = allIssues.concat(data.issues || []);
       nextPageToken = data.nextPageToken;
       if (!nextPageToken || (data.issues || []).length === 0) break;
     }
