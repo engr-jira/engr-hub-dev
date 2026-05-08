@@ -1899,6 +1899,7 @@ async function loadAIUsage(options={}){
   setAIUsageLoading(reason);
   try{
     const r=await fetch(`${WORKERS}/kv/usage`,{headers:authHeaders()});
+    if(r.status===403){setAIUsageText('ai-usage-state','관리자 전용');finishAIUsageLoading();AI_USAGE_LOADING=false;return;}
     if(!r.ok)throw new Error('usage endpoint unavailable');
     const usage=await r.json();
     applyAIUsage(usage);
