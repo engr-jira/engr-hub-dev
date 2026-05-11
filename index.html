@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.5.19 - ESCARE Security Hub</title>
+<title>ENGR AI v1.5.20 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -5006,12 +5006,16 @@ async function runCaseAI(mode='summary'){
 function renderOverdueBanner(){
   const OVERDUE_DAYS=7;
   const overdue=getGeneralIssues().filter(i=>isOpenStatus(i.status)&&daysSince(i.date)>=OVERDUE_DAYS);
+  const myOpen=getGeneralIssues().filter(i=>isMyIssue(i)&&isOpenStatus(i.status));
   const wrap=document.getElementById('overdue-banner-wrap');
   if(!wrap)return;
-  if(!overdue.length){wrap.innerHTML='';return;}
+  if(!overdue.length&&!myOpen.length){wrap.innerHTML='';return;}
   const byAss={};overdue.forEach(i=>{byAss[i.assignee]=(byAss[i.assignee]||0)+1;});
   const topAss=Object.entries(byAss).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([n,c])=>`${escapeHtml(n)} ${c}건`).join(', ');
-  wrap.innerHTML=`<div style="background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(248,113,113,.08));border:1px solid rgba(251,191,36,.3);border-radius:12px;padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px"><span style="font-size:22px">🚨</span><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:2px">${OVERDUE_DAYS}일 이상 미완료 일반 이슈 ${overdue.length}건</div><div style="font-size:11px;color:var(--text2)">필터 기준: 케이스 제외 · 미완료/진행 상태 · 접수/수정일 기준 ${OVERDUE_DAYS}일 이상 · 주요 담당자: ${topAss}</div></div><button title="7일 이상 미완료 일반 이슈 목록을 엽니다" onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})" style="background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);color:var(--warn);padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700">이슈 보기 →</button></div>`;
+  const overduePart=overdue.length?`<div style="flex:1;min-width:240px;background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(248,113,113,.08));border:1px solid rgba(251,191,36,.3);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px"><span style="font-size:22px">🚨</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:2px">${OVERDUE_DAYS}일 이상 미완료 일반 이슈 ${overdue.length}건</div><div style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">필터 기준: 케이스 제외 · 미완료/진행 상태 · 접수/수정일 기준 ${OVERDUE_DAYS}일 이상 · 주요 담당자: ${topAss}</div></div><button title="7일 이상 미완료 일반 이슈 목록을 엽니다" onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})" style="background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);color:var(--warn);padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap">이슈 보기 →</button></div>`:'';
+  const myLabel=myOpen.length?`담당자: ${escapeHtml(CURRENT_DISPLAY||CURRENT_USER)} · 미완료/진행 ${myOpen.length}건`:'현재 담당 미완료 이슈 없음';
+  const myPart=`<div style="flex:1;min-width:240px;background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.08));border:1px solid rgba(99,102,241,.35);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="setIssueNavigationFilter({preset:{kind:'my',label:'내 미완료 이슈'}})"><span style="font-size:22px">📋</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:#a5b4fc;margin-bottom:2px">내 미완료 이슈 ${myOpen.length}건</div><div style="font-size:11px;color:var(--text2)">${myLabel}</div></div><button style="background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.4);color:#a5b4fc;padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap" onclick="event.stopPropagation();setIssueNavigationFilter({preset:{kind:'my',label:'내 미완료 이슈'}})">내 이슈 보기 →</button></div>`;
+  wrap.innerHTML=`<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">${overduePart}${myPart}</div>`;
 }
 function renderOpsFocus(){
   const overdue=getGeneralIssues().filter(i=>isOpenStatus(i.status)&&daysSince(i.date)>=7).sort((a,b)=>daysSince(b.date)-daysSince(a.date)).slice(0,5);
