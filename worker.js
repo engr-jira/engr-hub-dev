@@ -1,4 +1,4 @@
-// ENGR HUB Cloudflare Worker v1.5.11
+﻿// ENGR HUB Cloudflare Worker v1.5.11
 //
 //
 //
@@ -224,80 +224,6 @@ async function canModifyItem(env, user, item) {
 function cleanCommentText(text = '') {
   return String(text || '').trim().slice(0, 2000);
 }
-// ─── Email Management ──────────────────────────────────────────────────────────
-const EMAIL_LOG_KEY = 'email:log';
-const EMAIL_LOG_MAX = 500;
-
-function getDefaultEmailTemplates() {
-  return {
-    comment: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f1f5f9;font-family:'Malgun Gothic','Segoe UI',sans-serif"><div style="max-width:560px;margin:32px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)"><div style="background:linear-gradient(135deg,#4f46e5,#7c3aed);padding:24px 28px"><div style="color:#c7d2fe;font-size:11px;font-weight:700;letter-spacing:.08em;margin-bottom:4px">ENGR HUB 알림</div><div style="color:#fff;font-size:18px;font-weight:700">새 댓글이 달렸습니다 💬</div></div><div style="padding:24px 28px"><p style="margin:0 0 16px;color:#475569;font-size:14px"><strong style="color:#1e293b">{{author}}</strong>님이 등록한 {{kind}}에 댓글이 달렸습니다.</p><div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px;margin-bottom:20px"><div style="font-size:11px;color:#94a3b8;font-weight:700;margin-bottom:6px">{{kind_upper}}</div><div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:14px;line-height:1.4">{{item_title}}</div><div style="border-top:1px solid #e2e8f0;padding-top:14px"><div style="font-size:12px;color:#64748b;margin-bottom:6px">💬 <strong>{{commenter}}</strong>님의 댓글</div><div style="font-size:14px;color:#334155;line-height:1.7;white-space:pre-wrap">{{comment_text}}</div></div></div><a href="{{hub_url}}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:11px 22px;border-radius:8px;font-size:13px;font-weight:700">ENGR HUB에서 확인하기 →</a></div><div style="padding:16px 28px;border-top:1px solid #f1f5f9;font-size:11px;color:#94a3b8">이 메일은 ENGR HUB 댓글 알림 시스템에서 자동 발송되었습니다. 수신을 원하지 않으시면 관리자에게 문의하세요.</div></div></body></html>`,
-    push: `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f1f5f9;font-family:'Malgun Gothic','Segoe UI',sans-serif"><div style="max-width:620px;margin:32px auto;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)"><div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);padding:24px 28px"><div style="color:#93c5fd;font-size:11px;font-weight:700;letter-spacing:.08em;margin-bottom:4px">ENGR HUB 업무 알림</div><div style="color:#fff;font-size:18px;font-weight:700">📋 미완료 업무 현황</div></div><div style="padding:24px 28px"><p style="margin:0 0 8px;color:#475569;font-size:14px"><strong style="color:#1e293b">{{assignee}}</strong>님의 미완료 업무 내역입니다.</p><p style="margin:0 0 20px;font-size:12px;color:#94a3b8">발송: {{sent_by}} · {{sent_date}}</p>{{jira_section}}{{case_section}}{{eos_section}}<a href="{{hub_url}}" style="display:inline-block;background:#1e40af;color:#fff;text-decoration:none;padding:11px 22px;border-radius:8px;font-size:13px;font-weight:700;margin-top:8px">ENGR HUB에서 확인하기 →</a></div><div style="padding:16px 28px;border-top:1px solid #f1f5f9;font-size:11px;color:#94a3b8">이 메일은 ENGR HUB 관리자가 발송한 업무 알림입니다.</div></div></body></html>`,
-  };
-}
-
-async function logEmailHistory(env, entry) {
-  try {
-    const raw = await env.ENGR_KV.get(EMAIL_LOG_KEY);
-    const log = raw ? JSON.parse(raw) : [];
-    log.unshift({ ...entry, sentAt: new Date().toISOString() });
-    if (log.length > EMAIL_LOG_MAX) log.length = EMAIL_LOG_MAX;
-    await env.ENGR_KV.put(EMAIL_LOG_KEY, JSON.stringify(log));
-  } catch (_) {}
-}
-
-async function getEmailTemplates(env) {
-  try {
-    const raw = await env.ENGR_KV.get('config:email_templates');
-    if (raw) {
-      const saved = JSON.parse(raw);
-      const def = getDefaultEmailTemplates();
-      return { comment: saved.comment || def.comment, push: saved.push || def.push };
-    }
-  } catch (_) {}
-  return getDefaultEmailTemplates();
-}
-
-function applyTemplate(tmpl, vars) {
-  return tmpl.replace(/\{\{(\w+)\}\}/g, (_, k) => vars[k] ?? '');
-}
-
-async function sendEmail(env, { to, subject, html, type, sentBy, meta }) {
-  if (!env.RESEND_API_KEY) return { ok: false, reason: 'no_key' };
-  try {
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ from: 'ENGR HUB <onboarding@resend.dev>', to: [to], subject, html }),
-    });
-    const ok = res.ok;
-    await logEmailHistory(env, { type, to, subject, sentBy, ok, meta });
-    return { ok };
-  } catch (err) {
-    await logEmailHistory(env, { type, to, subject, sentBy, ok: false, error: err.message, meta });
-    return { ok: false, reason: err.message };
-  }
-}
-
-async function sendCommentNotification(env, { kind, item, comment, commenter }) {
-  try {
-    if (!env.RESEND_API_KEY) return;
-    const author = item.createdBy;
-    if (!author || author === commenter) return; // 자기 글에 자기 댓글 시 발송 안 함
-    const toEmail = `${author}@escare.co.kr`;
-    const kindLabel = kind === 'knowledge' ? '팀노하우' : '업무링크';
-    const itemTitle = item.title || item.url || '(제목 없음)';
-    const subject = `[ENGR HUB] '${itemTitle}' ${kindLabel}에 댓글이 달렸습니다`;
-    const templates = await getEmailTemplates(env);
-    const html = applyTemplate(templates.comment, {
-      author, kind: kindLabel, kind_upper: kindLabel.toUpperCase(),
-      item_title: itemTitle, commenter,
-      comment_text: comment.text || '',
-      hub_url: 'https://engr-jira.github.io/engr-hub-dev/',
-    });
-    await sendEmail(env, { to: toEmail, subject, html, type: 'comment', sentBy: commenter, meta: { itemId: item.id, kind } });
-  } catch (_) { /* 알림 실패 시 조용히 무시 — 댓글 등록에 영향 없음 */ }
-}
-
 async function addCollectionComment(env, key, id, user, text, auditType) {
   const body = cleanCommentText(text);
   if (!body) return { status: 400, body: { ok: false, message: '\uB313\uAE00 \uB0B4\uC6A9\uC744 \uC785\uB825\uD558\uC138\uC694.' } };
@@ -1392,10 +1318,10 @@ export default {
         const AI_USER_DAILY_LIMIT = parseInt(env.AI_USER_DAILY_LIMIT || '80', 10);
         try {
           const usageNow = await readUsageCounter(env, user);
-          if ((usageNow.teamToday || 0) >= AI_DAILY_LIMIT) {
-            return corsResponse({ ok: false, message: `\ud300 \uc77c\uc77c AI \uc694\uccad \ud55c\ub3c4(${AI_DAILY_LIMIT}\ud68c)\uc5d0 \ub3c4\ub2ec\ud588\uc2b5\ub2c8\ub2e4.` }, 429);
+          if ((usageNow?.team?.today || 0) >= AI_DAILY_LIMIT) {
+            return corsResponse({ ok: false, message: `\ud300 \uc77c\uc77c AI \uc694\uccad \ud55c\ub3c4(${AI_DAILY_LIMIT}\ud68c)\uc5d0 \ub3c4\ub2ec\ud588\uc2b5\uB2C8\uB2E4.` }, 429);
           }
-          if ((usageNow.today || 0) >= AI_USER_DAILY_LIMIT) {
+          if ((usageNow?.me?.today || 0) >= AI_USER_DAILY_LIMIT) {
             return corsResponse({ ok: false, message: `\uac1c\uc778 \uc77c\uc77c AI \uc694\uccad \ud55c\ub3c4(${AI_USER_DAILY_LIMIT}\ud68c)\uc5d0 \ub3c4\ub2ec\ud588\uc2b5\uB2C8\uB2E4.` }, 429);
           }
         } catch (_) {}
@@ -1695,7 +1621,6 @@ export default {
         if (request.method === 'POST') {
           const body = await request.json().catch(() => ({}));
           const result = await addCollectionComment(env, 'config:links', id, user, body.text, 'LINK_COMMENT_ADD');
-          if (result.item) ctx.waitUntil(sendCommentNotification(env, { kind: 'links', item: result.item, comment: result.body.comment, commenter: user }));
           return corsResponse(result.body, result.status);
         }
         if (request.method === 'DELETE') {
@@ -1815,7 +1740,6 @@ export default {
         if (request.method === 'POST') {
           const body = await request.json().catch(() => ({}));
           const result = await addCollectionComment(env, 'config:knowledge', id, user, body.text, 'KNOWLEDGE_COMMENT_ADD');
-          if (result.item) ctx.waitUntil(sendCommentNotification(env, { kind: 'knowledge', item: result.item, comment: result.body.comment, commenter: user }));
           return corsResponse(result.body, result.status);
         }
         if (request.method === 'DELETE') {
@@ -1909,169 +1833,6 @@ export default {
         return corsResponse({ ok: true });
       }
 
-      // \u2500\u2500 \uC774\uBA54\uC77C \uBC1C\uC1A1 \uC774\uB825 \uC870\uD68C \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-      if (path === '/admin/email/history' && request.method === 'GET') {
-        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC811\uADFC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
-        const raw = await env.ENGR_KV.get(EMAIL_LOG_KEY);
-        const log = raw ? JSON.parse(raw) : [];
-        return corsResponse({ ok: true, log });
-      }
-
-      // \u2500\u2500 \uC774\uBA54\uC77C \uD15C\uD50C\uB9BF \uC870\uD68C / \uC218\uC815 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-      if (path === '/admin/email/templates') {
-        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC811\uADFC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
-        if (request.method === 'GET') {
-          const templates = await getEmailTemplates(env);
-          const defaults = getDefaultEmailTemplates();
-          return corsResponse({ ok: true, templates, defaults });
-        }
-        if (request.method === 'PUT') {
-          const body = await request.json();
-          const current = await getEmailTemplates(env);
-          const updated = { comment: body.comment || current.comment, push: body.push || current.push };
-          await env.ENGR_KV.put('config:email_templates', JSON.stringify(updated));
-          await auditLog(env, user, 'EMAIL_TEMPLATE_UPDATE', {});
-          return corsResponse({ ok: true });
-        }
-      }
-
-      // \u2500\u2500 \uBBF8\uC644\uB8CC \uC5C5\uBB34 Push \uC774\uBA54\uC77C \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-      if (path === '/admin/email/push' && request.method === 'POST') {
-        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC811\uADFC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
-        const body = await request.json().catch(() => ({}));
-        const targetUser = (body.targetUser || '').trim();
-        const preview = body.preview === true;
-        const types = Array.isArray(body.types) && body.types.length ? body.types : ['jira', 'cases', 'eos'];
-        if (!targetUser) return corsResponse({ ok: false, message: '\uB300\uC0C1 \uD300\uC6D0\uC744 \uC9C0\uC815\uD558\uC138\uC694.' }, 400);
-        const toEmail = `${targetUser}@escare.co.kr`;
-
-        // 1. Jira \uBBF8\uC644\uB8CC \uC774\uC288 \uC870\uD68C (\uB2F4\uB2F9\uC790 \uAE30\uC900, types\uC5D0 jira \uB610\uB294 cases \uD3EC\uD568 \uC2DC)
-        let allIssues = [];
-        if (types.includes('jira') || types.includes('cases')) {
-          allIssues = await fetchJiraUnresolvedByUser(env, targetUser);
-        }
-
-        // 2. \uCF00\uC774\uC2A4 vs \uC77C\uBC18 \uC774\uC288 \uBD84\uB9AC (\uCF00\uC774\uC2A4: summary\uC5D0 7\uC790\uB9AC \uC774\uC0C1 \uC22B\uC790 \uD3EC\uD568)
-        const caseRe = /\b\d{7,}\b/;
-        const cases = types.includes('cases') ? allIssues.filter(i => caseRe.test(i.fields?.summary || '')) : [];
-        const jiraIssues = types.includes('jira') ? allIssues.filter(i => !caseRe.test(i.fields?.summary || '')) : [];
-
-        // 3. EOS \uB9CC\uB8CC \uC784\uBC15 \uD56D\uBAA9 (90\uC77C \uC774\uB0B4)
-        let eosItems = [];
-        if (types.includes('eos')) {
-          try {
-            const eosRaw = await env.ENGR_KV.get('config:eos');
-            const eosList = eosRaw ? JSON.parse(eosRaw) : [];
-            const now = Date.now();
-            const days90 = 90 * 24 * 60 * 60 * 1000;
-            eosItems = eosList.filter(e => {
-              if (!e.expireDate) return false;
-              const exp = new Date(e.expireDate).getTime();
-              return exp > now && exp - now <= days90;
-            }).sort((a, b) => new Date(a.expireDate) - new Date(b.expireDate));
-          } catch (_) {}
-        }
-
-        // 4. HTML \uC139\uC158 \uBE4C\uB4DC \uD5EC\uD37C
-        function issueRow(i) {
-          const key = i.key || '';
-          const summary = (i.fields?.summary || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-          const status = i.fields?.status?.name || '';
-          const priority = i.fields?.priority?.name || '';
-          return `<tr><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#3b82f6;font-weight:700;white-space:nowrap">${key}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#334155">${summary}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;color:#64748b;white-space:nowrap">${status}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;color:#64748b">${priority}</td></tr>`;
-        }
-        const issueTableHeader = `<table style="width:100%;border-collapse:collapse;background:#fff"><thead><tr style="background:#f8fafc"><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uD0A4</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uC81C\uBAA9</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uC0C1\uD0DC</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uC6B0\uC120\uC21C\uC704</th></tr></thead><tbody>`;
-
-        let jiraSection = '';
-        if (jiraIssues.length > 0) {
-          jiraSection = `<div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden"><div style="font-size:13px;font-weight:700;color:#1e293b;padding:10px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0">\uD83D\uDCCC Jira \uC774\uC288 (${jiraIssues.length}\uAC74)</div>${issueTableHeader}${jiraIssues.map(issueRow).join('')}</tbody></table></div>`;
-        }
-        let caseSection = '';
-        if (cases.length > 0) {
-          caseSection = `<div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden"><div style="font-size:13px;font-weight:700;color:#1e293b;padding:10px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0">\uD83C\uDFAB \uCF00\uC774\uC2A4 (${cases.length}\uAC74)</div>${issueTableHeader}${cases.map(issueRow).join('')}</tbody></table></div>`;
-        }
-        let eosSection = '';
-        if (eosItems.length > 0) {
-          const eosRows = eosItems.map(e => {
-            const daysLeft = Math.ceil((new Date(e.expireDate) - new Date()) / 86400000);
-            const cust = (e.customer || '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-            const prod = (e.product || '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-            const ver = (e.version || '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-            const dColor = daysLeft <= 30 ? '#dc2626' : '#d97706';
-            return `<tr><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#1e293b">${cust}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#334155">${prod} ${ver}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;color:#64748b">${e.expireDate || ''}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;color:${dColor};font-weight:700">D-${daysLeft}</td></tr>`;
-          }).join('');
-          const eosTableHeader = `<table style="width:100%;border-collapse:collapse;background:#fff"><thead><tr style="background:#f8fafc"><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uACE0\uAC1D\uC0AC</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uC81C\uD488/\uBC84\uC804</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uB9CC\uB8CC\uC77C</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">D-day</th></tr></thead><tbody>`;
-          eosSection = `<div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden"><div style="font-size:13px;font-weight:700;color:#1e293b;padding:10px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0">\u23F0 EOS/\uB77C\uC774\uC120\uC2A4 \uB9CC\uB8CC \uC784\uBC15 (${eosItems.length}\uAC74 \u00B7 90\uC77C \uC774\uB0B4)</div>${eosTableHeader}${eosRows}</tbody></table></div>`;
-        }
-
-        const counts = { jira: jiraIssues.length, cases: cases.length, eos: eosItems.length };
-        if (!jiraSection && !caseSection && !eosSection) {
-          return corsResponse({ ok: true, empty: true, message: `${targetUser}\uC758 \uBBF8\uC644\uB8CC \uAC74\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.`, counts });
-        }
-
-        const sentDate = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-        const templates = await getEmailTemplates(env);
-        const html = applyTemplate(templates.push, {
-          assignee: targetUser, sent_by: user, sent_date: sentDate,
-          jira_section: jiraSection, case_section: caseSection, eos_section: eosSection,
-          hub_url: 'https://engr-jira.github.io/engr-hub-dev/',
-        });
-        const subject = `[ENGR HUB] ${targetUser}\uB2D8\uC758 \uBBF8\uC644\uB8CC \uC5C5\uBB34 \uD604\uD669 (${sentDate})`;
-
-        if (preview) {
-          return corsResponse({ ok: true, preview: true, html, subject, to: toEmail, counts });
-        }
-
-        ctx.waitUntil(sendEmail(env, { to: toEmail, subject, html, type: 'push', sentBy: user, meta: { targetUser, counts } }));
-        await auditLog(env, user, 'EMAIL_PUSH', { targetUser, counts });
-        return corsResponse({ ok: true, message: `${toEmail}\uB85C \uBC1C\uC1A1 \uC694\uCCAD\uB418\uC5C8\uC2B5\uB2C8\uB2E4.`, counts });
-      }
-
-      // \u2500\u2500 \uC774\uBA54\uC77C \uC2A4\uCF00\uC904 \uC124\uC815 \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-      if (path === '/admin/email/schedules') {
-        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC811\uADFC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
-        if (request.method === 'GET') {
-          const raw = await env.ENGR_KV.get('config:email_schedules');
-          return corsResponse({ ok: true, schedules: raw ? JSON.parse(raw) : [] });
-        }
-        if (request.method === 'POST') {
-          const body = await request.json();
-          const raw = await env.ENGR_KV.get('config:email_schedules');
-          const schedules = raw ? JSON.parse(raw) : [];
-          const newSched = {
-            id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-            targetUser: (body.targetUser || '').trim(),
-            types: Array.isArray(body.types) ? body.types : ['jira', 'cases', 'eos'],
-            frequency: body.frequency || 'weekly',  // 'daily' | 'weekly'
-            dayOfWeek: body.dayOfWeek ?? 1,          // 0=\uC77C,1=\uC6D4...6=\uD1A0 (\uC8FC\uB2E8\uC704\uC6A9)
-            hourKST: body.hourKST ?? 10,             // \uBC1C\uC1A1 \uC2DC\uAC01 (KST \uAE30\uC900 0~23, \uAE30\uBCF8 \uC624\uC804 10\uC2DC)
-            enabled: true,
-            createdBy: user,
-            createdAt: new Date().toISOString(),
-          };
-          if (!newSched.targetUser) return corsResponse({ ok: false, message: '\uB300\uC0C1 \uD300\uC6D0\uC744 \uC9C0\uC815\uD558\uC138\uC694.' }, 400);
-          schedules.push(newSched);
-          await env.ENGR_KV.put('config:email_schedules', JSON.stringify(schedules));
-          await auditLog(env, user, 'EMAIL_SCHEDULE_ADD', { targetUser: newSched.targetUser, frequency: newSched.frequency });
-          return corsResponse({ ok: true, schedule: newSched });
-        }
-        if (request.method === 'PUT') {
-          const body = await request.json();
-          const raw = await env.ENGR_KV.get('config:email_schedules');
-          let schedules = raw ? JSON.parse(raw) : [];
-          schedules = schedules.map(s => s.id === body.id ? { ...s, ...body } : s);
-          await env.ENGR_KV.put('config:email_schedules', JSON.stringify(schedules));
-          return corsResponse({ ok: true });
-        }
-        if (request.method === 'DELETE') {
-          const id = url.searchParams.get('id');
-          const raw = await env.ENGR_KV.get('config:email_schedules');
-          let schedules = raw ? JSON.parse(raw) : [];
-          schedules = schedules.filter(s => s.id !== id);
-          await env.ENGR_KV.put('config:email_schedules', JSON.stringify(schedules));
-          return corsResponse({ ok: true });
-        }
-      }
 
       return corsResponse({ ok: false, message: '\uC5C6\uB294 \uACBD\uB85C\uC785\uB2C8\uB2E4.' }, 404);
     } catch (err) {
@@ -2081,148 +1842,6 @@ export default {
 
   // \u2500\u2500 Cron Scheduled Handler \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(runScheduledEmailPush(env));
+    // no scheduled tasks
   },
 };
-
-async function runScheduledEmailPush(env) {
-  try {
-    const raw = await env.ENGR_KV.get('config:email_schedules');
-    if (!raw) return;
-    const schedules = JSON.parse(raw);
-    const now = new Date();
-    const nowUtcHour = now.getUTCHours();
-    const nowKstHour = (nowUtcHour + 9) % 24; // KST = UTC+9
-    const todayDowKst = new Date(now.getTime() + 9 * 3600 * 1000).getUTCDay(); // 0=Sun...6=Sat
-
-    for (const sched of schedules) {
-      if (!sched.enabled || !sched.targetUser) continue;
-      // \uBC1C\uC1A1 \uC2DC\uAC01 \uCCB4\uD06C (\uC124\uC815\uB41C KST \uC2DC\uAC01\uACFC \uD604\uC7AC KST \uC2DC\uAC01 \uBE44\uAD50, \uAE30\uBCF8 10\uC2DC)
-      const schedHour = sched.hourKST ?? 10;
-      if (nowKstHour !== schedHour) continue;
-      // \uC8FC\uB2E8\uC704: \uC624\uB298\uC774 \uC124\uC815\uB41C \uC694\uC77C(KST \uAE30\uC900)\uC778\uC9C0 \uD655\uC778
-      if (sched.frequency === 'weekly' && sched.dayOfWeek !== todayDowKst) continue;
-      // \uC77C\uB2E8\uC704: \uB9E4\uC77C \uBC1C\uC1A1 \uC2DC\uAC01\uC5D0 \uC2E4\uD589
-      try {
-        await executeEmailPush(env, {
-          targetUser: sched.targetUser,
-          types: sched.types || ['jira', 'cases', 'eos'],
-          sentBy: sched.createdBy || 'system',
-        });
-      } catch (_) {}
-    }
-  } catch (_) {}
-}
-
-// Jira 사용자 accountId 조회 → accountId 기반 JQL로 이슈 검색
-// Jira Cloud는 emailAddress를 숨길 수 있어 email 기반 필터가 불안정함
-// accountId를 JQL에 사용하면 항상 신뢰성 있게 동작함
-async function fetchJiraUnresolvedByUser(env, targetUser) {
-  const jiraAuth = 'Basic ' + btoa('mj.park@escare.co.kr:' + env.JIRA_TOKEN);
-  const jiraApiBase = 'https://escare-engr.atlassian.net/rest/api/3';
-  const targetEmail = `${targetUser}@escare.co.kr`;
-
-  // Step 1: 이메일로 Jira 계정 검색 → accountId 획득
-  let assigneeJql = `"${targetEmail}"`; // 기본: 이메일 직접 사용
-  try {
-    const userRes = await fetch(
-      `${jiraApiBase}/user/search?query=${encodeURIComponent(targetEmail)}&maxResults=5`,
-      { headers: { 'Authorization': jiraAuth, 'Accept': 'application/json' } }
-    );
-    if (userRes.ok) {
-      const users = await userRes.json();
-      // 이메일 일치 또는 첫 번째 결과의 accountId 사용
-      const match = users.find(u =>
-        (u.emailAddress || '').toLowerCase() === targetEmail.toLowerCase()
-      ) || users[0];
-      if (match?.accountId) assigneeJql = `"${match.accountId}"`;
-    }
-  } catch (_) {}
-
-  // Step 2: accountId(또는 이메일) 기반 JQL로 미완료 이슈 조회
-  const jql = `project=ENGR AND resolution=Unresolved AND assignee=${assigneeJql} ORDER BY created DESC`;
-  let allIssues = [], nextPageToken = undefined;
-  try {
-    for (let page = 0; page < 10; page++) {
-      const body = {
-        jql, maxResults: 100, fieldsByKeys: false,
-        fields: ['summary', 'status', 'priority', 'assignee', 'created', 'issuetype'],
-      };
-      if (nextPageToken) body.nextPageToken = nextPageToken;
-      const res = await fetch(`${jiraApiBase}/search/jql`, {
-        method: 'POST',
-        headers: { 'Authorization': jiraAuth, 'Content-Type': 'application/json', 'Accept': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) break;
-      const data = await res.json();
-      allIssues = allIssues.concat(data.issues || []);
-      nextPageToken = data.nextPageToken;
-      if (!nextPageToken || (data.issues || []).length === 0) break;
-    }
-  } catch (_) {}
-  return allIssues;
-}
-
-async function executeEmailPush(env, { targetUser, types, sentBy }) {
-  let allIssues = [];
-  if (types.includes('jira') || types.includes('cases')) {
-    allIssues = await fetchJiraUnresolvedByUser(env, targetUser);
-  }
-
-  const caseRe = /\b\d{7,}\b/;
-  const cases = types.includes('cases') ? allIssues.filter(i => caseRe.test(i.fields?.summary || '')) : [];
-  const jiraIssues = types.includes('jira') ? allIssues.filter(i => !caseRe.test(i.fields?.summary || '')) : [];
-
-  let eosItems = [];
-  if (types.includes('eos')) {
-    try {
-      const eosRaw = await env.ENGR_KV.get('config:eos');
-      const eosList = eosRaw ? JSON.parse(eosRaw) : [];
-      const now = Date.now();
-      const days90 = 90 * 24 * 60 * 60 * 1000;
-      eosItems = eosList.filter(e => {
-        if (!e.expireDate) return false;
-        const exp = new Date(e.expireDate).getTime();
-        return exp > now && exp - now <= days90;
-      }).sort((a, b) => new Date(a.expireDate) - new Date(b.expireDate));
-    } catch (_) {}
-  }
-
-  if (!jiraIssues.length && !cases.length && !eosItems.length) return;
-
-  function issueRow(i) {
-    const key = i.key || '';
-    const summary = (i.fields?.summary || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const status = i.fields?.status?.name || '';
-    const priority = i.fields?.priority?.name || '';
-    return `<tr><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:12px;color:#3b82f6;font-weight:700">${key}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#334155">${summary}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;color:#64748b">${status}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;color:#64748b">${priority}</td></tr>`;
-  }
-  const th = `<table style="width:100%;border-collapse:collapse;background:#fff"><thead><tr style="background:#f8fafc"><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uD0A4</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uC81C\uBAA9</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uC0C1\uD0DC</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uC6B0\uC120\uC21C\uC704</th></tr></thead><tbody>`;
-
-  let jiraSection = jiraIssues.length ? `<div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden"><div style="font-size:13px;font-weight:700;color:#1e293b;padding:10px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0">\uD83D\uDCCC Jira \uC774\uC288 (${jiraIssues.length}\uAC74)</div>${th}${jiraIssues.map(issueRow).join('')}</tbody></table></div>` : '';
-  let caseSection = cases.length ? `<div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden"><div style="font-size:13px;font-weight:700;color:#1e293b;padding:10px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0">\uD83C\uDFAB \uCF00\uC774\uC2A4 (${cases.length}\uAC74)</div>${th}${cases.map(issueRow).join('')}</tbody></table></div>` : '';
-  let eosSection = '';
-  if (eosItems.length) {
-    const eosRows = eosItems.map(e => {
-      const daysLeft = Math.ceil((new Date(e.expireDate) - new Date()) / 86400000);
-      const cust = (e.customer || '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-      const prod = (e.product || '').replace(/&/g,'&amp;').replace(/</g,'&lt;');
-      const dColor = daysLeft <= 30 ? '#dc2626' : '#d97706';
-      return `<tr><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#1e293b">${cust}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#334155">${prod} ${e.version||''}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;color:#64748b">${e.expireDate||''}</td><td style="padding:8px 10px;border-bottom:1px solid #f1f5f9;font-size:11px;color:${dColor};font-weight:700">D-${daysLeft}</td></tr>`;
-    }).join('');
-    const eth = `<table style="width:100%;border-collapse:collapse;background:#fff"><thead><tr style="background:#f8fafc"><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uACE0\uAC1D\uC0AC</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uC81C\uD488/\uBC84\uC804</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">\uB9CC\uB8CC\uC77C</th><th style="padding:8px 10px;text-align:left;font-size:11px;color:#64748b;font-weight:700;border-bottom:2px solid #e2e8f0">D-day</th></tr></thead><tbody>`;
-    eosSection = `<div style="margin-bottom:20px;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden"><div style="font-size:13px;font-weight:700;color:#1e293b;padding:10px 12px;background:#f8fafc;border-bottom:1px solid #e2e8f0">\u23F0 EOS/\uB77C\uC774\uC120\uC2A4 \uB9CC\uB8CC \uC784\uBC15 (${eosItems.length}\uAC74)</div>${eth}${eosRows}</tbody></table></div>`;
-  }
-
-  const sentDate = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
-  const templates = await getEmailTemplates(env);
-  const html = applyTemplate(templates.push, {
-    assignee: targetUser, sent_by: sentBy, sent_date: sentDate,
-    jira_section: jiraSection, case_section: caseSection, eos_section: eosSection,
-    hub_url: 'https://engr-jira.github.io/engr-hub-dev/',
-  });
-  const subject = `[ENGR HUB] ${targetUser}\uB2D8\uC758 \uBBF8\uC644\uB8CC \uC5C5\uBB34 \uD604\uD669 (${sentDate})`;
-  const counts = { jira: jiraIssues.length, cases: cases.length, eos: eosItems.length };
-  await sendEmail(env, { to: `${targetUser}@escare.co.kr`, subject, html, type: 'push', sentBy, meta: { targetUser, counts, auto: true } });
-}
