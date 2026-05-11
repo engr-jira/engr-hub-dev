@@ -184,6 +184,26 @@ async function deactivateUserAccount(env, idRaw) {
   return users[id];
 }
 
+async function purgeUserAccount(env, idRaw) {
+  const id = normalizeUserId(idRaw);
+  if (!id) throw new Error('대상 사용자를 선택하세요.');
+  if (id === SUPER_ADMIN) throw new Error('최고 관리자는 삭제할 수 없습니다.');
+  const users = await getUsers(env);
+  if (!users[id]) throw new Error('등록된 계정이 아닙니다.');
+  delete users[id];
+  users[SUPER_ADMIN] = users[SUPER_ADMIN] || { id: SUPER_ADMIN, displayName: 'mj.park', role: 'super', active: true };
+  users[SUPER_ADMIN].role = 'super';
+  users[SUPER_ADMIN].active = true;
+  await env.ENGR_KV.put('config:users', JSON.stringify(Object.values(users)));
+  const admins = await getAdmins(env, { skipUsers: true });
+  delete admins[id];
+  admins[SUPER_ADMIN] = 'super';
+  await env.ENGR_KV.put('config:admins', JSON.stringify(admins));
+  try { await env.ENGR_KV.delete(`userpin:${id}`); } catch (_) {}
+  await revokeUserSessions(env, id);
+  return id;
+}
+
 // Team ID validation
 function getTeamNames(env) {
   const raw = env.TEAM_NAMES || '';
@@ -1440,13 +1460,21 @@ export default {
       if (path.startsWith('/admin/users/') && request.method === 'DELETE') {
         if (!hasSession || !await isSuper(env, user)) return corsResponse({ ok: false, message: 'Forbidden' }, 403);
         const target = decodeURIComponent(path.split('/')[3] || '');
+        const urlObj = new URL(request.url);
+        const purge = urlObj.searchParams.get('purge') === 'true';
         try {
-          const account = await deactivateUserAccount(env, target);
-          if (!account) return corsResponse({ ok: false, message: '\uB4F1\uB85D\uB41C \uACC4\uC815\uC774 \uC544\uB2D9\uB2C8\uB2E4.' }, 404);
-          await auditLog(env, user, 'USER_DISABLE', { target: account.id });
-          return corsResponse({ ok: true, user: account.id, active: false });
+          if (purge) {
+            const deletedId = await purgeUserAccount(env, target);
+            await auditLog(env, user, 'USER_PURGE', { target: deletedId });
+            return corsResponse({ ok: true, user: deletedId, purged: true });
+          } else {
+            const account = await deactivateUserAccount(env, target);
+            if (!account) return corsResponse({ ok: false, message: '\uB4F1\uB85D\uB41C \uACC4\uC815\uC774 \uC544\uB2D9\uB2C8\uB2E4.' }, 404);
+            await auditLog(env, user, 'USER_DISABLE', { target: account.id });
+            return corsResponse({ ok: true, user: account.id, active: false });
+          }
         } catch (e) {
-          return corsResponse({ ok: false, message: e.message || '\uC0AC\uC6A9\uC790 \uBE44\uD65C\uC131\uD654 \uC2E4\uD328' }, 400);
+          return corsResponse({ ok: false, message: e.message || '\uC0AC\uC6A9\uC790 \uCC98\uB9AC \uC2E4\uD328' }, 400);
         }
       }
 

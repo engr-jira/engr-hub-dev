@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.6.0 - ESCARE Security Hub</title>
+<title>ENGR AI v1.6.1 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -934,8 +934,10 @@ html[data-theme="light"] .btn-ghost,html[data-theme="light"] .filter-reset{backg
 html[data-theme="light"] .alert,html[data-theme="light"] .sync-banner,html[data-theme="light"] .dash-alert{background:linear-gradient(135deg,rgba(255,251,235,.86),rgba(239,246,255,.86));border-color:rgba(180,138,39,.26);color:#334155}
 html[data-theme="light"] .rp-desc,html[data-theme="light"] .rp-comment-item,html[data-theme="light"] .rp-meta,html[data-theme="light"] .rp-row{background:#f5f8fd;border-color:#d8e2f0;color:#334155}
 html[data-theme="light"] .rp-row span:last-child{color:#111827}
-html[data-theme="light"] .audit-table th,html[data-theme="light"] .eos-table th{background:#eef3fb;color:#475569}
-html[data-theme="light"] .audit-table td,html[data-theme="light"] .eos-table td{color:#334155;border-bottom-color:#d8e2f0}
+html[data-theme="light"] .eos-table{background:#fff !important;border-color:#e2e8f0 !important}
+html[data-theme="light"] .audit-table th,html[data-theme="light"] .eos-table th{background:#f1f5f9 !important;color:#475569 !important;border-bottom-color:#e2e8f0 !important}
+html[data-theme="light"] .audit-table td,html[data-theme="light"] .eos-table td{color:#334155 !important;border-bottom-color:#f1f5f9 !important}
+html[data-theme="light"] .eos-table tr:hover td{background:#f8fafc !important}
 html[data-theme="light"] .mini-card,html[data-theme="light"] .ops-focus-card,html[data-theme="light"] .rank-row,html[data-theme="light"] .vt-cell,html[data-theme="light"] .vt-hist-row,html[data-theme="light"] .admin-list-item{background:#ffffff;border-color:#d8e2f0;color:#111827;box-shadow:0 6px 18px rgba(30,41,59,.06)}
 html[data-theme="light"] .issue-card{background:linear-gradient(145deg,#ffffff,#f7faff);border-color:#d8e2f0;color:#111827;box-shadow:0 7px 20px rgba(30,41,59,.06)}
 html[data-theme="light"] .issue-card:hover,html[data-theme="light"] .issue-card.sel,html[data-theme="light"] .irow:hover,html[data-theme="light"] .case-card:hover{background:#f6f9fe!important;border-color:#b9c8dc!important}
@@ -1252,7 +1254,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.6.0</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.6.1</span></div></div>
       </div>
       <div class="sb-section">메뉴</div>
       <div class="sb-nav">
@@ -3515,6 +3517,7 @@ function renderUserAccounts(users=[]){
     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
       <button class="btn btn-ghost" onclick="fillUserForm('${escapeHtml(u.id)}','${escapeHtml(u.displayName||'')}','${escapeHtml(u.role||'user')}')" style="width:auto;padding:4px 12px;font-size:11px">수정</button>
       ${u.id!==SUPER_ADMIN&&u.active!==false?`<button class="btn btn-red" onclick="deleteUserAccount('${escapeHtml(u.id)}')" style="width:auto;padding:4px 12px;font-size:11px">로그인 차단</button>`:''}
+      ${u.id!==SUPER_ADMIN?`<button class="btn btn-red" onclick="purgeUserAccount('${escapeHtml(u.id)}')" style="width:auto;padding:4px 12px;font-size:11px;opacity:.7">계정 삭제</button>`:''}
     </div>
   </div>`).join('')||'<div class="empty">등록된 사용자가 없습니다.</div>';
 }
@@ -3550,7 +3553,18 @@ async function deleteUserAccount(id){
     toast(`${d.user||id} 로그인 차단 완료`);
     setAdminActionStatus(`${d.user||id} 계정 로그인을 차단했습니다. 기존 등록 데이터는 유지됩니다.`);
     await loadSettings();
-  }catch(e){toast('사용자 삭제 실패: '+e.message,true);setAdminActionStatus('사용자 로그인 차단 실패: '+e.message,'err');}
+  }catch(e){toast('사용자 차단 실패: '+e.message,true);setAdminActionStatus('사용자 로그인 차단 실패: '+e.message,'err');}
+}
+async function purgeUserAccount(id){
+  if(!id||id===SUPER_ADMIN){toast('최고 관리자는 삭제할 수 없습니다.',true);return;}
+  if(!confirm(`⚠ ${id} 계정을 완전히 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없으며 계정 정보와 PIN이 삭제됩니다.\n등록자가 만든 업무 데이터(링크/노하우/EOS 등)는 유지됩니다.`))return;
+  if(!confirm(`정말로 ${id} 계정을 삭제합니까?`))return;
+  try{
+    const d=await hubApi(`/admin/users/${encodeURIComponent(id)}?purge=true`,{method:'DELETE'});
+    toast(`${d.user||id} 계정이 삭제됐습니다.`);
+    setAdminActionStatus(`${d.user||id} 계정 삭제 완료.`);
+    await loadSettings();
+  }catch(e){toast('계정 삭제 실패: '+e.message,true);setAdminActionStatus('계정 삭제 실패: '+e.message,'err');}
 }
 async function saveConfig(){
   const body={
@@ -3659,23 +3673,44 @@ async function resetUserPin(){
     setAdminActionStatus(`${target} PIN 초기화 완료`);
   }catch(e){toast('PIN 초기화 실패: '+e.message,true);setAdminActionStatus('PIN 초기화 실패: '+e.message,'err');}
 }
-async function resetAllHubData(){
-  const msg='업무 링크, 노하우, EOS/라이선스, 개인 메모, VT 이력, AI 캐시/사용량/감사 로그를 초기화합니다. 관리자/시스템 설정은 유지됩니다.\n\n계속하려면 로그인 PIN을 입력해야 합니다.';
-  if(!confirm(msg))return;
-  const pin=prompt('현재 로그인 사용자의 PIN을 입력하세요');
-  if(!pin)return;
-  const btn=document.getElementById('storage-reset-btn');
-  const old=btn?.textContent;
-  if(btn){btn.disabled=true;btn.textContent='초기화 중...';}
-  try{
-    const d=await hubApi('/admin/storage/reset',{method:'POST',body:JSON.stringify({pin})});
-    LINKS=[];KNOWLEDGE=[];EOS_ITEMS=[];PRIVATE_ITEMS=[];VT_HISTORY=[];
-    localStorage.removeItem('vt_history');
-    toast(`초기화 완료: ${d.deleted||0}개 삭제${d.truncated?' · 일부 데이터가 남아 다시 실행 필요':''}`);
-    setAdminActionStatus(`전체 데이터 초기화 완료: ${d.deleted||0}개 삭제${d.truncated?' · 일부 데이터가 남아 다시 실행 필요':''}`);
-    renderCurrent();
-  }catch(e){toast('초기화 실패: '+e.message,true);setAdminActionStatus('전체 데이터 초기화 실패: '+e.message,'err');}
-  finally{if(btn){btn.disabled=false;btn.textContent=old||'⚠ 전체 데이터 초기화';}}
+function resetAllHubData(){
+  if(!confirm('업무 링크, 노하우, EOS/라이선스, 개인 메모, VT 이력, AI 캐시/사용량/감사 로그를 초기화합니다.\n관리자/시스템 설정은 유지됩니다.\n\n계속하려면 로그인 PIN을 입력해야 합니다.'))return;
+  // 기존 모달 재활용 or 인라인 PIN 입력
+  const pin=window.__resetPin||(()=>{
+    const p=document.createElement('div');
+    p.style.cssText='position:fixed;inset:0;background:rgba(5,8,16,.85);z-index:9999;display:flex;align-items:center;justify-content:center';
+    p.innerHTML=`<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px 24px;width:320px;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+      <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px">⚠ 전체 데이터 초기화</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">로그인 PIN을 입력하면 초기화가 시작됩니다.</div>
+      <input id="reset-pin-input" type="password" placeholder="PIN 입력" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-size:14px;box-sizing:border-box;margin-bottom:12px" autocomplete="current-password">
+      <div style="display:flex;gap:8px">
+        <button id="reset-pin-cancel" class="btn btn-ghost" style="flex:1">취소</button>
+        <button id="reset-pin-ok" class="btn btn-red" style="flex:1">초기화</button>
+      </div>
+    </div>`;
+    document.body.appendChild(p);
+    document.getElementById('reset-pin-input').focus();
+    return new Promise(resolve=>{
+      document.getElementById('reset-pin-cancel').onclick=()=>{p.remove();resolve(null);};
+      document.getElementById('reset-pin-ok').onclick=()=>{const v=document.getElementById('reset-pin-input').value;p.remove();resolve(v||null);};
+      document.getElementById('reset-pin-input').onkeydown=e=>{if(e.key==='Enter'){const v=document.getElementById('reset-pin-input').value;p.remove();resolve(v||null);}if(e.key==='Escape'){p.remove();resolve(null);}};
+    });
+  })();
+  Promise.resolve(pin).then(async resolvedPin=>{
+    if(!resolvedPin)return;
+    const btn=document.getElementById('storage-reset-btn');
+    const old=btn?.textContent;
+    if(btn){btn.disabled=true;btn.textContent='초기화 중...';}
+    try{
+      const d=await hubApi('/admin/storage/reset',{method:'POST',body:JSON.stringify({pin:resolvedPin})});
+      LINKS=[];KNOWLEDGE=[];EOS_ITEMS=[];PRIVATE_ITEMS=[];VT_HISTORY=[];
+      localStorage.removeItem('vt_history');
+      toast(`초기화 완료: ${d.deleted||0}개 삭제${d.truncated?' · 일부 데이터가 남아 다시 실행 필요':''}`);
+      setAdminActionStatus(`전체 데이터 초기화 완료: ${d.deleted||0}개 삭제${d.truncated?' · 일부 데이터가 남아 다시 실행 필요':''}`);
+      renderCurrent();
+    }catch(e){toast('초기화 실패: '+e.message,true);setAdminActionStatus('초기화 실패: '+e.message,'err');}
+    finally{if(btn){btn.disabled=false;btn.textContent=old||'⚠ 전체 데이터 초기화';}}
+  });
 }
 async function addAdmin(){
   const name=document.getElementById('admin-add-name').value;
