@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.7.3 - ESCARE Security Hub</title>
+<title>ENGR AI v1.7.4 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -42,8 +42,10 @@ aside{width:230px;background:#161b27;border-right:1px solid var(--border2);displ
 .sb-sub{font-size:10px;color:var(--text3);margin-top:1px}
 .sb-section{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;padding:0 12px;margin-bottom:6px;margin-top:4px}
 .sb-nav{display:flex;flex-direction:column;gap:2px}
-.sb-group{display:flex;flex-direction:column;gap:2px}
-.sb-group-head{display:flex;align-items:center;gap:9px;width:100%;padding:8px 12px;border:none;background:none;color:var(--text3);font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:1px;cursor:pointer;font-family:inherit;border-radius:10px;text-align:left;transition:all .15s}
+.sb-group{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+.sb-group-head{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border:none;background:none;color:var(--text2);font-size:13.5px;font-weight:800;letter-spacing:.2px;cursor:pointer;font-family:inherit;border-radius:10px;text-align:left;transition:all .15s}
+.sb-group-head svg{width:16px;height:16px}
+.sb-btn-solo{margin-bottom:6px;background:linear-gradient(135deg,rgba(99,102,241,.16),rgba(124,58,237,.12));border:1px solid rgba(99,102,241,.3)!important}
 .sb-group-head:hover{color:var(--text2);background:rgba(255,255,255,.05)}
 .sb-group-head svg{width:14px;height:14px;flex-shrink:0;opacity:.6}
 .sb-group-chev{margin-left:auto;font-size:9px;opacity:.7;transition:transform .18s}
@@ -480,6 +482,15 @@ input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer
 .topbar-right .search-box,.btn-group #similar-btn,button[onclick="runPattern()"],button[onclick="runCaseAI('similar')"]{display:none!important}
 .sb-bottom .health-card{display:none!important}
 .top-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.top-clock{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;line-height:1.05;padding:0 4px 0 10px;margin-left:auto}
+.top-clock .tc-time{font-size:17px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:.5px}
+.top-clock .tc-date{font-size:9px;color:var(--text3);font-weight:700}
+.top-user-group{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:4px 5px}
+.top-user-group .tug-user{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2);font-weight:800;padding:0 7px;white-space:nowrap}
+.top-user-group .tug-user svg{opacity:.7}
+.top-user-group .top-pin,.top-user-group .top-logout,.top-user-group .top-theme{height:30px}
+html[data-theme="light"] .top-user-group{background:rgba(15,23,42,.04);border-color:#d8e1ee}
+html[data-theme="light"] .top-clock .tc-time{color:#1e293b}
 .top-status-card{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:7px 10px;min-height:34px}
 .top-status-card .label{font-size:9px;color:var(--text3);font-weight:800;letter-spacing:.2px}
 .top-status-card .value{font-size:11px;color:#f5f8ff;font-weight:900;white-space:nowrap}
@@ -1587,9 +1598,10 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.3</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.4</span></div></div>
       </div>
       <div class="sb-nav">
+        <button class="sb-btn sb-btn-solo" id="nav-mydesk" onclick="showPage('mydesk',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>My Desk ✦</button>
         <div class="sb-group" data-group="work">
           <button class="sb-group-head" type="button" onclick="toggleNavGroup(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>업무<span class="sb-group-chev">▾</span></button>
           <div class="sb-group-body">
@@ -1605,7 +1617,6 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
           <div class="sb-group-body">
             <button class="sb-btn" id="nav-log" onclick="showPage('log',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>로그 분석기</button>
             <button class="sb-btn" id="nav-vt" onclick="showPage('vt',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>VirusTotal 조회</button>
-            <button class="sb-btn" id="nav-mydesk" onclick="showPage('mydesk',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>My Desk ✦</button>
           </div>
         </div>
         <div class="sb-group collapsed" data-group="collab">
@@ -1836,10 +1847,11 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     <div class="page" id="page-vt">
       <div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:#fca5a5;margin-bottom:16px">🛡 MD5 / SHA-1 / SHA-256 해시값 입력 시 VirusTotal 탐지 결과 조회 <span onclick="showStorageInfo('vt')" title="데이터 저장 안내" style="cursor:pointer;opacity:.6;font-size:13px">ℹ</span></div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">
-        <div style="display:flex;gap:10px">
-          <input id="vt-input" placeholder="해시값 입력..." style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:13px;outline:none;font-family:inherit" onkeydown="if(event.key==='Enter')vtLookup()">
-          <button class="btn btn-red" onclick="vtLookup()" id="vt-btn" style="width:auto;padding:12px 20px">🔍 조회</button>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <textarea id="vt-input" rows="3" placeholder="해시값을 한 줄에 하나씩(또는 공백·쉼표로 구분) 여러 개 입력 가능 — MD5/SHA-1/SHA-256, 최대 100개" style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:13px;outline:none;font-family:'Consolas','Courier New',monospace;resize:vertical;line-height:1.6" oninput="vtUpdateCount()" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();vtLookup();}"></textarea>
+          <button class="btn btn-red" onclick="vtLookup()" id="vt-btn" style="width:auto;padding:12px 20px;white-space:nowrap">🔍 조회</button>
         </div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px"><span id="vt-count" style="font-size:11px;color:var(--text3)">해시 0개</span><span style="font-size:11px;color:var(--text3)">Ctrl+Enter로 조회 · 여러 개는 순차 조회됩니다</span></div>
       </div>
       <div id="vt-result"></div>
       <div id="vt-history-wrap" style="margin-top:16px"></div>
@@ -1921,17 +1933,9 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
 
     <div class="page" id="page-mydesk" style="overflow:auto;background:var(--bg)">
 <div class="wrap">
-  <header>
-    <div class="greet">
-      <div class="eyebrow">ESCARE · 보안기술팀 운영 대시보드</div>
-      <h1 id="greeting">안녕하세요, <span class="name">팀원 님</span></h1>
-      <div class="sub" id="subline">오늘 하루를 정리해 보세요.</div>
-    </div>
-    <div class="clock">
-      <div class="time" id="clock">--:--</div>
-      <div class="date" id="datestr">&mdash;</div>
-    </div>
-  </header>
+  <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+    <button onclick="resetMyDesk()" style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.35);color:#f87171;font-size:11px;padding:6px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700">🗑 My Desk 전체 초기화</button>
+  </div>
 
   <div class="dock" id="dock"></div>
 
@@ -3823,32 +3827,89 @@ ${log.slice(0,15000)}`,'keywords',{product,files:fileNames});
 }
 
 // ── VIRUSTOTAL ────────────────────────────────────
-async function vtLookup(){
-  const hash=document.getElementById('vt-input').value.trim().toLowerCase();
-  if(!hash){toast('해시값 입력',true);return;}
-  if(!/^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64})$/i.test(hash)){toast('MD5/SHA-1/SHA-256 hash format only.',true);return;}
-  const btn=document.getElementById('vt-btn'),res=document.getElementById('vt-result');
-  btn.disabled=true;btn.textContent='조회 중...';
-  res.innerHTML='<div class="loading">VirusTotal 조회 중...</div>';
+const VT_HASH_RE=/^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64})$/i;
+function vtParseHashes(){
+  const raw=(document.getElementById('vt-input')?.value||'');
+  const toks=raw.split(/[\s,;]+/).map(s=>s.trim().toLowerCase()).filter(Boolean);
+  const seen=new Set(),valid=[],invalid=[];
+  toks.forEach(t=>{ if(VT_HASH_RE.test(t)){ if(!seen.has(t)){seen.add(t);valid.push(t);} } else invalid.push(t); });
+  return {valid,invalid};
+}
+function vtUpdateCount(){
+  const {valid,invalid}=vtParseHashes();
+  const el=document.getElementById('vt-count');
+  if(el)el.textContent=`해시 ${valid.length}개`+(invalid.length?` · 형식오류 ${invalid.length}개`:'');
+}
+function vtRiskColor(mal){return mal>=5?'#f87171':mal>=1?'#fbbf24':'#22d3a5';}
+async function vtLookupOne(hash){
   try{
     const r=await fetch(`${WORKERS}/vt/lookup`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({hash})});
     const d=await r.json();
-    if(d.error){res.innerHTML=`<div style="color:var(--danger);font-size:12px;padding:16px">${d.error.message||'조회 실패'}</div>`;btn.disabled=false;btn.textContent='🔍 조회';return;}
+    if(d.error)return {hash,ok:false,error:d.error.message||'조회 실패'};
     const attrs=d.data?.attributes||{};
     const stats=attrs.last_analysis_stats||{};
     const total=(stats.malicious||0)+(stats.undetected||0)+(stats.harmless||0)+(stats.suspicious||0);
     const mal=stats.malicious||0;
-    const riskColor=mal>=5?'#f87171':mal>=1?'#fbbf24':'#22d3a5';
-    const riskLabel=mal>=5?'⚠ 악성':mal>=1?'🔶 의심':'✅ 안전';
-    const fileName=attrs.meaningful_name||attrs.names?.[0]||'-';
+    const name=attrs.meaningful_name||attrs.names?.[0]||'-';
+    const rec={hash,ok:true,mal,total,name,size:attrs.size||0,type:attrs.type_description||'',stats,attrs};
     VT_HISTORY=VT_HISTORY.filter(h=>h.hash!==hash);
-    VT_HISTORY.unshift({hash,mal,total,name:fileName,size:attrs.size||0,type:attrs.type_description||'',ts:Date.now()});
-    if(VT_HISTORY.length>15)VT_HISTORY=VT_HISTORY.slice(0,15);
-    localStorage.setItem('vt_history',JSON.stringify(VT_HISTORY));
+    VT_HISTORY.unshift({hash,mal,total,name,size:rec.size,type:rec.type,ts:Date.now()});
+    if(VT_HISTORY.length>50)VT_HISTORY=VT_HISTORY.slice(0,50);
+    try{localStorage.setItem('vt_history',JSON.stringify(VT_HISTORY));}catch(_){}
+    return rec;
+  }catch(e){return {hash,ok:false,error:e.message};}
+}
+async function vtLookup(){
+  const {valid,invalid}=vtParseHashes();
+  const btn=document.getElementById('vt-btn'),res=document.getElementById('vt-result');
+  if(!valid.length){toast(invalid.length?'유효한 해시가 없습니다 (MD5/SHA-1/SHA-256 형식 확인).':'해시값을 입력하세요.',true);return;}
+  const list=valid.slice(0,100);
+  if(valid.length>100)toast('한 번에 최대 100개까지 조회합니다.',true);
+  btn.disabled=true;
+  if(list.length===1){
+    btn.textContent='조회 중...';
+    res.innerHTML='<div class="loading">VirusTotal 조회 중...</div>';
+    const rec=await vtLookupOne(list[0]); renderVTHistory();
+    res.innerHTML=rec.ok?renderVtRich(rec):`<div style="color:var(--danger);font-size:12px;padding:16px">${escapeHtml(rec.error)}</div>`;
+    btn.disabled=false;btn.textContent='🔍 조회';return;
+  }
+  const results=[];
+  for(let i=0;i<list.length;i++){
+    btn.textContent=`조회 중 ${i+1}/${list.length}`;
+    res.innerHTML=vtTableHtml(results,list.length,i);
+    results.push(await vtLookupOne(list[i]));
     renderVTHistory();
-    const engines=attrs.last_analysis_results||{};
-    const malEngines=Object.entries(engines).filter(([,v])=>v.category==='malicious').map(([k,v])=>`${k}: ${v.result||'malicious'}`).slice(0,8);
-    res.innerHTML=`<div class="vt-result">
+    await new Promise(r=>setTimeout(r,350));
+  }
+  res.innerHTML=vtTableHtml(results,list.length,list.length);
+  btn.disabled=false;btn.textContent='🔍 조회';
+  const okN=results.filter(r=>r.ok).length, malN=results.filter(r=>r.ok&&r.mal>0).length;
+  toast(`VT 조회 완료: ${okN}/${list.length}건 성공 · 악성/의심 ${malN}건`);
+}
+function vtTableHtml(results,total,done){
+  const rows=results.map(r=>{
+    if(!r.ok)return `<tr><td style="font-family:monospace;font-size:11px">${escapeHtml(r.hash.slice(0,20))}…</td><td colspan="3" style="color:var(--danger);font-size:11px">${escapeHtml(r.error||'실패')}</td><td></td></tr>`;
+    const col=vtRiskColor(r.mal),label=r.mal>=5?'악성':r.mal>=1?'의심':'안전';
+    return `<tr>
+      <td style="font-family:monospace;font-size:11px;white-space:nowrap" title="${escapeHtml(r.hash)}">${escapeHtml(r.hash.slice(0,18))}…</td>
+      <td style="font-weight:800;color:${col};white-space:nowrap">${r.mal}/${r.total}</td>
+      <td><span class="badge" style="background:${col}22;color:${col}">${label}</span></td>
+      <td style="font-size:11px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(r.name||'-')}</td>
+      <td><a href="https://www.virustotal.com/gui/file/${r.hash}" target="_blank" style="color:var(--cyan);font-size:11px;text-decoration:none">VT↗</a></td>
+    </tr>`;
+  }).join('');
+  const head=done<total?`<div style="font-size:12px;color:var(--text2);margin-bottom:10px"><span class="loading"></span> 조회 중 ${done}/${total} …</div>`:`<div style="font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;justify-content:space-between"><span>완료 ${results.length}/${total}건</span><span style="color:#f87171">악성/의심 ${results.filter(r=>r.ok&&r.mal>0).length}건</span></div>`;
+  return `<div class="vt-result">${head}
+    <table class="eos-table"><thead><tr><th>해시</th><th>탐지</th><th>위험도</th><th>파일명</th><th>VT</th></tr></thead><tbody>${rows}</tbody></table>
+  </div>`;
+}
+function renderVtRich(rec){
+  const {hash,mal,total,stats,attrs,name}=rec;
+  const riskColor=vtRiskColor(mal);
+  const riskLabel=mal>=5?'⚠ 악성':mal>=1?'🔶 의심':'✅ 안전';
+  const engines=attrs.last_analysis_results||{};
+  const malEngines=Object.entries(engines).filter(([,v])=>v.category==='malicious').map(([k,v])=>`${k}: ${v.result||'malicious'}`).slice(0,8);
+  return `<div class="vt-result">
       <div style="text-align:center;margin-bottom:16px">
         <div style="font-size:11px;color:var(--text3);margin-bottom:4px">탐지 결과</div>
         <div class="vt-score" style="color:${riskColor}">${mal} / ${total}</div>
@@ -3859,7 +3920,7 @@ async function vtLookup(){
         <div class="vt-cell"><div class="vt-cell-label">의심</div><div class="vt-cell-val" style="color:#fbbf24">${stats.suspicious||0}</div></div>
         <div class="vt-cell"><div class="vt-cell-label">안전</div><div class="vt-cell-val" style="color:#22d3a5">${stats.harmless||0}</div></div>
         <div class="vt-cell"><div class="vt-cell-label">미탐지</div><div class="vt-cell-val">${stats.undetected||0}</div></div>
-        <div class="vt-cell" style="grid-column:span 2"><div class="vt-cell-label">파일명</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(fileName)}</div></div>
+        <div class="vt-cell" style="grid-column:span 2"><div class="vt-cell-label">파일명</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(name)}</div></div>
         ${attrs.size?`<div class="vt-cell"><div class="vt-cell-label">크기</div><div class="vt-cell-val" style="font-size:11px">${(attrs.size/1024).toFixed(1)}KB</div></div>`:''}
         ${attrs.type_description?`<div class="vt-cell"><div class="vt-cell-label">유형</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(attrs.type_description)}</div></div>`:''}
       </div>
@@ -3872,8 +3933,6 @@ async function vtLookup(){
         </a>
       </div>
     </div>`;
-  }catch(e){res.innerHTML=`<div style="color:var(--danger);font-size:12px;padding:16px">오류: ${e.message}</div>`;}
-  btn.disabled=false;btn.textContent='🔍 조회';
 }
 async function vtAIAnalysis(hash,mal,total){
   openAIModal('🛡','VT 위험도 분석',hash.slice(0,12)+'...','<div class="loading">분석 중...</div>');
@@ -4938,6 +4997,17 @@ function toggleIncompleteFilter(){
   if(ib){ if(!on){ib.style.background='rgba(251,191,36,.28)';ib.style.color='#fff';} else {ib.style.background='rgba(251,191,36,.12)';ib.style.color='#fbbf24';} }
   showPage('issues',document.getElementById('nav-issues'));
   PAGE=1;renderIssues();
+}
+function resetMyDesk(){
+  if(!confirm('My Desk의 모든 값(루틴·할 일·메모·팀 일보고·주간 미팅·케이스·고객사·단축/원격)을 빈 값으로 초기화합니다.\n되돌릴 수 없습니다. 계속할까요?'))return;
+  try{
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('escare:')===0)keys.push(k);}
+    keys.forEach(k=>localStorage.removeItem(k));
+    localStorage.setItem('escare:routine-items','[]');
+  }catch(_){}
+  toast('My Desk를 초기화했습니다. 새로고침합니다.');
+  setTimeout(()=>location.reload(),600);
 }
 function resetCaseFilters(){
   ['case-q','case-stat','case-ass','case-sla','case-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -6330,16 +6400,27 @@ function renderTopbarStatusV159(){
   const gi=getGeneralIssues().length, ci=getCaseIssueBase().length;
   const connected=!!(ISSUES&&ISSUES.length);
   right.innerHTML=`<div class="top-status">
-    <div class="top-status-card"><span class="label">접속자</span><span class="value" id="top-user">${escapeHtml(CURRENT_DISPLAY||CURRENT_USER||'-')}</span></div>
-    <button class="top-pin" onclick="openChangePinModal()">PIN 변경</button>
-    <button class="top-theme" id="theme-toggle" type="button" onclick="toggleTheme()" title="화면 테마 전환"><span class="theme-icon" id="theme-icon">☾</span><span id="theme-label">다크</span></button>
     <div class="top-status-card"><span class="label">Jira</span><span class="value ${connected?'ok':'warn'}" id="top-jira">${connected?'연결됨':'대기'}</span></div>
     <div class="top-status-card"><span class="label">동기화</span><span class="value" id="top-count">${gi||ci?`일반 ${gi} / 케이스 ${ci}`:'-'}</span></div>
     <button class="top-refresh" onclick="syncJira()" title="Jira 새로고침"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></button>
     <button class="mob-search-btn" onclick="openMobSearch()" title="검색"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
-    <button class="top-logout" onclick="logout()">로그아웃</button>
+    <div class="top-clock" id="top-clock"><span class="tc-time" id="tc-time">--:--</span><span class="tc-date" id="tc-date"></span></div>
+    <div class="top-user-group">
+      <span class="tug-user" title="접속자"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span id="top-user">${escapeHtml(CURRENT_DISPLAY||CURRENT_USER||'-')}</span></span>
+      <button class="top-pin" onclick="openChangePinModal()">PIN 변경</button>
+      <button class="top-theme" id="theme-toggle" type="button" onclick="toggleTheme()" title="화면 테마 전환"><span class="theme-icon" id="theme-icon">☾</span><span id="theme-label">다크</span></button>
+      <button class="top-logout" onclick="logout()">로그아웃</button>
+    </div>
   </div>`;
   syncThemeToggle();
+  tickTopClock();
+  if(!window.__topClockTimer)window.__topClockTimer=setInterval(tickTopClock,1000);
+}
+function tickTopClock(){
+  const t=document.getElementById('tc-time'); if(!t)return;
+  const d=new Date(); const dows=['일','월','화','수','목','금','토'];
+  t.textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  const dd=document.getElementById('tc-date'); if(dd)dd.textContent=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${dows[d.getDay()]})`;
 }
 renderTopbarStatus=renderTopbarStatusV159;
 function enhanceDateButtons(){
@@ -6414,10 +6495,7 @@ function hubApi(path,options={}){
 function api(path,options={}){return hubApi(path,options);}
 let PRIVATE_ITEMS=[], PRIVATE_LOADED=false;
 function injectPrivateHubDom(){
-  if(!document.getElementById('nav-private')){
-    const anchor=document.getElementById('nav-knowledge')||document.getElementById('nav-links');
-    if(anchor)anchor.insertAdjacentHTML('afterend',`<button class="sb-btn" id="nav-private" onclick="showPage('private',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11h6"/><path d="M9 15h6"/><path d="M5 4h14v16l-7-3-7 3z"/></svg>개인 메모</button>`);
-  }
+  // 개인 메모(nav-private) 메뉴 제거: My Desk의 메모 카드로 대체됨 (page-private DOM은 미사용으로 남김)
   if(!document.getElementById('page-private')){
     const main=document.querySelector('main');
     if(main)main.insertAdjacentHTML('beforeend',`
@@ -6591,8 +6669,8 @@ function syncMobSheet(panelId){
 /* ── v1.5.11: session revoke + comment feed ───────────── */
 /* mobile primary nav + compact admin settings */
 const MOBILE_PRIMARY_NAV=['nav-dash','nav-issues','nav-cases','nav-customers'];
-const MOBILE_MORE_NAV=['nav-eos','nav-log','nav-vt','nav-links','nav-knowledge','nav-private','nav-audit','nav-settings','nav-mydesk'];
-const MOBILE_NAV_LABELS={eos:'EOS / 라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk'};
+const MOBILE_MORE_NAV=['nav-mydesk','nav-eos','nav-log','nav-vt','nav-links','nav-knowledge','nav-audit','nav-settings'];
+const MOBILE_NAV_LABELS={eos:'EOS / 라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk'};
 function mobilePageNameFromNav(id){return String(id||'').replace(/^nav-/,'');}
 function canShowMobileMoreItem(id){
   if(id==='nav-audit')return !!(IS_ADMIN||IS_SUPER);
@@ -6862,14 +6940,14 @@ function cardSave(card){
 /* ---------- date / clock ---------- */
 const DAYS=['일','월','화','수','목','금','토'];
 function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function tickClock(){ const d=new Date(); document.getElementById('clock').textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); document.getElementById('datestr').textContent=d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0')+' ('+DAYS[d.getDay()]+')'; }
+function tickClock(){ const c=document.getElementById('clock'); if(c){const d=new Date();c.textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); const ds=document.getElementById('datestr'); if(ds)ds.textContent=d.getFullYear()+'.'+String(d.getMonth()+1).padStart(2,'0')+'.'+String(d.getDate()).padStart(2,'0')+' ('+DAYS[d.getDay()]+')';} }
 function setGreeting(){ const h=new Date().getHours(); let g,s;
   if(h<6){g='늦은 시간까지 고생 많으십니다';s='무리하지 마세요.';}
   else if(h<11){g='좋은 아침입니다';s='오늘 루틴부터 가볍게 점검해 보세요.';}
   else if(h<14){g='점심 무렵이네요';s='오전 진행 상황을 정리할 시간입니다.';}
   else if(h<18){g='오후도 힘내세요';s='회신 대기·케이스 상태를 확인해 보세요.';}
   else{g='하루 마무리 시간입니다';s='지원내역 기록과 내일 우선순위를 정리해 보세요.';}
-  document.getElementById('greeting').innerHTML=g+', <span class="name">'+(window.__HUB_DISPLAY||'팀원')+' 님</span>'; document.getElementById('subline').textContent=s; }
+  const ge=document.getElementById('greeting'); if(ge)ge.innerHTML=g+', <span class="name">'+(window.__HUB_DISPLAY||'팀원')+' 님</span>'; const se=document.getElementById('subline'); if(se)se.textContent=s; }
 
 /* ---------- ROUTINE ---------- */
 const DEFAULT_ROUTINE=[
