@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.7.6 - ESCARE Security Hub</title>
+<title>ENGR AI v1.7.7 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -1601,7 +1601,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.6</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.7</span></div></div>
       </div>
       <div class="sb-nav">
         <button class="sb-btn sb-btn-solo" id="nav-mydesk" onclick="showPage('mydesk',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>My Desk ✦</button>
@@ -7453,6 +7453,10 @@ async function init(){
 
   routineItems=await load('routine-items',null);
   if(!routineItems){ routineItems=DEFAULT_ROUTINE.slice(); save('routine-items',routineItems); }
+  if(Array.isArray(routineItems)&&routineItems.length===7){
+    const seed=['이메일 확인 - CASE / 일반','JIRA 확인','ESXI 상태 확인','CASE 모니터링','고객사 이슈 지원','내일 예정사항 검토','일보고'];
+    if(routineItems.every((it,idx)=>it&&it.t===seed[idx])){ routineItems=[]; saveNow('routine-items',routineItems); }
+  }
   const rs=await load('routine-state',{date:'',checks:{}});
   routineChecks=(rs.date===todayKey())?(rs.checks||{}):{};
   if(rs.date!==todayKey()) persistRoutineState();
