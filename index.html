@@ -34,8 +34,8 @@ body{font-family:'Malgun Gothic','Segoe UI',sans-serif;background:var(--bg);colo
 .cfg-note{font-size:11px;color:var(--text3);text-align:center;margin-top:14px}
 #app{display:none;height:100vh;flex-direction:row}
 aside{width:230px;background:#161b27;border-right:1px solid var(--border2);display:flex;flex-direction:column;flex-shrink:0;height:100vh;position:sticky;top:0}
-.sb-top{padding:20px 16px 14px}
-.sb-brand{display:flex;align-items:center;gap:10px;margin-bottom:24px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.sb-top{padding:0 16px 14px}
+.sb-brand{display:flex;align-items:center;gap:10px;height:58px;margin-bottom:14px;padding-bottom:0;border-bottom:1px solid var(--border2);box-sizing:border-box}
 .sb-icon{width:38px;height:38px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:12px;display:flex;align-items:center;justify-content:center}
 .sb-icon svg{width:20px;height:20px}
 .sb-name{font-size:17px;font-weight:800;letter-spacing:2px;color:#fff}
@@ -1202,11 +1202,8 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
   :scope{min-height:100%}
   :scope{
     font-family:var(--sans);color:var(--ink);
-    background:
-      radial-gradient(1200px 600px at 80% -10%, rgba(224,176,92,.06), transparent 60%),
-      radial-gradient(900px 500px at -10% 110%, rgba(99,189,172,.05), transparent 55%),
-      linear-gradient(160deg,var(--bg-grad-1),var(--bg-grad-2));
-    background-attachment:fixed;min-height:100vh;padding:clamp(16px,3vw,40px);
+    background:transparent;
+    min-height:100%;padding:clamp(14px,2.4vw,28px);
     -webkit-font-smoothing:antialiased;
   }
   .wrap{max-width:1640px;margin:0 auto}
@@ -1648,7 +1645,6 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     <div class="page active" id="page-dash">
       <div id="overdue-banner-wrap"></div>
       <div id="eos-banner-wrap"></div>
-      <div id="mytodo-wrap"></div>
       <div class="kpi-grid" id="kpi-wrap"></div>
       <div class="sec-title">운영 포커스</div>
       <div id="ops-focus" class="ops-focus-grid"></div>
@@ -1891,7 +1887,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
       </div>
     </div>
 
-    <div class="page" id="page-mydesk" style="overflow:auto">
+    <div class="page" id="page-mydesk" style="overflow:auto;background:var(--bg)">
 <div class="wrap">
   <header>
     <div class="greet">
@@ -1933,7 +1929,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     </div>
 
     <div class="col" id="col-2">
-      <div class="panel" data-card="team">
+      <div class="panel" data-card="team" id="md-team-report-panel">
         <div class="panel-head">
           <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot" style="background:var(--teal);box-shadow:0 0 0 3px rgba(99,189,172,.15)"></span>팀 일보고</h2>
           <span class="meta" id="team-count">0 / 0</span>
@@ -2328,7 +2324,7 @@ function enterApp(){
   document.getElementById('ai-dot').innerHTML='<span class="dot dot-green"></span><span style="color:var(--success)">준비됨</span>';
   if(IS_ADMIN||IS_SUPER){document.getElementById('nav-audit').style.display='flex';}
   if(IS_SUPER)document.getElementById('nav-settings').style.display='flex';
-  if(CURRENT_USER===SUPER_ADMIN){const md=document.getElementById('nav-mydesk');if(md)md.style.display='flex';}
+  {const md=document.getElementById('nav-mydesk');if(md)md.style.display='flex';}
   // 링크 등록은 전체 팀원 가능
   startSessionTimer();
   syncJira();loadAIUsage({reason:'login'});loadSyncMeta();renderVTHistory();bindFileUpload();
@@ -5964,44 +5960,10 @@ function renderDash(){
   const chart=document.getElementById('trend-chart'); if(chart)chart.innerHTML=trendSvg(g,c);
   const dl=document.getElementById('dash-list');
   if(dl)dl.innerHTML=g.sort((a,b)=>issueDateValue(b)-issueDateValue(a)).slice(0,10).map(issueRowHTML).join('')||'<div class="empty">Jira 새로고침 후 최근 이슈가 표시됩니다.</div>';
-  renderOverdueBanner();renderEosBanner();renderMyTodos();
+  renderOverdueBanner();renderEosBanner();
   const ic=document.getElementById('issue-count'); if(ic)ic.textContent=`일반 ${g.length} / 케이스 ${c.length}`;
   renderTopbarStatus();
 }
-// ── 개인 오늘 할 일 (localStorage, 사용자별) ──────────────
-function myTodoKey(){return 'engr_todos_'+(CURRENT_USER||'guest');}
-function loadMyTodos(){try{return JSON.parse(localStorage.getItem(myTodoKey())||'[]');}catch(_){return [];}}
-function saveMyTodos(list){try{localStorage.setItem(myTodoKey(),JSON.stringify(list));}catch(_){}}
-function renderMyTodos(){
-  const wrap=document.getElementById('mytodo-wrap');
-  if(!wrap)return;
-  const todos=loadMyTodos();
-  const open=todos.filter(t=>!t.done).length;
-  const rows=todos.length?todos.map((t,idx)=>`<div style="display:flex;align-items:center;gap:9px;padding:6px 4px;border-bottom:1px solid var(--border)">
-      <span onclick="toggleMyTodo(${idx})" style="width:17px;height:17px;border-radius:5px;border:2px solid ${t.done?'var(--accent)':'var(--border2)'};background:${t.done?'var(--accent)':'transparent'};cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px">${t.done?'✓':''}</span>
-      <span style="flex:1;font-size:13px;color:${t.done?'var(--text3)':'var(--text)'};${t.done?'text-decoration:line-through':''}">${escapeHtml(t.text)}</span>
-      <button onclick="deleteMyTodo(${idx})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px 6px">✕</button>
-    </div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 4px">오늘 할 일을 추가해 보세요.</div>';
-  wrap.innerHTML=`<div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:14px">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-      <div style="font-size:13px;font-weight:700;color:var(--text)">📋 오늘 할 일 <span style="color:var(--text3);font-weight:500;font-size:11px">· 진행 ${open} / 전체 ${todos.length}</span></div>
-      ${todos.some(t=>t.done)?`<button onclick="clearDoneMyTodos()" style="background:none;border:1px solid var(--border2);color:var(--text3);font-size:11px;padding:3px 9px;border-radius:7px;cursor:pointer">완료 정리</button>`:''}
-    </div>
-    <div style="display:flex;gap:6px;margin-bottom:6px">
-      <input id="mytodo-input" placeholder="할 일 입력 후 Enter" onkeydown="if(event.key==='Enter')addMyTodo()" style="flex:1;background:var(--panel);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-size:13px;padding:7px 10px;outline:none">
-      <button onclick="addMyTodo()" class="btn btn-primary" style="width:auto;padding:7px 14px;font-size:13px">추가</button>
-    </div>
-    ${rows}
-  </div>`;
-}
-function addMyTodo(){
-  const inp=document.getElementById('mytodo-input');if(!inp)return;
-  const text=(inp.value||'').trim();if(!text)return;
-  const list=loadMyTodos();list.push({text,done:false});saveMyTodos(list);inp.value='';renderMyTodos();
-}
-function toggleMyTodo(idx){const list=loadMyTodos();if(list[idx]){list[idx].done=!list[idx].done;saveMyTodos(list);renderMyTodos();}}
-function deleteMyTodo(idx){const list=loadMyTodos();list.splice(idx,1);saveMyTodos(list);renderMyTodos();}
-function clearDoneMyTodos(){saveMyTodos(loadMyTodos().filter(t=>!t.done));renderMyTodos();}
 function focusCardHtml(title,items,empty,mapper){
   return `<div class="chart-card"><h4>${escapeHtml(title)}</h4>${items.length?items.slice(0,6).map(mapper).join(''):`<div class="empty" style="padding:16px 0">${escapeHtml(empty)}</div>`}</div>`;
 }
@@ -6349,6 +6311,7 @@ function showPage(name,btn){
   const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',eos:'제품 EOS 및 라이선스 체크',log:'로그 업로드 및 증상 기반 AI 분석',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',private:'로그인 사용자 전용 일정, 팁, 할일, 개인 참고',audit:'사용자 작업 이력',settings:'초기 데이터 및 저장소 관리'};
   const title=document.getElementById('page-title'); if(title)title.textContent=titleMap[name]||'HUB';
   const desc=document.getElementById('page-desc'); if(desc)desc.textContent=descMap[name]||'';
+  if(name==='mydesk'){const tp=document.getElementById('md-team-report-panel');if(tp)tp.style.display=(IS_ADMIN||IS_SUPER)?'':'none';}
   renderCurrent();
   ensureRelativeDateOptions();
   setTimeout(enhanceDateButtons,0);
@@ -6475,7 +6438,7 @@ function enterApp(){
   document.getElementById('app').style.display='flex';
   if(IS_ADMIN||IS_SUPER){const audit=document.getElementById('nav-audit');if(audit)audit.style.display='flex';}
   if(IS_SUPER){const settings=document.getElementById('nav-settings');if(settings)settings.style.display='flex';}
-  if(CURRENT_USER===SUPER_ADMIN){const md=document.getElementById('nav-mydesk');if(md)md.style.display='flex';}
+  {const md=document.getElementById('nav-mydesk');if(md)md.style.display='flex';}
   renderSidebarCompact();
   const ai=document.getElementById('ai-status');if(ai){ai.textContent='준비됨';ai.className='h-state ok';}
   startSessionTimer();
@@ -6544,7 +6507,6 @@ function mobilePageNameFromNav(id){return String(id||'').replace(/^nav-/,'');}
 function canShowMobileMoreItem(id){
   if(id==='nav-audit')return !!(IS_ADMIN||IS_SUPER);
   if(id==='nav-settings')return !!IS_SUPER;
-  if(id==='nav-mydesk')return CURRENT_USER===SUPER_ADMIN;
   return !!document.getElementById(id);
 }
 function ensureMobileMoreMenu(){
