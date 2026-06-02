@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.7.0 - ESCARE Security Hub</title>
+<title>ENGR AI v1.7.1 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -1578,7 +1578,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.0</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.1</span></div></div>
       </div>
       <div class="sb-section">메뉴</div>
       <div class="sb-nav">
@@ -1612,6 +1612,11 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
           <div class="ai-usage-section-title"><span>팀 전체</span><span>요청 기준</span></div>
           <div class="ai-usage-row"><span>오늘</span><span class="ai-usage-val" id="ai-team-today">-</span></div>
           <div class="ai-usage-row"><span>이번 달</span><span class="ai-usage-val" id="ai-team-month">-</span></div>
+        </div>
+        <div class="ai-usage-section">
+          <div class="ai-usage-section-title"><span>모델별 (오늘)</span><span id="ai-active-model">-</span></div>
+          <div class="ai-usage-row"><span>🟢 Gemini</span><span class="ai-usage-val" id="ai-model-gemini">-</span></div>
+          <div class="ai-usage-row"><span>🟣 Llama</span><span class="ai-usage-val" id="ai-model-llama">-</span></div>
         </div>
         <div class="ai-usage-section">
           <div class="ai-usage-row"><span>성공</span><span class="ai-usage-val good" id="ai-success-month">-</span></div>
@@ -2198,6 +2203,7 @@ window.onerror=(msg,src,line,col,err)=>{
   return false;
 };
 let AI_USAGE_LOADING=false, AI_USAGE_LAST=null;
+let AI_PROVIDER='', AI_MODEL_LABEL='AI', LAST_AI_MODEL='';
 let VT_HISTORY=JSON.parse(localStorage.getItem('vt_history')||'[]');
 let LINKS=[],EOS_ITEMS=[],TEAM_NAMES=[];
 let EOS_WARN_DAYS=[60,30,7];
@@ -2259,7 +2265,7 @@ function updateSyncMeta(meta=SYNC_META){
   if(banner){banner.style.display='flex';banner.innerHTML=`<span><b>Jira 동기화 기준</b> ${text}</span><button class="btn btn-ghost" onclick="syncJira()" style="width:auto;padding:7px 12px;font-size:11px">새로고침</button>`;}
 }
 async function loadSyncMeta(){
-  try{const r=await fetch(`${WORKERS}/config/public`);if(r.ok){const d=await r.json();if(d.rangeMonths)localStorage.setItem('jira_range_months',d.rangeMonths);updateSyncMeta(d.lastSync?{...d.lastSync,rangeMonths:d.rangeMonths}:{rangeMonths:d.rangeMonths});return;}}catch{}
+  try{const r=await fetch(`${WORKERS}/config/public`);if(r.ok){const d=await r.json();if(d.rangeMonths)localStorage.setItem('jira_range_months',d.rangeMonths);if(d.aiProvider)AI_PROVIDER=d.aiProvider;if(d.aiModel)AI_MODEL_LABEL=aiModelLabel(d.aiModel);updateSyncMeta(d.lastSync?{...d.lastSync,rangeMonths:d.rangeMonths}:{rangeMonths:d.rangeMonths});return;}}catch{}
   updateSyncMeta();
 }
 
@@ -2382,6 +2388,10 @@ function applyAIUsage(usage){
   setAIUsageText('ai-team-month',fmtUsageCount(team.month));
   setAIUsageText('ai-success-month',fmtUsageCount(team.successMonth));
   setAIUsageText('ai-fail-month',fmtUsageCount(team.failMonth));
+  const mt=team.modelsToday||{};
+  setAIUsageText('ai-model-gemini',fmtUsageCount(mt.gemini));
+  setAIUsageText('ai-model-llama',fmtUsageCount(mt.llama));
+  setAIUsageText('ai-active-model',(AI_PROVIDER==='gemini'?'Gemini 활성':AI_PROVIDER==='llama'?'Llama 활성':'-'));
   setAIUsageText('ai-usage-updated',`갱신 ${fmtClock(usage.asOf)} · ${usage.timezone||'Asia/Seoul'}`);
   const fill=document.getElementById('ai-usage-fill');
   if(fill){
@@ -3078,7 +3088,7 @@ function openAIModal(icon,label,issueKey,bodyHTML){
       <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden">
         <div style="height:100%;width:${s.pct}%;background:linear-gradient(90deg,#6366f1,#a78bfa);border-radius:3px;transition:width .8s ease"></div>
       </div>
-      <div style="margin-top:12px;font-size:11px;color:var(--text3)">Llama 3.3 70B 처리 중 · 평균 15~25초</div>
+      <div style="margin-top:12px;font-size:11px;color:var(--text3)">${escapeHtml(AI_MODEL_LABEL||'AI')} 처리 중 · 평균 10~25초</div>
     </div>`;
     si++;
   }
@@ -3128,6 +3138,10 @@ function setAIModalBody(text,isError){
     return s;
   }
   body.innerHTML=renderMd(text);
+  if(LAST_AI_MODEL){
+    const prov=LAST_AI_MODEL.toLowerCase().includes('gemini')?'#34a853':'#a78bfa';
+    body.innerHTML+=`<div style="margin-top:16px;padding-top:10px;border-top:1px solid var(--border2);font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:${prov};display:inline-block"></span>${escapeHtml(aiModelLabel(LAST_AI_MODEL))} 모델로 생성됨</div>`;
+  }
   body.style.whiteSpace='normal';
   const btn=document.getElementById('ai-modal-copy');
   btn.dataset.t=text;
@@ -4715,7 +4729,14 @@ async function callAI(prompt,mode='technical_analysis',detail={}){
     throw new Error(`(${r.status}) ${msg}`);
   }
   const d=await r.json();
+  LAST_AI_MODEL=d._model||'';
   return d.candidates?.[0]?.content?.parts?.[0]?.text||'응답을 받지 못했습니다.';
+}
+function aiModelLabel(m){
+  m=String(m||'').toLowerCase();
+  if(m.includes('gemini')){const v=m.replace('gemini-','').replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());return 'Gemini '+v;}
+  if(m.includes('llama'))return 'Llama 3.3 70B';
+  return m?m:(AI_MODEL_LABEL||'AI');
 }
 
 

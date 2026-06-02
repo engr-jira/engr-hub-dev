@@ -426,7 +426,7 @@ function bumpUsageBucket(b,type,scope){
   if(type==='AI_SUCCESS') b[scope==='day'?'successToday':'successMonth']=(b[scope==='day'?'successToday':'successMonth']||0)+1;
   if(type==='AI_FAIL') b[scope==='day'?'failToday':'failMonth']=(b[scope==='day'?'failToday':'failMonth']||0)+1;
 }
-async function updateAIUsage(env,user,outcome){
+async function updateAIUsage(env,user,outcome,model){
   if(!['success','fail','cached'].includes(outcome))return;
   try{
     const keys=usageKeys();
@@ -445,6 +445,14 @@ async function updateAIUsage(env,user,outcome){
     bumpUsageBucket(store.team,'AI_REQUEST','month');
     bumpUsageBucket(dayStore.team,type,'day');
     bumpUsageBucket(store.team,type,'month');
+    // 모델(제공자)별 호출 카운트 — 실제 호출(성공/캐시)만
+    if(outcome!=='fail'){
+      const provider=String(model||'').includes('gemini')?'gemini':'llama';
+      if(!dayStore.team.models)dayStore.team.models={};
+      if(!store.team.models)store.team.models={};
+      dayStore.team.models[provider]=(dayStore.team.models[provider]||0)+1;
+      store.team.models[provider]=(store.team.models[provider]||0)+1;
+    }
     if(user){
       bumpUsageBucket(ensureUserUsage(dayStore,user),'AI_REQUEST','day');
       bumpUsageBucket(ensureUserUsage(store,user),'AI_REQUEST','month');
@@ -470,6 +478,8 @@ async function readUsageCounter(env,user=''){
         successMonth:store.team?.successMonth||0,
         failToday:day.team?.failToday||0,
         failMonth:store.team?.failMonth||0,
+        modelsToday:day.team?.models||{},
+        modelsMonth:store.team?.models||{},
       };
       const du=u?(day.users?.[u]||{}):{};
       const mu=u?(store.users?.[u]||{}):{};
@@ -1316,7 +1326,10 @@ export default {
         const rangeRaw = await env.ENGR_KV.get('config:range_months') || await env.ENGR_KV.get('config:jira_range_months');
         let lastSync = null;
         try { const raw = await env.ENGR_KV.get('config:last_jira_sync'); if (raw) lastSync = JSON.parse(raw); } catch (_) {}
-        return corsResponse({ sessionMin: parseInt(sessionRaw || '120') || 120, rangeMonths: parseInt(rangeRaw || '6') || 6, lastSync });
+        const geminiOn = !!(env.GEMINI_API_KEY || env.GEMINI_KEY);
+        const aiProvider = geminiOn ? 'gemini' : 'llama';
+        const aiModel = geminiOn ? (env.GEMINI_MODEL || 'gemini-2.5-flash') : 'llama-3.3-70b';
+        return corsResponse({ sessionMin: parseInt(sessionRaw || '120') || 120, rangeMonths: parseInt(rangeRaw || '6') || 6, lastSync, aiProvider, aiModel });
       }
       if (path === '/kv/usage' && request.method === 'GET') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 접근할 수 있습니다.' }, 403);
@@ -1381,8 +1394,8 @@ export default {
           const safeMode = normalizeAIMode(mode);
           const result = await callAI(env, prompt, safeMode);
           const outcome = result._cached ? 'cached' : 'success';
-          await auditLog(env, user, 'AI_CALL', { reqId, mode: safeMode, promptLen: prompt.length, outcome, ...detail });
-          await updateAIUsage(env, user, outcome);
+          await auditLog(env, user, 'AI_CALL', { reqId, mode: safeMode, promptLen: prompt.length, outcome, model: result._model, ...detail });
+          await updateAIUsage(env, user, outcome, result._model);
           return corsResponse(result);
         } catch (e) {
           await updateAIUsage(env, user, 'fail');
