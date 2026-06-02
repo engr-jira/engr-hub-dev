@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.7.1 - ESCARE Security Hub</title>
+<title>ENGR AI v1.7.2 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -42,6 +42,14 @@ aside{width:230px;background:#161b27;border-right:1px solid var(--border2);displ
 .sb-sub{font-size:10px;color:var(--text3);margin-top:1px}
 .sb-section{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;padding:0 12px;margin-bottom:6px;margin-top:4px}
 .sb-nav{display:flex;flex-direction:column;gap:2px}
+.sb-group{display:flex;flex-direction:column;gap:2px}
+.sb-group-head{display:flex;align-items:center;gap:9px;width:100%;padding:8px 12px;border:none;background:none;color:var(--text3);font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:1px;cursor:pointer;font-family:inherit;border-radius:10px;text-align:left;transition:all .15s}
+.sb-group-head:hover{color:var(--text2);background:rgba(255,255,255,.05)}
+.sb-group-head svg{width:14px;height:14px;flex-shrink:0;opacity:.6}
+.sb-group-chev{margin-left:auto;font-size:9px;opacity:.7;transition:transform .18s}
+.sb-group.collapsed .sb-group-chev{transform:rotate(-90deg)}
+.sb-group-body{display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.sb-group.collapsed .sb-group-body{display:none}
 .sb-btn{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:12px;border:none;background:none;color:#c5cee8;font-size:12.5px;cursor:pointer;font-family:inherit;width:100%;text-align:left;transition:all .15s}
 .sb-btn svg{width:15px;height:15px;flex-shrink:0;opacity:.7}
 .sb-btn:hover{background:rgba(255,255,255,.08);color:#f0f4ff}
@@ -109,7 +117,8 @@ main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 @media(max-width:700px){
   #app{height:auto;min-height:100vh;display:none;flex-direction:column}
   aside{position:relative;width:100%;height:auto;max-height:none;overflow:visible;border-right:none;border-bottom:1px solid var(--border2)}
-  .sb-top{padding:12px}.sb-brand{margin-bottom:10px;padding-bottom:10px}.sb-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+  .sb-top{padding:12px}.sb-brand{margin-bottom:10px;padding-bottom:10px;height:auto}.sb-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+  .sb-group{display:contents}.sb-group-head{display:none}.sb-group-body{display:contents}.sb-group.collapsed .sb-group-body{display:contents}
   .sb-btn{min-height:34px}.sb-divider{margin:8px 12px}.sb-bottom{padding:8px 12px;margin-top:0}
   main{width:100%;overflow:visible}.topbar{position:relative;height:auto;min-height:58px;padding:10px 12px;align-items:flex-start;gap:10px;flex-direction:column}
   .topbar-right{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.topbar-right>*{min-width:0}
@@ -1578,25 +1587,41 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.1</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.2</span></div></div>
       </div>
-      <div class="sb-section">메뉴</div>
       <div class="sb-nav">
-        <button class="sb-btn active" id="nav-dash" onclick="showPage('dash',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>대시보드</button>
-        <button class="sb-btn" id="nav-issues" onclick="showPage('issues',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>이슈 관리</button>
-        <button class="sb-btn" id="nav-cases" onclick="showPage('cases',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>케이스 트래커</button>
-        <button class="sb-btn" id="nav-customers" onclick="showPage('customers',this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>고객사 프로필
-        </button>
-        <button class="sb-btn" id="nav-eos" onclick="showPage('eos',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>EOS / 라이선스<span class="badge-warn" id="eos-warn-badge" style="display:none">0</span></button>
-        <button class="sb-btn" id="nav-log" onclick="showPage('log',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>로그 분석기</button>
-        <button class="sb-btn" id="nav-vt" onclick="showPage('vt',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>VirusTotal 조회</button>
-        <button class="sb-btn" id="nav-links" onclick="showPage('links',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>업무 링크</button>
-        <button class="sb-btn" id="nav-knowledge" onclick="showPage('knowledge',this)">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>팀 노하우
-        </button>
-        <button class="sb-btn" id="nav-audit" onclick="showPage('audit',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>감사 로그</button>
-        <button class="sb-btn" id="nav-mydesk" onclick="showPage('mydesk',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>My Desk ✦</button>        <button class="sb-btn" id="nav-settings" onclick="showPage('settings',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>관리자 설정</button>
+        <div class="sb-group" data-group="work">
+          <button class="sb-group-head" type="button" onclick="toggleNavGroup(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>업무<span class="sb-group-chev">▾</span></button>
+          <div class="sb-group-body">
+            <button class="sb-btn active" id="nav-dash" onclick="showPage('dash',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>대시보드</button>
+            <button class="sb-btn" id="nav-issues" onclick="showPage('issues',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>이슈 관리</button>
+            <button class="sb-btn" id="nav-cases" onclick="showPage('cases',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>케이스 트래커</button>
+            <button class="sb-btn" id="nav-customers" onclick="showPage('customers',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>고객사 프로필</button>
+            <button class="sb-btn" id="nav-eos" onclick="showPage('eos',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>EOS / 라이선스<span class="badge-warn" id="eos-warn-badge" style="display:none">0</span></button>
+          </div>
+        </div>
+        <div class="sb-group collapsed" data-group="tools">
+          <button class="sb-group-head" type="button" onclick="toggleNavGroup(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.6 5.6L3 18.1V21h2.9l6.2-6.1a4 4 0 005.6-5.6l-2.6 2.6-2-2 2.6-2.6z"/></svg>분석 도구<span class="sb-group-chev">▾</span></button>
+          <div class="sb-group-body">
+            <button class="sb-btn" id="nav-log" onclick="showPage('log',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>로그 분석기</button>
+            <button class="sb-btn" id="nav-vt" onclick="showPage('vt',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>VirusTotal 조회</button>
+            <button class="sb-btn" id="nav-mydesk" onclick="showPage('mydesk',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>My Desk ✦</button>
+          </div>
+        </div>
+        <div class="sb-group collapsed" data-group="collab">
+          <button class="sb-group-head" type="button" onclick="toggleNavGroup(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>지식 / 협업<span class="sb-group-chev">▾</span></button>
+          <div class="sb-group-body">
+            <button class="sb-btn" id="nav-links" onclick="showPage('links',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>업무 링크</button>
+            <button class="sb-btn" id="nav-knowledge" onclick="showPage('knowledge',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>팀 노하우</button>
+          </div>
+        </div>
+        <div class="sb-group collapsed" data-group="admin">
+          <button class="sb-group-head" type="button" onclick="toggleNavGroup(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9z"/></svg>관리자<span class="sb-group-chev">▾</span></button>
+          <div class="sb-group-body">
+            <button class="sb-btn" id="nav-audit" onclick="showPage('audit',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>감사 로그</button>
+            <button class="sb-btn" id="nav-settings" onclick="showPage('settings',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>관리자 설정</button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="sb-divider"></div>
@@ -1653,6 +1678,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
       <div class="kpi-grid" id="kpi-wrap"></div>
       <div class="sec-title">운영 포커스</div>
       <div id="ops-focus" class="ops-focus-grid"></div>
+      <div id="meta-incomplete-wrap"></div>
       <div class="chart-grid" id="chart-section"></div>
       <div class="sec-title">팀원 랭킹</div>
       <div class="chart-grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
@@ -2331,6 +2357,7 @@ function enterApp(){
   if(IS_ADMIN||IS_SUPER){document.getElementById('nav-audit').style.display='flex';}
   if(IS_SUPER)document.getElementById('nav-settings').style.display='flex';
   {const md=document.getElementById('nav-mydesk');if(md)md.style.display='flex';}
+  updateNavGroups();
   // 링크 등록은 전체 팀원 가능
   startSessionTimer();
   syncJira();loadAIUsage({reason:'login'});loadSyncMeta();renderVTHistory();bindFileUpload();
@@ -5981,9 +6008,34 @@ function renderDash(){
   const chart=document.getElementById('trend-chart'); if(chart)chart.innerHTML=trendSvg(g,c);
   const dl=document.getElementById('dash-list');
   if(dl)dl.innerHTML=g.sort((a,b)=>issueDateValue(b)-issueDateValue(a)).slice(0,10).map(issueRowHTML).join('')||'<div class="empty">Jira 새로고침 후 최근 이슈가 표시됩니다.</div>';
-  renderOverdueBanner();renderEosBanner();
+  renderOverdueBanner();renderEosBanner();renderMetaIncomplete();
   const ic=document.getElementById('issue-count'); if(ic)ic.textContent=`일반 ${g.length} / 케이스 ${c.length}`;
   renderTopbarStatus();
+}
+function renderMetaIncomplete(){
+  const wrap=document.getElementById('meta-incomplete-wrap');
+  if(!wrap)return;
+  const inc=getGeneralIssues().filter(i=>isOpenStatus(i.status)&&isMetaIncomplete(i));
+  if(!inc.length){wrap.innerHTML=`<div class="chart-card" style="margin-bottom:16px"><div class="chart-title">📋 주요 항목 미기입 점검</div><div style="font-size:12px;color:var(--success);padding:8px 2px">✓ 미완료 일반 이슈의 핵심 항목(고객사·레이블·범주·기한)이 모두 입력되어 있습니다.</div></div>`;return;}
+  // 담당자별 집계
+  const byAss={};
+  inc.forEach(i=>{const a=i.assignee||'(미지정)';if(!byAss[a])byAss[a]={count:0,fields:{}};byAss[a].count++;metaMissingFields(i).forEach(f=>{byAss[a].fields[f]=(byAss[a].fields[f]||0)+1;});});
+  const rows=Object.entries(byAss).sort((a,b)=>b[1].count-a[1].count).map(([name,info])=>{
+    const fieldChips=Object.entries(info.fields).sort((a,b)=>b[1]-a[1]).map(([f,n])=>`<span style="display:inline-block;background:rgba(251,191,36,.12);color:#fbbf24;border-radius:6px;padding:1px 7px;font-size:10px;margin:1px">${f} ${n}</span>`).join(' ');
+    return `<div onclick="setIssueNavigationFilter({assignee:${jsAttr(name==='(미지정)'?'':name)},preset:{kind:'incomplete',label:${jsAttr('메타 미완성 · '+name)}}})" style="display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--border);cursor:pointer">
+      <span style="min-width:90px;font-size:13px;font-weight:700;color:var(--text)">${escapeHtml(name)}</span>
+      <span style="background:rgba(248,113,113,.15);color:#f87171;border-radius:7px;padding:2px 9px;font-size:12px;font-weight:700">${info.count}건</span>
+      <span style="flex:1;text-align:right">${fieldChips}</span>
+    </div>`;
+  }).join('');
+  wrap.innerHTML=`<div class="chart-card" style="margin-bottom:16px">
+    <div class="chart-title" style="display:flex;align-items:center;justify-content:space-between">
+      <span>📋 주요 항목 미기입 점검 — 담당자별 (${inc.length}건)</span>
+      <button onclick="setIssueNavigationFilter({preset:{kind:'incomplete',label:'메타 미완성 일반 이슈'}})" class="btn btn-ghost" style="width:auto;padding:4px 12px;font-size:11px">전체 보기 →</button>
+    </div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:6px">미완료 일반 이슈 중 고객사·레이블·범주·기한이 빠진 건. 담당자 클릭 시 해당 미기입 이슈로 이동합니다.</div>
+    ${rows}
+  </div>`;
 }
 function focusCardHtml(title,items,empty,mapper){
   return `<div class="chart-card"><h4>${escapeHtml(title)}</h4>${items.length?items.slice(0,6).map(mapper).join(''):`<div class="empty" style="padding:16px 0">${escapeHtml(empty)}</div>`}</div>`;
@@ -6332,6 +6384,7 @@ function showPage(name,btn){
   const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',eos:'제품 EOS 및 라이선스 체크',log:'로그 업로드 및 증상 기반 AI 분석',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',private:'로그인 사용자 전용 일정, 팁, 할일, 개인 참고',audit:'사용자 작업 이력',settings:'초기 데이터 및 저장소 관리'};
   const title=document.getElementById('page-title'); if(title)title.textContent=titleMap[name]||'HUB';
   const desc=document.getElementById('page-desc'); if(desc)desc.textContent=descMap[name]||'';
+  expandActiveNavGroup(name);
   if(name==='mydesk'){const tp=document.getElementById('md-team-report-panel');if(tp)tp.style.display=(IS_ADMIN||IS_SUPER)?'':'none';}
   renderCurrent();
   ensureRelativeDateOptions();
@@ -6460,6 +6513,7 @@ function enterApp(){
   if(IS_ADMIN||IS_SUPER){const audit=document.getElementById('nav-audit');if(audit)audit.style.display='flex';}
   if(IS_SUPER){const settings=document.getElementById('nav-settings');if(settings)settings.style.display='flex';}
   {const md=document.getElementById('nav-mydesk');if(md)md.style.display='flex';}
+  updateNavGroups();
   renderSidebarCompact();
   const ai=document.getElementById('ai-status');if(ai){ai.textContent='준비됨';ai.className='h-state ok';}
   startSessionTimer();
@@ -6529,6 +6583,18 @@ function canShowMobileMoreItem(id){
   if(id==='nav-audit')return !!(IS_ADMIN||IS_SUPER);
   if(id==='nav-settings')return !!IS_SUPER;
   return !!document.getElementById(id);
+}
+function toggleNavGroup(head){const g=head&&head.closest('.sb-group');if(g)g.classList.toggle('collapsed');}
+function updateNavGroups(){
+  document.querySelectorAll('#app .sb-group').forEach(g=>{
+    const hasVisible=[...g.querySelectorAll('.sb-btn')].some(b=>b.style.display!=='none');
+    g.style.display=hasVisible?'':'none';
+  });
+}
+function expandActiveNavGroup(name){
+  const btn=document.getElementById('nav-'+name);
+  const g=btn&&btn.closest('.sb-group');
+  if(g)g.classList.remove('collapsed');
 }
 function ensureMobileMoreMenu(){
   injectPrivateHubDom();
