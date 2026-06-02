@@ -1737,6 +1737,26 @@ export default {
         return corsResponse({ ok: true, items: raw ? JSON.parse(raw) : [] });
       }
       //
+      // \u2500\u2500 My Desk \uAC1C\uC778 \uB370\uC774\uD130 (\uC0AC\uC6A9\uC790\uBCC4, \uAE30\uAE30 \uAC04 \uB3D9\uAE30\uD654) \u2500\u2500
+      if (path === '/mydesk' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        let store = {};
+        try { const raw = await env.ENGR_KV.get(`mydesk:${user}`); if (raw) store = JSON.parse(raw); } catch (_) {}
+        return corsResponse({ ok: true, data: store });
+      }
+      if (path === '/mydesk' && request.method === 'PUT') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        const body = await request.json().catch(() => ({}));
+        const store = (body && body.store && typeof body.store === 'object') ? body.store : {};
+        try { await env.ENGR_KV.put(`mydesk:${user}`, JSON.stringify(store)); }
+        catch (e) { return corsResponse({ ok: false, message: '\uC800\uC7A5 \uC2E4\uD328' }, 500); }
+        return corsResponse({ ok: true });
+      }
+      if (path === '/mydesk' && request.method === 'DELETE') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        try { await env.ENGR_KV.delete(`mydesk:${user}`); } catch (_) {}
+        return corsResponse({ ok: true });
+      }
       if (path === '/private-notes' && request.method === 'GET') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const notes = await loadPrivateNotes(env, user);

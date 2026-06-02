@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.7.4 - ESCARE Security Hub</title>
+<title>ENGR AI v1.7.5 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -1598,7 +1598,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.4</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.5</span></div></div>
       </div>
       <div class="sb-nav">
         <button class="sb-btn sb-btn-solo" id="nav-mydesk" onclick="showPage('mydesk',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>My Desk ✦</button>
@@ -4998,16 +4998,40 @@ function toggleIncompleteFilter(){
   showPage('issues',document.getElementById('nav-issues'));
   PAGE=1;renderIssues();
 }
+// ── My Desk 서버(KV) 동기화 — 사용자별, 기기 간 동일 ──
+let __mdSaveTimer=null;
+window.__mdQueueServerSave=function(){
+  if(!CURRENT_USER||!window.__mdLoaded)return;
+  clearTimeout(__mdSaveTimer);
+  __mdSaveTimer=setTimeout(()=>{ hubApi('/mydesk',{method:'PUT',body:JSON.stringify({store:window.__MD_STORE||{}})}).catch(()=>{}); },600);
+};
+window.__mdServerSaveNow=function(){
+  if(!CURRENT_USER||!window.__mdLoaded)return;
+  clearTimeout(__mdSaveTimer);
+  hubApi('/mydesk',{method:'PUT',body:JSON.stringify({store:window.__MD_STORE||{}})}).catch(()=>{});
+};
+async function loadMyDeskForUser(){
+  if(window.__mdLoadedUser===CURRENT_USER&&window.__mdLoaded)return;
+  if(window.__mdLoading)return;
+  window.__mdLoading=true; window.__mdLoaded=false;
+  try{ const d=await hubApi('/mydesk'); window.__MD_STORE=(d&&d.data)||{}; }
+  catch(_){ window.__MD_STORE={}; }
+  window.__mdLoaded=true; window.__mdLoadedUser=CURRENT_USER;
+  try{ if(typeof window.__mydeskInit==='function') await window.__mydeskInit(); }catch(_){}
+  window.__mdLoading=false;
+}
 function resetMyDesk(){
   if(!confirm('My Desk의 모든 값(루틴·할 일·메모·팀 일보고·주간 미팅·케이스·고객사·단축/원격)을 빈 값으로 초기화합니다.\n되돌릴 수 없습니다. 계속할까요?'))return;
+  window.__MD_STORE={};
   try{
     const keys=[];
     for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k&&k.indexOf('escare:')===0)keys.push(k);}
     keys.forEach(k=>localStorage.removeItem(k));
-    localStorage.setItem('escare:routine-items','[]');
   }catch(_){}
-  toast('My Desk를 초기화했습니다. 새로고침합니다.');
-  setTimeout(()=>location.reload(),600);
+  hubApi('/mydesk',{method:'DELETE'}).catch(()=>{}).finally(()=>{
+    toast('My Desk를 초기화했습니다. 새로고침합니다.');
+    setTimeout(()=>location.reload(),700);
+  });
 }
 function resetCaseFilters(){
   ['case-q','case-stat','case-ass','case-sla','case-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -6479,8 +6503,8 @@ function showPage(name,btn){
   expandActiveNavGroup(name);
   if(name==='mydesk'){
     window.__HUB_DISPLAY=CURRENT_DISPLAY||CURRENT_USER||'팀원';
-    const gn=document.querySelector('#page-mydesk #greeting .name');if(gn)gn.textContent=window.__HUB_DISPLAY+' 님';
     const tp=document.getElementById('md-team-report-panel');if(tp)tp.style.display=(IS_ADMIN||IS_SUPER)?'':'none';
+    if(typeof loadMyDeskForUser==='function')loadMyDeskForUser();
   }
   renderCurrent();
   ensureRelativeDateOptions();
@@ -6894,30 +6918,28 @@ const ART = !!(window.storage && typeof window.storage.get === 'function');
 const LS  = (function(){ try{ localStorage.setItem('__t','1'); localStorage.removeItem('__t'); return true; }catch(e){ return false; } })();
 let storageOK = ART || LS;
 const _pending = {}, _timers = {};
+// 서버(KV) 기반 사용자별 저장. window.__MD_STORE가 서버에서 로드된 캐시.
+// 로그인/서버 로드 전(__mdLoaded=false)에는 localStorage로 임시 표시.
 async function load(key, def){
   try{
-    if(ART){ const r = await window.storage.get(key, false); return (r && r.value!=null) ? JSON.parse(r.value) : def; }
+    if(window.__mdLoaded){ const v=(window.__MD_STORE||{})[key]; return v!==undefined?v:def; }
     if(LS){ const v = localStorage.getItem('escare:'+key); return v!=null ? JSON.parse(v) : def; }
   }catch(e){}
   return def;
 }
 function save(key, val){
-  _pending[key] = val;
-  if(ART){ if(storageOK) flashSaved(); clearTimeout(_timers[key]); _timers[key]=setTimeout(()=>flushArt(key),350); return; }
-  if(LS){ try{ localStorage.setItem('escare:'+key, JSON.stringify(val)); markSavedByKey(key); flashSaved(); }catch(e){ storageOK=false; showDegraded(); } return; }
-  flashSaved();
-}
-async function flushArt(key){
-  if(!(key in _pending) || !storageOK) return;
-  const val=_pending[key];
-  try{ await window.storage.set(key, JSON.stringify(val), false); if(_pending[key]===val) delete _pending[key]; markSavedByKey(key); }
-  catch(e){ try{ await new Promise(r=>setTimeout(r,600)); await window.storage.set(key, JSON.stringify(val), false); if(_pending[key]===val) delete _pending[key]; markSavedByKey(key); }catch(e2){ storageOK=false; showDegraded(); } }
+  if(!window.__MD_STORE)window.__MD_STORE={};
+  window.__MD_STORE[key]=val;
+  if(LS){ try{ localStorage.setItem('escare:'+key, JSON.stringify(val)); }catch(e){} }
+  if(window.__mdQueueServerSave)window.__mdQueueServerSave();
+  markSavedByKey(key); flashSaved();
 }
 function saveNow(key,val){
-  _pending[key]=val;
-  if(ART){ clearTimeout(_timers[key]); flushArt(key); flashSaved(); }
-  else if(LS){ try{ localStorage.setItem('escare:'+key, JSON.stringify(val)); markSavedByKey(key); flashSaved(); }catch(e){ storageOK=false; showDegraded(); } }
-  else flashSaved();
+  if(!window.__MD_STORE)window.__MD_STORE={};
+  window.__MD_STORE[key]=val;
+  if(LS){ try{ localStorage.setItem('escare:'+key, JSON.stringify(val)); }catch(e){} }
+  if(window.__mdServerSaveNow)window.__mdServerSaveNow(); else if(window.__mdQueueServerSave)window.__mdQueueServerSave();
+  markSavedByKey(key); flashSaved();
 }
 let saveTimer;
 function flashSaved(){ const el=document.getElementById('saved'); el.textContent='저장됨'; el.style.color='var(--teal)'; el.classList.add('show'); clearTimeout(saveTimer); saveTimer=setTimeout(()=>el.classList.remove('show'),1100); }
@@ -7459,7 +7481,8 @@ async function init(){
 
   initSortable();
 }
-init();
+// 자동 실행하지 않음: 첫 My Desk 진입 시 서버 데이터 로드 후 loadMyDeskForUser()가 1회 호출.
+window.__mydeskInit=init;
 })();
 </script>
 </body>
