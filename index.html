@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.7.5 - ESCARE Security Hub</title>
+<title>ENGR AI v1.7.6 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -43,7 +43,10 @@ aside{width:230px;background:#161b27;border-right:1px solid var(--border2);displ
 .sb-section{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1.2px;padding:0 12px;margin-bottom:6px;margin-top:4px}
 .sb-nav{display:flex;flex-direction:column;gap:2px}
 .sb-group{display:flex;flex-direction:column;gap:2px;margin-top:4px}
-.sb-group-head{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border:none;background:none;color:var(--text2);font-size:13.5px;font-weight:800;letter-spacing:.2px;cursor:pointer;font-family:inherit;border-radius:10px;text-align:left;transition:all .15s}
+.sb-group-head{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border:none;background:none;color:var(--accent3);font-size:13.5px;font-weight:800;letter-spacing:.2px;cursor:pointer;font-family:inherit;border-radius:10px;text-align:left;transition:all .15s}
+.sb-group-head svg{stroke:var(--accent3);opacity:.85}
+html[data-theme="light"] .sb-group-head{color:#4f46e5}
+html[data-theme="light"] .sb-group-head svg{stroke:#4f46e5}
 .sb-group-head svg{width:16px;height:16px}
 .sb-btn-solo{margin-bottom:6px;background:linear-gradient(135deg,rgba(99,102,241,.16),rgba(124,58,237,.12));border:1px solid rgba(99,102,241,.3)!important}
 .sb-group-head:hover{color:var(--text2);background:rgba(255,255,255,.05)}
@@ -1209,7 +1212,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
 @scope (#page-mydesk) {
   :scope{
     /* --bg/--bg-grad 제거: My Desk 페이지 배경은 hub 테마(var(--bg))를 따름 (#page-mydesk inline) */
-    --panel:#161b22; --panel-2:#1b2129; --line:#252c36; --line-soft:#1f2630;
+    --panel:#212640; --panel-2:#262d47; --line:#323a5e; --line-soft:#2a3150;
     --line2:#3c4654; --cb:#62707f;
     --ink:#ece7db; --ink-dim:#a7b0bb; --ink-faint:#6a7480;
     --gold:#e0b05c; --gold-soft:#3a2f1c; --teal:#63bdac; --red:#dc8076;
@@ -1598,7 +1601,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.5</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.6</span></div></div>
       </div>
       <div class="sb-nav">
         <button class="sb-btn sb-btn-solo" id="nav-mydesk" onclick="showPage('mydesk',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>My Desk ✦</button>
@@ -3845,13 +3848,15 @@ async function vtLookupOne(hash){
   try{
     const r=await fetch(`${WORKERS}/vt/lookup`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({hash})});
     const d=await r.json();
-    if(d.error)return {hash,ok:false,error:d.error.message||'조회 실패'};
+    if(d.error){const msg=d.error.message||'조회 실패';return {hash,ok:false,error:msg,notFound:/not\s*found/i.test(msg)};}
     const attrs=d.data?.attributes||{};
     const stats=attrs.last_analysis_stats||{};
     const total=(stats.malicious||0)+(stats.undetected||0)+(stats.harmless||0)+(stats.suspicious||0);
     const mal=stats.malicious||0;
     const name=attrs.meaningful_name||attrs.names?.[0]||'-';
-    const rec={hash,ok:true,mal,total,name,size:attrs.size||0,type:attrs.type_description||'',stats,attrs};
+    const eng=attrs.last_analysis_results||{};
+    const detections=Object.entries(eng).filter(([,v])=>v.category==='malicious'||v.category==='suspicious').map(([k,v])=>`${k}: ${v.result||v.category}`);
+    const rec={hash,ok:true,mal,total,name,size:attrs.size||0,type:attrs.type_description||'',stats,attrs,detections};
     VT_HISTORY=VT_HISTORY.filter(h=>h.hash!==hash);
     VT_HISTORY.unshift({hash,mal,total,name,size:rec.size,type:rec.type,ts:Date.now()});
     if(VT_HISTORY.length>50)VT_HISTORY=VT_HISTORY.slice(0,50);
@@ -3887,22 +3892,58 @@ async function vtLookup(){
   toast(`VT 조회 완료: ${okN}/${list.length}건 성공 · 악성/의심 ${malN}건`);
 }
 function vtTableHtml(results,total,done){
-  const rows=results.map(r=>{
-    if(!r.ok)return `<tr><td style="font-family:monospace;font-size:11px">${escapeHtml(r.hash.slice(0,20))}…</td><td colspan="3" style="color:var(--danger);font-size:11px">${escapeHtml(r.error||'실패')}</td><td></td></tr>`;
+  window.__vtLastResults=results;
+  const ok=results.filter(r=>r.ok);
+  const nf=results.filter(r=>!r.ok);
+  const okRows=ok.map(r=>{
     const col=vtRiskColor(r.mal),label=r.mal>=5?'악성':r.mal>=1?'의심':'안전';
+    const dets=r.detections||[];
+    const detShort=dets.length?escapeHtml(dets.slice(0,3).join(' · '))+(dets.length>3?` <span style="color:var(--text3)">외 ${dets.length-3}</span>`:''):'<span style="color:var(--text3)">-</span>';
     return `<tr>
-      <td style="font-family:monospace;font-size:11px;white-space:nowrap" title="${escapeHtml(r.hash)}">${escapeHtml(r.hash.slice(0,18))}…</td>
+      <td style="font-family:monospace;font-size:11px;white-space:nowrap" title="${escapeHtml(r.hash)}">${escapeHtml(r.hash.slice(0,16))}…</td>
       <td style="font-weight:800;color:${col};white-space:nowrap">${r.mal}/${r.total}</td>
       <td><span class="badge" style="background:${col}22;color:${col}">${label}</span></td>
-      <td style="font-size:11px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(r.name||'-')}</td>
+      <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(r.name||'')}">${escapeHtml(r.name||'-')}</td>
+      <td style="font-size:10.5px;color:var(--text2);max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(dets.join(' | '))}">${detShort}</td>
       <td><a href="https://www.virustotal.com/gui/file/${r.hash}" target="_blank" style="color:var(--cyan);font-size:11px;text-decoration:none">VT↗</a></td>
     </tr>`;
   }).join('');
-  const head=done<total?`<div style="font-size:12px;color:var(--text2);margin-bottom:10px"><span class="loading"></span> 조회 중 ${done}/${total} …</div>`:`<div style="font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;justify-content:space-between"><span>완료 ${results.length}/${total}건</span><span style="color:#f87171">악성/의심 ${results.filter(r=>r.ok&&r.mal>0).length}건</span></div>`;
-  return `<div class="vt-result">${head}
-    <table class="eos-table"><thead><tr><th>해시</th><th>탐지</th><th>위험도</th><th>파일명</th><th>VT</th></tr></thead><tbody>${rows}</tbody></table>
+  const nfRows=nf.map(r=>`<tr><td style="font-family:monospace;font-size:11px">${escapeHtml(r.hash)}</td><td style="font-size:11px;color:${r.notFound?'var(--text3)':'var(--danger)'}">${r.notFound?'미발견 (VT 미등록)':escapeHtml(r.error||'오류')}</td></tr>`).join('');
+  const head=done<total
+    ?`<div style="font-size:12px;color:var(--text2);margin-bottom:10px"><span class="loading"></span> 조회 중 ${done}/${total} …</div>`
+    :`<div style="font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px"><span>완료 ${results.length}/${total}건 · 성공 ${ok.length} · 미발견/오류 ${nf.length}</span><span style="color:#f87171">악성/의심 ${ok.filter(r=>r.mal>0).length}건</span></div>`;
+  const copyBar=done>=total?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+    <button onclick="vtCopyResults('tsv')" class="btn btn-ghost" style="width:auto;padding:6px 12px;font-size:11px">📋 표 복사(엑셀 붙여넣기)</button>
+    <button onclick="vtCopyResults('csv')" class="btn btn-ghost" style="width:auto;padding:6px 12px;font-size:11px">📋 CSV 복사</button>
+    ${nf.length?`<button onclick="vtCopyResults('notfound')" class="btn btn-ghost" style="width:auto;padding:6px 12px;font-size:11px">📋 미발견 해시 복사 (${nf.length})</button>`:''}
+  </div>`:'';
+  return `<div class="vt-result">${head}${copyBar}
+    ${ok.length?`<div class="sec-title" style="margin:4px 0 8px">✅ 조회 성공 ${ok.length}건</div>
+      <table class="eos-table"><thead><tr><th>해시</th><th>탐지</th><th>위험도</th><th>파일명</th><th>탐지명 (업체: 결과)</th><th>VT</th></tr></thead><tbody>${okRows}</tbody></table>`:''}
+    ${nf.length?`<div class="sec-title" style="margin:16px 0 8px">❔ 미발견 / 오류 ${nf.length}건</div>
+      <table class="eos-table"><thead><tr><th>해시</th><th>사유</th></tr></thead><tbody>${nfRows}</tbody></table>`:''}
   </div>`;
 }
+function vtCopyResults(mode){
+  const results=window.__vtLastResults||[];
+  let text='';
+  if(mode==='notfound'){
+    text=results.filter(r=>!r.ok).map(r=>r.hash).join('\n');
+  }else{
+    const sep=mode==='csv'?',':'\t';
+    const q=mode==='csv'?(s=>`"${String(s==null?'':s).replace(/"/g,'""')}"`):(s=>String(s==null?'':s).replace(/[\t\n]/g,' '));
+    const lines=[['해시','악성','전체','위험도','파일명','탐지명','상태'].map(q).join(sep)];
+    results.forEach(r=>{
+      if(r.ok){const label=r.mal>=5?'악성':r.mal>=1?'의심':'안전';lines.push([r.hash,r.mal,r.total,label,r.name||'',(r.detections||[]).join('; '),'성공'].map(q).join(sep));}
+      else lines.push([r.hash,'','','','','',r.notFound?'미발견':(r.error||'오류')].map(q).join(sep));
+    });
+    text=lines.join('\n');
+  }
+  if(!text){toast('복사할 내용이 없습니다.',true);return;}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(()=>toast('클립보드에 복사됨'),()=>vtFallbackCopy(text));}
+  else vtFallbackCopy(text);
+}
+function vtFallbackCopy(text){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');toast('클립보드에 복사됨');}catch(e){toast('복사 실패 — 직접 선택하세요',true);}document.body.removeChild(ta);}
 function renderVtRich(rec){
   const {hash,mal,total,stats,attrs,name}=rec;
   const riskColor=vtRiskColor(mal);
@@ -6391,7 +6432,8 @@ function metaMissingFields(i){
   if(!i.due)miss.push('기한');
   return miss;
 }
-function isMetaIncomplete(i){return metaMissingFields(i).length>0;}
+function isHandsOn(i){return /hands[\s\-]?on/i.test((i&&i.title)||'');}
+function isMetaIncomplete(i){ if(isHandsOn(i))return false; return metaMissingFields(i).length>0;}
 function filterByPreset(list,preset){
   if(!preset)return list;
   let out=list;
@@ -6503,6 +6545,7 @@ function showPage(name,btn){
   expandActiveNavGroup(name);
   if(name==='mydesk'){
     window.__HUB_DISPLAY=CURRENT_DISPLAY||CURRENT_USER||'팀원';
+    window.__HUB_IS_ADMIN=!!(IS_ADMIN||IS_SUPER);
     const tp=document.getElementById('md-team-report-panel');if(tp)tp.style.display=(IS_ADMIN||IS_SUPER)?'':'none';
     if(typeof loadMyDeskForUser==='function')loadMyDeskForUser();
   }
@@ -6972,15 +7015,7 @@ function setGreeting(){ const h=new Date().getHours(); let g,s;
   const ge=document.getElementById('greeting'); if(ge)ge.innerHTML=g+', <span class="name">'+(window.__HUB_DISPLAY||'팀원')+' 님</span>'; const se=document.getElementById('subline'); if(se)se.textContent=s; }
 
 /* ---------- ROUTINE ---------- */
-const DEFAULT_ROUTINE=[
-  {id:'r1',g:'아침 · 시작',t:'이메일 확인 - CASE / 일반'},
-  {id:'r2',g:'아침 · 시작',t:'JIRA 확인'},
-  {id:'r3',g:'아침 · 시작',t:'ESXI 상태 확인'},
-  {id:'r4',g:'업무 중',t:'CASE 모니터링'},
-  {id:'r5',g:'업무 중',t:'고객사 이슈 지원'},
-  {id:'r6',g:'마감',t:'내일 예정사항 검토'},
-  {id:'r7',g:'마감',t:'일보고'},
-];
+const DEFAULT_ROUTINE=[];
 const GROUP_ORDER=['아침 · 시작','업무 중','마감'];
 let routineItems=[]; let routineChecks={};
 function renderRoutine(){
@@ -7396,6 +7431,7 @@ function renderDock(){
   const root=document.getElementById('dock'); if(!root) return;
   root.innerHTML='<span class="dock-label">카드</span>';
   CARD_META.forEach(c=>{
+    if(c.id==='team' && !window.__HUB_IS_ADMIN) return; // 팀 일보고는 관리자만
     const on=!hiddenCards.has(c.id);
     const b=document.createElement('button'); b.className='dock-chip '+(on?'on':'off'); b.dataset.card=c.id;
     b.innerHTML='<span class="dock-dot" style="background:'+c.color+'"></span>'+c.name;
@@ -7403,7 +7439,10 @@ function renderDock(){
     root.appendChild(b);
   });
 }
-function applyHidden(){ document.querySelectorAll('#page-mydesk .panel[data-card]').forEach(p=>{ p.style.display = hiddenCards.has(p.dataset.card)?'none':''; }); }
+function applyHidden(){ document.querySelectorAll('#page-mydesk .panel[data-card]').forEach(p=>{
+  if(p.dataset.card==='team' && !window.__HUB_IS_ADMIN){ p.style.display='none'; return; }
+  p.style.display = hiddenCards.has(p.dataset.card)?'none':'';
+}); }
 
 /* ---------- init ---------- */
 async function init(){
