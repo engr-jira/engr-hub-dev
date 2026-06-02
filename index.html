@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.7.7 - ESCARE Security Hub</title>
+<title>ENGR AI v1.7.8 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -1601,7 +1601,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.7</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.8</span></div></div>
       </div>
       <div class="sb-nav">
         <button class="sb-btn sb-btn-solo" id="nav-mydesk" onclick="showPage('mydesk',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>My Desk ✦</button>
@@ -6470,6 +6470,7 @@ function renderTopbarStatusV159(){
     <div class="top-status-card"><span class="label">동기화</span><span class="value" id="top-count">${gi||ci?`일반 ${gi} / 케이스 ${ci}`:'-'}</span></div>
     <button class="top-refresh" onclick="syncJira()" title="Jira 새로고침"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></button>
     <button class="mob-search-btn" onclick="openMobSearch()" title="검색"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
+    <button class="top-refresh" onclick="window.open('manual.html','_blank','noopener')" title="사용 매뉴얼 열기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg></button>
     <div class="top-clock" id="top-clock"><span class="tc-time" id="tc-time">--:--</span><span class="tc-date" id="tc-date"></span></div>
     <div class="top-user-group">
       <span class="tug-user" title="접속자"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span id="top-user">${escapeHtml(CURRENT_DISPLAY||CURRENT_USER||'-')}</span></span>

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ENGR HUB 사용 매뉴얼 v1.7.7</title>
+<style>
+  :root{
+    --bg:#0f1422;--bg2:#141a2b;--panel:#212640;--panel2:#262d47;--card:#1b2138;
+    --border:#2a3150;--border2:#323a5e;--text:#eaf0ff;--text2:#aab4d4;--text3:#6f7aa0;
+    --accent:#6366f1;--accent2:#818cf8;--accent3:#a5b4fc;--cyan:#22d3ee;--teal:#2de6b8;
+    --gold:#fbbf24;--red:#f87171;--green:#86b070;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Malgun Gothic','Segoe UI',-apple-system,sans-serif;background:linear-gradient(160deg,#10162a,#0c1120);color:var(--text);line-height:1.7;-webkit-font-smoothing:antialiased}
+  .layout{display:flex;max-width:1180px;margin:0 auto;gap:0}
+  /* ── TOC sidebar ── */
+  nav.toc{position:sticky;top:0;align-self:flex-start;width:248px;height:100vh;overflow-y:auto;padding:24px 16px;border-right:1px solid var(--border);background:rgba(20,26,43,.6);flex-shrink:0}
+  nav.toc .brand{display:flex;align-items:center;gap:10px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+  nav.toc .brand .ic{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center}
+  nav.toc .brand b{font-size:15px;letter-spacing:1px}
+  nav.toc .brand span{font-size:10px;color:var(--text3);display:block}
+  nav.toc a{display:block;color:var(--text2);text-decoration:none;font-size:13px;padding:6px 10px;border-radius:8px;transition:.15s}
+  nav.toc a:hover{background:rgba(99,102,241,.12);color:var(--text)}
+  nav.toc .grp{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--accent3);font-weight:800;margin:14px 0 4px 10px}
+  main{flex:1;min-width:0;padding:36px 40px 80px;max-width:900px}
+  /* ── headings ── */
+  h1{font-size:30px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px}
+  .sub{color:var(--text3);font-size:13px;margin-bottom:26px}
+  h2{font-size:21px;font-weight:800;margin:38px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--border);scroll-margin-top:20px;display:flex;align-items:center;gap:10px}
+  h2 .ic{width:26px;height:26px;color:var(--accent3);flex-shrink:0}
+  h3{font-size:15px;font-weight:700;color:var(--accent3);margin:20px 0 8px}
+  p{margin:8px 0;color:var(--text2)}
+  ul,ol{margin:8px 0 8px 22px;color:var(--text2)}
+  li{margin:5px 0}
+  b,strong{color:var(--text);font-weight:700}
+  code{background:rgba(99,102,241,.16);color:var(--accent3);padding:2px 7px;border-radius:5px;font-family:Consolas,monospace;font-size:12.5px}
+  a.link{color:var(--cyan);text-decoration:none}
+  /* ── components ── */
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin:16px 0}
+  .note{border-left:3px solid var(--accent2);background:rgba(99,102,241,.08);border-radius:0 10px 10px 0;padding:12px 16px;margin:14px 0;font-size:13.5px}
+  .note.warn{border-left-color:var(--gold);background:rgba(251,191,36,.09)}
+  .note.danger{border-left-color:var(--red);background:rgba(248,113,113,.09)}
+  .note .t{font-weight:800;color:var(--text);display:block;margin-bottom:3px}
+  .badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 9px;border-radius:8px;margin:0 2px}
+  .b-ind{background:rgba(99,102,241,.18);color:var(--accent3)}
+  .b-gold{background:rgba(251,191,36,.16);color:var(--gold)}
+  .b-red{background:rgba(248,113,113,.16);color:var(--red)}
+  .b-teal{background:rgba(45,230,184,.14);color:var(--teal)}
+  .b-cyan{background:rgba(34,211,238,.14);color:var(--cyan)}
+  .steps{counter-reset:s;list-style:none;margin-left:0}
+  .steps li{counter-increment:s;position:relative;padding:6px 0 6px 38px;margin:4px 0}
+  .steps li::before{content:counter(s);position:absolute;left:0;top:5px;width:24px;height:24px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800}
+  /* ── mock UI (실제 화면 재현) ── */
+  .mock{border:1px solid var(--border2);border-radius:12px;overflow:hidden;margin:16px 0;background:var(--bg2);box-shadow:0 14px 30px -18px rgba(0,0,0,.8)}
+  .mock .cap{font-size:11px;color:var(--text3);padding:7px 12px;background:rgba(0,0,0,.25);border-top:1px solid var(--border)}
+  .mock .body{padding:14px}
+  .mtop{display:flex;align-items:center;justify-content:space-between;background:rgba(22,27,39,.9);padding:8px 12px;border-bottom:1px solid var(--border2)}
+  .mtop .l{font-weight:800;font-size:14px}
+  .mchip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border2);background:rgba(255,255,255,.04);border-radius:999px;padding:4px 10px;font-size:11px;color:var(--text2);margin:2px}
+  .mrow{display:flex;align-items:center;gap:8px;padding:7px 8px;border-bottom:1px solid var(--border);font-size:12px}
+  .mkey{color:var(--cyan);font-weight:800;font-family:monospace}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .mnav{display:flex;flex-direction:column;gap:3px;width:210px;background:rgba(20,26,43,.7);border:1px solid var(--border);border-radius:12px;padding:10px}
+  .mnav .solo{background:linear-gradient(135deg,rgba(99,102,241,.18),rgba(124,58,237,.12));border:1px solid rgba(99,102,241,.3);border-radius:10px;padding:7px 10px;font-size:12.5px;display:flex;align-items:center;gap:8px}
+  .mnav .gh{color:var(--accent3);font-weight:800;font-size:13px;padding:7px 10px;display:flex;align-items:center;gap:8px}
+  .mnav .it{color:#c5cee8;font-size:12.5px;padding:6px 10px 6px 22px}
+  kbd{background:#2a3150;border:1px solid var(--border2);border-bottom-width:2px;border-radius:5px;padding:1px 7px;font-size:11px;font-family:monospace}
+  table.t{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+  table.t th{background:rgba(99,102,241,.1);color:var(--text2);text-align:left;padding:8px 10px;border-bottom:2px solid var(--border2);font-size:12px}
+  table.t td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:top}
+  .ph{border:1.5px dashed var(--border2);border-radius:10px;padding:22px;text-align:center;color:var(--text3);font-size:12px;margin:12px 0;background:rgba(255,255,255,.015)}
+  footer{margin-top:50px;padding-top:18px;border-top:1px solid var(--border);color:var(--text3);font-size:12px}
+  @media print{nav.toc{display:none}main{max-width:100%}body{background:#fff;color:#111}.card,.mock{break-inside:avoid}}
+  @media(max-width:820px){nav.toc{display:none}main{padding:20px}}
+</style>
+</head>
+<body>
+<div class="layout">
+  <nav class="toc">
+    <div class="brand"><div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div><div><b>ENGR HUB</b><span>사용 매뉴얼 · v1.7.7</span></div></div>
+    <a href="#intro">소개 &amp; 시작하기</a>
+    <a href="#login">로그인 / 권한</a>
+    <a href="#menu">메뉴 구조</a>
+    <div class="grp">개인 · 대시보드</div>
+    <a href="#mydesk">My Desk</a>
+    <a href="#dash">대시보드</a>
+    <div class="grp">업무</div>
+    <a href="#issues">이슈 관리</a>
+    <a href="#meta">미기입 점검</a>
+    <a href="#cases">케이스 트래커</a>
+    <a href="#customers">고객사 프로필</a>
+    <a href="#eos">EOS / 라이선스</a>
+    <div class="grp">분석 도구</div>
+    <a href="#log">로그 분석기</a>
+    <a href="#vt">VirusTotal 조회</a>
+    <a href="#ai">AI 기능</a>
+    <div class="grp">지식 · 협업</div>
+    <a href="#links">업무 링크</a>
+    <a href="#know">팀 노하우</a>
+    <div class="grp">관리자</div>
+    <a href="#admin">관리자 설정</a>
+    <a href="#audit">감사 로그</a>
+    <div class="grp">기타</div>
+    <a href="#faq">팁 &amp; FAQ</a>
+  </nav>
+  <main>
+    <h1>ENGR HUB 사용 매뉴얼</h1>
+    <div class="sub">ESCARE 보안기술팀 운영 허브 · 버전 v1.7.7 · 최종 갱신 2026-06</div>
+
+    <div class="note"><span class="t">이 매뉴얼에 대해</span>각 화면의 동작과 사용법을 메뉴 순서대로 설명합니다. 화면 예시는 실제 UI 요소를 재현한 도식으로 표시했습니다. (실제 캡처 이미지를 끼워 넣고 싶다면 각 <span class="badge b-ind">화면 예시</span> 영역에 PNG를 넣으면 됩니다.)</div>
+
+    <h2 id="intro"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>소개 &amp; 시작하기</h2>
+    <p>ENGR HUB는 보안기술팀의 일상 업무를 한 곳에서 처리하는 내부 운영 툴입니다. Jira 이슈/케이스 관리, 고객사·EOS 관리, 로그·해시 분석(AI/VirusTotal), 팀 지식 공유, 그리고 개인 업무 보드(My Desk)를 제공합니다.</p>
+    <table class="t"><tr><th>항목</th><th>주소</th></tr>
+      <tr><td>운영계</td><td><a class="link" href="https://engr-jira.github.io/engr-hub/">engr-jira.github.io/engr-hub</a></td></tr>
+      <tr><td>개발계</td><td><a class="link" href="https://engr-jira.github.io/engr-hub-dev/">engr-jira.github.io/engr-hub-dev</a></td></tr>
+    </table>
+    <div class="note"><span class="t">권장 브라우저</span>Chrome / Edge 최신 버전. 화면이 갱신 안 될 때는 <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>(강력 새로고침).</div>
+
+    <h2 id="login"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>로그인 / 권한</h2>
+    <ol class="steps">
+      <li><b>계정 ID</b>(예: <code>mj.park</code>)와 <b>팀 PIN</b>을 입력하고 <span class="badge b-ind">접속하기 →</span></li>
+      <li>로그인 후 세션이 유지되며, 일정 시간 미사용 시 자동 만료(만료 5분/1분 전 경고 표시).</li>
+      <li>PIN은 상단 <span class="badge b-ind">PIN 변경</span>에서 변경할 수 있습니다.</li>
+    </ol>
+    <h3>권한 등급</h3>
+    <table class="t"><tr><th>등급</th><th>설명</th></tr>
+      <tr><td><span class="badge b-teal">USER</span></td><td>일반 팀원 — 이슈/케이스/고객사/EOS 조회, 링크·노하우 등록, 개인 My Desk 사용</td></tr>
+      <tr><td><span class="badge b-ind">ADMIN</span></td><td>관리자 — 위 기능 + 감사 로그, My Desk 팀 일보고 카드</td></tr>
+      <tr><td><span class="badge b-red">SUPER</span></td><td>최고 관리자(mj.park) — 전체 + 관리자 설정(계정/저장소/초기화)</td></tr>
+    </table>
+    <div class="note danger"><span class="t">보안</span>PIN·토큰은 절대 공유하지 마세요. 비밀번호/키 입력 화면 외에는 자동완성을 신뢰하지 마세요.</div>
+
+    <h2 id="menu"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>메뉴 구조 (2단계)</h2>
+    <p>왼쪽 사이드바는 <b>최상단 My Desk</b> + <b>4개 접이식 그룹</b>으로 구성됩니다. 그룹명을 클릭하면 펼침/접힘. 현재 보고 있는 페이지의 그룹은 자동으로 펼쳐집니다.</p>
+    <div class="mock"><div class="body"><div class="mnav">
+      <div class="solo"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> My Desk ✦</div>
+      <div class="gh">▾ 업무</div><div class="it">대시보드 · 이슈 관리 · 케이스 트래커 · 고객사 프로필 · EOS/라이선스</div>
+      <div class="gh">▸ 분석 도구</div><div class="it">로그 분석기 · VirusTotal 조회</div>
+      <div class="gh">▸ 지식 / 협업</div><div class="it">업무 링크 · 팀 노하우</div>
+      <div class="gh">▸ 관리자</div><div class="it">감사 로그 · 관리자 설정 (권한자만)</div>
+    </div></div><div class="cap">화면 예시 — 사이드바 메뉴 (그룹명은 강조색, 하위 메뉴와 구분)</div></div>
+    <p>상단바 오른쪽에는 <b>Jira 연결 상태 · 동기화 건수 · 새로고침 · 실시간 시계 · 접속자/PIN/테마/로그아웃</b>이 한 묶음으로 정리되어 있습니다.</p>
+
+    <h2 id="mydesk"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>My Desk (개인 업무 보드)</h2>
+    <p>개인 전용 작업 공간입니다. <b>로그인한 본인 데이터만</b> 보이며, <b>서버에 저장</b>되어 어느 PC에서 로그인해도 동일하게 나타납니다.</p>
+    <h3>카드 구성</h3>
+    <ul>
+      <li><b>주간 미팅</b> — 미팅명·일자 기록</li>
+      <li><b>할 일</b> — 우선순위(높음/보통/낮음)·기한·하위작업 지원</li>
+      <li><b>오늘의 루틴</b> — 아침/업무중/마감 단계별 체크리스트(직접 추가, 매일 체크 초기화)</li>
+      <li><b>메모 · 인계</b> — 자유 메모(자동 저장)</li>
+      <li><b>빠른 업무 도구</b> — 자주 쓰는 문구를 클릭하면 클립보드 복사</li>
+      <li><b>벤더 케이스 / 고객사</b> — 개인 추적용 핀·메모</li>
+      <li><b>팀 일보고</b> <span class="badge b-ind">관리자 전용</span> — 전일/금일 보고, 주간 누적</li>
+    </ul>
+    <div class="ph">화면 예시 — My Desk 전체 (상단 헤더 없이 카드들이 바로 표시, 우측 상단 "🗑 My Desk 전체 초기화")</div>
+    <div class="note"><span class="t">카드 표시/숨김</span>상단 <span class="mchip">● 카드칩</span>들을 클릭해 보고 싶은 카드만 켜고 끌 수 있습니다. 카드는 드래그(⠿)로 순서 변경 가능.</div>
+    <div class="note warn"><span class="t">전체 초기화</span>우측 상단 <span class="badge b-red">🗑 My Desk 전체 초기화</span>는 본인 My Desk의 모든 값을 비웁니다(되돌릴 수 없음).</div>
+
+    <h2 id="dash"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>대시보드</h2>
+    <p>팀 운영 현황을 한눈에 보는 시작 화면입니다.</p>
+    <ul>
+      <li><b>상단 배너</b> — 좌: <span class="badge b-gold">7일 이상 미완료</span> / 우: <span class="badge b-ind">내 미완료 이슈</span> (클릭 시 해당 이슈 목록으로 필터 이동)</li>
+      <li><b>KPI 카드</b> — 일반 이슈/완료/진행·미완료/High+/내 담당/케이스 (클릭 시 해당 필터로 이동)</li>
+      <li><b>운영 포커스</b> — 7일 이상 미완료, High 이상, 메타 미완성, 60일 내 EOS</li>
+      <li><b>주요 항목 미기입 점검</b> — <a class="link" href="#meta">아래 참조</a></li>
+      <li><b>팀원 랭킹 / 월별 추이 / 최근 이슈</b></li>
+    </ul>
+    <div class="ph">화면 예시 — 대시보드 (배너 2분할 · KPI · 운영 포커스 · 미기입 점검 카드)</div>
+
+    <h2 id="issues"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>이슈 관리</h2>
+    <p>Jira의 일반 이슈(케이스 제외)를 조회·검색·AI 분석합니다.</p>
+    <h3>검색 / 필터</h3>
+    <ul>
+      <li>상단 검색창 + <b>상태 · 우선순위 · 레이블 · 담당자 · 기간</b> 드롭다운</li>
+      <li><span class="badge b-gold">📋 미기입만</span> 토글 — 핵심 항목이 빠진 미완료 이슈만 보기</li>
+      <li><span class="badge b-ind">✕ 초기화</span> — 모든 필터 해제</li>
+    </ul>
+    <h3>이슈 상세 (행 클릭)</h3>
+    <p>우측 패널에 Jira 세부필드가 모두 표시됩니다. 비어 있는 핵심 항목은 <span class="badge b-gold">미입력</span>으로 강조됩니다.</p>
+    <div class="mock"><div class="body">
+      <div class="mrow"><span style="color:var(--text3);width:70px">이슈키</span><span class="mkey">ENGR-3232</span></div>
+      <div class="mrow"><span style="color:var(--text3);width:70px">우선순위</span>Medium</div>
+      <div class="mrow"><span style="color:var(--text3);width:70px">고객사</span>우리카드</div>
+      <div class="mrow"><span style="color:var(--text3);width:70px">레이블</span><span class="badge b-ind">DLP</span> <span class="badge b-ind">PP</span></div>
+      <div class="mrow"><span style="color:var(--text3);width:70px">범주</span><span style="color:var(--gold);font-weight:700">미입력</span></div>
+      <div class="mrow"><span style="color:var(--text3);width:70px">담당자 / 보고자</span>이서현 / 박민준</div>
+      <div class="mrow"><span style="color:var(--text3);width:70px">기한</span><span style="color:var(--gold)">2026-06-23 (D-21)</span></div>
+    </div><div class="cap">화면 예시 — 이슈 상세 패널 (전 필드 + 미입력 강조)</div></div>
+    <p>하단 버튼으로 <b>AI 요약 · 기술 분석 · 회신 초안 · 인수인계 · 유사 이슈</b>를 실행할 수 있습니다 (<a class="link" href="#ai">AI 기능</a> 참조).</p>
+
+    <h2 id="meta"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>주요 항목 미기입 점검</h2>
+    <p>미완료 일반 이슈 중 <b>고객사 · 레이블 · 범주 · 기한</b> 중 하나라도 빠진 건을 찾아, <b>담당자별</b>로 모아 보여줍니다. 누가 어떤 항목을 안 채웠는지 한눈에 확인하고 챙길 수 있습니다.</p>
+    <div class="mock"><div class="body">
+      <div class="mrow"><b style="width:90px">최시온</b><span class="badge b-red">5건</span><span style="margin-left:auto"><span class="badge b-gold">기한 4</span><span class="badge b-gold">고객사 1</span></span></div>
+      <div class="mrow"><b style="width:90px">김민지</b><span class="badge b-red">1건</span><span style="margin-left:auto"><span class="badge b-gold">범주 1</span></span></div>
+    </div><div class="cap">화면 예시 — 담당자별 미기입 점검 (담당자 클릭 → 해당 미기입 이슈로 이동)</div></div>
+    <ul>
+      <li>대시보드 카드의 <b>담당자 행</b>을 클릭하면 그 담당자의 미기입 이슈만 필터됩니다.</li>
+      <li>이슈 관리의 <span class="badge b-gold">📋 미기입만</span> 토글로도 전체를 볼 수 있습니다.</li>
+    </ul>
+    <div class="note"><span class="t">참고</span><code>[Hands-on]</code> 테스트 이슈는 점검 대상에서 자동 제외됩니다.</div>
+
+    <h2 id="cases"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>케이스 트래커</h2>
+    <p>제목이 <code>[8자리번호]</code>로 시작하는 제조사 케이스를 별도로 추적합니다. 상태·담당자·SLA·기간으로 필터하고, 케이스별 다음 액션을 AI로 제안받을 수 있습니다.</p>
+    <div class="ph">화면 예시 — 케이스 트래커 목록 + 상세</div>
+
+    <h2 id="customers"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/></svg>고객사 프로필</h2>
+    <p>고객사별로 이슈·케이스·제품·EOS 현황을 모아 봅니다. 좌측에서 고객사를 선택하면 우측에 요약(이슈/케이스 건수·완료율·EOS·최근 이슈)이 나오고, "일반 이슈 보기 / 케이스 보기"로 바로 이동합니다.</p>
+    <div class="ph">화면 예시 — 고객사 프로필</div>
+
+    <h2 id="eos"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>EOS / 라이선스</h2>
+    <p>제품의 EOS(단종)·라이선스 만료일을 관리합니다. <span class="badge b-ind">+ 신규 등록</span>으로 항목을 추가하고, 만료 임박 항목은 대시보드/사이드바 배지로 강조됩니다.</p>
+    <div class="ph">화면 예시 — EOS / 라이선스 목록 (D-Day 표시)</div>
+    <div class="note"><span class="t">라이트 모드</span>상단 <span class="badge b-ind">☾ 다크/밝음</span> 토글로 화면 테마를 바꿀 수 있습니다.</div>
+
+    <h2 id="log"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>로그 분석기</h2>
+    <p>로그를 붙여넣거나 파일로 올려 증상 기반 AI 분석을 받습니다. 결과는 증거 → 추정 원인 → 영향 → 조치 → 확인 질문 순으로 정리됩니다.</p>
+    <div class="ph">화면 예시 — 로그 분석기</div>
+
+    <h2 id="vt"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>VirusTotal 조회 (다중 해시)</h2>
+    <p>MD5/SHA-1/SHA-256 해시의 VirusTotal 탐지 결과를 조회합니다. <b>여러 개를 한 번에</b> 조회할 수 있습니다(최대 100개).</p>
+    <ol class="steps">
+      <li>해시를 <b>한 줄에 하나씩</b>(또는 공백·쉼표로 구분) 입력칸에 붙여넣습니다.</li>
+      <li><span class="badge b-red">🔍 조회</span> 클릭 (또는 <kbd>Ctrl</kbd>+<kbd>Enter</kbd>). 내부적으로 하나씩 순차 조회됩니다.</li>
+      <li>결과는 <b>✅ 조회 성공</b>과 <b>❔ 미발견/오류</b>로 분류되어 표시됩니다.</li>
+    </ol>
+    <div class="mock"><div class="body">
+      <div class="mrow"><span class="mkey">a581f…</span><span style="color:var(--red);font-weight:800">50/71</span><span class="badge b-red">악성</span><span style="color:var(--text2)">br50eefk.exe</span><span style="color:var(--text3);font-size:11px">Microsoft: Trojan… 외 49</span></div>
+      <div class="mrow"><span class="mkey">00f95…</span><span style="color:var(--teal);font-weight:800">0/66</span><span class="badge b-teal">안전</span><span style="color:var(--text2)">nProtect…exe</span></div>
+    </div><div class="cap">화면 예시 — VT 다중 조회 결과 (탐지명 포함)</div></div>
+    <h3>결과 복사 / 내보내기</h3>
+    <ul>
+      <li><span class="badge b-ind">📋 표 복사(엑셀)</span> — 표를 그대로 복사 → Excel/Sheets에 붙여넣으면 열로 분리</li>
+      <li><span class="badge b-ind">📋 CSV 복사</span> — CSV 형식으로 클립보드 복사</li>
+      <li><span class="badge b-ind">📋 미발견 해시 복사</span> — VT에 없는 해시만 모아 복사</li>
+    </ul>
+    <div class="note"><span class="t">탐지명</span>각 행의 "탐지명" 칸에 백신 업체별 결과(예: <code>Microsoft: Trojan:Win32/...</code>)가 표시됩니다. 칸에 마우스를 올리면 전체 목록을 볼 수 있습니다.</div>
+
+    <h2 id="ai"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>AI 기능</h2>
+    <p>이슈/케이스/로그에서 AI 분석을 실행할 수 있습니다. 결과 하단에 <b>실제 사용한 모델</b>(예: "Gemini 2.5 Flash 모델로 생성됨")이 표시됩니다.</p>
+    <table class="t"><tr><th>기능</th><th>용도</th></tr>
+      <tr><td>요약</td><td>이슈 핵심/상태/조치/과제 4줄 요약</td></tr>
+      <tr><td>기술 분석</td><td>상황·원인·권장 조치·재발 방지</td></tr>
+      <tr><td>회신 초안</td><td>고객 공식 회신 메일 초안</td></tr>
+      <tr><td>인수인계</td><td>내부 인수인계 메모</td></tr>
+      <tr><td>유사 이슈</td><td>과거 유사 케이스 비교</td></tr>
+    </table>
+    <div class="note"><span class="t">AI 사용량</span>사이드바 하단에서 팀/개인 사용량과 <b>모델별(Gemini/Llama) 호출 수</b>를 확인할 수 있습니다. 일일 한도 초과 시 안내가 표시됩니다.</div>
+    <div class="note warn"><span class="t">유의</span>AI 결과는 사람이 검토하는 초안입니다. 확인된 사실과 추정을 구분하고, 고객 발송 전 반드시 검수하세요.</div>
+
+    <h2 id="links"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>업무 링크</h2>
+    <p>자주 쓰는 업무용 링크 모음. 누구나 등록·수정·삭제할 수 있습니다(팀 공유).</p>
+    <div class="ph">화면 예시 — 업무 링크</div>
+
+    <h2 id="know"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>팀 노하우</h2>
+    <p>팀 내부 노하우·트러블슈팅 문서를 작성·공유합니다. 글에 댓글을 달 수 있습니다.</p>
+    <div class="ph">화면 예시 — 팀 노하우</div>
+
+    <h2 id="admin"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9z"/></svg>관리자 설정 <span class="badge b-red" style="font-size:12px">SUPER</span></h2>
+    <p>최고 관리자 전용. 다음을 관리합니다:</p>
+    <ul>
+      <li><b>기본 설정</b> — 데이터 조회 기간, 세션 타임아웃, EOS 경고 일수, AI 시스템 지침</li>
+      <li><b>사용자 / 권한</b> — 계정 등록·역할 변경·<span class="badge b-red">로그인 차단</span>·<span class="badge b-red">계정 삭제</span></li>
+      <li><b>PIN 관리</b> — 사용자 PIN 초기화</li>
+      <li><b>저장소</b> — KV 사용량 조회, 전체 데이터 백업</li>
+      <li><b>위험 작업</b> — AI 캐시 초기화, 감사 로그 정리, <span class="badge b-red">전체 데이터 초기화</span>(PIN 확인)</li>
+    </ul>
+    <div class="note danger"><span class="t">주의</span>계정 삭제·전체 초기화는 되돌릴 수 없습니다. 실행 전 백업을 권장합니다.</div>
+
+    <h2 id="audit"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>감사 로그 <span class="badge b-ind" style="font-size:12px">ADMIN</span></h2>
+    <p>사용자 작업 이력(로그인, AI 호출, 설정 변경, 계정 변경 등)을 조회합니다. 유형·검색·건수로 필터할 수 있습니다.</p>
+    <div class="ph">화면 예시 — 감사 로그</div>
+
+    <h2 id="faq"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01"/></svg>팁 &amp; FAQ</h2>
+    <h3>자주 묻는 질문</h3>
+    <p><b>Q. My Desk 내용이 다른 PC에서도 보이나요?</b><br>네. My Desk 데이터는 서버에 본인 계정으로 저장되어, 어느 PC에서 로그인해도 동일하게 보입니다.</p>
+    <p><b>Q. 화면이 예전 버전으로 보여요.</b><br><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd>로 강력 새로고침 하세요(브라우저 캐시).</p>
+    <p><b>Q. 팀 일보고 카드가 안 보여요.</b><br>팀 일보고는 <b>관리자 전용</b> 카드입니다. 일반 사용자에게는 표시되지 않습니다.</p>
+    <p><b>Q. 미완료 건이 안 잡혀요.</b><br>상단 <span class="badge b-ind">↻</span> 또는 "동기화"로 Jira를 새로고침하세요.</p>
+    <p><b>Q. AI가 Gemini인지 Llama인지?</b><br>결과 하단과 사이드바 사용량에서 실제 사용 모델을 확인할 수 있습니다. 기본 Gemini, 실패 시 Llama로 자동 대체됩니다.</p>
+    <h3>단축</h3>
+    <ul>
+      <li>VT 조회: <kbd>Ctrl</kbd>+<kbd>Enter</kbd></li>
+      <li>강력 새로고침: <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>R</kbd></li>
+    </ul>
+
+    <footer>
+      ENGR HUB 사용 매뉴얼 · v1.7.7 · ESCARE 보안기술팀<br>
+      이 문서는 단일 HTML 파일입니다. 브라우저에서 열거나 인쇄(→ PDF 저장)할 수 있습니다.<br>
+      <span style="color:var(--text3)">※ "화면 예시" 영역에 실제 캡처(PNG)를 넣으려면 해당 자리에 &lt;img&gt;를 추가하면 됩니다.</span>
+    </footer>
+  </main>
+</div>
+</body>
+</html>
