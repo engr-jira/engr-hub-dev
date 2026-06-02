@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.6.2 - ESCARE Security Hub</title>
+<title>ENGR AI v1.7.0 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
@@ -1254,7 +1254,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.6.2</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.0</span></div></div>
       </div>
       <div class="sb-section">메뉴</div>
       <div class="sb-nav">
@@ -2032,7 +2032,13 @@ async function syncJira(){
       comments:[],
       attachments:[],
       type:i.fields.issuetype?i.fields.issuetype.name:'작업',
-      customer:extractCustomer(i.fields.summary),
+      customer:(i.fields.customfield_10134&&i.fields.customfield_10134[0])||extractCustomer(i.fields.summary),
+      customers:i.fields.customfield_10134||[],
+      division:i.fields.customfield_10178||[],
+      category:i.fields.customfield_10036?i.fields.customfield_10036.value:'',
+      rating:i.fields.customfield_10244?i.fields.customfield_10244.value:'',
+      startDate:i.fields.customfield_10015||'',
+      due:i.fields.duedate||'',
       caseNums:extractCaseNums(i.fields.summary),
       _detailLoaded:false
     }));
@@ -2407,11 +2413,27 @@ function renderRightPanel(){
       ${i.labels.map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join('')}
     </div>
     <div class="rp-meta">
+      ${(()=>{const na='<span style="color:#fbbf24;font-weight:700">미입력</span>';
+        const dueCell=i.due?(()=>{const d=daysUntil(i.due);const col=d<0?'#fc8181':d<=7?'#fbbf24':'var(--text)';return `<span style="color:${col}">${i.due} ${d<0?'(기한초과 '+Math.abs(d)+'일)':'(D-'+d+')'}</span>`;})():na;
+        const custCell=(i.customers&&i.customers.length)?escapeHtml(i.customers.join(', ')):(i.customer?`<span>${escapeHtml(i.customer)} <span style="color:var(--text3);font-size:10px">(제목 추정)</span></span>`:na);
+        const divCell=(i.division&&i.division.length)?escapeHtml(i.division.join(', ')):'<span style="color:var(--text3)">-</span>';
+        const catCell=(i.category&&i.category!=='N/A')?escapeHtml(i.category):na;
+        const labCell=(i.labels&&i.labels.length)?i.labels.map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join(' '):na;
+        const rateCell=i.rating?escapeHtml(i.rating):'<span style="color:var(--text3)">-</span>';
+        return `
       <div class="rp-row"><span>이슈키</span><span style="color:var(--accent3);font-weight:700">${i.key}</span></div>
-      <div class="rp-row"><span>담당자</span><span>${escapeHtml(i.assignee)}</span></div>
-      <div class="rp-row"><span>고객사</span><span>${escapeHtml(i.customer||'-')}</span></div>
+      <div class="rp-row"><span>우선순위</span><span>${escapeHtml(i.pri)}</span></div>
+      <div class="rp-row"><span>고객사</span><span>${custCell}</span></div>
+      <div class="rp-row"><span>레이블</span><span>${labCell}</span></div>
+      <div class="rp-row"><span>구분</span><span>${divCell}</span></div>
+      <div class="rp-row"><span>범주</span><span>${catCell}</span></div>
+      <div class="rp-row"><span>담당자</span><span>${escapeHtml(i.assignee||'-')}</span></div>
+      <div class="rp-row"><span>보고자</span><span>${escapeHtml(i.reporter||'-')}</span></div>
+      <div class="rp-row"><span>평가</span><span>${rateCell}</span></div>
+      <div class="rp-row"><span>시작일</span><span>${i.startDate?fd(i.startDate):'<span style="color:var(--text3)">-</span>'}</span></div>
+      <div class="rp-row"><span>기한</span><span>${dueCell}</span></div>
       <div class="rp-row"><span>접수일</span><span>${fd(i.date)}</span></div>
-      <div class="rp-row"><span>수정일</span><span>${fd(i.updated)}</span></div>
+      <div class="rp-row"><span>수정일</span><span>${fd(i.updated)}</span></div>`;})()}
     </div>
     ${i.attachments&&i.attachments.length?`
     <div style="margin-bottom:12px">
@@ -4596,10 +4618,11 @@ function renderOpsFocus(){
   const overdue=getGeneralIssues().filter(i=>isOpenStatus(i.status)&&daysSince(i.date)>=7).sort((a,b)=>daysSince(b.date)-daysSince(a.date)).slice(0,5);
   const highOpen=getGeneralIssues().filter(i=>isOpenStatus(i.status)&&['Highest','High'].includes(i.pri)).slice(0,5);
   const nearEos=EOS_ITEMS.filter(x=>x.expireDate&&daysUntil(x.expireDate)>=0&&daysUntil(x.expireDate)<=60).sort((a,b)=>daysUntil(a.expireDate)-daysUntil(b.expireDate)).slice(0,5);
+  const metaInc=getGeneralIssues().filter(i=>isOpenStatus(i.status)&&isMetaIncomplete(i)).slice(0,5);
   const wrap=document.getElementById('ops-focus');
   if(!wrap)return;
   const sec=(title,items,empty,mapper)=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="font-size:12px;font-weight:800;color:#e8edff;margin-bottom:8px">${title}</div>${items.length?items.map(mapper).join(''):`<div style="font-size:11px;color:var(--text3);padding:8px">${empty}</div>`}</div>`;
-  wrap.innerHTML=`<div class="chart-card"><div class="chart-title">운영 포커스</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">${sec('7일 이상 미완료 일반 이슈',overdue,'대상 없음',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fcd34d">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#f87171">${daysSince(i.date)}일</span></div>`)}${sec('High 이상 미완료 일반 이슈',highOpen,'대상 없음',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'high',label:'High 이상 미완료 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fca5a5">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#fca5a5">${i.pri}</span></div>`)}${sec('60일 내 EOS/라이선스',nearEos,'대상 없음',x=>`<div onclick="showPage('eos',document.getElementById('nav-eos'));document.getElementById('eos-q').value=${jsAttr(x.customer)};PAGE_STATE.eos=1;renderEosList();" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fcd34d">${escapeHtml(x.customer)}</b> ${escapeHtml(x.product)} <span style="float:right;color:#fcd34d">D-${daysUntil(x.expireDate)}</span></div>`)}</div></div>`;
+  wrap.innerHTML=`<div class="chart-card"><div class="chart-title">운영 포커스</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">${sec('7일 이상 미완료 일반 이슈',overdue,'대상 없음',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fcd34d">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#f87171">${daysSince(i.date)}일</span></div>`)}${sec('High 이상 미완료 일반 이슈',highOpen,'대상 없음',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'high',label:'High 이상 미완료 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fca5a5">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#fca5a5">${i.pri}</span></div>`)}${sec('메타 미완성 (고객사·레이블·범주·기한)',metaInc,'모두 입력됨 ✓',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'incomplete',label:'메타 미완성 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fbbf24">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,38)} <span style="float:right;color:#fbbf24">${metaMissingFields(i).join('·')}</span></div>`)}${sec('60일 내 EOS/라이선스',nearEos,'대상 없음',x=>`<div onclick="showPage('eos',document.getElementById('nav-eos'));document.getElementById('eos-q').value=${jsAttr(x.customer)};PAGE_STATE.eos=1;renderEosList();" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fcd34d">${escapeHtml(x.customer)}</b> ${escapeHtml(x.product)} <span style="float:right;color:#fcd34d">D-${daysUntil(x.expireDate)}</span></div>`)}</div></div>`;
 }
 
 function buildCustomers(){
@@ -4740,7 +4763,9 @@ function normalizeJiraIssue(i){
   const title=f.summary||'';
   const parentTitle=parentSummaryOf(f);
   const caseNum=getCasePrefixNum(title);
-  const customer=caseNum ? (extractCustomer(parentTitle)||extractCustomer(title)||'') : (extractCustomer(title)||extractCustomer(parentTitle)||'');
+  const cfCustomers=Array.isArray(f.customfield_10134)?f.customfield_10134:[];
+  const parsedCustomer=caseNum ? (extractCustomer(parentTitle)||extractCustomer(title)||'') : (extractCustomer(title)||extractCustomer(parentTitle)||'');
+  const customer=cfCustomers[0]||parsedCustomer;
   return {
     key:i.key,
     title,
@@ -4754,6 +4779,12 @@ function normalizeJiraIssue(i){
     desc:'',descPlain:'',comments:[],attachments:[],
     type:f.issuetype?f.issuetype.name:'작업',
     customer,
+    customers:cfCustomers,
+    division:Array.isArray(f.customfield_10178)?f.customfield_10178:[],
+    category:(f.customfield_10036&&f.customfield_10036.value)||'',
+    rating:(f.customfield_10244&&f.customfield_10244.value)||'',
+    startDate:f.customfield_10015||'',
+    due:f.duedate||'',
     caseNum,
     caseNums:caseNum?[caseNum]:extractCaseNums(title),
     parentKey:f.parent?f.parent.key:'',
@@ -4812,7 +4843,7 @@ async function syncJira(){
 }
 
 async function fetchIssueDetail(key){
-  const fields=['summary','status','priority','assignee','reporter','created','updated','description','labels','issuetype','attachment','comment','parent'].join(',');
+  const fields=['summary','status','priority','assignee','reporter','created','updated','description','labels','issuetype','attachment','comment','parent','duedate','customfield_10134','customfield_10036','customfield_10178','customfield_10015','customfield_10244'].join(',');
   const r=await fetch(`${WORKERS}/jira/issue/${encodeURIComponent(key)}?fields=${encodeURIComponent(fields)}`,{headers:authHeaders()});
   if(!r.ok)throw new Error('상세 조회 오류: '+r.status);
   const i=await r.json();
@@ -5685,6 +5716,16 @@ function buildCustomers(){
   return Object.values(map).sort((a,b)=>(b.general.length+b.cases.length)-(a.general.length+a.cases.length));
 }
 function buildCustomerData(){return buildCustomers();}
+function metaMissingFields(i){
+  if(!i)return [];
+  const miss=[];
+  if(!(i.customers&&i.customers.length))miss.push('고객사');
+  if(!(i.labels&&i.labels.length))miss.push('레이블');
+  if(!i.category||i.category==='N/A')miss.push('범주');
+  if(!i.due)miss.push('기한');
+  return miss;
+}
+function isMetaIncomplete(i){return metaMissingFields(i).length>0;}
 function filterByPreset(list,preset){
   if(!preset)return list;
   let out=list;
@@ -5695,6 +5736,7 @@ function filterByPreset(list,preset){
   if(preset.kind==='high')out=out.filter(i=>isOpenStatus(i.status)&&String(i.pri||'').toLowerCase().includes('high'));
   if(preset.kind==='customer')out=out.filter(i=>isCaseIssue(i)?caseCustomerName(i)===preset.customer:(i.customer||'')===preset.customer);
   if(preset.kind==='priority')out=out.filter(i=>String(i.pri||'').toLowerCase().includes('high'));
+  if(preset.kind==='incomplete')out=out.filter(i=>isOpenStatus(i.status)&&isMetaIncomplete(i));
   return out;
 }
 function renderTopbarStatus(){

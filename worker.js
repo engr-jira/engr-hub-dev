@@ -597,7 +597,7 @@ async function handleJiraSearch(env, user = "") {
   };
 
   //
-  const fields = ['summary','status','priority','assignee','reporter','created','updated','labels','issuetype','parent'];
+  const fields = ['summary','status','priority','assignee','reporter','created','updated','labels','issuetype','parent','duedate','customfield_10134','customfield_10036','customfield_10178','customfield_10015','customfield_10244'];
 
   let allIssues = [];
   let nextPageToken = undefined;
