@@ -550,21 +550,50 @@ All outputs are review drafts for humans; never instruct automatic customer send
   let userText = clippedPrompt;
 
   //
-  const response = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
-    messages: [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: userText },
-    ],
-    max_tokens: 2048,
-    temperature: 0.4,
-  });
+  let text = '';
+  let modelUsed = '';
 
-  const text = response?.response || '';
+  // 1\uC21C\uC704: Google Gemini (\uBB34\uB8CC \uB4F1\uAE09) \u2014 GEMINI_API_KEY \uC124\uC815 \uC2DC
+  if (env.GEMINI_API_KEY) {
+    try {
+      const gModel = env.GEMINI_MODEL || 'gemini-2.5-flash';
+      const gRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${env.GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: [{ role: 'user', parts: [{ text: userText }] }],
+          generationConfig: { temperature: 0.4, maxOutputTokens: 2048 },
+        }),
+      });
+      if (gRes.ok) {
+        const gData = await gRes.json();
+        text = (gData?.candidates?.[0]?.content?.parts || []).map(p => p.text || '').join('') || '';
+        if (text) modelUsed = gModel;
+      }
+    } catch (_) {}
+  }
+
+  // \uD3F4\uBC31: Cloudflare Workers AI (Llama) \u2014 Gemini \uBBF8\uC124\uC815/\uC2E4\uD328 \uC2DC (\uBB34\uBE44\uC6A9)
+  if (!text) {
+    const response = await env.AI.run('@cf/meta/llama-3.3-70b-instruct-fp8-fast', {
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userText },
+      ],
+      max_tokens: 2048,
+      temperature: 0.4,
+    });
+    text = response?.response || '';
+    if (text) modelUsed = 'llama-3.3-70b';
+  }
+
   if (!text) throw new Error('AI \uC751\uB2F5\uC774 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.');
 
   //
   const result = {
     candidates: [{ content: { parts: [{ text }] } }],
+    _model: modelUsed,
   };
 
   //
