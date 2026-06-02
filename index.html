@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.7.2 - ESCARE Security Hub</title>
+<title>ENGR AI v1.7.3 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -1197,7 +1197,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
 <style id="mydesk-scoped">
 @scope (#page-mydesk) {
   :scope{
-    --bg:#0d1014; --bg-grad-1:#13181f; --bg-grad-2:#0b0e12;
+    /* --bg/--bg-grad 제거: My Desk 페이지 배경은 hub 테마(var(--bg))를 따름 (#page-mydesk inline) */
     --panel:#161b22; --panel-2:#1b2129; --line:#252c36; --line-soft:#1f2630;
     --line2:#3c4654; --cb:#62707f;
     --ink:#ece7db; --ink-dim:#a7b0bb; --ink-faint:#6a7480;
@@ -1587,7 +1587,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.2</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.3</span></div></div>
       </div>
       <div class="sb-nav">
         <div class="sb-group" data-group="work">
@@ -1702,6 +1702,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
         <select id="f-lab" onchange="PAGE=1;renderIssues()"><option value="">전체 레이블</option></select>
         <select id="f-ass" onchange="PAGE=1;renderIssues()"><option value="">전체 담당자</option></select>
         <select id="f-pg" onchange="PAGE=1;renderIssues()"><option value="10" selected>10개</option><option value="20">20개</option><option value="30">30개</option><option value="50">50개</option><option value="100">100개</option><option value="200">200개</option></select>
+        <button id="f-incomplete-btn" onclick="toggleIncompleteFilter()" title="고객사·레이블·범주·기한 중 하나라도 미기입된 미완료 일반 이슈만" style="background:rgba(251,191,36,.12);border:1.5px solid rgba(251,191,36,.35);border-radius:10px;padding:7px 14px;color:#fbbf24;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;font-weight:700">📋 미기입만</button>
         <button onclick="resetFilters()" style="background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.28);border-radius:10px;padding:7px 14px;color:#e8edff;font-size:11px;cursor:pointer;font-family:inherit;white-space:nowrap;font-weight:600">✕ 초기화</button>
         <span class="filter-count" id="f-count">0건</span>
       </div>
@@ -1923,7 +1924,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
   <header>
     <div class="greet">
       <div class="eyebrow">ESCARE · 보안기술팀 운영 대시보드</div>
-      <h1 id="greeting">안녕하세요, <span class="name">박민준 부장님</span></h1>
+      <h1 id="greeting">안녕하세요, <span class="name">팀원 님</span></h1>
       <div class="sub" id="subline">오늘 하루를 정리해 보세요.</div>
     </div>
     <div class="clock">
@@ -4926,7 +4927,17 @@ function refreshFilters(){
 
 function resetFilters(){
   ['f-q','f-stat','f-pri','f-lab','f-ass','f-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  ISSUE_PRESET=null;PAGE=1;renderIssues();
+  ISSUE_PRESET=null;
+  const ib=document.getElementById('f-incomplete-btn');if(ib){ib.style.background='rgba(251,191,36,.12)';ib.style.color='#fbbf24';}
+  PAGE=1;renderIssues();
+}
+function toggleIncompleteFilter(){
+  const on=!!(ISSUE_PRESET&&ISSUE_PRESET.kind==='incomplete');
+  ISSUE_PRESET=on?null:{kind:'incomplete',label:'메타 미완성 일반 이슈'};
+  const ib=document.getElementById('f-incomplete-btn');
+  if(ib){ if(!on){ib.style.background='rgba(251,191,36,.28)';ib.style.color='#fff';} else {ib.style.background='rgba(251,191,36,.12)';ib.style.color='#fbbf24';} }
+  showPage('issues',document.getElementById('nav-issues'));
+  PAGE=1;renderIssues();
 }
 function resetCaseFilters(){
   ['case-q','case-stat','case-ass','case-sla','case-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -6385,7 +6396,11 @@ function showPage(name,btn){
   const title=document.getElementById('page-title'); if(title)title.textContent=titleMap[name]||'HUB';
   const desc=document.getElementById('page-desc'); if(desc)desc.textContent=descMap[name]||'';
   expandActiveNavGroup(name);
-  if(name==='mydesk'){const tp=document.getElementById('md-team-report-panel');if(tp)tp.style.display=(IS_ADMIN||IS_SUPER)?'':'none';}
+  if(name==='mydesk'){
+    window.__HUB_DISPLAY=CURRENT_DISPLAY||CURRENT_USER||'팀원';
+    const gn=document.querySelector('#page-mydesk #greeting .name');if(gn)gn.textContent=window.__HUB_DISPLAY+' 님';
+    const tp=document.getElementById('md-team-report-panel');if(tp)tp.style.display=(IS_ADMIN||IS_SUPER)?'':'none';
+  }
   renderCurrent();
   ensureRelativeDateOptions();
   setTimeout(enhanceDateButtons,0);
@@ -6854,7 +6869,7 @@ function setGreeting(){ const h=new Date().getHours(); let g,s;
   else if(h<14){g='점심 무렵이네요';s='오전 진행 상황을 정리할 시간입니다.';}
   else if(h<18){g='오후도 힘내세요';s='회신 대기·케이스 상태를 확인해 보세요.';}
   else{g='하루 마무리 시간입니다';s='지원내역 기록과 내일 우선순위를 정리해 보세요.';}
-  document.getElementById('greeting').innerHTML=g+', <span class="name">박민준 부장님</span>'; document.getElementById('subline').textContent=s; }
+  document.getElementById('greeting').innerHTML=g+', <span class="name">'+(window.__HUB_DISPLAY||'팀원')+' 님</span>'; document.getElementById('subline').textContent=s; }
 
 /* ---------- ROUTINE ---------- */
 const DEFAULT_ROUTINE=[
