@@ -553,11 +553,12 @@ All outputs are review drafts for humans; never instruct automatic customer send
   let text = '';
   let modelUsed = '';
 
-  // 1\uC21C\uC704: Google Gemini (\uBB34\uB8CC \uB4F1\uAE09) \u2014 GEMINI_API_KEY \uC124\uC815 \uC2DC
-  if (env.GEMINI_API_KEY) {
+  // 1\uC21C\uC704: Google Gemini (\uBB34\uB8CC \uB4F1\uAE09) \u2014 GEMINI_API_KEY \uB610\uB294 GEMINI_KEY \uC124\uC815 \uC2DC
+  const geminiKey = env.GEMINI_API_KEY || env.GEMINI_KEY;
+  if (geminiKey) {
     try {
       const gModel = env.GEMINI_MODEL || 'gemini-2.5-flash';
-      const gRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${env.GEMINI_API_KEY}`, {
+      const gRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${gModel}:generateContent?key=${geminiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
