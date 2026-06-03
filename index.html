@@ -5658,7 +5658,7 @@ function normalizeJiraIssue(i){
   const title=f.summary||'';
   const parentTitle=parentSummaryOf(f);
   const caseNum=getCasePrefixNum(title);
-  const cfCustomers=Array.isArray(f.customfield_10134)?f.customfield_10134:[];
+  const cfCustomers=(Array.isArray(f.customfield_10134)?f.customfield_10134:[]).filter(isRealCust);
   const parsedCustomer=caseNum ? (extractCustomer(parentTitle)||extractCustomer(title)||'') : (extractCustomer(title)||extractCustomer(parentTitle)||'');
   const customer=cfCustomers[0]||parsedCustomer;
   return {
