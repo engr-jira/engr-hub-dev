@@ -899,6 +899,8 @@ html[data-theme="light"] .top-clock .tc-time{color:#1e293b}
   .topbar-right{display:block!important;width:100%!important;overflow:visible!important}.topbar-right .search-box{display:none!important}
   .top-status{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;align-items:center!important;justify-content:stretch!important;gap:6px!important;max-width:100%!important;overflow:visible!important;flex-wrap:initial!important;padding:2px 0 1px!important}
   .top-status::-webkit-scrollbar{display:none!important}
+  /* 모바일은 다크 전용 — 테마 토글 숨김(눌러도 변화 없어 혼란) */
+  .top-theme,#theme-toggle{display:none!important}
   .top-status-card,.top-pin,.top-refresh,.top-logout,.mob-search-btn{width:100%!important;min-width:0!important;flex:initial!important;height:32px!important;min-height:32px!important;border-radius:999px!important;background:rgba(255,255,255,.075)!important;border:1px solid rgba(129,140,248,.24)!important;color:var(--text2)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important;padding:0 8px!important;white-space:nowrap!important;font-size:10px!important;font-weight:900!important;overflow:hidden!important;text-overflow:ellipsis!important;justify-content:center!important}
   .top-status-card .label{display:none!important}.top-status-card .value{display:block!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;font-size:10px!important;color:var(--text)!important}.top-status-card .ok{color:var(--success)!important}.top-status-card .warn{color:var(--warn)!important}
   .top-pin{color:#dffbff!important;border-color:rgba(103,232,249,.34)!important;background:rgba(103,232,249,.10)!important}.top-refresh,.mob-search-btn{padding:0!important}.top-logout{grid-column:span 2!important}
