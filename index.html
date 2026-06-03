@@ -963,7 +963,9 @@ html[data-theme="light"] .top-clock .tc-time{color:#1e293b}
 (function(){
   try {
     var saved = localStorage.getItem('engr_theme');
-    document.documentElement.setAttribute('data-theme', saved === 'light' ? 'light' : 'dark');
+    var isMob = false; try{ isMob = window.matchMedia('(max-width:700px)').matches; }catch(e){}
+    // 모바일은 항상 다크로 렌더(라이트 누수로 인한 글자 안보임/레이아웃 깨짐 방지). 데스크톱만 사용자 설정 적용.
+    document.documentElement.setAttribute('data-theme', (saved === 'light' && !isMob) ? 'light' : 'dark');
   } catch (_) {
     document.documentElement.setAttribute('data-theme', 'dark');
   }
@@ -2354,25 +2356,32 @@ let LINKS=[],EOS_ITEMS=[],TEAM_NAMES=[];
 let EOS_WARN_DAYS=[60,30,7];
 let LOG_FILES=[];
 const THEME_KEY='engr_theme';
-let UI_THEME=normalizeTheme(document.documentElement.getAttribute('data-theme')||'dark');
+let UI_THEME=normalizeTheme((function(){try{return localStorage.getItem(THEME_KEY)}catch(_){return null}})()||document.documentElement.getAttribute('data-theme')||'dark');
 
 function normalizeTheme(theme){return theme==='light'?'light':'dark';}
+function isMobileViewport(){try{return window.matchMedia('(max-width:700px)').matches;}catch(_){return false;}}
 function applyTheme(theme, opts={}){
   UI_THEME=normalizeTheme(theme);
-  document.documentElement.setAttribute('data-theme',UI_THEME);
+  // 모바일은 항상 다크로 렌더(라이트 누수 방지). 사용자 설정값(UI_THEME)은 그대로 저장되어 데스크톱에 적용됨.
+  document.documentElement.setAttribute('data-theme', isMobileViewport()?'dark':UI_THEME);
   if(opts.persist!==false){
     try{localStorage.setItem(THEME_KEY,UI_THEME);}catch(_){}
   }
   syncThemeToggle();
   syncMobileThemeSheets();
 }
-// 모바일: 라이트 모드에서는 다크 모바일 시트(codex-mobile-dark)를 비활성화 → 라이트 모바일(v158)만 적용해 글자 안보임 방지
+// 모바일 다크 시트는 항상 활성(레이아웃 안정). 데스크톱/모바일 전환 시 data-theme도 재적용.
 function syncMobileThemeSheets(){
   try{
     const darkEl=document.getElementById('codex-mobile-dark');
-    if(darkEl) darkEl.media = (UI_THEME==='light') ? 'not all' : 'all';
+    if(darkEl) darkEl.media='all';
   }catch(_){}
 }
+try{
+  const _mq=window.matchMedia('(max-width:700px)');
+  const _onMq=()=>{document.documentElement.setAttribute('data-theme', isMobileViewport()?'dark':UI_THEME);};
+  if(_mq.addEventListener)_mq.addEventListener('change',_onMq); else if(_mq.addListener)_mq.addListener(_onMq);
+}catch(_){}
 function toggleTheme(){applyTheme(UI_THEME==='light'?'dark':'light');}
 function syncThemeToggle(){
   const btn=document.getElementById('theme-toggle');
