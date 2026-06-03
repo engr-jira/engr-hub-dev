@@ -565,7 +565,7 @@ All outputs are review drafts for humans; never instruct automatic customer send
   //
   const fullText = `[SYSTEM]${systemPrompt}\n[USER]${clippedPrompt}`;
   const hash = await sha256Hex(mode + '|' + fullText);
-  const cacheKey = `ai:${mode}:${hash.slice(0, 40)}`;
+  const cacheKey = `ai:v2:${mode}:${hash.slice(0, 40)}`;
 
   //
   try {
@@ -595,7 +595,8 @@ All outputs are review drafts for humans; never instruct automatic customer send
         body: JSON.stringify({
           systemInstruction: { parts: [{ text: systemPrompt }] },
           contents: [{ role: 'user', parts: [{ text: userText }] }],
-          generationConfig: { temperature: 0.4, maxOutputTokens: 2048 },
+          // maxOutputTokens 상향 + thinking 비활성화(2.5-flash는 사고 토큰이 출력예산을 잠식해 답변이 잘림)
+          generationConfig: { temperature: 0.4, maxOutputTokens: 8192, thinkingConfig: { thinkingBudget: 0 } },
         }),
       });
       if (gRes.ok) {
@@ -613,7 +614,7 @@ All outputs are review drafts for humans; never instruct automatic customer send
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userText },
       ],
-      max_tokens: 2048,
+      max_tokens: 8192,
       temperature: 0.4,
     });
     text = response?.response || '';
