@@ -7820,6 +7820,7 @@ function setMyDeskCols(n, redistribute){
   saveNow('mdCols',n);
   if(redistribute) saveLayout();
 }
+try{ window.setMyDeskCols=setMyDeskCols; }catch(_){}
 
 /* ---------- CARD DOCK (표시/숨김) ---------- */
 const CARD_META=[
