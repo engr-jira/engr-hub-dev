@@ -1378,14 +1378,24 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
   .dock-chip.off{opacity:.5;text-decoration:line-through;text-decoration-color:var(--ink-faint)}
 
   .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;align-items:start}
-  @media(max-width:1180px){.grid{grid-template-columns:1fr 1fr}}
-  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .grid.cols-1{grid-template-columns:1fr}
+  .grid.cols-2{grid-template-columns:repeat(2,1fr)}
+  .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:1180px){.grid.cols-3{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:760px){.grid,.grid.cols-1,.grid.cols-2,.grid.cols-3{grid-template-columns:1fr}}
   .col{display:flex;flex-direction:column;gap:22px;min-height:40px}
+  /* 열 수 조절 컨트롤 */
+  .md-cols-ctrl{display:inline-flex;align-items:center;gap:3px;background:var(--panel);border:1px solid var(--line2);border-radius:10px;padding:3px}
+  .md-cols-ctrl .mcc-label{font-family:var(--mono);font-size:10px;color:var(--ink-faint);padding:0 7px 0 4px;letter-spacing:.12em;text-transform:uppercase}
+  .md-cols-ctrl button{min-width:30px;height:26px;border:none;background:none;color:var(--ink-dim);font-size:12.5px;font-weight:800;border-radius:7px;cursor:pointer;font-family:var(--sans);transition:.15s;display:inline-flex;align-items:center;justify-content:center;gap:4px}
+  .md-cols-ctrl button:hover{background:rgba(255,255,255,.05);color:var(--ink)}
+  .md-cols-ctrl button.active{background:rgba(224,176,92,.16);color:var(--gold)}
+  @media(max-width:760px){.md-cols-ctrl{display:none}}
 
   .panel{background:linear-gradient(180deg,var(--panel),var(--panel-2));border:1px solid rgba(129,140,248,.22);border-radius:16px;padding:22px 22px 20px;box-shadow:0 1px 0 rgba(255,255,255,.04) inset, 0 10px 26px -16px rgba(0,0,0,.55)}
   .panel:hover{border-color:rgba(129,140,248,.34)}
   .panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-  .panel-head h2{font-family:var(--serif);font-size:19px;font-weight:600;letter-spacing:-.01em;display:flex;align-items:center;gap:9px}
+  .panel-head h2{font-family:var(--sans);font-size:17px;font-weight:800;letter-spacing:-.01em;display:flex;align-items:center;gap:9px}
   .panel-head h2 .dot{width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 0 3px var(--gold-soft)}
   .meta{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);letter-spacing:.04em}
   .grip{color:var(--ink-faint);cursor:grab;font-size:15px;letter-spacing:-3px;user-select:none;transition:.15s;padding-right:2px}
@@ -1647,7 +1657,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
   .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
   .modal-bg.show{display:flex}
   .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;max-width:560px;width:100%;box-shadow:0 30px 60px -20px rgba(0,0,0,.85)}
-  .modal h3{font-family:var(--serif);font-size:16px;font-weight:600;margin-bottom:8px}
+  .modal h3{font-family:var(--sans);font-size:16px;font-weight:800;margin-bottom:8px}
   .modal .hint{font-size:11.5px;color:var(--ink-dim);margin-bottom:11px;font-family:var(--mono)}
   .modal textarea{width:100%;min-height:170px;background:rgba(0,0,0,.3);border:1px solid var(--line2);border-radius:10px;color:var(--ink);font-family:var(--mono);font-size:12.5px;line-height:1.55;padding:12px;outline:none;resize:vertical}
   .modal textarea:focus{border-color:var(--gold)}
@@ -2109,7 +2119,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
 
     <div class="page" id="page-mydesk" style="overflow:auto;background:var(--bg)">
 <div class="wrap">
-  <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+    <div class="md-cols-ctrl" id="md-cols-ctrl" title="카드 열 수 — 취향에 맞게 조절">
+      <span class="mcc-label">열</span>
+      <button type="button" data-cols="1" onclick="setMyDeskCols(1,true)">1</button>
+      <button type="button" data-cols="2" onclick="setMyDeskCols(2,true)">2</button>
+      <button type="button" data-cols="3" onclick="setMyDeskCols(3,true)">3</button>
+    </div>
     <button onclick="resetMyDesk()" style="background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.35);color:#f87171;font-size:11px;padding:6px 12px;border-radius:8px;cursor:pointer;font-family:inherit;font-weight:700">🗑 My Desk 전체 초기화</button>
   </div>
 
@@ -7785,6 +7801,25 @@ function initSortable(){
     new Sortable(document.getElementById(id),{group:'cards',handle:'.grip',animation:160,ghostClass:'sortable-ghost',chosenClass:'sortable-chosen',dragClass:'sortable-drag',onEnd:saveLayout});
   });
 }
+/* ---------- 열 수 조절 (취향에 맞게 1/2/3열) ---------- */
+function setMyDeskCols(n, redistribute){
+  n=Math.max(1,Math.min(3,parseInt(n)||3));
+  const grid=document.querySelector('#page-mydesk .grid'); if(!grid)return;
+  if(redistribute){
+    // 모든 카드를 순서대로 모아 선택한 열 수로 라운드로빈 재배치
+    const cards=[];
+    COLS.forEach(id=>{const c=document.getElementById(id);if(c)[...c.children].forEach(ch=>{if(ch.dataset&&ch.dataset.card)cards.push(ch);});});
+    cards.forEach((card,i)=>{const t=document.getElementById(COLS[i%n]);if(t)t.appendChild(card);});
+  }else{
+    // 로드 시: 숨겨질 열에 남은 카드를 보이는 열로 회수
+    for(let idx=n;idx<COLS.length;idx++){const c=document.getElementById(COLS[idx]);if(!c)continue;[...c.children].forEach((ch,j)=>{if(ch.dataset&&ch.dataset.card){const t=document.getElementById(COLS[j%n]);if(t)t.appendChild(ch);}});}
+  }
+  COLS.forEach((id,idx)=>{const c=document.getElementById(id);if(c)c.style.display=idx<n?'':'none';});
+  grid.classList.remove('cols-1','cols-2','cols-3'); grid.classList.add('cols-'+n);
+  document.querySelectorAll('#md-cols-ctrl button').forEach(b=>b.classList.toggle('active',(+b.dataset.cols)===n));
+  saveNow('mdCols',n);
+  if(redistribute) saveLayout();
+}
 
 /* ---------- CARD DOCK (표시/숨김) ---------- */
 const CARD_META=[
@@ -7820,6 +7855,7 @@ function applyHidden(){ document.querySelectorAll('#page-mydesk .panel[data-card
 async function init(){
   tickClock(); setInterval(tickClock,15000); setGreeting();
   await applyLayout();
+  try{ setMyDeskCols(await load('mdCols',3), false); }catch(_){}
   hiddenCards=new Set(await load('hidden',[]));
   renderDock(); applyHidden();
 
