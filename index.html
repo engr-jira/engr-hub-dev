@@ -2,8 +2,16 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <title>ENGR AI v1.8.2 - ESCARE Security Hub</title>
+<!-- PWA: 홈 화면에 추가 시 앱처럼 실행 (URL 입력 불필요) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0c1126">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="ENGR AI">
+<link rel="apple-touch-icon" href="icon.svg">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -52,6 +60,9 @@ body{font-family:'Malgun Gothic','Segoe UI',sans-serif;background:var(--bg);colo
 .cfg-btn:hover{opacity:.92;transform:translateY(-1px)}
 .cfg-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .cfg-note{font-size:11px;color:var(--text3);text-align:center;margin-top:14px}
+.cfg-remember{display:flex;align-items:center;gap:9px;margin:4px 2px 2px;cursor:pointer;font-size:12.5px;color:var(--text2);user-select:none}
+.cfg-remember input{width:17px;height:17px;accent-color:var(--accent2);cursor:pointer;flex:0 0 auto}
+.cfg-remember span{line-height:1.3}
 #app{display:none;height:100vh;flex-direction:row}
 aside{width:230px;background:#161b27;border-right:1px solid var(--border2);display:flex;flex-direction:column;flex-shrink:0;height:100vh;position:sticky;top:0}
 .sb-top{padding:0 16px 14px}
@@ -899,11 +910,16 @@ html[data-theme="light"] .top-clock .tc-time{color:#1e293b}
   .topbar-right{display:block!important;width:100%!important;overflow:visible!important}.topbar-right .search-box{display:none!important}
   .top-status{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;align-items:center!important;justify-content:stretch!important;gap:6px!important;max-width:100%!important;overflow:visible!important;flex-wrap:initial!important;padding:2px 0 1px!important}
   .top-status::-webkit-scrollbar{display:none!important}
-  /* 모바일은 다크 전용 — 테마 토글 숨김(눌러도 변화 없어 혼란) */
+  /* 모바일은 다크 전용 — 테마 토글/시계 숨김(폰에 시계 있음) */
   .top-theme,#theme-toggle{display:none!important}
-  .top-status-card,.top-pin,.top-refresh,.top-logout,.mob-search-btn{width:100%!important;min-width:0!important;flex:initial!important;height:32px!important;min-height:32px!important;border-radius:999px!important;background:rgba(255,255,255,.075)!important;border:1px solid rgba(129,140,248,.24)!important;color:var(--text2)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important;padding:0 8px!important;white-space:nowrap!important;font-size:10px!important;font-weight:900!important;overflow:hidden!important;text-overflow:ellipsis!important;justify-content:center!important}
+  .top-clock{display:none!important}
+  /* 사용자 그룹을 그리드 직접 항목으로 펼쳐 균등 배치(이름/PIN/로그아웃 칸 맞춤) */
+  .top-user-group{display:contents!important}
+  .top-status-card,.top-pin,.top-refresh,.top-logout,.mob-search-btn,.tug-user{width:100%!important;min-width:0!important;flex:initial!important;height:32px!important;min-height:32px!important;border-radius:999px!important;background:rgba(255,255,255,.075)!important;border:1px solid rgba(129,140,248,.24)!important;color:var(--text2)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important;padding:0 8px!important;white-space:nowrap!important;font-size:10px!important;font-weight:900!important;overflow:hidden!important;text-overflow:ellipsis!important;justify-content:center!important}
+  .tug-user{display:inline-flex!important;align-items:center!important;gap:5px!important;color:var(--text)!important}
+  .tug-user svg{width:12px!important;height:12px!important;flex:0 0 12px!important;opacity:.7}
   .top-status-card .label{display:none!important}.top-status-card .value{display:block!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;font-size:10px!important;color:var(--text)!important}.top-status-card .ok{color:var(--success)!important}.top-status-card .warn{color:var(--warn)!important}
-  .top-pin{color:#dffbff!important;border-color:rgba(103,232,249,.34)!important;background:rgba(103,232,249,.10)!important}.top-refresh,.mob-search-btn{padding:0!important}.top-logout{grid-column:span 2!important}
+  .top-pin{color:#dffbff!important;border-color:rgba(103,232,249,.34)!important;background:rgba(103,232,249,.10)!important}.top-refresh,.mob-search-btn{padding:0!important}.top-logout{grid-column:span 1!important}
   aside{position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;z-index:120!important;width:100%!important;height:68px!important;background:rgba(18,24,39,.96)!important;border-top:1px solid rgba(129,140,248,.22)!important;box-shadow:0 -12px 30px rgba(0,0,0,.36)!important;overflow:hidden!important;backdrop-filter:blur(16px)!important}
   .sb-top{height:100%!important;padding:0!important}.sb-brand,.sb-section,.sb-divider,.sb-bottom{display:none!important}
   .sb-nav{height:100%!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:stretch!important;gap:4px!important;margin:0!important;padding:5px 8px!important;overflow:visible!important;scroll-snap-type:none!important;scrollbar-width:none!important}
@@ -1691,7 +1707,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     </div>
     <div class="cfg-card">
       <div class="cfg-field"><label>계정 ID</label><input id="l-name" placeholder="mj.park" autocomplete="username" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter')document.getElementById('l-pin').focus()"></div>
-      <div class="cfg-field"><label>팀 PIN</label><input id="l-pin" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')login()"></div>
+      <div class="cfg-field"><label>팀 PIN</label><input id="l-pin" type="password" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
+      <label class="cfg-remember"><input type="checkbox" id="l-remember"><span>로그인 유지 · 이 기기에 자동 로그인</span></label>
       <button class="cfg-btn" id="login-btn" onclick="login()">접속하기 →</button>
       <p class="cfg-note">ENGR AI 팀 전용 접속</p>
     </div>
@@ -2481,6 +2498,17 @@ async function login(){
     localStorage.setItem('engr_session_min',String(SESSION_MIN));
     if(d.sessionToken)localStorage.setItem('engr_session_token',d.sessionToken);
     localStorage.setItem('engr_session_deadline',SESSION_DEADLINE);
+    // 로그인 유지: 아이디·PIN 저장(자동 로그인). 미체크 시 저장정보 삭제.
+    const remember=document.getElementById('l-remember')?.checked;
+    if(remember){
+      try{
+        localStorage.setItem('engr_remember','1');
+        localStorage.setItem('engr_saved_user',name);
+        localStorage.setItem('engr_saved_pin',btoa(unescape(encodeURIComponent(pin))));
+      }catch(_){}
+    }else{
+      ['engr_remember','engr_saved_user','engr_saved_pin'].forEach(k=>localStorage.removeItem(k));
+    }
     enterApp();
   }catch(e){toast('서버 연결 실패',true);btn.disabled=false;btn.textContent='접속하기 →';}
 }
@@ -2520,7 +2548,7 @@ document.addEventListener('click',extendSession);
 document.addEventListener('keydown',extendSession);
 function clearLocalSession(){['engr_user','engr_display','engr_pin','engr_session_token','engr_session_deadline','engr_role','engr_is_admin','engr_is_super','engr_session_min'].forEach(k=>localStorage.removeItem(k));}
 function forceLogout(){clearLocalSession();location.reload();}
-function logout(){if(!confirm('로그아웃 하시겠어요?'))return;forceLogout();}
+function logout(){if(!confirm('로그아웃 하시겠어요?'))return;['engr_remember','engr_saved_user','engr_saved_pin'].forEach(k=>localStorage.removeItem(k));forceLogout();}
 
 // ── AI 사용량 ──────────────────────────────────────
 function setAIUsageText(id,text){const el=document.getElementById(id);if(el)el.textContent=text;}
@@ -5940,17 +5968,49 @@ async function restoreSession(){
     return true;
   }catch(e){
     clearLocalSession();
-    toast('세션이 만료되어 다시 로그인해주세요',true);
+    if(localStorage.getItem('engr_remember')!=='1')toast('세션이 만료되어 다시 로그인해주세요',true);
     return false;
   }
 }
 
+function autoLogin(){
+  const name=(localStorage.getItem('engr_saved_user')||'').trim();
+  let pin='';try{pin=decodeURIComponent(escape(atob(localStorage.getItem('engr_saved_pin')||'')));}catch(_){pin='';}
+  if(!name||!pin)return false;
+  const nameEl=document.getElementById('l-name'),pinEl=document.getElementById('l-pin'),rc=document.getElementById('l-remember');
+  if(nameEl)nameEl.value=name; if(pinEl)pinEl.value=pin; if(rc)rc.checked=true;
+  return login();
+}
 (function init(){
-  const su=localStorage.getItem('engr_user');
+  const remembered=localStorage.getItem('engr_remember')==='1';
+  const savedUser=localStorage.getItem('engr_saved_user')||localStorage.getItem('engr_user')||'';
+  if(savedUser){const el=document.getElementById('l-name');if(el)el.value=savedUser;}
+  if(remembered){
+    const rc=document.getElementById('l-remember');if(rc)rc.checked=true;
+    try{const p=localStorage.getItem('engr_saved_pin');if(p){const el=document.getElementById('l-pin');if(el)el.value=decodeURIComponent(escape(atob(p)));}}catch(_){}
+  }
   localStorage.removeItem('engr_pin');
-  if(su){document.getElementById('l-name').value=su;document.getElementById('l-pin').focus();}
-  restoreSession();
+  restoreSession().then(ok=>{
+    if(ok)return;
+    if(remembered){autoLogin();return;}
+    const el=document.getElementById('l-pin');if(el&&!el.value)el.focus();
+  });
 })();
+
+// ── PWA 설치 도우미: 설치 가능 시 '앱 설치' 버튼 노출 (URL 입력 없이 홈 화면/바탕화면에서 실행) ──
+let __deferredInstall=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();__deferredInstall=e;showInstallChip();});
+function showInstallChip(){
+  try{if(window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone)return;}catch(_){}
+  if(document.getElementById('pwa-install-chip'))return;
+  const b=document.createElement('button');
+  b.id='pwa-install-chip';
+  b.innerHTML='📲 앱으로 설치';
+  b.style.cssText='position:fixed;right:16px;bottom:84px;z-index:130;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:linear-gradient(135deg,#6366f1,#7c3aed);color:#fff;font-weight:800;font-size:12.5px;box-shadow:0 12px 28px -8px rgba(99,102,241,.7);cursor:pointer;font-family:inherit;letter-spacing:.2px';
+  b.onclick=async()=>{ if(!__deferredInstall){b.remove();return;} __deferredInstall.prompt(); try{await __deferredInstall.userChoice;}catch(_){} __deferredInstall=null; b.remove(); };
+  document.body.appendChild(b);
+}
+window.addEventListener('appinstalled',()=>{const c=document.getElementById('pwa-install-chip');if(c)c.remove();try{toast&&toast('앱이 설치되었습니다 ✓');}catch(_){}});
 
 
 /* =========================================================

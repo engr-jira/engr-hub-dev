@@ -1,0 +1,18 @@
+{
+  "name": "ENGR AI · ESCARE 보안기술팀",
+  "short_name": "ENGR AI",
+  "description": "ESCARE 보안기술팀 통합 보안 허브 — 이슈·케이스·VirusTotal·로그분석·My Desk",
+  "lang": "ko",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0c1126",
+  "theme_color": "#0c1126",
+  "categories": ["productivity", "business", "security"],
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}
