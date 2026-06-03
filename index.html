@@ -137,9 +137,10 @@ html[data-theme="light"] .sb-group-head svg{stroke:#a5b4fc}
   .session-timer{font-size:9px;margin-top:3px}.sb-bottom [onclick="logout()"]{font-size:9px}
 }
 main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
-.topbar{background:rgba(22,27,39,.92);border-bottom:1px solid var(--border2);padding:7px 24px;min-height:58px;display:flex;align-items:center;justify-content:space-between;gap:8px 14px;flex-wrap:wrap;position:sticky;top:0;z-index:50;flex-shrink:0;backdrop-filter:blur(20px)}
+.topbar{background:rgba(22,27,39,.92);border-bottom:1px solid var(--border2);padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;gap:14px;position:sticky;top:0;z-index:50;flex-shrink:0;backdrop-filter:blur(20px)}
 .topbar-left{min-width:0}
 .topbar-left h2{font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top-status{flex-wrap:nowrap!important}
 .topbar-left p{font-size:11px;color:var(--text3);margin-top:2px}
 .topbar-right{display:flex;align-items:center;gap:10px}
 .search-box{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.2);border-radius:12px;padding:8px 14px;width:240px}
@@ -744,10 +745,10 @@ html[data-theme="light"] .top-clock .tc-time{color:#1e293b}
   aside{width:200px}
   .sb-name{font-size:15px}
   .sb-btn{font-size:11.5px;padding:8px 10px}
-  .topbar{padding:7px 16px}
+  .topbar{padding:0 16px}
   .search-box{width:auto;min-width:160px;flex:1;max-width:220px}
   .topbar-right{gap:8px}
-  .top-status{gap:6px;flex-wrap:wrap}
+  .top-status{gap:6px;flex-wrap:nowrap}
   /* 좁은 너비: 시계 숨겨 상단바 혼잡 완화 */
   .top-clock{display:none}
 }
@@ -1011,8 +1012,8 @@ html[data-theme="light"] .top-clock .tc-time{color:#1e293b}
   } catch (_) {
     document.documentElement.setAttribute('data-theme', 'dark');
   }
-  // 설치형 PWA(앱)로 실행 시 창 제목을 앱 명만 표시
-  try{ if(window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone){ document.title='ENGR AI'; } }catch(e){}
+  // 설치형 PWA(앱)로 실행 시 창 제목
+  try{ if(window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone){ document.title='ESCARE - 보안기술팀'; } }catch(e){}
 })();
 </script>
 <style id="theme-style">
@@ -6830,7 +6831,23 @@ function tickTopClock(){
   t.textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
   const dd=document.getElementById('tc-date'); if(dd)dd.textContent=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${dows[d.getDay()]})`;
 }
-function toggleTopMenu(e){ if(e){e.stopPropagation();} const p=document.getElementById('top-menu-pop'); if(!p)return; const open=p.classList.toggle('show'); const b=document.getElementById('top-menu-btn'); if(b)b.setAttribute('aria-expanded',open?'true':'false'); }
+function toggleTopMenu(e){
+  if(e){e.stopPropagation();}
+  const p=document.getElementById('top-menu-pop'); if(!p)return;
+  const open=p.classList.toggle('show');
+  const b=document.getElementById('top-menu-btn'); if(b)b.setAttribute('aria-expanded',open?'true':'false');
+  // 모바일: 버튼 위치 기준으로 뷰포트에 고정 배치 → 부모 클리핑/위치 문제로 안 열리는 현상 방지
+  let mob=false; try{mob=window.matchMedia('(max-width:700px)').matches;}catch(_){}
+  if(open && b && mob){
+    const r=b.getBoundingClientRect();
+    p.style.position='fixed';
+    p.style.top=(r.bottom+6)+'px';
+    p.style.right=Math.max(8,(window.innerWidth-r.right))+'px';
+    p.style.left='auto';
+  }else if(!mob){
+    p.style.position='';p.style.top='';p.style.right='';p.style.left='';
+  }
+}
 function closeTopMenu(){ const p=document.getElementById('top-menu-pop'); if(p)p.classList.remove('show'); const b=document.getElementById('top-menu-btn'); if(b)b.setAttribute('aria-expanded','false'); }
 document.addEventListener('click',e=>{ const m=document.querySelector('.top-menu'); if(m&&!m.contains(e.target))closeTopMenu(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeTopMenu(); });
