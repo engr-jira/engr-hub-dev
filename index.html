@@ -2684,8 +2684,8 @@ async function syncJira(){
       comments:[],
       attachments:[],
       type:i.fields.issuetype?i.fields.issuetype.name:'작업',
-      customer:(i.fields.customfield_10134&&i.fields.customfield_10134[0])||extractCustomer(i.fields.summary),
-      customers:i.fields.customfield_10134||[],
+      customer:((i.fields.customfield_10134||[]).filter(isRealCust)[0])||extractCustomer(i.fields.summary),
+      customers:(i.fields.customfield_10134||[]).filter(isRealCust),
       division:i.fields.customfield_10178||[],
       category:i.fields.customfield_10036?i.fields.customfield_10036.value:'',
       rating:i.fields.customfield_10244?i.fields.customfield_10244.value:'',
@@ -2822,6 +2822,7 @@ function extractAttachments(att){
   if(!att||!Array.isArray(att))return [];
   return att.map(a=>({name:a.filename||'unknown',size:a.size||0,mime:a.mimeType||''}));
 }
+function isRealCust(v){const s=String(v==null?'':v).trim().toLowerCase();return !!s&&!['none','null','n/a','na','-','없음','미정','undefined'].includes(s);}
 function extractCustomer(title){
   const matches=title.match(/\[([^\]]+)\]/g)||[];
   for(const m of matches){
@@ -3073,7 +3074,7 @@ function renderRightPanel(){
         const labCell=(i.labels&&i.labels.length)?i.labels.map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join(' '):na;
         const rateCell=i.rating?escapeHtml(i.rating):'<span style="color:var(--text3)">-</span>';
         return `
-      <div class="rp-row"><span>이슈키</span><span style="color:var(--accent3);font-weight:700">${i.key}</span></div>
+      <div class="rp-row"><span>이슈키</span><span style="color:var(--accent3);font-weight:700;display:inline-flex;align-items:center;gap:7px">${i.key}<button onclick="copyText('${i.key}');event.stopPropagation()" title="이슈키 복사" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px;display:inline-flex;border-radius:5px" onmouseover="this.style.color='var(--accent3)'" onmouseout="this.style.color='var(--text3)'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></span></div>
       <div class="rp-row"><span>우선순위</span><span>${escapeHtml(i.pri)}</span></div>
       <div class="rp-row"><span>고객사</span><span>${custCell}</span></div>
       <div class="rp-row"><span>레이블</span><span>${labCell}</span></div>
