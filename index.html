@@ -2823,11 +2823,13 @@ function extractAttachments(att){
   return att.map(a=>({name:a.filename||'unknown',size:a.size||0,mime:a.mimeType||''}));
 }
 function isRealCust(v){const s=String(v==null?'':v).trim().toLowerCase();return !!s&&!['none','null','n/a','na','-','없음','미정','undefined'].includes(s);}
+const NON_CUST_TAGS=['hands-on','handson','hands on','none','null','n/a','na','test','테스트','내부','검토','긴급','urgent','poc'];
 function extractCustomer(title){
   const matches=title.match(/\[([^\]]+)\]/g)||[];
   for(const m of matches){
     const inner=m.slice(1,-1).trim();
     if(!inner||/^\d+$/.test(inner))continue;
+    if(NON_CUST_TAGS.includes(inner.toLowerCase()))continue;
     return inner;
   }
   return '';
