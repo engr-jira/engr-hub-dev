@@ -6030,20 +6030,22 @@ function autoLogin(){
   });
 })();
 
-// ── PWA 설치 도우미: 설치 가능 시 '앱 설치' 버튼 노출 (URL 입력 없이 홈 화면/바탕화면에서 실행) ──
+// ── PWA 설치: 상단 메뉴의 '앱 설치' 항목으로 노출 (방해되는 플로팅 버튼 제거) ──
 let __deferredInstall=null;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();__deferredInstall=e;showInstallChip();});
-function showInstallChip(){
-  try{if(window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone)return;}catch(_){}
-  if(document.getElementById('pwa-install-chip'))return;
-  const b=document.createElement('button');
-  b.id='pwa-install-chip';
-  b.innerHTML='📲 앱으로 설치';
-  b.style.cssText='position:fixed;right:16px;bottom:84px;z-index:130;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:linear-gradient(135deg,#6366f1,#7c3aed);color:#fff;font-weight:800;font-size:12.5px;box-shadow:0 12px 28px -8px rgba(99,102,241,.7);cursor:pointer;font-family:inherit;letter-spacing:.2px';
-  b.onclick=async()=>{ if(!__deferredInstall){b.remove();return;} __deferredInstall.prompt(); try{await __deferredInstall.userChoice;}catch(_){} __deferredInstall=null; b.remove(); };
-  document.body.appendChild(b);
+function isStandaloneApp(){try{return window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone;}catch(_){return false;}}
+function syncInstallMenuItem(){
+  const el=document.getElementById('tmp-install'); if(!el)return;
+  el.style.display=(__deferredInstall&&!isStandaloneApp())?'flex':'none';
 }
-window.addEventListener('appinstalled',()=>{const c=document.getElementById('pwa-install-chip');if(c)c.remove();try{toast&&toast('앱이 설치되었습니다 ✓');}catch(_){}});
+async function pwaInstall(){
+  closeTopMenu();
+  if(!__deferredInstall){toast('이미 설치되었거나, 브라우저 메뉴의 "홈 화면에 추가"를 이용해 주세요.',true);return;}
+  __deferredInstall.prompt();
+  try{await __deferredInstall.userChoice;}catch(_){}
+  __deferredInstall=null; syncInstallMenuItem();
+}
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();__deferredInstall=e;syncInstallMenuItem();});
+window.addEventListener('appinstalled',()=>{__deferredInstall=null;syncInstallMenuItem();try{toast&&toast('앱이 설치되었습니다 ✓');}catch(_){}});
 
 
 /* =========================================================
@@ -6809,6 +6811,7 @@ function renderTopbarStatusV159(){
         <div class="tmp-sep"></div>
         <button class="tmp-item" type="button" onclick="closeTopMenu();syncJira()"><span class="tmp-ic">🔄</span> Jira 새로고침</button>
         <button class="tmp-item" type="button" onclick="closeTopMenu();window.open('${manualHref}','_blank','noopener')"><span class="tmp-ic">📖</span> 사용 매뉴얼</button>
+        <button class="tmp-item" type="button" id="tmp-install" style="display:none" onclick="pwaInstall()"><span class="tmp-ic">📲</span> 앱 설치</button>
         <button class="tmp-item" type="button" id="theme-toggle" onclick="toggleTheme()"><span class="tmp-ic theme-icon" id="theme-icon">☾</span> <span id="theme-label">다크</span> 모드</button>
         <button class="tmp-item" type="button" onclick="closeTopMenu();openChangePinModal()"><span class="tmp-ic">🔑</span> PIN 변경</button>
         <div class="tmp-sep"></div>
@@ -6817,6 +6820,7 @@ function renderTopbarStatusV159(){
     </div>
   </div>`;
   syncThemeToggle();
+  if(typeof syncInstallMenuItem==='function')syncInstallMenuItem();
   tickTopClock();
   if(!window.__topClockTimer)window.__topClockTimer=setInterval(tickTopClock,1000);
 }
