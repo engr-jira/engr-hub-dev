@@ -530,9 +530,34 @@ input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer
 .topbar-right .search-box,.btn-group #similar-btn,button[onclick="runPattern()"],button[onclick="runCaseAI('similar')"]{display:none!important}
 .sb-bottom .health-card{display:none!important}
 .top-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-.top-clock{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;line-height:1.05;padding:0 4px 0 10px;margin-left:auto}
-.top-clock .tc-time{font-size:17px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:.5px}
-.top-clock .tc-date{font-size:9px;color:var(--text3);font-weight:700}
+/* 큰 시계 — 날짜+시간 한 줄 */
+.top-clock{display:inline-flex;align-items:baseline;gap:9px;padding:6px 15px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1)}
+.top-clock .tc-ic{width:15px;height:15px;align-self:center;color:var(--accent3);opacity:.85;flex:0 0 15px}
+.top-clock .tc-date{font-size:13.5px;font-weight:700;color:var(--text2);white-space:nowrap;letter-spacing:.2px}
+.top-clock .tc-time{font-size:19px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:.6px;white-space:nowrap}
+/* 상단 그룹 메뉴 */
+.top-menu{position:relative}
+.top-menu-btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;transition:background .15s,border-color .15s}
+.top-menu-btn:hover{background:rgba(129,140,248,.18);border-color:rgba(129,140,248,.42)}
+.top-menu-btn .tmb-av{width:17px;height:17px;opacity:.8;flex:0 0 17px}
+.top-menu-btn .tmb-user{white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis}
+.top-menu-btn .tmb-chev{width:14px;height:14px;opacity:.6;flex:0 0 14px;transition:transform .15s}
+.top-menu-btn[aria-expanded="true"] .tmb-chev{transform:rotate(180deg)}
+.top-menu-pop{position:absolute;top:calc(100% + 8px);right:0;z-index:200;min-width:236px;background:var(--panel);border:1px solid var(--border2);border-radius:14px;box-shadow:0 20px 48px -14px rgba(0,0,0,.62),0 2px 8px rgba(0,0,0,.3);padding:8px;display:none;flex-direction:column;gap:1px}
+.top-menu-pop.show{display:flex;animation:tmpIn .14s ease-out}
+@keyframes tmpIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.top-menu-pop .tmp-head{padding:7px 10px 7px}
+.top-menu-pop .tmp-user{font-size:14px;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px}
+.top-menu-pop .tmp-user svg{width:16px;height:16px;opacity:.75;flex:0 0 16px}
+.top-menu-pop .tmp-role{font-size:10.5px;color:var(--text3);font-weight:700;margin-top:3px;margin-left:24px}
+.top-menu-pop .tmp-status{display:flex;align-items:center;justify-content:space-between;padding:5px 11px;font-size:11.5px;color:var(--text3);font-weight:700}
+.top-menu-pop .tmp-status span:last-child{font-weight:800;color:var(--text2)}
+.top-menu-pop .tmp-status span.ok{color:var(--success)} .top-menu-pop .tmp-status span.warn{color:var(--warn)}
+.top-menu-pop .tmp-sep{height:1px;background:var(--border);margin:5px 4px}
+.top-menu-pop .tmp-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:9px 11px;border:none;background:none;color:var(--text2);font-family:inherit;font-size:12.5px;font-weight:700;cursor:pointer;border-radius:9px;transition:background .12s,color .12s}
+.top-menu-pop .tmp-item:hover{background:rgba(129,140,248,.16);color:var(--text)}
+.top-menu-pop .tmp-item .tmp-ic{font-size:14px;width:18px;text-align:center;flex:0 0 18px}
+.top-menu-pop .tmp-danger{color:var(--danger)} .top-menu-pop .tmp-danger:hover{background:rgba(248,113,113,.15);color:var(--danger)}
 .top-user-group{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:4px 5px}
 .top-user-group .tug-user{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2);font-weight:800;padding:0 7px;white-space:nowrap}
 .top-user-group .tug-user svg{opacity:.7}
@@ -911,18 +936,14 @@ html[data-theme="light"] .top-clock .tc-time{color:#1e293b}
   .topbar-left h2{font-size:17px!important;font-weight:900!important;color:var(--text)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
   .topbar-left p{font-size:10px!important;color:var(--text3)!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
   .topbar-right{display:block!important;width:100%!important;overflow:visible!important}.topbar-right .search-box{display:none!important}
-  .top-status{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;align-items:center!important;justify-content:stretch!important;gap:6px!important;max-width:100%!important;overflow:visible!important;flex-wrap:initial!important;padding:2px 0 1px!important}
+  /* 모바일 상단바: 시계 숨김(폰에 시계 있음) + 그룹 메뉴 버튼만 — 다크 전용 */
+  .top-status{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important;max-width:100%!important;padding:0!important;flex-wrap:nowrap!important}
   .top-status::-webkit-scrollbar{display:none!important}
-  /* 모바일은 다크 전용 — 테마 토글/시계 숨김(폰에 시계 있음) */
-  .top-theme,#theme-toggle{display:none!important}
   .top-clock{display:none!important}
-  /* 사용자 그룹을 그리드 직접 항목으로 펼쳐 균등 배치(이름/PIN/로그아웃 칸 맞춤) */
-  .top-user-group{display:contents!important}
-  .top-status-card,.top-pin,.top-refresh,.top-logout,.mob-search-btn,.tug-user{width:100%!important;min-width:0!important;flex:initial!important;height:32px!important;min-height:32px!important;border-radius:999px!important;background:rgba(255,255,255,.075)!important;border:1px solid rgba(129,140,248,.24)!important;color:var(--text2)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.06)!important;padding:0 8px!important;white-space:nowrap!important;font-size:10px!important;font-weight:900!important;overflow:hidden!important;text-overflow:ellipsis!important;justify-content:center!important}
-  .tug-user{display:inline-flex!important;align-items:center!important;gap:5px!important;color:var(--text)!important}
-  .tug-user svg{width:12px!important;height:12px!important;flex:0 0 12px!important;opacity:.7}
-  .top-status-card .label{display:none!important}.top-status-card .value{display:block!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;font-size:10px!important;color:var(--text)!important}.top-status-card .ok{color:var(--success)!important}.top-status-card .warn{color:var(--warn)!important}
-  .top-pin{color:#dffbff!important;border-color:rgba(103,232,249,.34)!important;background:rgba(103,232,249,.10)!important}.top-refresh,.mob-search-btn{padding:0!important}.top-logout{grid-column:span 1!important}
+  .top-theme,#theme-toggle{display:none!important}
+  .top-menu-btn{height:34px!important;padding:0 12px!important;border-radius:999px!important;background:rgba(255,255,255,.08)!important;border:1px solid rgba(129,140,248,.28)!important;color:var(--text)!important;font-size:11.5px!important;font-weight:800!important}
+  .top-menu-btn .tmb-user{max-width:130px!important}
+  .top-menu-pop{min-width:212px!important;max-width:calc(100vw - 20px)!important}
   aside{position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;z-index:120!important;width:100%!important;height:68px!important;background:rgba(18,24,39,.96)!important;border-top:1px solid rgba(129,140,248,.22)!important;box-shadow:0 -12px 30px rgba(0,0,0,.36)!important;overflow:hidden!important;backdrop-filter:blur(16px)!important}
   .sb-top{height:100%!important;padding:0!important}.sb-brand,.sb-section,.sb-divider,.sb-bottom{display:none!important}
   .sb-nav{height:100%!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;align-items:stretch!important;gap:4px!important;margin:0!important;padding:5px 8px!important;overflow:visible!important;scroll-snap-type:none!important;scrollbar-width:none!important}
@@ -1038,6 +1059,13 @@ html[data-theme="light"] .top-status-card .ok{color:#059669}
 html[data-theme="light"] .top-status-card .warn{color:#b7791f}
 html[data-theme="light"] .top-pin{color:#0369a1;background:#eef8ff;border-color:#bae6fd}
 html[data-theme="light"] .top-theme{color:#4338ca;background:#eef2ff;border-color:#c7d2fe}
+/* 라이트: 큰 시계 + 그룹 메뉴 */
+html[data-theme="light"] .top-clock{background:rgba(255,255,255,.85);border-color:#cbd7e8;box-shadow:0 1px 6px rgba(30,41,59,.05)}
+html[data-theme="light"] .top-clock .tc-date{color:#475569}
+html[data-theme="light"] .top-clock .tc-time{color:#111827}
+html[data-theme="light"] .top-clock .tc-ic{color:#4f46e5}
+html[data-theme="light"] .top-menu-btn{background:rgba(255,255,255,.85);border-color:#cbd7e8;color:#1e293b;box-shadow:0 1px 6px rgba(30,41,59,.05)}
+html[data-theme="light"] .top-menu-btn:hover{background:#eef2ff;border-color:#c7d2fe}
 html[data-theme="light"] .content,html[data-theme="light"] .panel,html[data-theme="light"] .admin-card,html[data-theme="light"] .kpi,html[data-theme="light"] .chart-card,html[data-theme="light"] .case-card,html[data-theme="light"] .issue-card,html[data-theme="light"] .irow,html[data-theme="light"] .link-card,html[data-theme="light"] .knowledge-card,html[data-theme="light"] .vt-result,html[data-theme="light"] .file-drop,html[data-theme="light"] .storage-summary,html[data-theme="light"] .storage-item,html[data-theme="light"] .private-editor,html[data-theme="light"] .rpanel,html[data-theme="light"] .modal,html[data-theme="light"] .ai-modal{background:linear-gradient(145deg,rgba(255,255,255,.96),rgba(246,249,254,.96));border-color:#d8e2f0;color:#111827;box-shadow:0 10px 28px rgba(30,41,59,.08)}
 html[data-theme="light"] .kpi{background:linear-gradient(145deg,#ffffff,#f2f6fc)}
 html[data-theme="light"] .kpi-val,html[data-theme="light"] .kpi .num,html[data-theme="light"] .ititle,html[data-theme="light"] .rank-name,html[data-theme="light"] .link-title,html[data-theme="light"] .admin-card h3,html[data-theme="light"] .rp-title{color:#111827}
@@ -6756,18 +6784,37 @@ function renderTopbarStatusV159(){
   const right=document.querySelector('.topbar-right'); if(!right)return;
   const gi=getGeneralIssues().length, ci=getCaseIssueBase().length;
   const connected=!!(ISSUES&&ISSUES.length);
+  const manualHref=(IS_ADMIN||IS_SUPER)?'manual.html':'manual-user.html';
+  const role=IS_SUPER?'슈퍼관리자':(IS_ADMIN?'관리자':'팀원');
+  const uname=escapeHtml(CURRENT_DISPLAY||CURRENT_USER||'-');
   right.innerHTML=`<div class="top-status">
-    <div class="top-status-card"><span class="label">Jira</span><span class="value ${connected?'ok':'warn'}" id="top-jira">${connected?'연결됨':'대기'}</span></div>
-    <div class="top-status-card"><span class="label">동기화</span><span class="value" id="top-count">${gi||ci?`일반 ${gi} / 케이스 ${ci}`:'-'}</span></div>
-    <button class="top-refresh" onclick="syncJira()" title="Jira 새로고침"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></button>
-    <button class="mob-search-btn" onclick="openMobSearch()" title="검색"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
-    <button class="top-refresh" onclick="window.open((IS_ADMIN||IS_SUPER)?'manual.html':'manual-user.html','_blank','noopener')" title="사용 매뉴얼 열기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg></button>
-    <div class="top-clock" id="top-clock"><span class="tc-time" id="tc-time">--:--</span><span class="tc-date" id="tc-date"></span></div>
-    <div class="top-user-group">
-      <span class="tug-user" title="접속자"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span id="top-user">${escapeHtml(CURRENT_DISPLAY||CURRENT_USER||'-')}</span></span>
-      <button class="top-pin" onclick="openChangePinModal()">PIN 변경</button>
-      <button class="top-theme" id="theme-toggle" type="button" onclick="toggleTheme()" title="화면 테마 전환"><span class="theme-icon" id="theme-icon">☾</span><span id="theme-label">다크</span></button>
-      <button class="top-logout" onclick="logout()">로그아웃</button>
+    <div class="top-clock" id="top-clock">
+      <svg class="tc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>
+      <span class="tc-date" id="tc-date">----.--.--</span>
+      <span class="tc-time" id="tc-time">--:--:--</span>
+    </div>
+    <div class="top-menu">
+      <button class="top-menu-btn" id="top-menu-btn" type="button" onclick="toggleTopMenu(event)" aria-haspopup="true" aria-expanded="false" title="메뉴">
+        <svg class="tmb-av" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span class="tmb-user">${uname}</span>
+        <svg class="tmb-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="top-menu-pop" id="top-menu-pop" role="menu">
+        <div class="tmp-head">
+          <div class="tmp-user"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${uname}</div>
+          <div class="tmp-role">${role}</div>
+        </div>
+        <div class="tmp-status"><span>Jira</span><span class="${connected?'ok':'warn'}" id="top-jira">${connected?'연결됨':'대기'}</span></div>
+        <div class="tmp-status"><span>동기화</span><span id="top-count">${gi||ci?`일반 ${gi} / 케이스 ${ci}`:'-'}</span></div>
+        <div class="tmp-sep"></div>
+        <button class="tmp-item" type="button" onclick="closeTopMenu();syncJira()"><span class="tmp-ic">🔄</span> Jira 새로고침</button>
+        <button class="tmp-item" type="button" onclick="closeTopMenu();openMobSearch()"><span class="tmp-ic">🔍</span> 검색</button>
+        <button class="tmp-item" type="button" onclick="closeTopMenu();window.open('${manualHref}','_blank','noopener')"><span class="tmp-ic">📖</span> 사용 매뉴얼</button>
+        <button class="tmp-item top-theme" type="button" id="theme-toggle" onclick="toggleTheme()"><span class="tmp-ic theme-icon" id="theme-icon">☾</span> <span id="theme-label">다크</span> 모드</button>
+        <button class="tmp-item" type="button" onclick="closeTopMenu();openChangePinModal()"><span class="tmp-ic">🔑</span> PIN 변경</button>
+        <div class="tmp-sep"></div>
+        <button class="tmp-item tmp-danger" type="button" onclick="closeTopMenu();logout()"><span class="tmp-ic">🚪</span> 로그아웃</button>
+      </div>
     </div>
   </div>`;
   syncThemeToggle();
@@ -6777,9 +6824,13 @@ function renderTopbarStatusV159(){
 function tickTopClock(){
   const t=document.getElementById('tc-time'); if(!t)return;
   const d=new Date(); const dows=['일','월','화','수','목','금','토'];
-  t.textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  t.textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')+':'+String(d.getSeconds()).padStart(2,'0');
   const dd=document.getElementById('tc-date'); if(dd)dd.textContent=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${dows[d.getDay()]})`;
 }
+function toggleTopMenu(e){ if(e){e.stopPropagation();} const p=document.getElementById('top-menu-pop'); if(!p)return; const open=p.classList.toggle('show'); const b=document.getElementById('top-menu-btn'); if(b)b.setAttribute('aria-expanded',open?'true':'false'); }
+function closeTopMenu(){ const p=document.getElementById('top-menu-pop'); if(p)p.classList.remove('show'); const b=document.getElementById('top-menu-btn'); if(b)b.setAttribute('aria-expanded','false'); }
+document.addEventListener('click',e=>{ const m=document.querySelector('.top-menu'); if(m&&!m.contains(e.target))closeTopMenu(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeTopMenu(); });
 renderTopbarStatus=renderTopbarStatusV159;
 function enhanceDateButtons(){
   document.querySelectorAll('input[type="date"]').forEach(input=>{
