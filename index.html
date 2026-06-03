@@ -28,7 +28,7 @@ body{font-family:'Malgun Gothic','Segoe UI',sans-serif;background:var(--bg);colo
 .cfg-field label{display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
 .cfg-field input{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 16px;color:var(--text);font-size:14px;outline:none;font-family:inherit}
 .cfg-field input:focus{border-color:var(--accent);background:rgba(255,255,255,.11);box-shadow:0 0 0 3px rgba(99,102,241,.2)}
-.cfg-btn{width:100%;background:linear-gradient(135deg,#6366f1,#818cf8);border:2px solid rgba(255,255,255,.25);border-radius:12px;padding:14px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;margin-top:8px;font-family:inherit;letter-spacing:.5px;box-shadow:0 4px 20px rgba(99,102,241,.4)}
+.cfg-btn{width:100%;background:linear-gradient(135deg,#6366f1,#7c83f6 55%,#818cf8);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:14px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;margin-top:8px;font-family:inherit;letter-spacing:.5px;box-shadow:0 10px 26px -10px rgba(99,102,241,.6)}
 .cfg-btn:hover{opacity:.92;transform:translateY(-1px)}
 .cfg-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 .cfg-note{font-size:11px;color:var(--text3);text-align:center;margin-top:14px}
@@ -207,21 +207,31 @@ main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 .comment-feed-meta{font-size:10px;color:var(--text3);font-weight:800;margin-bottom:4px}
 .comment-feed-text{font-size:11.5px;color:var(--text2);line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .btn-group{display:flex;flex-direction:column;gap:6px}
-.btn{border:none;border-radius:10px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;letter-spacing:.2px;transition:all .18s}
-.btn:hover{transform:translateY(-1px);opacity:.92}
-.btn:active{transform:translateY(0);opacity:.85}
-.btn-indigo{background:#eef0ff;color:#3730a3;border:1.5px solid #c7d2fe;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.btn-green{background:#ecfdf5;color:#065f46;border:1.5px solid #a7f3d0;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.btn-purple{background:#f5f3ff;color:#5b21b6;border:1.5px solid #ddd6fe;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.btn-cyan{background:#ecfeff;color:#164e63;border:1.5px solid #a5f3fc;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.btn-red{background:#fef2f2;color:#991b1b;border:1.5px solid #fecaca;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.btn-ghost{background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.25);color:#e8edff;font-weight:600}
-.btn-ghost:hover{background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.4);color:#fff}
+.btn{border:1px solid transparent;border-radius:10px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;width:100%;letter-spacing:.2px;transition:background .16s,border-color .16s,color .16s,transform .12s}
+.btn:hover{transform:translateY(-1px)}
+.btn:active{transform:translateY(0)}
+/* 모던 소프트 버튼 — 색조 틴트 + 색조 텍스트 + 헤어라인(채우기/그림자 제거, 라이트/다크 자동 적응) */
+.btn-indigo{--bc:#6366f1}.btn-green{--bc:#10b981}.btn-purple{--bc:#8b5cf6}.btn-cyan{--bc:#06b6d4}.btn-red{--bc:#ef4444}.btn-gray{--bc:#94a3b8}.btn-warn{--bc:#f59e0b}
+.btn-indigo,.btn-green,.btn-purple,.btn-cyan,.btn-red,.btn-gray,.btn-warn{
+  background:color-mix(in srgb,var(--bc) 15%,transparent);
+  color:color-mix(in srgb,var(--bc) 60%,#ffffff);
+  border:1px solid color-mix(in srgb,var(--bc) 34%,transparent);box-shadow:none}
+.btn-indigo:hover,.btn-green:hover,.btn-purple:hover,.btn-cyan:hover,.btn-red:hover,.btn-gray:hover,.btn-warn:hover{
+  background:color-mix(in srgb,var(--bc) 24%,transparent);border-color:color-mix(in srgb,var(--bc) 52%,transparent)}
+html[data-theme="light"] .btn-indigo,html[data-theme="light"] .btn-green,html[data-theme="light"] .btn-purple,html[data-theme="light"] .btn-cyan,html[data-theme="light"] .btn-red,html[data-theme="light"] .btn-gray,html[data-theme="light"] .btn-warn{
+  background:color-mix(in srgb,var(--bc) 12%,#ffffff);
+  color:color-mix(in srgb,var(--bc) 72%,#000000);
+  border-color:color-mix(in srgb,var(--bc) 32%,#ffffff)}
+html[data-theme="light"] .btn-indigo:hover,html[data-theme="light"] .btn-green:hover,html[data-theme="light"] .btn-purple:hover,html[data-theme="light"] .btn-cyan:hover,html[data-theme="light"] .btn-red:hover,html[data-theme="light"] .btn-gray:hover,html[data-theme="light"] .btn-warn:hover{
+  background:color-mix(in srgb,var(--bc) 20%,#ffffff);border-color:color-mix(in srgb,var(--bc) 46%,#ffffff)}
+.btn-ghost{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);color:#e8edff;font-weight:600;box-shadow:none}
+.btn-ghost:hover{background:rgba(255,255,255,.13);border-color:rgba(255,255,255,.3);color:#fff}
 .sec-title{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .sec-title::after{content:'';flex:1;height:1px;background:var(--border)}
 .loading{display:flex;align-items:center;gap:10px;color:var(--text3);font-size:13px;padding:16px}
 .loading::before{content:'';width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
+.spin{display:inline-block;animation:spin 1.2s linear infinite}
 .chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:18px}
 .chart-card{background:#222538;border:1px solid var(--border2);border-radius:14px;padding:16px}
 .chart-card h4{font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;margin-bottom:12px}
@@ -244,6 +254,9 @@ main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 .case-num{font-size:11px;font-weight:800;color:var(--cyan);background:rgba(34,211,238,.12);padding:2px 10px;border-radius:20px}
 .sla-badge{font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px}
 .vt-result{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-top:14px}
+.vt-file-drop{display:flex;align-items:center;gap:10px;margin-top:12px;padding:14px 16px;border:1.5px dashed var(--border2,var(--border));border-radius:12px;background:var(--panel);color:var(--text2);font-size:12px;cursor:pointer;transition:border-color .15s,background .15s}
+.vt-file-drop:hover{border-color:var(--accent3,#818cf8);background:var(--accent-soft,rgba(99,102,241,.08))}
+.vt-file-drop.drag{border-color:var(--accent3,#818cf8);background:var(--accent-soft,rgba(99,102,241,.14));border-style:solid}
 .vt-score{font-size:36px;font-weight:800;text-align:center;margin:10px 0}
 .vt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:12px}
 .vt-cell{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:10px;text-align:center}
@@ -1363,7 +1376,8 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
   .sc-add .a-ip{width:130px} .sc-add .a-user{width:90px}
   .sc-add button{background:rgba(255,255,255,.03);border:1px solid var(--line2);color:var(--ink-dim);border-radius:8px;padding:0 12px;cursor:pointer;font-size:14px;transition:.15s;font-family:var(--sans)}
   .sc-add button:hover{border-color:var(--gold);color:var(--gold)}
-  .sc-add .e-save{background:var(--gold);color:#1a140a;border-color:var(--gold);font-weight:600;font-size:12px}
+  .sc-add .e-save{background:rgba(224,176,92,.16);color:var(--gold);border-color:rgba(224,176,92,.5);font-weight:600;font-size:12px}
+  .sc-add .e-save:hover{background:rgba(224,176,92,.26);border-color:var(--gold)}
   .sc-hint{font-size:10.5px;color:var(--ink-faint);margin-top:8px;line-height:1.5;font-family:var(--mono)}
 
   /* CASES (벤더 케이스 트래커) */
@@ -1387,7 +1401,8 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
   .case-add .c-title{flex:1;min-width:100px} .case-add .c-cust{width:110px} .case-add .c-date{width:128px;color-scheme:dark;font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
   .case-add button{background:rgba(255,255,255,.03);border:1px solid var(--line2);color:var(--ink-dim);border-radius:8px;padding:0 12px;cursor:pointer;font-size:14px;transition:.15s;font-family:var(--sans)}
   .case-add button:hover{border-color:var(--gold);color:var(--gold)}
-  .case-add .e-save{background:var(--gold);color:#1a140a;border-color:var(--gold);font-weight:600;font-size:12px}
+  .case-add .e-save{background:rgba(224,176,92,.16);color:var(--gold);border-color:rgba(224,176,92,.5);font-weight:600;font-size:12px}
+  .case-add .e-save:hover{background:rgba(224,176,92,.26);border-color:var(--gold)}
   .case-empty{font-size:13px;color:var(--ink-faint);font-style:italic;padding:6px 8px}
 
   /* ACCOUNTS (고객사 핀/현황) */
@@ -1428,8 +1443,8 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
   .prio-sel button.sel[data-p="H"]{background:rgba(220,128,118,.18);border-color:var(--red);color:var(--red)}
   .prio-sel button.sel[data-p="M"]{background:rgba(230,184,95,.16);border-color:var(--amber);color:var(--amber)}
   .prio-sel button.sel[data-p="L"]{background:rgba(134,176,112,.16);border-color:var(--green);color:var(--green)}
-  .add-btn{background:var(--gold);border:none;color:#1a140a;font-weight:700;height:34px;border-radius:10px;padding:0 14px;cursor:pointer;font-size:18px;line-height:1;transition:.15s}
-  .add-btn:hover{filter:brightness(1.08)}
+  .add-btn{background:rgba(224,176,92,.14);border:1px solid rgba(224,176,92,.46);color:var(--gold);font-weight:700;height:34px;border-radius:10px;padding:0 14px;cursor:pointer;font-size:18px;line-height:1;transition:.15s}
+  .add-btn:hover{background:rgba(224,176,92,.24);border-color:var(--gold)}
   @media(max-width:560px){.todo-input{flex-wrap:wrap}.todo-input input[type=date]{width:100%}}
 
   .task{border-radius:9px;transition:background .15s}
@@ -1526,8 +1541,8 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
   .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
   .modal-actions button{padding:8px 16px;border-radius:9px;cursor:pointer;font-size:13px;border:1px solid var(--line2);background:rgba(0,0,0,.2);color:var(--ink-dim);transition:.15s;font-family:var(--sans)}
   .modal-actions button:hover{border-color:var(--ink-faint)}
-  .modal-actions button.primary{background:var(--gold);color:#1a140a;border-color:var(--gold);font-weight:600}
-  .modal-actions button.primary:hover{filter:brightness(1.08)}
+  .modal-actions button.primary{background:rgba(224,176,92,.18);color:var(--gold);border-color:rgba(224,176,92,.55);font-weight:700}
+  .modal-actions button.primary:hover{background:rgba(224,176,92,.28);border-color:var(--gold)}
 
   .toast{position:fixed;bottom:26px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--panel);border:1px solid var(--gold);color:var(--ink);padding:11px 18px;border-radius:11px;font-size:13px;font-family:var(--mono);opacity:0;pointer-events:none;transition:.25s;z-index:50;box-shadow:0 10px 30px -10px rgba(0,0,0,.7)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -1847,7 +1862,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     </div>
 
     <div class="page" id="page-log">
-      <div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--purple);margin-bottom:16px">🔬 로그 텍스트 또는 파일(.log/.txt/.zip/.csv) 업로드. 최대 5MB</div>
+      <div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--purple);margin-bottom:16px">🔬 로그를 <b>직접 붙여넣기</b> 하거나 파일(.log/.txt/.zip/.csv)을 업로드해 AI 분석 — 파일 최대 20MB, 분석 결과는 우측 상단 📋 복사 버튼으로 가져갈 수 있어요.</div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">
         <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
           <select id="log-product" class="admin-input" style="width:auto;min-width:200px">
@@ -1861,7 +1876,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         </div>
         <div class="file-drop" id="log-drop" onclick="document.getElementById('log-file').click()">
           <div style="font-size:12px;color:var(--text2);margin-bottom:6px">📁 파일을 드래그하거나 클릭</div>
-          <div style="font-size:10px;color:var(--text3)">.log / .txt / .zip / .csv · 최대 5MB</div>
+          <div style="font-size:10px;color:var(--text3)">.log / .txt / .zip / .csv · 최대 20MB · 여러 개/ZIP 가능</div>
           <input type="file" id="log-file" accept=".log,.txt,.zip,.csv" multiple style="display:none">
           <div id="log-file-list" class="file-list"></div>
         </div>
@@ -1869,7 +1884,14 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           <label style="font-size:11px;color:var(--text3);font-weight:700;display:block;margin-bottom:6px">증상 / 재현 조건</label>
           <textarea id="log-symptom" class="admin-textarea log-symptom" placeholder="예: 특정 클라이언트에서 정책 업데이트 실패, 콘솔에는 Download Protection Content Failures 발생, 재부팅 후에도 반복..." style="min-height:76px"></textarea>
         </div>
-        <textarea id="log-input" class="log-textarea" placeholder="로그 직접 입력 또는 파일 업로드..."></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <label style="font-size:11px;color:var(--text3);font-weight:700">로그 붙여넣기 / 직접 입력</label>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="log-charcount" style="font-size:10.5px;color:var(--text3)">0자</span>
+            <button onclick="pasteLogFromClipboard()" class="btn btn-ghost" style="width:auto;padding:5px 12px;font-size:11px" title="클립보드에서 붙여넣기">📋 붙여넣기</button>
+          </div>
+        </div>
+        <textarea id="log-input" class="log-textarea" placeholder="여기에 로그를 붙여넣으세요 (Ctrl+V) 또는 위에서 파일을 업로드하세요.  분석은 Ctrl+Enter" oninput="updateLogCharCount()" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();analyzeLogs();}"></textarea>
         <div style="display:flex;gap:8px;margin-top:12px">
           <button class="btn btn-purple" id="log-btn" onclick="analyzeLogs()" style="width:auto;padding:10px 20px">🔬 로그 분석</button>
           <button class="btn btn-cyan" onclick="extractKeywords()" style="width:auto;padding:10px 20px">🔑 키워드 추출</button>
@@ -1879,13 +1901,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     </div>
 
     <div class="page" id="page-vt">
-      <div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:#fca5a5;margin-bottom:16px">🛡 MD5 / SHA-1 / SHA-256 해시값 입력 시 VirusTotal 탐지 결과 조회 <span onclick="showStorageInfo('vt')" title="데이터 저장 안내" style="cursor:pointer;opacity:.6;font-size:13px">ℹ</span></div>
+      <div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:#fca5a5;margin-bottom:16px">🛡 VirusTotal 통합 조회 — <b>파일해시 · IP · 도메인 · URL</b>을 자동 인식해 조회하고, 실제 파일을 업로드해 검사할 수 있습니다. <span onclick="showStorageInfo('vt')" title="데이터 저장 안내" style="cursor:pointer;opacity:.6;font-size:13px">ℹ</span></div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">
         <div style="display:flex;gap:10px;align-items:flex-start">
-          <textarea id="vt-input" rows="3" placeholder="해시값을 한 줄에 하나씩(또는 공백·쉼표로 구분) 여러 개 입력 가능 — MD5/SHA-1/SHA-256, 최대 100개" style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:13px;outline:none;font-family:'Consolas','Courier New',monospace;resize:vertical;line-height:1.6" oninput="vtUpdateCount()" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();vtLookup();}"></textarea>
+          <textarea id="vt-input" rows="3" placeholder="해시 · IP · 도메인 · URL을 한 줄에 하나씩(또는 공백·쉼표로 구분) — 유형 자동 인식, 최대 100개&#10;예) 44d88612fea8a8f36de82e1278abb02f   8.8.8.8   example.com   https://site.com/path" style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:13px;outline:none;font-family:'Consolas','Courier New',monospace;resize:vertical;line-height:1.6" oninput="vtUpdateCount()" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();vtLookup();}"></textarea>
           <button class="btn btn-red" onclick="vtLookup()" id="vt-btn" style="width:auto;padding:12px 20px;white-space:nowrap">🔍 조회</button>
         </div>
-        <div style="display:flex;justify-content:space-between;margin-top:8px"><span id="vt-count" style="font-size:11px;color:var(--text3)">해시 0개</span><span style="font-size:11px;color:var(--text3)">Ctrl+Enter로 조회 · 여러 개는 순차 조회됩니다</span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px"><span id="vt-count" style="font-size:11px;color:var(--text3)">입력 0</span><span style="font-size:11px;color:var(--text3)">Ctrl+Enter로 조회 · 여러 개는 순차 조회됩니다</span></div>
+        <div id="vt-file-drop" class="vt-file-drop" onclick="document.getElementById('vt-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="vtFileDrop(event)">
+          <span style="font-size:18px">📎</span>
+          <span><b>실제 파일 검사</b> — 파일을 끌어다 놓거나 클릭해 선택 (최대 32MB, VirusTotal에 업로드되어 분석됩니다)</span>
+          <input type="file" id="vt-file-input" style="display:none" onchange="vtFileScan(this.files[0])">
+        </div>
+        <div id="vt-file-status" style="margin-top:8px"></div>
       </div>
       <div id="vt-result"></div>
       <div id="vt-history-wrap" style="margin-top:16px"></div>
@@ -2250,7 +2278,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
 <script>
 const WORKERS='https://engr-hub-proxy-dev.mj-park.workers.dev';
 const SUPER_ADMIN='mj.park';
-const MAX_FILE_SIZE=5*1024*1024;
+const MAX_FILE_SIZE=20*1024*1024;
 let ISSUES=[],SEL=null,CASE_SEL=null,PAGE=1;
 let CURRENT_USER='',CURRENT_DISPLAY='',IS_ADMIN=false,IS_SUPER=false,USER_ROLE='user';
 let SESSION_MIN=120, SESSION_DEADLINE=0, SESSION_TIMER=null;
@@ -3761,7 +3789,7 @@ function bindFileUpload(){
 }
 async function handleFiles(files){
   for(const f of files){
-    if(f.size>MAX_FILE_SIZE){toast(`${f.name}: 5MB 초과`,true);continue;}
+    if(f.size>MAX_FILE_SIZE){toast(`${f.name}: 20MB 초과`,true);continue;}
     if(LOG_FILES.find(x=>x.name===f.name)){toast(`${f.name}: 이미 추가됨`,true);continue;}
     const ext=f.name.split('.').pop().toLowerCase();
     if(ext==='zip'){
@@ -3772,12 +3800,12 @@ async function handleFiles(files){
           if(entry.dir)continue;
           if(!/\.(log|txt|csv|xml|json|conf|ini|out|err)$/i.test(name))continue;
           const content=await entry.async('string');
-          LOG_FILES.push({name:`${f.name}/${name}`,size:content.length,content:sampleLogContent(content,12000)});
+          LOG_FILES.push({name:`${f.name}/${name}`,size:content.length,content:sampleLogContent(content,14000)});
           if(LOG_FILES.length>=20){toast('ZIP 내 파일은 최대 20개까지만 분석에 포함합니다.');break;}
         }
       }catch(e){toast('ZIP 읽기 실패: '+e.message,true);}
     }else{
-      try{const content=await f.text();LOG_FILES.push({name:f.name,size:f.size,content:sampleLogContent(content,16000)});}
+      try{const content=await f.text();LOG_FILES.push({name:f.name,size:f.size,content:sampleLogContent(content,20000)});}
       catch(e){toast('파일 읽기 실패: '+e.message,true);}
     }
   }
@@ -3799,11 +3827,22 @@ function renderLogFiles(){
   </div>`).join('');
 }
 function removeLogFile(idx){LOG_FILES.splice(idx,1);renderLogFiles();}
-function clearLogInput(){document.getElementById('log-input').value='';const s=document.getElementById('log-symptom');if(s)s.value='';LOG_FILES=[];renderLogFiles();}
+function clearLogInput(){document.getElementById('log-input').value='';const s=document.getElementById('log-symptom');if(s)s.value='';LOG_FILES=[];renderLogFiles();updateLogCharCount();}
+function updateLogCharCount(){const t=document.getElementById('log-input');const el=document.getElementById('log-charcount');if(!t||!el)return;const n=t.value.length;el.textContent=n>=10000?`${(n/1000).toFixed(1)}천자`:`${n.toLocaleString()}자`;el.style.color=n>20000?'var(--warn,#fbbf24)':'var(--text3)';}
+async function pasteLogFromClipboard(){
+  const t=document.getElementById('log-input');if(!t)return;
+  try{
+    const txt=await navigator.clipboard.readText();
+    if(!txt){toast('클립보드가 비어 있습니다.',true);return;}
+    t.value=t.value?(t.value.replace(/\s*$/,'')+'\n'+txt):txt;
+    updateLogCharCount();toast('클립보드 내용을 붙여넣었습니다.');
+    t.focus();
+  }catch(e){toast('클립보드 접근 권한이 없습니다. Ctrl+V로 직접 붙여넣어 주세요.',true);t.focus();}
+}
 function collectLogContent(){
   const t=document.getElementById('log-input').value.trim();
   const f=LOG_FILES.map(x=>`[파일: ${x.name}]\n${x.content}`).join('\n\n');
-  return [t,f].filter(Boolean).join('\n\n').slice(0,22000);
+  return [t,f].filter(Boolean).join('\n\n').slice(0,28000);
 }
 async function analyzeLogs(){
   const log=collectLogContent();
@@ -3829,7 +3868,7 @@ ${symptom||'(입력 없음)'}
 **🔎 추가 확인 로그/명령어**
 
 로그:
-${log.slice(0,25000)}`,'log',{product,files:fileNames,size:log.length,hasSymptom:!!symptom});
+${log.slice(0,28000)}`,'log',{product,files:fileNames,size:log.length,hasSymptom:!!symptom});
     setAIModalBody(text);
     document.getElementById('ai-modal-meta').textContent=`${product} · ${fileNames} · ${(log.length/1024).toFixed(1)}KB`;
   }catch(e){setAIModalBody(`<div style="color:var(--danger);padding:20px">오류: ${e.message}</div>`,true);}
@@ -3862,43 +3901,57 @@ ${log.slice(0,15000)}`,'keywords',{product,files:fileNames});
 
 // ── VIRUSTOTAL ────────────────────────────────────
 const VT_HASH_RE=/^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64})$/i;
+function vtClientType(s){
+  s=String(s||'').trim();
+  if(VT_HASH_RE.test(s))return 'hash';
+  if(/^(\d{1,3}\.){3}\d{1,3}$/.test(s)||/^[0-9a-f:]+:[0-9a-f:]+$/i.test(s))return 'ip';
+  if(/^https?:\/\//i.test(s)||s.includes('/'))return 'url';
+  if(/^([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(s))return 'domain';
+  return '';
+}
+const VT_TYPE_LABEL={hash:'파일해시',ip:'IP',domain:'도메인',url:'URL'};
 function vtParseHashes(){
   const raw=(document.getElementById('vt-input')?.value||'');
-  const toks=raw.split(/[\s,;]+/).map(s=>s.trim().toLowerCase()).filter(Boolean);
+  const toks=raw.split(/[\s,;\n]+/).map(s=>s.trim()).filter(Boolean);
   const seen=new Set(),valid=[],invalid=[];
-  toks.forEach(t=>{ if(VT_HASH_RE.test(t)){ if(!seen.has(t)){seen.add(t);valid.push(t);} } else invalid.push(t); });
+  toks.forEach(t=>{const ty=vtClientType(t); if(ty){const k=t.toLowerCase(); if(!seen.has(k)){seen.add(k);valid.push({value:t,type:ty});}} else invalid.push(t);});
   return {valid,invalid};
 }
 function vtUpdateCount(){
   const {valid,invalid}=vtParseHashes();
   const el=document.getElementById('vt-count');
-  if(el)el.textContent=`해시 ${valid.length}개`+(invalid.length?` · 형식오류 ${invalid.length}개`:'');
+  if(!el)return;
+  const by={}; valid.forEach(v=>{by[v.type]=(by[v.type]||0)+1;});
+  const parts=Object.entries(by).map(([t,n])=>`${VT_TYPE_LABEL[t]} ${n}`);
+  el.textContent=(parts.length?parts.join(' · '):'입력 0')+(invalid.length?` · 형식오류 ${invalid.length}`:'');
 }
 function vtRiskColor(mal){return mal>=5?'#f87171':mal>=1?'#fbbf24':'#22d3a5';}
-async function vtLookupOne(hash){
+async function vtLookupOne(item){
+  const value=typeof item==='string'?item:item.value;
   try{
-    const r=await fetch(`${WORKERS}/vt/lookup`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({hash})});
+    const r=await fetch(`${WORKERS}/vt/lookup`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({value})});
     const d=await r.json();
-    if(d.error){const msg=d.error.message||'조회 실패';return {hash,ok:false,error:msg,notFound:/not\s*found/i.test(msg)};}
+    if(d.error){const msg=d.error.message||'조회 실패';return {value,hash:value,ok:false,error:msg,notFound:/not\s*found/i.test(msg)};}
+    const t=d._type||(typeof item==='object'?item.type:vtClientType(value));
     const attrs=d.data?.attributes||{};
     const stats=attrs.last_analysis_stats||{};
     const total=(stats.malicious||0)+(stats.undetected||0)+(stats.harmless||0)+(stats.suspicious||0);
     const mal=stats.malicious||0;
-    const name=attrs.meaningful_name||attrs.names?.[0]||'-';
     const eng=attrs.last_analysis_results||{};
     const detections=Object.entries(eng).filter(([,v])=>v.category==='malicious'||v.category==='suspicious').map(([k,v])=>`${k}: ${v.result||v.category}`);
-    const rec={hash,ok:true,mal,total,name,size:attrs.size||0,type:attrs.type_description||'',stats,attrs,detections};
-    VT_HISTORY=VT_HISTORY.filter(h=>h.hash!==hash);
-    VT_HISTORY.unshift({hash,mal,total,name,size:rec.size,type:rec.type,ts:Date.now()});
-    if(VT_HISTORY.length>50)VT_HISTORY=VT_HISTORY.slice(0,50);
-    try{localStorage.setItem('vt_history',JSON.stringify(VT_HISTORY));}catch(_){}
-    return rec;
-  }catch(e){return {hash,ok:false,error:e.message};}
+    let name='-',link='https://www.virustotal.com/',info='';
+    if(t==='hash'){name=attrs.meaningful_name||attrs.names?.[0]||'-';info=attrs.type_description||'';link=`https://www.virustotal.com/gui/file/${value.toLowerCase()}`;
+      VT_HISTORY=VT_HISTORY.filter(h=>h.hash!==value.toLowerCase());VT_HISTORY.unshift({hash:value.toLowerCase(),mal,total,name,size:attrs.size||0,type:info,ts:Date.now()});if(VT_HISTORY.length>50)VT_HISTORY=VT_HISTORY.slice(0,50);try{localStorage.setItem('vt_history',JSON.stringify(VT_HISTORY));}catch(_){}}
+    else if(t==='ip'){name=value;info=[attrs.country,attrs.as_owner].filter(Boolean).join(' · ');link=`https://www.virustotal.com/gui/ip-address/${value}`;}
+    else if(t==='domain'){name=value;info=attrs.registrar?('등록기관: '+attrs.registrar):'';link=`https://www.virustotal.com/gui/domain/${value}`;}
+    else if(t==='url'){name=attrs.title||attrs.url||value;info=attrs.last_final_url||attrs.url||value;link=d.data?.id?`https://www.virustotal.com/gui/url/${d.data.id}`:'https://www.virustotal.com/';}
+    return {value,hash:value,ok:true,vtType:t,mal,total,name,size:attrs.size||0,info,rep:attrs.reputation,stats,attrs,detections,link};
+  }catch(e){return {value,hash:value,ok:false,error:e.message};}
 }
 async function vtLookup(){
   const {valid,invalid}=vtParseHashes();
   const btn=document.getElementById('vt-btn'),res=document.getElementById('vt-result');
-  if(!valid.length){toast(invalid.length?'유효한 해시가 없습니다 (MD5/SHA-1/SHA-256 형식 확인).':'해시값을 입력하세요.',true);return;}
+  if(!valid.length){toast(invalid.length?'유효한 값이 없습니다 (해시/IP/도메인/URL 확인).':'해시·IP·도메인·URL을 입력하세요.',true);return;}
   const list=valid.slice(0,100);
   if(valid.length>100)toast('한 번에 최대 100개까지 조회합니다.',true);
   btn.disabled=true;
@@ -3922,6 +3975,48 @@ async function vtLookup(){
   const okN=results.filter(r=>r.ok).length, malN=results.filter(r=>r.ok&&r.mal>0).length;
   toast(`VT 조회 완료: ${okN}/${list.length}건 성공 · 악성/의심 ${malN}건`);
 }
+function vtFileDrop(e){
+  e.preventDefault();
+  const el=document.getElementById('vt-file-drop'); if(el)el.classList.remove('drag');
+  const f=e.dataTransfer?.files?.[0]; if(f)vtFileScan(f);
+}
+async function vtFileScan(file){
+  if(!file)return;
+  const st=document.getElementById('vt-file-status'),res=document.getElementById('vt-result');
+  const MAX=32*1024*1024;
+  if(file.size>MAX){st.innerHTML=`<span style="color:var(--danger);font-size:12px">파일이 너무 큽니다 (${(file.size/1048576).toFixed(1)}MB · 최대 32MB)</span>`;return;}
+  st.innerHTML=`<span style="font-size:12px;color:var(--text2)"><span class="spin">⏳</span> 업로드 중… <b>${escapeHtml(file.name)}</b> (${(file.size/1024).toFixed(0)}KB)</span>`;
+  try{
+    const fd=new FormData(); fd.append('file',file,file.name);
+    const up=await fetch(`${WORKERS}/vt/file`,{method:'POST',headers:authHeaders(),body:fd});
+    const ud=await up.json();
+    if(!up.ok||!ud.analysisId){throw new Error(ud.error?.message||ud.error||'업로드 실패');}
+    st.innerHTML=`<span style="font-size:12px;color:var(--text2)"><span class="spin">⏳</span> VirusTotal 분석 중… (수십 초 소요될 수 있어요)</span>`;
+    let an=null;
+    for(let i=0;i<20;i++){
+      const ar=await fetch(`${WORKERS}/vt/analysis?id=${encodeURIComponent(ud.analysisId)}`,{headers:authHeaders()});
+      const ad=await ar.json();
+      const status=ad.data?.attributes?.status;
+      if(status==='completed'){an=ad;break;}
+      await new Promise(r=>setTimeout(r,3000));
+    }
+    if(!an){st.innerHTML=`<span style="color:var(--warn,#fbbf24);font-size:12px">분석이 아직 진행 중입니다. 잠시 후 해시로 다시 조회해 주세요.</span>`;return;}
+    const at=an.data.attributes||{};
+    const stats=at.stats||{};
+    const total=(stats.malicious||0)+(stats.undetected||0)+(stats.harmless||0)+(stats.suspicious||0);
+    const mal=stats.malicious||0;
+    const fi=an.meta?.file_info||{};
+    const sha=fi.sha256||fi.sha1||fi.md5||'';
+    const eng=at.results||{};
+    const detections=Object.entries(eng).filter(([,v])=>v.category==='malicious'||v.category==='suspicious').map(([k,v])=>`${k}: ${v.result||v.category}`);
+    const attrs={last_analysis_results:eng,last_analysis_stats:stats,size:fi.size||file.size,type_description:fi.type_description||'',meaningful_name:file.name};
+    const rec={value:sha||file.name,hash:sha,ok:true,vtType:'hash',mal,total,name:file.name,size:attrs.size,info:attrs.type_description,stats,attrs,detections,link:sha?`https://www.virustotal.com/gui/file/${sha}`:'https://www.virustotal.com/'};
+    st.innerHTML=`<span style="font-size:12px;color:var(--ok,#22d3a5)">✓ 분석 완료 · <b>${escapeHtml(file.name)}</b></span>`;
+    res.innerHTML=renderVtRich(rec);
+    if(sha){VT_HISTORY=VT_HISTORY.filter(h=>h.hash!==sha.toLowerCase());VT_HISTORY.unshift({hash:sha.toLowerCase(),mal,total,name:file.name,size:attrs.size,type:attrs.type_description,ts:Date.now()});if(VT_HISTORY.length>50)VT_HISTORY=VT_HISTORY.slice(0,50);try{localStorage.setItem('vt_history',JSON.stringify(VT_HISTORY));}catch(_){}renderVTHistory();}
+    const fin=document.getElementById('vt-file-input'); if(fin)fin.value='';
+  }catch(e){st.innerHTML=`<span style="color:var(--danger);font-size:12px">파일 검사 실패: ${escapeHtml(e.message)}</span>`;}
+}
 function vtTableHtml(results,total,done){
   window.__vtLastResults=results;
   const ok=results.filter(r=>r.ok);
@@ -3929,17 +4024,17 @@ function vtTableHtml(results,total,done){
   const okRows=ok.map(r=>{
     const col=vtRiskColor(r.mal),label=r.mal>=5?'악성':r.mal>=1?'의심':'안전';
     const dets=r.detections||[];
-    const detShort=dets.length?escapeHtml(dets.slice(0,3).join(' · '))+(dets.length>3?` <span style="color:var(--text3)">외 ${dets.length-3}</span>`:''):'<span style="color:var(--text3)">-</span>';
+    const detShort=dets.length?escapeHtml(dets.slice(0,2).join(' · '))+(dets.length>2?` <span style="color:var(--text3)">외 ${dets.length-2}</span>`:''):(r.info?escapeHtml(String(r.info).slice(0,60)):'<span style="color:var(--text3)">-</span>');
     return `<tr>
-      <td style="font-family:monospace;font-size:11px;white-space:nowrap" title="${escapeHtml(r.hash)}">${escapeHtml(r.hash.slice(0,16))}…</td>
+      <td><span class="badge" style="background:var(--accent-soft,rgba(99,102,241,.14));color:var(--accent3)">${VT_TYPE_LABEL[r.vtType]||r.vtType}</span></td>
+      <td style="font-family:monospace;font-size:11px;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(r.value)}">${escapeHtml(String(r.value).slice(0,30))}${String(r.value).length>30?'…':''}</td>
       <td style="font-weight:800;color:${col};white-space:nowrap">${r.mal}/${r.total}</td>
       <td><span class="badge" style="background:${col}22;color:${col}">${label}</span></td>
-      <td style="font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(r.name||'')}">${escapeHtml(r.name||'-')}</td>
-      <td style="font-size:10.5px;color:var(--text2);max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(dets.join(' | '))}">${detShort}</td>
-      <td><a href="https://www.virustotal.com/gui/file/${r.hash}" target="_blank" style="color:var(--cyan);font-size:11px;text-decoration:none">VT↗</a></td>
+      <td style="font-size:10.5px;color:var(--text2);max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeHtml(dets.join(' | ')||String(r.info||''))}">${detShort}</td>
+      <td><a href="${r.link||'#'}" target="_blank" style="color:var(--cyan);font-size:11px;text-decoration:none">VT↗</a></td>
     </tr>`;
   }).join('');
-  const nfRows=nf.map(r=>`<tr><td style="font-family:monospace;font-size:11px">${escapeHtml(r.hash)}</td><td style="font-size:11px;color:${r.notFound?'var(--text3)':'var(--danger)'}">${r.notFound?'미발견 (VT 미등록)':escapeHtml(r.error||'오류')}</td></tr>`).join('');
+  const nfRows=nf.map(r=>`<tr><td style="font-family:monospace;font-size:11px">${escapeHtml(r.value||r.hash)}</td><td style="font-size:11px;color:${r.notFound?'var(--text3)':'var(--danger)'}">${r.notFound?'미발견 (VT 미등록)':escapeHtml(r.error||'오류')}</td></tr>`).join('');
   const head=done<total
     ?`<div style="font-size:12px;color:var(--text2);margin-bottom:10px"><span class="loading"></span> 조회 중 ${done}/${total} …</div>`
     :`<div style="font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px"><span>완료 ${results.length}/${total}건 · 성공 ${ok.length} · 미발견/오류 ${nf.length}</span><span style="color:#f87171">악성/의심 ${ok.filter(r=>r.mal>0).length}건</span></div>`;
@@ -3950,23 +4045,23 @@ function vtTableHtml(results,total,done){
   </div>`:'';
   return `<div class="vt-result">${head}${copyBar}
     ${ok.length?`<div class="sec-title" style="margin:4px 0 8px">✅ 조회 성공 ${ok.length}건</div>
-      <table class="eos-table"><thead><tr><th>해시</th><th>탐지</th><th>위험도</th><th>파일명</th><th>탐지명 (업체: 결과)</th><th>VT</th></tr></thead><tbody>${okRows}</tbody></table>`:''}
+      <table class="eos-table"><thead><tr><th>유형</th><th>대상</th><th>탐지</th><th>위험도</th><th>탐지명 / 정보</th><th>VT</th></tr></thead><tbody>${okRows}</tbody></table>`:''}
     ${nf.length?`<div class="sec-title" style="margin:16px 0 8px">❔ 미발견 / 오류 ${nf.length}건</div>
-      <table class="eos-table"><thead><tr><th>해시</th><th>사유</th></tr></thead><tbody>${nfRows}</tbody></table>`:''}
+      <table class="eos-table"><thead><tr><th>대상</th><th>사유</th></tr></thead><tbody>${nfRows}</tbody></table>`:''}
   </div>`;
 }
 function vtCopyResults(mode){
   const results=window.__vtLastResults||[];
   let text='';
   if(mode==='notfound'){
-    text=results.filter(r=>!r.ok).map(r=>r.hash).join('\n');
+    text=results.filter(r=>!r.ok).map(r=>r.value||r.hash).join('\n');
   }else{
     const sep=mode==='csv'?',':'\t';
     const q=mode==='csv'?(s=>`"${String(s==null?'':s).replace(/"/g,'""')}"`):(s=>String(s==null?'':s).replace(/[\t\n]/g,' '));
-    const lines=[['해시','악성','전체','위험도','파일명','탐지명','상태'].map(q).join(sep)];
+    const lines=[['유형','대상','악성','전체','위험도','탐지명/정보','상태'].map(q).join(sep)];
     results.forEach(r=>{
-      if(r.ok){const label=r.mal>=5?'악성':r.mal>=1?'의심':'안전';lines.push([r.hash,r.mal,r.total,label,r.name||'',(r.detections||[]).join('; '),'성공'].map(q).join(sep));}
-      else lines.push([r.hash,'','','','','',r.notFound?'미발견':(r.error||'오류')].map(q).join(sep));
+      if(r.ok){const label=r.mal>=5?'악성':r.mal>=1?'의심':'안전';lines.push([VT_TYPE_LABEL[r.vtType]||r.vtType,r.value,r.mal,r.total,label,(r.detections||[]).join('; ')||r.info||'','성공'].map(q).join(sep));}
+      else lines.push([(r.vtType?VT_TYPE_LABEL[r.vtType]:''),r.value||r.hash,'','','','',r.notFound?'미발견':(r.error||'오류')].map(q).join(sep));
     });
     text=lines.join('\n');
   }
@@ -3976,14 +4071,36 @@ function vtCopyResults(mode){
 }
 function vtFallbackCopy(text){const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.left='-9999px';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');toast('클립보드에 복사됨');}catch(e){toast('복사 실패 — 직접 선택하세요',true);}document.body.removeChild(ta);}
 function renderVtRich(rec){
-  const {hash,mal,total,stats,attrs,name}=rec;
+  const {mal,total,stats,attrs,name,info,link,detections}=rec;
+  const value=rec.value||rec.hash;
+  const t=rec.vtType||'hash';
   const riskColor=vtRiskColor(mal);
   const riskLabel=mal>=5?'⚠ 악성':mal>=1?'🔶 의심':'✅ 안전';
   const engines=attrs.last_analysis_results||{};
-  const malEngines=Object.entries(engines).filter(([,v])=>v.category==='malicious').map(([k,v])=>`${k}: ${v.result||'malicious'}`).slice(0,8);
+  const malEngines=Object.entries(engines).filter(([,v])=>v.category==='malicious'||v.category==='suspicious').map(([k,v])=>`${k}: ${v.result||v.category}`).slice(0,8);
+  // 유형별 메타 셀
+  let metaCells='';
+  if(t==='hash'){
+    metaCells=`<div class="vt-cell" style="grid-column:span 2"><div class="vt-cell-label">파일명</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(name||'-')}</div></div>
+      ${attrs.size?`<div class="vt-cell"><div class="vt-cell-label">크기</div><div class="vt-cell-val" style="font-size:11px">${(attrs.size/1024).toFixed(1)}KB</div></div>`:''}
+      ${attrs.type_description?`<div class="vt-cell"><div class="vt-cell-label">파일유형</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(attrs.type_description)}</div></div>`:''}`;
+  }else if(t==='ip'){
+    metaCells=`${attrs.country?`<div class="vt-cell"><div class="vt-cell-label">국가</div><div class="vt-cell-val" style="font-size:12px">${escapeHtml(attrs.country)}</div></div>`:''}
+      ${attrs.as_owner?`<div class="vt-cell" style="grid-column:span 2"><div class="vt-cell-label">소유 (AS)</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(attrs.as_owner)}</div></div>`:''}
+      ${attrs.network?`<div class="vt-cell"><div class="vt-cell-label">네트워크</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(attrs.network)}</div></div>`:''}`;
+  }else if(t==='domain'){
+    metaCells=`${attrs.registrar?`<div class="vt-cell" style="grid-column:span 2"><div class="vt-cell-label">등록기관</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(attrs.registrar)}</div></div>`:''}
+      ${attrs.creation_date?`<div class="vt-cell" style="grid-column:span 2"><div class="vt-cell-label">생성일</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(fdt(attrs.creation_date*1000))}</div></div>`:''}`;
+  }else if(t==='url'){
+    const fin=attrs.last_final_url||attrs.url||value;
+    metaCells=`<div class="vt-cell" style="grid-column:span 4"><div class="vt-cell-label">최종 URL</div><div class="vt-cell-val" style="font-size:11px;word-break:break-all">${escapeHtml(fin)}</div></div>
+      ${attrs.title?`<div class="vt-cell" style="grid-column:span 4"><div class="vt-cell-label">제목</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(attrs.title)}</div></div>`:''}`;
+  }
+  const aiArg=encodeURIComponent(JSON.stringify({value,vtType:t,mal,total}));
   return `<div class="vt-result">
-      <div style="text-align:center;margin-bottom:16px">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:4px">탐지 결과</div>
+      <div style="text-align:center;margin-bottom:14px">
+        <span class="badge" style="background:var(--accent-soft,rgba(99,102,241,.14));color:var(--accent3);margin-bottom:8px">${VT_TYPE_LABEL[t]||t}</span>
+        <div style="font-size:11px;color:var(--text3);margin:6px 0 4px;word-break:break-all">${escapeHtml(value)}</div>
         <div class="vt-score" style="color:${riskColor}">${mal} / ${total}</div>
         <span class="badge" style="background:${riskColor}22;color:${riskColor};font-size:13px;padding:5px 16px">${riskLabel}</span>
       </div>
@@ -3992,35 +4109,39 @@ function renderVtRich(rec){
         <div class="vt-cell"><div class="vt-cell-label">의심</div><div class="vt-cell-val" style="color:#fbbf24">${stats.suspicious||0}</div></div>
         <div class="vt-cell"><div class="vt-cell-label">안전</div><div class="vt-cell-val" style="color:#22d3a5">${stats.harmless||0}</div></div>
         <div class="vt-cell"><div class="vt-cell-label">미탐지</div><div class="vt-cell-val">${stats.undetected||0}</div></div>
-        <div class="vt-cell" style="grid-column:span 2"><div class="vt-cell-label">파일명</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(name)}</div></div>
-        ${attrs.size?`<div class="vt-cell"><div class="vt-cell-label">크기</div><div class="vt-cell-val" style="font-size:11px">${(attrs.size/1024).toFixed(1)}KB</div></div>`:''}
-        ${attrs.type_description?`<div class="vt-cell"><div class="vt-cell-label">유형</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(attrs.type_description)}</div></div>`:''}
+        ${metaCells}
       </div>
       ${malEngines.length?`<div style="margin-top:14px"><div class="sec-title" style="margin-bottom:8px">탐지 엔진 (${malEngines.length}개)</div>
       ${malEngines.map(e=>`<div style="font-size:11px;color:var(--danger);padding:4px 0;border-bottom:1px solid var(--border)">${escapeHtml(e)}</div>`).join('')}</div>`:''}
       <div style="margin-top:14px;display:flex;gap:8px">
-        <button class="btn btn-purple" onclick="vtAIAnalysis('${hash}',${mal},${total})" style="width:auto;padding:8px 16px;font-size:11px">🤖 AI 위험도 분석</button>
-        <a href="https://www.virustotal.com/gui/file/${hash}" target="_blank" style="text-decoration:none">
+        <button class="btn btn-purple" onclick="vtAIAnalysis('${aiArg}')" style="width:auto;padding:8px 16px;font-size:11px">🤖 AI 위험도 분석</button>
+        <a href="${link||'https://www.virustotal.com/'}" target="_blank" style="text-decoration:none">
           <button class="btn btn-ghost" style="width:auto;padding:8px 16px;font-size:11px">VT에서 보기 →</button>
         </a>
       </div>
     </div>`;
 }
-async function vtAIAnalysis(hash,mal,total){
-  openAIModal('🛡','VT 위험도 분석',hash.slice(0,12)+'...','<div class="loading">분석 중...</div>');
+async function vtAIAnalysis(arg,malArg,totalArg){
+  // 신형: arg = encodeURIComponent(JSON {value,vtType,mal,total}). 구형: (hash,mal,total)
+  let value,vtType,mal,total;
+  try{const o=JSON.parse(decodeURIComponent(arg));value=o.value;vtType=o.vtType||'hash';mal=o.mal;total=o.total;}
+  catch(_){value=arg;vtType='hash';mal=malArg;total=totalArg;}
+  const tLabel=VT_TYPE_LABEL[vtType]||vtType;
+  openAIModal('🛡','VT 위험도 분석',`${tLabel} · ${String(value).slice(0,20)}${String(value).length>20?'…':''}`,'<div class="loading">분석 중...</div>');
   try{
     const text=await callAI(`VirusTotal 탐지 결과 분석.
-해시: ${hash}
+유형: ${tLabel}
+대상: ${value}
 탐지: ${mal}/${total}개 엔진
 
 **🎯 종합 판정** (악성/오탐/안전)
 **📊 탐지율 해석**
-**⚡ 권장 조치**
+**⚡ 권장 조치** (${vtType==='ip'?'IP 차단/모니터링':vtType==='domain'?'도메인 차단/DNS 싱크홀':vtType==='url'?'URL 차단/사용자 경고':'파일 격리/삭제'} 관점)
 **📰 관련 공개 자료 확인**
-- 이 해시/파일명/탐지명으로 공개 기사, 벤더 권고, 보안 블로그를 찾아볼 때 쓸 검색 키워드
+- 이 ${tLabel}로 공개 기사, 벤더 권고, 보안 블로그를 찾아볼 때 쓸 검색 키워드
 - 검색 결과가 없을 때의 해석
-**📝 오탐 가능성**`,'vt',{hash:hash.slice(0,16),mal,total});
-    const links=`\n\n### 관련 자료 빠른 검색\n- [Google에서 해시 검색](https://www.google.com/search?q=${encodeURIComponent(hash)})\n- [Google News에서 해시 검색](https://news.google.com/search?q=${encodeURIComponent(hash)})\n- [Broadcom KB에서 해시 검색](https://support.broadcom.com/web/ecx/search?searchString=${encodeURIComponent(hash)})`;
+**📝 오탐 가능성**`,'vt',{value:String(value).slice(0,32),vtType,mal,total});
+    const links=`\n\n### 관련 자료 빠른 검색\n- [Google 검색](https://www.google.com/search?q=${encodeURIComponent(value)})\n- [Google News 검색](https://news.google.com/search?q=${encodeURIComponent(value)})\n- [Broadcom KB 검색](https://support.broadcom.com/web/ecx/search?searchString=${encodeURIComponent(value)})`;
     setAIModalBody(text+links);
     document.getElementById('ai-modal-meta').textContent=`${mal}/${total} 탐지`;
   }catch(e){setAIModalBody(`<div style="color:var(--danger);padding:20px">오류: ${e.message}</div>`,true);}

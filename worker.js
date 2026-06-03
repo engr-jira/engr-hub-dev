@@ -235,6 +235,27 @@ function redactSensitiveText(text = '') {
 function isValidVtHash(hash = '') {
   return /^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64})$/i.test(String(hash).trim());
 }
+function vtDetectType(v = '') {
+  const s = String(v).trim();
+  if (isValidVtHash(s)) return 'hash';
+  if (/^(\d{1,3}\.){3}\d{1,3}$/.test(s) || /^[0-9a-f:]+:[0-9a-f:]+$/i.test(s)) return 'ip';
+  if (/^https?:\/\//i.test(s) || s.includes('/')) return 'url';
+  if (/^([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(s)) return 'domain';
+  return '';
+}
+function vtUrlId(u) { // base64url(url) without padding — VirusTotal URL identifier
+  return btoa(unescape(encodeURIComponent(u))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+async function vtPollAnalysis(vtKey, id, tries = 6) {
+  for (let i = 0; i < tries; i++) {
+    const r = await fetch(`https://www.virustotal.com/api/v3/analyses/${id}`, { headers: { 'x-apikey': vtKey } });
+    const d = await r.json();
+    const status = d?.data?.attributes?.status;
+    if (status === 'completed') return d;
+    await new Promise(res => setTimeout(res, 1500));
+  }
+  return null;
+}
 
 async function canModifyItem(env, user, item) {
   if (!user || !item) return false;
@@ -1403,29 +1424,71 @@ export default {
         }
       }
 
-      //
+      // VT \uBA40\uD2F0 \uD0C0\uC785 \uC870\uD68C (\uD574\uC2DC/IP/\uB3C4\uBA54\uC778/URL)
       if (path === '/vt/lookup' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ error: { message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' } }, 401);
         const body = await request.json();
-        const hash = String(body.hash || '').trim().toLowerCase();
-        if (!hash) return corsResponse({ error: { message: 'hash \uD544\uC694' } }, 400);
-        if (!isValidVtHash(hash)) return corsResponse({ error: { message: 'MD5/SHA-1/SHA-256 \uD574\uC2DC \uD615\uC2DD\uC774 \uC544\uB2D9\uB2C8\uB2E4.' } }, 400);
         const vtKey = env.VT_KEY || env.VT_API_KEY || '';
         if (!vtKey) return corsResponse({ error: { message: 'VT_KEY \uD658\uACBD\uBCC0\uC218\uAC00 \uC124\uC815\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.' } }, 500);
-
-        const vtRes = await fetch(`https://www.virustotal.com/api/v3/files/${hash}`, {
-          headers: { 'x-apikey': vtKey },
-        });
-        const data = await vtRes.json();
-        if (vtRes.ok && data?.data?.attributes) {
-          await auditLog(env, user, 'VT_LOOKUP', {
-            hash: hash.slice(0, 16),
-            name: data.data.attributes.meaningful_name || '',
-            mal: data.data.attributes.last_analysis_stats?.malicious || 0,
-          });
-          await saveVtHistory(env, user, hash, data.data.attributes);
-        }
-        return corsResponse(data, vtRes.status);
+        const raw = String(body.value || body.hash || '').trim();
+        if (!raw) return corsResponse({ error: { message: '\uC870\uD68C\uD560 \uAC12\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' } }, 400);
+        const type = (body.type && body.type !== 'auto') ? body.type : vtDetectType(raw);
+        if (!type) return corsResponse({ error: { message: '\uD574\uC2DC/IP/\uB3C4\uBA54\uC778/URL \uD615\uC2DD\uC774 \uC544\uB2D9\uB2C8\uB2E4.' } }, 400);
+        const H = { 'x-apikey': vtKey };
+        try {
+          if (type === 'url') {
+            const sres = await fetch('https://www.virustotal.com/api/v3/urls', { method: 'POST', headers: { ...H, 'content-type': 'application/x-www-form-urlencoded' }, body: `url=${encodeURIComponent(raw)}` });
+            const sdata = await sres.json();
+            if (!sres.ok) return corsResponse(sdata, sres.status);
+            const aid = sdata?.data?.id;
+            if (aid) await vtPollAnalysis(vtKey, aid, 6);
+            const ures = await fetch(`https://www.virustotal.com/api/v3/urls/${vtUrlId(raw)}`, { headers: H });
+            const udata = await ures.json();
+            if (ures.ok && udata?.data?.attributes) await auditLog(env, user, 'VT_LOOKUP', { type, value: raw.slice(0, 60), mal: udata.data.attributes.last_analysis_stats?.malicious || 0 });
+            return corsResponse({ ...udata, _type: 'url', _value: raw }, ures.status);
+          }
+          let vtUrl;
+          if (type === 'hash') vtUrl = `https://www.virustotal.com/api/v3/files/${encodeURIComponent(raw.toLowerCase())}`;
+          else if (type === 'ip') vtUrl = `https://www.virustotal.com/api/v3/ip_addresses/${encodeURIComponent(raw)}`;
+          else if (type === 'domain') vtUrl = `https://www.virustotal.com/api/v3/domains/${encodeURIComponent(raw)}`;
+          const vtRes = await fetch(vtUrl, { headers: H });
+          const data = await vtRes.json();
+          if (vtRes.ok && data?.data?.attributes) {
+            await auditLog(env, user, 'VT_LOOKUP', { type, value: raw.slice(0, 40), mal: data.data.attributes.last_analysis_stats?.malicious || 0 });
+            if (type === 'hash') await saveVtHistory(env, user, raw.toLowerCase(), data.data.attributes);
+          }
+          return corsResponse({ ...data, _type: type, _value: raw }, vtRes.status);
+        } catch (e) { return corsResponse({ error: { message: e.message || 'VT \uC870\uD68C \uC2E4\uD328' } }, 502); }
+      }
+      // VT \uD30C\uC77C \uC5C5\uB85C\uB4DC \u2192 \uBD84\uC11D ID \uBC18\uD658
+      if (path === '/vt/file' && request.method === 'POST') {
+        if (!hasSession) return corsResponse({ error: { message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' } }, 401);
+        const vtKey = env.VT_KEY || env.VT_API_KEY || '';
+        if (!vtKey) return corsResponse({ error: { message: 'VT_KEY \uD658\uACBD\uBCC0\uC218\uAC00 \uC124\uC815\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.' } }, 500);
+        try {
+          const form = await request.formData();
+          const file = form.get('file');
+          if (!file || typeof file === 'string') return corsResponse({ error: { message: '\uD30C\uC77C\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' } }, 400);
+          if (file.size > 32 * 1024 * 1024) return corsResponse({ error: { message: '\uBB34\uB8CC \uC5C5\uB85C\uB4DC\uB294 \uCD5C\uB300 32MB\uC785\uB2C8\uB2E4.' } }, 400);
+          const vform = new FormData();
+          vform.append('file', file, file.name || 'upload.bin');
+          const ures = await fetch('https://www.virustotal.com/api/v3/files', { method: 'POST', headers: { 'x-apikey': vtKey }, body: vform });
+          const udata = await ures.json();
+          if (!ures.ok) return corsResponse(udata, ures.status);
+          await auditLog(env, user, 'VT_UPLOAD', { name: file.name || '', size: file.size || 0 });
+          return corsResponse({ ok: true, analysisId: udata?.data?.id, name: file.name || '' }, 200);
+        } catch (e) { return corsResponse({ error: { message: e.message || '\uC5C5\uB85C\uB4DC \uC2E4\uD328' } }, 502); }
+      }
+      // VT \uBD84\uC11D \uC0C1\uD0DC \uD3F4\uB9C1 (\uD30C\uC77C \uC5C5\uB85C\uB4DC \uD6C4)
+      if (path === '/vt/analysis' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ error: { message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' } }, 401);
+        const vtKey = env.VT_KEY || env.VT_API_KEY || '';
+        if (!vtKey) return corsResponse({ error: { message: 'VT_KEY \uBBF8\uC124\uC815' } }, 500);
+        const id = url.searchParams.get('id') || '';
+        if (!id) return corsResponse({ error: { message: 'id \uD544\uC694' } }, 400);
+        const ares = await fetch(`https://www.virustotal.com/api/v3/analyses/${encodeURIComponent(id)}`, { headers: { 'x-apikey': vtKey } });
+        const adata = await ares.json();
+        return corsResponse(adata, ares.status);
       }
 
       //
