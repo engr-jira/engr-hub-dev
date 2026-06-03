@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.8.0 - ESCARE Security Hub</title>
+<title>ENGR AI v1.8.1 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -1533,6 +1533,26 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 }
 </style>
+<style id="mydesk-light">
+/* 라이트모드: My Desk도 다른 화면처럼 밝게 — @scope 변수를 #page-mydesk에 라이트값으로 재정의(전 컴포넌트 자동 적용) */
+html[data-theme="light"] #page-mydesk{
+  --panel:#ffffff; --panel-2:#f6f8fc; --line:#e4e8f0; --line-soft:#eef1f6; --line2:#d4dbe8; --cb:#94a3b8;
+  --ink:#0f172a; --ink-dim:#475569; --ink-faint:#7a8699;
+  --gold:#b45309; --gold-soft:#fef3c7; --teal:#0e9f6e; --red:#dc2626; --amber:#b45309; --green:#16a34a; --blue:#2563eb;
+}
+/* 카드/입력 배경 보정(다크 전용 rgba 위에 라이트값 덮어쓰기) */
+html[data-theme="light"] #page-mydesk .panel{background:#ffffff;border-color:#e4e8f0;color:#0f172a;box-shadow:0 1px 2px rgba(15,23,42,.04),0 10px 26px -16px rgba(15,23,42,.18)}
+html[data-theme="light"] #page-mydesk textarea,
+html[data-theme="light"] #page-mydesk input,
+html[data-theme="light"] #page-mydesk .add-row input,
+html[data-theme="light"] #page-mydesk .sub-add input{background:#f4f6fb;border-color:#d4dbe8;color:#0f172a}
+html[data-theme="light"] #page-mydesk .item:hover,
+html[data-theme="light"] #page-mydesk .sub:hover,
+html[data-theme="light"] #page-mydesk .sc-row:hover,
+html[data-theme="light"] #page-mydesk .case:hover{background:#f1f4f9}
+html[data-theme="light"] #page-mydesk .dock-chip{background:#ffffff;border-color:#e4e8f0;color:#475569}
+html[data-theme="light"] #page-mydesk .dock-chip.on{background:#eef1fb;color:#0f172a}
+</style>
 
 </head>
 <body>
@@ -1604,7 +1624,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.8.0</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.8.1</span></div></div>
       </div>
       <div class="sb-nav">
         <button class="sb-btn sb-btn-solo" id="nav-mydesk" onclick="showPage('mydesk',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>My Desk ✦</button>
