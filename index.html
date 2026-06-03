@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>ENGR AI v1.7.10 - ESCARE Security Hub</title>
+<title>ENGR AI v1.8.0 - ESCARE Security Hub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%236366f1'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
@@ -45,8 +45,8 @@ aside{width:230px;background:#161b27;border-right:1px solid var(--border2);displ
 .sb-group{display:flex;flex-direction:column;gap:2px;margin-top:4px}
 .sb-group-head{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border:none;background:none;color:var(--accent3);font-size:13.5px;font-weight:800;letter-spacing:.2px;cursor:pointer;font-family:inherit;border-radius:10px;text-align:left;transition:all .15s}
 .sb-group-head svg{stroke:var(--accent3);opacity:.85}
-html[data-theme="light"] .sb-group-head{color:#4f46e5}
-html[data-theme="light"] .sb-group-head svg{stroke:#4f46e5}
+html[data-theme="light"] .sb-group-head{color:#a5b4fc}
+html[data-theme="light"] .sb-group-head svg{stroke:#a5b4fc}
 .sb-group-head svg{width:16px;height:16px}
 .sb-btn-solo{margin-bottom:6px;background:linear-gradient(135deg,rgba(99,102,241,.16),rgba(124,58,237,.12));border:1px solid rgba(99,102,241,.3)!important}
 .sb-group-head:hover{color:var(--text2);background:rgba(255,255,255,.05)}
@@ -921,26 +921,28 @@ html[data-theme="light"] .top-clock .tc-time{color:#1e293b}
 .top-theme:hover{background:rgba(129,140,248,.2);border-color:rgba(129,140,248,.42)}
 .theme-icon{font-size:12px;line-height:1}
 html[data-theme="light"]{
-  --bg:#eef3fb;--sidebar:#f6f8fd;--panel:#f8fbff;--card:#ffffff;--card2:#eef4fb;
-  --border:#d8e2f0;--border2:#c8d5e6;--accent:#4f46e5;--accent2:#5b6ee1;--accent3:#4f46e5;
-  --success:#0f9f83;--warn:#b7791f;--danger:#dc2626;--purple:#6d5bd0;--pink:#be4b8b;--cyan:#0891b2;
-  --text:#111827;--text2:#334155;--text3:#64748b;
+  --bg:#eceff5;--sidebar:#161c2e;--panel:#ffffff;--card:#ffffff;--card2:#f4f6fb;
+  --border:#e4e8f0;--border2:#d4dbe8;--accent:#4f46e5;--accent2:#6366f1;--accent3:#4f46e5;
+  --success:#059669;--warn:#b45309;--danger:#dc2626;--purple:#6d5bd0;--pink:#be4b8b;--cyan:#0891b2;
+  --text:#0f172a;--text2:#475569;--text3:#7a8699;
 }
-html[data-theme="light"] body{background:radial-gradient(circle at 18% 0%,#f7fbff 0,#eef3fb 44%,#e9eff8 100%);color:var(--text)}
+html[data-theme="light"] body{background:radial-gradient(circle at 22% 0%,#f2f4f9 0,#eceff5 52%,#e6eaf1 100%);color:var(--text)}
 html[data-theme="light"] #cfg{background:radial-gradient(ellipse at 30% 32%,#eff6ff 0%,#f8fbff 45%,#e9eff8 100%)}
 html[data-theme="light"] .cfg-logo h1{color:#172033}
 html[data-theme="light"] .cfg-logo p{color:#64748b}
 html[data-theme="light"] .cfg-card{background:rgba(255,255,255,.72);border-color:#dbe5f2;box-shadow:0 24px 70px rgba(30,41,59,.12)}
 html[data-theme="light"] .cfg-field input{background:#ffffff;border-color:#cbd7e8;color:#111827}
 html[data-theme="light"] .cfg-field input:focus{background:#ffffff;box-shadow:0 0 0 3px rgba(79,70,229,.16)}
-html[data-theme="light"] aside{background:linear-gradient(180deg,#f8fbff,#eef4fb);border-right-color:#c8d5e6}
-html[data-theme="light"] .sb-name{color:#172033}
-html[data-theme="light"] .sb-brand{border-bottom-color:#d8e2f0}
-html[data-theme="light"] .sb-divider{background:#d8e2f0}
-html[data-theme="light"] .sb-btn{color:#475569}
-html[data-theme="light"] .sb-btn:hover{background:#e9f1ff;color:#1d4ed8}
-html[data-theme="light"] .sb-btn.active{background:linear-gradient(135deg,rgba(79,70,229,.13),rgba(8,145,178,.11));color:#3730a3;border-color:rgba(79,70,229,.24);box-shadow:inset 0 1px 0 rgba(255,255,255,.72)}
-html[data-theme="light"] .sb-status,html[data-theme="light"] .ai-usage-card{background:rgba(255,255,255,.66);border-color:#d8e2f0}
+/* 라이트모드: 사이드바는 다크 유지(위계). aside에 다크용 변수를 스코프 지정해 내부 요소가 자동으로 밝게 표시됨 */
+html[data-theme="light"] aside{background:#161c2e;border-right-color:#222a42;
+  --text:#eef2fb;--text2:#c3cce6;--text3:#8893b4;--panel:#1a2137;--card:rgba(255,255,255,.05);--card2:rgba(255,255,255,.05);--border:rgba(255,255,255,.10);--border2:rgba(255,255,255,.14);--accent2:#818cf8;--accent3:#a5b4fc}
+html[data-theme="light"] .sb-name{color:#fff}
+html[data-theme="light"] .sb-brand{border-bottom-color:rgba(255,255,255,.08)}
+html[data-theme="light"] .sb-divider{background:rgba(255,255,255,.08)}
+html[data-theme="light"] .sb-btn{color:#c3cce6}
+html[data-theme="light"] .sb-btn:hover{background:rgba(255,255,255,.07);color:#fff}
+html[data-theme="light"] .sb-btn.active{background:linear-gradient(135deg,rgba(129,140,248,.26),rgba(124,58,237,.18));color:#dfe4ff;border-color:rgba(129,140,248,.34);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+html[data-theme="light"] .sb-status,html[data-theme="light"] .ai-usage-card{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.10)}
 html[data-theme="light"] .topbar{background:rgba(248,251,255,.92);border-bottom-color:#c8d5e6;box-shadow:0 8px 26px rgba(30,41,59,.08)}
 html[data-theme="light"] .topbar-left h2{color:#111827}
 html[data-theme="light"] .top-status-card,html[data-theme="light"] .top-pin,html[data-theme="light"] .top-refresh,html[data-theme="light"] .top-logout,html[data-theme="light"] .top-theme{background:rgba(255,255,255,.78);border-color:#cbd7e8;color:#334155;box-shadow:0 1px 6px rgba(30,41,59,.06)}
@@ -1602,7 +1604,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.7.10</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(99,102,241,.25);color:var(--accent3);font-size:9px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.8.0</span></div></div>
       </div>
       <div class="sb-nav">
         <button class="sb-btn sb-btn-solo" id="nav-mydesk" onclick="showPage('mydesk',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>My Desk ✦</button>
