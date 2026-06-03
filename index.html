@@ -1553,6 +1553,14 @@ html[data-theme="light"] #page-mydesk .case:hover{background:#f1f4f9}
 html[data-theme="light"] #page-mydesk .dock-chip{background:#ffffff;border-color:#e4e8f0;color:#475569}
 html[data-theme="light"] #page-mydesk .dock-chip.on{background:#eef1fb;color:#0f172a}
 </style>
+<style id="polish-v18">
+/* 세련화: 부드러운 전환·호버 리프트·일관 포커스 링 (양 테마 공통, 가산식) */
+.kpi,.issue-card,.case-card,.link-card,.knowledge-card,.ops-focus-card,.chart-card,.admin-card,.mini-card,.vt-cell{transition:transform .14s ease, box-shadow .2s ease, border-color .14s ease}
+.issue-card:hover,.case-card:hover,.link-card:hover,.knowledge-card:hover,.mini-card:hover{transform:translateY(-1px)}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!important;box-shadow:0 0 0 3px rgba(99,102,241,.20)!important;border-color:var(--accent2)!important}
+.btn{transition:filter .15s, transform .1s, box-shadow .15s, background .15s}
+.btn:active{transform:translateY(1px)}
+</style>
 
 </head>
 <body>
