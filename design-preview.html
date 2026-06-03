@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ENGR HUB — 디자인 미리보기</title>
+<style>
+/* ============ 제안 디자인 토큰 ============ */
+:root{
+  /* DARK (정제) */
+  --bg:#0f1422; --sidebar:#141a2b; --panel:#1a2137; --card:#1e2740; --card2:#243150;
+  --border:#283350; --border2:#374569; --hair:rgba(255,255,255,.06);
+  --accent:#6366f1; --accent2:#818cf8; --accent3:#a5b4fc; --accent-soft:rgba(99,102,241,.16);
+  --ok:#34d399; --warn:#fbbf24; --danger:#f87171; --cyan:#38bdf8;
+  --text:#eef2fb; --text2:#aab6d4; --text3:#7682a0;
+  --sb-text:#c3cce6; --sb-text-dim:#8893b4; --sb-active-bg:linear-gradient(135deg,rgba(99,102,241,.30),rgba(124,58,237,.20)); --sb-active-text:#c7d0ff;
+  --shadow:0 1px 0 rgba(255,255,255,.03) inset, 0 12px 30px -20px rgba(0,0,0,.7);
+  --radius:16px; --radius-sm:11px;
+}
+html[data-theme="light"]{
+  /* LIGHT (elevated neutrals + 다크 사이드바) */
+  --bg:#eceff5;           /* 콘텐츠 배경: 부드러운 슬레이트 */
+  --sidebar:#161c2e;      /* 사이드바: 다크 네이비 유지 (위계) */
+  --panel:#ffffff; --card:#ffffff; --card2:#f5f7fb;
+  --border:#e4e8f0; --border2:#d4dbe8; --hair:rgba(15,23,42,.05);
+  --accent:#4f46e5; --accent2:#6366f1; --accent3:#4f46e5; --accent-soft:rgba(79,70,229,.10);
+  --ok:#059669; --warn:#b45309; --danger:#dc2626; --cyan:#0891b2;
+  --text:#0f172a; --text2:#475569; --text3:#7a8699;
+  --sb-text:#c3cce6; --sb-text-dim:#8893b4; --sb-active-bg:linear-gradient(135deg,rgba(129,140,248,.26),rgba(124,58,237,.18)); --sb-active-text:#dfe4ff;
+  --shadow:0 1px 2px rgba(15,23,42,.04), 0 10px 26px -16px rgba(15,23,42,.20);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Malgun Gothic','Segoe UI',-apple-system,sans-serif;background:var(--bg);color:var(--text);transition:background .2s}
+.app{display:flex;min-height:100vh}
+/* sidebar */
+aside{width:236px;flex-shrink:0;background:var(--sidebar);padding:0 14px 14px;border-right:1px solid var(--border)}
+.sb-brand{display:flex;align-items:center;gap:10px;height:60px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:12px}
+.sb-icon{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center}
+.sb-name{font-size:15px;font-weight:800;letter-spacing:1.5px;color:#fff}
+.sb-sub{font-size:9.5px;color:var(--sb-text-dim)}
+.sb-solo{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:11px;font-size:13px;font-weight:700;color:var(--sb-active-text);background:linear-gradient(135deg,rgba(99,102,241,.20),rgba(124,58,237,.12));border:1px solid rgba(129,140,248,.32);margin-bottom:8px}
+.sb-gh{display:flex;align-items:center;gap:9px;padding:9px 12px;font-size:13px;font-weight:800;color:var(--accent3);letter-spacing:.3px}
+.sb-gh .chev{margin-left:auto;font-size:9px;opacity:.6}
+.sb-btn{display:flex;align-items:center;gap:10px;padding:8px 12px 8px 14px;border-radius:11px;font-size:12.5px;color:var(--sb-text);cursor:pointer}
+.sb-btn:hover{background:rgba(255,255,255,.06);color:#fff}
+.sb-btn.active{background:var(--sb-active-bg);color:var(--sb-active-text);border:1px solid rgba(129,140,248,.34)}
+.sb-btn svg,.sb-gh svg,.sb-solo svg{width:15px;height:15px;opacity:.85}
+/* main */
+main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:var(--panel);border-bottom:1px solid var(--border);position:sticky;top:0;box-shadow:var(--shadow)}
+.tb-left h2{font-size:18px;font-weight:800}
+.tb-left p{font-size:11px;color:var(--text3)}
+.tb-right{display:flex;align-items:center;gap:8px}
+.chipcard{display:flex;align-items:center;gap:7px;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:6px 11px;font-size:11px}
+.chipcard .lb{color:var(--text3);font-weight:700}.chipcard .vl{color:var(--text);font-weight:800}
+.iconbtn{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.iconbtn svg{width:15px;height:15px}
+.clock{display:flex;flex-direction:column;align-items:flex-end;line-height:1.05;padding:0 6px}
+.clock .t{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}.clock .d{font-size:9px;color:var(--text3)}
+.usergrp{display:flex;align-items:center;gap:5px;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:4px 5px}
+.usergrp .u{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2);font-weight:800;padding:0 7px}
+.btn{border:none;border-radius:10px;font-family:inherit;font-weight:700;cursor:pointer;font-size:12px;padding:8px 14px;transition:.15s}
+.btn-pri{background:linear-gradient(135deg,#6366f1,#7c3aed);color:#fff;box-shadow:0 6px 16px -8px rgba(99,102,241,.7)}
+.btn-pri:hover{filter:brightness(1.07)}
+.btn-ghost{background:var(--card);border:1px solid var(--border);color:var(--text2)}
+.btn-ghost:hover{border-color:var(--accent2);color:var(--text)}
+.content{padding:22px;display:flex;flex-direction:column;gap:18px}
+.sec{font-size:13px;font-weight:800;color:var(--text2);letter-spacing:.3px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.kpi .n{font-size:28px;font-weight:800}
+.kpi .l{font-size:12px;color:var(--text2);margin-top:2px;font-weight:600}
+.kpi .s{font-size:11px;color:var(--text3);margin-top:2px}
+.kpi .bar{height:3px;border-radius:3px;margin-top:10px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.card-t{font-size:13px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.row{display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--hair);font-size:12.5px}
+.row:last-child{border-bottom:none}
+.key{color:var(--accent2);font-weight:800;font-family:monospace}
+.badge{font-size:11px;font-weight:700;padding:2px 9px;border-radius:8px}
+.b-ind{background:var(--accent-soft);color:var(--accent3)}
+.b-ok{background:rgba(16,185,129,.14);color:var(--ok)}
+.b-warn{background:rgba(251,191,36,.16);color:var(--warn)}
+.b-danger{background:rgba(248,113,113,.16);color:var(--danger)}
+.inp{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-size:13px;outline:none;font-family:inherit}
+.inp:focus{border-color:var(--accent2);box-shadow:0 0 0 3px var(--accent-soft)}
+.detail .rrow{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--hair);font-size:12.5px}
+.detail .rrow span:first-child{color:var(--text3)}
+.toggle{position:fixed;right:18px;bottom:18px;z-index:50;background:var(--accent);color:#fff;border:none;border-radius:999px;padding:11px 18px;font-weight:800;cursor:pointer;box-shadow:0 10px 24px -8px rgba(99,102,241,.7)}
+table.t{width:100%;border-collapse:collapse;font-size:12.5px}
+table.t th{text-align:left;color:var(--text3);font-size:11px;padding:8px 10px;border-bottom:2px solid var(--border)}
+table.t td{padding:8px 10px;border-bottom:1px solid var(--hair);color:var(--text2)}
+</style>
+</head>
+<body>
+<button class="toggle" onclick="document.documentElement.setAttribute('data-theme', document.documentElement.getAttribute('data-theme')==='light'?'dark':'light')">☀/☾ 테마 전환</button>
+<div class="app">
+  <aside>
+    <div class="sb-brand"><div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div><div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub · v1.8</div></div></div>
+    <div class="sb-solo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> My Desk ✦</div>
+    <div class="sb-gh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2"/></svg>업무 <span class="chev">▾</span></div>
+    <div class="sb-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>대시보드</div>
+    <div class="sb-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>이슈 관리</div>
+    <div class="sb-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>케이스 트래커</div>
+    <div class="sb-gh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.6 5.6L3 18.1V21h2.9l6.2-6.1a4 4 0 005.6-5.6l-2.6 2.6-2-2 2.6-2.6z"/></svg>분석 도구 <span class="chev">▸</span></div>
+    <div class="sb-gh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.2 4.2l2.8 2.8"/></svg>관리자 <span class="chev">▸</span></div>
+  </aside>
+  <main>
+    <div class="topbar">
+      <div class="tb-left"><h2>대시보드</h2><p>이슈 기반 보안기술팀 허브</p></div>
+      <div class="tb-right">
+        <div class="chipcard"><span class="lb">Jira</span><span class="vl" style="color:var(--ok)">연결됨</span></div>
+        <div class="chipcard"><span class="lb">동기화</span><span class="vl">일반 758 / 케이스 62</span></div>
+        <div class="iconbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/></svg></div>
+        <div class="iconbtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg></div>
+        <div class="clock"><span class="t">18:42</span><span class="d">2026.06.02 (화)</span></div>
+        <div class="usergrp"><span class="u"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>박민준</span><button class="btn btn-ghost" style="padding:5px 10px">PIN</button><button class="btn btn-ghost" style="padding:5px 10px">로그아웃</button></div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="kpis">
+        <div class="kpi"><div class="n">758</div><div class="l">일반 이슈</div><div class="s">케이스 제외</div><div class="bar"></div></div>
+        <div class="kpi"><div class="n" style="color:var(--ok)">710</div><div class="l">완료</div><div class="s">94% 완료율</div><div class="bar" style="background:linear-gradient(90deg,#10b981,#34d399)"></div></div>
+        <div class="kpi"><div class="n" style="color:var(--warn)">48</div><div class="l">진행/미완료</div><div class="s">처리 필요</div><div class="bar" style="background:linear-gradient(90deg,#f59e0b,#fbbf24)"></div></div>
+        <div class="kpi"><div class="n" style="color:var(--accent2)">11</div><div class="l">내 담당</div><div class="s">진행 1 / 완료 10</div><div class="bar"></div></div>
+      </div>
+      <div class="sec">운영 포커스</div>
+      <div class="grid2">
+        <div class="card">
+          <div class="card-t"><span class="dot"></span>이슈 관리 — 목록</div>
+          <div class="row"><span class="key">ENGR-3192</span><span class="badge b-danger">Blocked</span><span class="badge b-warn">Medium</span><span style="flex:1">[우리카드] DLP 16.0RU2 HF9 에이전트 추출</span><span style="color:var(--text3)">7일</span></div>
+          <div class="row"><span class="key">ENGR-3190</span><span class="badge b-ind">진행</span><span class="badge b-danger">High</span><span style="flex:1">[토스증권] LUA 실패 원인 분석 요청</span><span style="color:var(--text3)">7일</span></div>
+          <div class="row"><span class="key">ENGR-3189</span><span class="badge b-ind">진행</span><span class="badge b-danger">High</span><span style="flex:1">[오늘의집] DLP 취약점 보안 업데이트</span><span style="color:var(--text3)">7일</span></div>
+          <div style="display:flex;gap:8px;margin-top:14px"><button class="btn btn-pri">✉ AI 요약</button><button class="btn btn-ghost">기술 분석</button><button class="btn btn-ghost">📋 미기입만</button></div>
+        </div>
+        <div class="card detail">
+          <div class="card-t"><span class="dot" style="background:var(--cyan)"></span>이슈 상세</div>
+          <div class="rrow"><span>이슈키</span><span class="key">ENGR-3192</span></div>
+          <div class="rrow"><span>고객사</span><span>우리카드</span></div>
+          <div class="rrow"><span>레이블</span><span><span class="badge b-ind">DLP</span> <span class="badge b-ind">PP</span></span></div>
+          <div class="rrow"><span>범주</span><span class="badge b-warn">미입력</span></div>
+          <div class="rrow"><span>기한</span><span style="color:var(--warn)">2026-06-16 (D-14)</span></div>
+          <div style="margin-top:12px"><input class="inp" placeholder="해시값/검색 입력..."></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-t">📋 주요 항목 미기입 점검 — 담당자별 (6건)</div>
+        <table class="t"><thead><tr><th>담당자</th><th>건수</th><th>미기입 항목</th></tr></thead><tbody>
+          <tr><td style="font-weight:800;color:var(--text)">최시온</td><td><span class="badge b-danger">5건</span></td><td><span class="badge b-warn">기한 4</span> <span class="badge b-warn">고객사 1</span></td></tr>
+          <tr><td style="font-weight:800;color:var(--text)">김민지</td><td><span class="badge b-danger">1건</span></td><td><span class="badge b-warn">범주 1</span></td></tr>
+        </tbody></table>
+      </div>
+    </div>
+  </main>
+</div>
+</body>
+</html>
