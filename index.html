@@ -56,6 +56,10 @@ body{font-family:'Malgun Gothic','Segoe UI',sans-serif;background:var(--bg);colo
 .cfg-field label{display:block;font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
 .cfg-field input{width:100%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:12px 16px;color:var(--text);font-size:14px;outline:none;font-family:inherit}
 .cfg-field input:focus{border-color:var(--accent);background:rgba(255,255,255,.11);box-shadow:0 0 0 3px rgba(99,102,241,.2)}
+.cfg-pin-wrap{position:relative}
+.cfg-pin-wrap input{width:100%;padding-right:46px}
+.cfg-eye{position:absolute;top:50%;right:8px;transform:translateY(-50%);width:32px;height:32px;border:none;background:transparent;color:var(--text3);font-size:16px;cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;opacity:.75}
+.cfg-eye:hover{opacity:1;background:rgba(255,255,255,.08)}
 .cfg-btn{width:100%;background:linear-gradient(135deg,#6366f1,#7c83f6 55%,#818cf8);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:14px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;margin-top:8px;font-family:inherit;letter-spacing:.5px;box-shadow:0 10px 26px -10px rgba(99,102,241,.6)}
 .cfg-btn:hover{opacity:.92;transform:translateY(-1px)}
 .cfg-btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
@@ -1773,7 +1777,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     </div>
     <div class="cfg-card">
       <div class="cfg-field"><label>계정 ID</label><input id="l-name" placeholder="mj.park" autocomplete="username" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter')document.getElementById('l-pin').focus()"></div>
-      <div class="cfg-field"><label>팀 PIN</label><input id="l-pin" type="password" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
+      <div class="cfg-field"><label>팀 PIN</label><div class="cfg-pin-wrap"><input id="l-pin" type="password" placeholder="••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"><button type="button" class="cfg-eye" id="l-pin-eye" onclick="togglePinView()" tabindex="-1" aria-label="PIN 표시/숨김" title="PIN 표시/숨김">👁</button></div></div>
       <label class="cfg-remember"><input type="checkbox" id="l-remember"><span>로그인 유지 · 이 기기에 자동 로그인</span></label>
       <button class="cfg-btn" id="login-btn" onclick="login()">접속하기 →</button>
       <p class="cfg-note">ENGR AI 팀 전용 접속</p>
@@ -2548,6 +2552,14 @@ function normalizeExternalUrl(url){
 }
 
 // ── AUTH ──────────────────────────────────────────
+function togglePinView(){
+  const el=document.getElementById('l-pin'),b=document.getElementById('l-pin-eye');
+  if(!el)return;
+  const show=el.type==='password';
+  el.type=show?'text':'password';
+  if(b)b.textContent=show?'🙈':'👁';
+  el.focus();
+}
 async function login(opts){
   const name=document.getElementById('l-name').value.trim();
   const pin=document.getElementById('l-pin').value.trim();
