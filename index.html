@@ -4523,11 +4523,11 @@ async function loadAudit(){
       CONFIG_CHANGE:{bg:'rgba(99,102,241,.12)',color:'#818cf8',label:'설정'},
       LINK_ADD:{bg:'rgba(34,211,238,.12)',color:'#22d3ee',label:'링크+'},
       LINK_DELETE:{bg:'rgba(248,113,113,.12)',color:'#f87171',label:'링크-'},
-      EOS_ADD:{bg:'rgba(251,191,36,.12)',color:'#fbbf24',label:'EOS+'},
-      EOS_ADD_BULK:{bg:'rgba(251,191,36,.12)',color:'#fbbf24',label:'EOS+'},
+      EOS_ADD:{bg:'rgba(251,191,36,.12)',color:'#fbbf24',label:'라이선스+'},
+      EOS_ADD_BULK:{bg:'rgba(251,191,36,.12)',color:'#fbbf24',label:'라이선스+'},
       PUSH_SEND:{bg:'rgba(45,230,184,.12)',color:'#22d3a5',label:'알림'},
-      EOS_DELETE:{bg:'rgba(248,113,113,.12)',color:'#f87171',label:'EOS-'},
-      EOS_UPDATE:{bg:'rgba(251,191,36,.12)',color:'#fbbf24',label:'EOS✎'},
+      EOS_DELETE:{bg:'rgba(248,113,113,.12)',color:'#f87171',label:'라이선스-'},
+      EOS_UPDATE:{bg:'rgba(251,191,36,.12)',color:'#fbbf24',label:'라이선스✎'},
     };
     tbody.innerHTML=items.map(a=>{
       const t=ts[a.type]||{bg:'rgba(148,163,184,.12)',color:'#94a3b8',label:a.type};

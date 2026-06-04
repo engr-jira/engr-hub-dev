@@ -1245,7 +1245,7 @@ async function resetHubData(env) {
 const PUSH_EVENTS = {
   link:      { label: '업무 링크 등록',    defTitle: '🔗 새 업무 링크',     defBody: "{user}님이 '{target}' 등록", page: 'links' },
   knowledge: { label: '팀 노하우 등록',    defTitle: '📚 새 팀 노하우',     defBody: "{user}님이 '{target}' 등록", page: 'knowledge' },
-  eos:       { label: 'EOS/라이선스 등록', defTitle: '⏳ EOS/라이선스 등록', defBody: "{user}님이 '{target}' 등록", page: 'eos' },
+  eos:       { label: '라이선스 등록', defTitle: '⏳ 라이선스 등록', defBody: "{user}님이 '{target}' 등록", page: 'eos' },
 };
 function u8ToB64url(u){ let s=''; for(let i=0;i<u.length;i++)s+=String.fromCharCode(u[i]); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
 async function vapidAuthHeader(env, audience){
@@ -1273,7 +1273,10 @@ async function getPushSettings(env){
   const events={};
   for(const [k,def] of Object.entries(PUSH_EVENTS)){
     const e=(s.events&&s.events[k])||{};
-    events[k]={ enabled:e.enabled!==false, title:e.title||def.defTitle, body:e.body||def.defBody, label:def.label };
+    let title=(e.title||def.defTitle), body=(e.body||def.defBody);
+    // 옛 'EOS/라이선스' 문구 자가 치환(저장된 멘트 마이그레이션)
+    title=title.replace(/EOS\s*\/\s*라이선스/g,'라이선스'); body=body.replace(/EOS\s*\/\s*라이선스/g,'라이선스');
+    events[k]={ enabled:e.enabled!==false, title, body, label:def.label };
   }
   return { events, include:Array.isArray(s.include)?s.include:[], exclude:Array.isArray(s.exclude)?s.exclude:[] };
 }
