@@ -4494,12 +4494,14 @@ async function loadAudit(){
     const ts={
       LOGIN:{bg:'rgba(34,211,165,.12)',color:'#22d3a5',label:'LOGIN'},
       AI_REQUEST:{bg:'rgba(167,139,250,.12)',color:'#a78bfa',label:'AI'},
+      AI_CALL:{bg:'rgba(167,139,250,.12)',color:'#a78bfa',label:'AI'},
       VT_LOOKUP:{bg:'rgba(248,113,113,.12)',color:'#f87171',label:'VT'},
       ADMIN_CHANGE:{bg:'rgba(248,113,113,.12)',color:'#f87171',label:'권한'},
       CONFIG_CHANGE:{bg:'rgba(99,102,241,.12)',color:'#818cf8',label:'설정'},
       LINK_ADD:{bg:'rgba(34,211,238,.12)',color:'#22d3ee',label:'링크+'},
       LINK_DELETE:{bg:'rgba(248,113,113,.12)',color:'#f87171',label:'링크-'},
       EOS_ADD:{bg:'rgba(251,191,36,.12)',color:'#fbbf24',label:'EOS+'},
+      EOS_ADD_BULK:{bg:'rgba(251,191,36,.12)',color:'#fbbf24',label:'EOS+'},
       EOS_DELETE:{bg:'rgba(248,113,113,.12)',color:'#f87171',label:'EOS-'},
       EOS_UPDATE:{bg:'rgba(251,191,36,.12)',color:'#fbbf24',label:'EOS✎'},
     };
@@ -4529,6 +4531,9 @@ async function loadAudit(){
         target='설정';detail=(a.keys||[]).join(', ');
       }else if(a.type==='LINK_ADD'){
         target=a.title||'-';
+      }else if(a.type==='EOS_ADD_BULK'){
+        target=`${a.customer||'-'} (${a.count||0}건)`;
+        detail=`[EOS/라이선스] 일괄 등록 ${a.count||0}건`;
       }else if(a.type==='EOS_ADD'||a.type==='EOS_UPDATE'||a.type==='EOS_DELETE'){
         target=`${a.customer||'-'} · ${a.product||'-'}`;
         const eosTypeLabel=a.itemType==='license'?'라이선스':'EOS';

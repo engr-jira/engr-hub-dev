@@ -117,4 +117,7 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
   - VT 최근 조회 이력 미표시: 활성 `renderVTHistory`(약 6551줄)가 없는 `#vt-history` 참조 → `#vt-history-wrap`로 수정. (⚠️ VT 이력 렌더러도 중복 정의됨 — 활성은 마지막 정의)
   - 모바일 검색 매핑 오류(`onMobSearch`): `links-q/know-q/vt-input`로 수정, log 제거.
   - 미수정/보류: M1(푸시 subscribe가 pref enabled:true 강제 — 클라 `initPushOnLogin`이 `__pushState.enabled`로 가드하므로 opt-out 정상; 제안 수정은 재활성을 깨뜨려 보류), 푸시 payload-less 헤더(L1)는 실기기 전송 실패 시 `Urgency`/`Content-Length` 추가 검토, 레거시 중복함수(issueRowHTML 3218 등)는 모두 dead(비활성).
-  - ⚠️ 샘플데이터 wrangler KV 시드는 토큰에 KV API 권한 없어 실패 → 로그인 UI 클릭검증은 사용자 몫.
+  - ⚠️ 샘플데이터 wrangler KV 시드는 토큰에 KV API 권한 없어 실패.
+- **로그인 실기 검증(mj.park)**: 전 페이지 콘솔 에러 0. My Desk 지속성(서버 반영)·주간시간·케이스 오픈일·RDP 포트 / EOS 복수등록 / VT 이력표시·다중조회 감사 1건(VT 뱃지) / **웹푸시 실제 종단 전송 성공(SW가 OS 알림 표시 확인)** / 토글 상태표시 / 로그분석 AI / 이슈 808건 로드 — 전부 정상.
+  - ⚠️ **회귀 발견·수정**: `/eos` GET에 인증 추가하니 클라 `loadEOS`가 인증 없이 호출해 EOS 목록이 빈 채로 떴음 → `loadEOS` fetch에 `authHeaders()` 추가(dev·prod 배포). **교훈: 워커 엔드포인트에 인증 추가 시 해당 엔드포인트를 부르는 모든 클라 fetch가 authHeaders를 쓰는지 확인.**
+  - 감사로그 뱃지 라벨 추가: `EOS_ADD_BULK`/`AI_CALL`(원시 표기 → EOS+/AI).
