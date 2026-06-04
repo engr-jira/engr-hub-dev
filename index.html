@@ -552,8 +552,8 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
 .case-chip.done{background:rgba(99,102,241,.16);border-color:rgba(129,140,248,.36);color:#c4b5fd}
 input[type="date"]{color-scheme:dark}
 input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer}
-.date-open-btn{height:36px;min-width:48px;border-radius:8px;border:1px solid rgba(103,232,249,.45);background:#dff8ff;color:#0f172a;font-size:11px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 0 12px rgba(103,232,249,.22);padding:0 10px}
-.date-open-btn:hover{background:#f2fdff;border-color:#a5f3fc}
+.date-open-btn{height:36px;border-radius:8px;border:1px solid var(--border2);background:rgba(255,255,255,.05);color:var(--text2);font-size:12px;font-weight:700;font-family:inherit;cursor:pointer;padding:0 12px;white-space:nowrap;transition:border-color .15s,background .15s,color .15s}
+.date-open-btn:hover{background:rgba(129,140,248,.14);border-color:var(--accent3);color:var(--text)}
 .modal-form input[type="date"]{width:calc(100% - 62px)!important;display:inline-block!important;vertical-align:middle;margin-right:8px}
 .modal-form input[type="date"]+.date-open-btn,.private-editor input[type="date"]+.date-open-btn{vertical-align:middle}
 .private-editor .filter-row{display:grid!important;grid-template-columns:1fr 1fr minmax(130px,1fr) 48px;align-items:center;gap:8px}
@@ -1298,10 +1298,15 @@ html[data-theme="light"] .search-box { background:rgba(255,255,255,.78) !importa
 /* ── date input ── */
 html[data-theme="light"] input[type="date"] { color-scheme:light; color:#111827 !important; }
 html[data-theme="light"] .date-open-btn {
-  border-color:rgba(14,165,233,.5) !important;
-  background:#e0f2fe !important;
-  color:#0369a1 !important;
-  box-shadow:0 0 8px rgba(14,165,233,.15) !important;
+  border-color:#cbd7e8 !important;
+  background:#f1f5f9 !important;
+  color:#475569 !important;
+  box-shadow:none !important;
+}
+html[data-theme="light"] .date-open-btn:hover {
+  border-color:#818cf8 !important;
+  background:#eef2ff !important;
+  color:#1e293b !important;
 }
 
 /* ── VT 해시 / 히스토리 ── */
@@ -1587,6 +1592,9 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
   .wk-row input[type=text]:focus{border-color:var(--gold)}
   .wk-row input[type=date]{flex:0 0 auto;width:150px;color-scheme:dark;background:rgba(0,0,0,.22);border:1px solid var(--line2);color:var(--ink-dim);font-family:var(--mono);font-size:11.5px;padding:9px 8px;border-radius:9px;outline:none}
   .wk-row input[type=date]:focus{border-color:var(--gold);color:var(--ink)}
+  .wk-row input[type=time]{flex:0 0 auto;width:120px;color-scheme:dark;background:rgba(0,0,0,.22);border:1px solid var(--line2);color:var(--ink-dim);font-family:var(--mono);font-size:11.5px;padding:9px 8px;border-radius:9px;outline:none}
+  .wk-row input[type=time]:focus{border-color:var(--gold);color:var(--ink)}
+  .wk-row input[type=time]::-webkit-calendar-picker-indicator{opacity:.55;cursor:pointer;filter:invert(.7)}
   .dday{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint)}
   .dday.soon{color:var(--gold)} .dday.today{color:var(--amber)} .dday.over{color:var(--red)}
 
@@ -2213,7 +2221,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <div class="wk-row">
           <input id="wk-title" type="text" placeholder="미팅명 (선택)">
           <input id="wk-date" type="date" title="주간 미팅 날짜">
-          <input id="wk-time" type="time" title="미팅 시간 (선택)" style="width:108px;flex:0 0 auto">
+          <input id="wk-time" type="time" title="미팅 시간 (선택)">
         </div>
         <div class="card-foot"><span class="card-saved" id="weekly-saved"></span><button class="card-save" data-card="weekly">저장</button></div>
       </div>
