@@ -1523,7 +1523,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
   .sc-add input{background:rgba(0,0,0,.22);border:1px solid var(--line2);color:var(--ink);font-size:12.5px;padding:7px 9px;border-radius:8px;outline:none;font-family:var(--sans)}
   .sc-add input:focus{border-color:var(--gold)}
   .sc-add .a-name{flex:1;min-width:70px} .sc-add .a-url{flex:2;min-width:120px}
-  .sc-add .a-ip{width:130px} .sc-add .a-user{width:90px}
+  .sc-add .a-ip{width:112px} .sc-add .a-port{width:62px} .sc-add .a-user{width:84px}
   .sc-add button{background:rgba(255,255,255,.03);border:1px solid var(--line2);color:var(--ink-dim);border-radius:8px;padding:0 12px;cursor:pointer;font-size:14px;transition:.15s;font-family:var(--sans)}
   .sc-add button:hover{border-color:var(--gold);color:var(--gold)}
   .sc-add .e-save{background:rgba(224,176,92,.16);color:var(--gold);border-color:rgba(224,176,92,.5);font-weight:600;font-size:12px}
@@ -1549,6 +1549,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
   .case-add input{background:rgba(0,0,0,.22);border:1px solid var(--line2);color:var(--ink);font-size:12.5px;padding:7px 9px;border-radius:8px;outline:none;font-family:var(--sans)}
   .case-add input:focus{border-color:var(--gold)}
   .case-add .c-title{flex:1;min-width:100px} .case-add .c-cust{width:110px} .case-add .c-date{width:128px;color-scheme:dark;font-family:var(--mono);font-size:11px;color:var(--ink-dim)}
+  .case-add .c-date-cap{align-self:center;font-size:10px;color:var(--ink-dim);white-space:nowrap;font-family:var(--sans)}
   .case-add button{background:rgba(255,255,255,.03);border:1px solid var(--line2);color:var(--ink-dim);border-radius:8px;padding:0 12px;cursor:pointer;font-size:14px;transition:.15s;font-family:var(--sans)}
   .case-add button:hover{border-color:var(--gold);color:var(--gold)}
   .case-add .e-save{background:rgba(224,176,92,.16);color:var(--gold);border-color:rgba(224,176,92,.5);font-weight:600;font-size:12px}
@@ -2205,6 +2206,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <div class="wk-row">
           <input id="wk-title" type="text" placeholder="미팅명 (선택)">
           <input id="wk-date" type="date" title="주간 미팅 날짜">
+          <input id="wk-time" type="time" title="미팅 시간 (선택)" style="width:108px;flex:0 0 auto">
         </div>
         <div class="card-foot"><span class="card-saved" id="weekly-saved"></span><button class="card-save" data-card="weekly">저장</button></div>
       </div>
@@ -2257,7 +2259,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <div class="sc-section">
           <div class="sc-label">원격 접속 (RDP)</div>
           <div id="sc-rdps"></div>
-          <div class="sc-hint">접속 클릭 → .rdp 다운로드 → 열면 mstsc가 해당 IP·계정으로 연결됩니다. 비밀번호는 저장하지 않습니다.</div>
+          <div class="sc-hint">접속 클릭 → .rdp 다운로드 → 열면 mstsc가 해당 IP·포트·계정으로 연결됩니다. 포트는 비워두면 기본(3389). 비밀번호는 저장하지 않습니다.</div>
         </div>
         <div class="card-foot"><span class="card-saved" id="shortcuts-saved"></span><button class="card-save" data-card="shortcuts">저장</button></div>
       </div>
@@ -2337,7 +2339,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         </div>
       </details>
 
-      <details class="admin-section">
+      <details class="admin-section np">
         <summary><span>🔔 푸시 알림</span><small>기능별 on/off · 멘트 수정 · 수신 대상</small></summary>
         <div class="admin-card">
           <h3>🔔 기능별 알림 / 멘트</h3>
@@ -7460,14 +7462,14 @@ function normalizeAdminSettingsUI(){
     ['초기 데이터 / 저장소','KB 수집, KV 사용량, 백업'],
     ['위험 작업','캐시, 감사 로그, 전체 초기화']
   ];
-  root.querySelectorAll('.admin-section').forEach((section,idx)=>{
+  root.querySelectorAll('.admin-section:not(.np)').forEach((section,idx)=>{
     const s=section.querySelector('summary');
     if(s&&summaries[idx])s.innerHTML=`<span>${summaries[idx][0]}</span><small>${summaries[idx][1]}</small>`;
     if(idx>0)section.open=false;
   });
   const heads=['운영 기본값','사용자 계정','관리자 권한','권한 안내','사용자 PIN 초기화','초기 KB 데이터','저장소 / KV 사용량','주의 작업'];
-  root.querySelectorAll('.admin-card h3').forEach((h,idx)=>{if(heads[idx])h.textContent=heads[idx];});
-  const guide=root.querySelector('.admin-card.soft');
+  root.querySelectorAll('.admin-section:not(.np) .admin-card h3').forEach((h,idx)=>{if(heads[idx])h.textContent=heads[idx];});
+  const guide=root.querySelector('.admin-section:not(.np) .admin-card.soft');
   if(guide)guide.style.display='none';
   const labels=[['cfg-range','데이터 조회 기간'],['cfg-session','세션 타임아웃'],['cfg-eos-warn','EOS 경고 일수']];
   labels.forEach(([id,text])=>{const input=document.getElementById(id);const label=input?.closest('.admin-row')?.querySelector('label');if(label)label.textContent=text;});
@@ -7640,7 +7642,7 @@ function markSavedByKey(key){ const c=KEY_CARD[key]; if(c) markCardSaved(c); }
 function cardSave(card){
   if(card==='routine'){ saveNow('routine-items',routineItems); saveNow('routine-state',{date:todayKey(),checks:routineChecks}); }
   else if(card==='team'){ saveNow('team-members',teamMembers); saveNow('team-data',teamData); }
-  else if(card==='weekly'){ saveNow('weekly-meeting',{title:document.getElementById('wk-title').value,date:document.getElementById('wk-date').value}); }
+  else if(card==='weekly'){ saveNow('weekly-meeting',{title:document.getElementById('wk-title').value,date:document.getElementById('wk-date').value,time:document.getElementById('wk-time').value}); }
   else if(card==='todos'){ saveNow('todos',todos); }
   else if(card==='notes'){ saveNow('notes',document.getElementById('notes').value); }
   else if(card==='shortcuts'){ saveNow('links',links); saveNow('rdps',rdps); }
@@ -7774,7 +7776,7 @@ function ddayText(date){
   else{t='D-'+diff;c=diff<=3?'soon':'';}
   return {t:md+' ('+wd+') · '+t,c:c};
 }
-function refreshWeekly(){ const info=ddayText(document.getElementById('wk-date').value); const el=document.getElementById('wk-dday'); el.textContent=info.t; el.className='dday meta'+(info.c?' '+info.c:''); }
+function refreshWeekly(){ const info=ddayText(document.getElementById('wk-date').value); const tv=(document.getElementById('wk-time')||{}).value||''; const el=document.getElementById('wk-dday'); el.textContent=info.t+(tv?(' · '+tv):''); el.className='dday meta'+(info.c?' '+info.c:''); }
 
 /* ---------- TASKS ---------- */
 let todos=[]; let prio='M';
@@ -7846,9 +7848,10 @@ function addTodo(){ const inp=document.getElementById('todo-text'); const v=inp.
 let links=[]; let rdps=[];
 const editLink=new Set(), editRdp=new Set();
 function openUrl(u){ if(!u) return; let url=String(u).trim(); if(!/^https?:\/\//i.test(url)) url='https://'+url; window.open(url,'_blank','noopener'); }
-function downloadRdp(ip,user,label){
+function downloadRdp(ip,user,label,port){
   if(!ip){ toast('IP가 없습니다'); return; }
-  const lines=['screen mode id:i:2','use multimon:i:0','full address:s:'+ip,'username:s:'+(user||''),'prompt for credentials:i:1','authentication level:i:2','redirectclipboard:i:1','administrative session:i:0'];
+  const addr=ip+(port?(':'+String(port).trim()):'');
+  const lines=['screen mode id:i:2','use multimon:i:0','full address:s:'+addr,'username:s:'+(user||''),'prompt for credentials:i:1','authentication level:i:2','redirectclipboard:i:1','administrative session:i:0'];
   const blob=new Blob([lines.join('\r\n')+'\r\n'],{type:'application/x-rdp'});
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a'); a.href=url; a.download=(String(label||ip).replace(/[^\w가-힣.\-]/g,'_')||'remote')+'.rdp';
@@ -7889,24 +7892,24 @@ function renderRdps(){
   rdps.forEach(r=>{
     if(editRdp.has(r.id)){
       const ed=document.createElement('div'); ed.className='sc-add';
-      ed.innerHTML='<input class="a-name" type="text"><input class="a-ip" type="text"><input class="a-user" type="text"><button class="e-save">저장</button><button class="e-cancel">취소</button>';
-      const n=ed.querySelector('.a-name'), ip=ed.querySelector('.a-ip'), us=ed.querySelector('.a-user'); n.value=r.label||''; ip.value=r.ip||''; us.value=r.user||'';
-      ed.querySelector('.e-save').addEventListener('click',()=>{ r.ip=ip.value.trim()||r.ip; r.user=us.value.trim(); r.label=n.value.trim()||r.ip; editRdp.delete(r.id); saveNow('rdps',rdps); renderRdps(); });
+      ed.innerHTML='<input class="a-name" type="text"><input class="a-ip" type="text"><input class="a-port" type="text" inputmode="numeric" placeholder="포트"><input class="a-user" type="text"><button class="e-save">저장</button><button class="e-cancel">취소</button>';
+      const n=ed.querySelector('.a-name'), ip=ed.querySelector('.a-ip'), po=ed.querySelector('.a-port'), us=ed.querySelector('.a-user'); n.value=r.label||''; ip.value=r.ip||''; po.value=r.port||''; us.value=r.user||'';
+      ed.querySelector('.e-save').addEventListener('click',()=>{ r.ip=ip.value.trim()||r.ip; r.port=po.value.trim(); r.user=us.value.trim(); r.label=n.value.trim()||r.ip; editRdp.delete(r.id); saveNow('rdps',rdps); renderRdps(); });
       ed.querySelector('.e-cancel').addEventListener('click',()=>{ editRdp.delete(r.id); renderRdps(); });
       root.appendChild(ed); return;
     }
     const row=document.createElement('div'); row.className='sc-row';
-    row.innerHTML='<div class="sc-main"><span class="sc-name">🖥 '+escapeHtml(r.label||r.ip)+'</span><span class="sc-sub">'+escapeHtml(r.ip)+(r.user?' / '+escapeHtml(r.user):'')+'</span></div><button class="sc-go">접속</button><button class="sc-cmd" title="mstsc 명령 복사">cmd</button><button class="sc-act ed" title="수정">✎</button><button class="sc-act del" title="삭제">×</button>';
-    row.querySelector('.sc-go').addEventListener('click',()=>downloadRdp(r.ip,r.user,r.label));
-    row.querySelector('.sc-cmd').addEventListener('click',()=>{ const c='mstsc /v:'+r.ip; tryCopy(c).then(ok=>toast(ok?('복사됨: '+c):'복사 실패')); });
+    row.innerHTML='<div class="sc-main"><span class="sc-name">🖥 '+escapeHtml(r.label||r.ip)+'</span><span class="sc-sub">'+escapeHtml(r.ip+(r.port?':'+r.port:''))+(r.user?' / '+escapeHtml(r.user):'')+'</span></div><button class="sc-go">접속</button><button class="sc-cmd" title="mstsc 명령 복사">cmd</button><button class="sc-act ed" title="수정">✎</button><button class="sc-act del" title="삭제">×</button>';
+    row.querySelector('.sc-go').addEventListener('click',()=>downloadRdp(r.ip,r.user,r.label,r.port));
+    row.querySelector('.sc-cmd').addEventListener('click',()=>{ const c='mstsc /v:'+r.ip+(r.port?':'+r.port:''); tryCopy(c).then(ok=>toast(ok?('복사됨: '+c):'복사 실패')); });
     row.querySelector('.ed').addEventListener('click',()=>{ editRdp.add(r.id); renderRdps(); });
     row.querySelector('.del').addEventListener('click',()=>{ rdps=rdps.filter(x=>x.id!==r.id); saveNow('rdps',rdps); renderRdps(); });
     root.appendChild(row);
   });
   const add=document.createElement('div'); add.className='sc-add';
-  add.innerHTML='<input class="a-name" type="text" placeholder="이름"><input class="a-ip" type="text" placeholder="IP/호스트"><input class="a-user" type="text" placeholder="계정"><button title="추가">+</button>';
-  const n=add.querySelector('.a-name'), ip=add.querySelector('.a-ip'), us=add.querySelector('.a-user');
-  const addFn=()=>{ const v=ip.value.trim(); if(!v) return; rdps.push({id:'d'+Date.now(),label:n.value.trim()||v,ip:v,user:us.value.trim()}); n.value='';ip.value='';us.value=''; saveNow('rdps',rdps); renderRdps(); };
+  add.innerHTML='<input class="a-name" type="text" placeholder="이름"><input class="a-ip" type="text" placeholder="IP/호스트"><input class="a-port" type="text" inputmode="numeric" placeholder="포트"><input class="a-user" type="text" placeholder="계정"><button title="추가">+</button>';
+  const n=add.querySelector('.a-name'), ip=add.querySelector('.a-ip'), po=add.querySelector('.a-port'), us=add.querySelector('.a-user');
+  const addFn=()=>{ const v=ip.value.trim(); if(!v) return; rdps.push({id:'d'+Date.now(),label:n.value.trim()||v,ip:v,port:po.value.trim(),user:us.value.trim()}); n.value='';ip.value='';po.value='';us.value=''; saveNow('rdps',rdps); renderRdps(); };
   add.querySelector('button').addEventListener('click',addFn);
   us.addEventListener('keydown',e=>{ if(e.key==='Enter') addFn(); });
   ip.addEventListener('keydown',e=>{ if(e.key==='Enter') addFn(); });
@@ -7926,14 +7929,14 @@ function renderCases(){
   sorted.forEach(c=>{
     if(editCase.has(c.id)){ root.appendChild(caseEditRow(c)); return; }
     const row=document.createElement('div'); row.className='case'+(c.status==='종료'?' done':'');
-    row.innerHTML='<span class="case-st" data-st="'+c.status+'">'+c.status+'</span><div class="case-main"><span class="case-title">'+escapeHtml(c.title)+'</span><span class="case-sub">'+escapeHtml(c.customer||'')+(c.updated?' · 갱신 '+fmtMd(c.updated):'')+'</span></div><button class="ed" title="수정">✎</button><button class="rm" title="삭제">×</button>';
+    row.innerHTML='<span class="case-st" data-st="'+c.status+'">'+c.status+'</span><div class="case-main"><span class="case-title">'+escapeHtml(c.title)+'</span><span class="case-sub">'+escapeHtml(c.customer||'')+(c.updated?' · 오픈 '+fmtMd(c.updated):'')+'</span></div><button class="ed" title="수정">✎</button><button class="rm" title="삭제">×</button>';
     row.querySelector('.case-st').addEventListener('click',()=>{ const i=CASE_ST.indexOf(c.status); c.status=CASE_ST[(i+1)%CASE_ST.length]; saveNow('cases',cases); renderCases(); });
     row.querySelector('.ed').addEventListener('click',()=>{ editCase.add(c.id); renderCases(); });
     row.querySelector('.rm').addEventListener('click',()=>{ cases=cases.filter(x=>x.id!==c.id); saveNow('cases',cases); renderCases(); });
     root.appendChild(row);
   });
   const add=document.createElement('div'); add.className='case-add';
-  add.innerHTML='<input class="c-title" type="text" placeholder="케이스/제목"><input class="c-cust" type="text" placeholder="고객사" list="customer-list"><input class="c-date" type="date" title="갱신일"><button title="추가">+</button>';
+  add.innerHTML='<input class="c-title" type="text" placeholder="케이스/제목"><input class="c-cust" type="text" placeholder="고객사" list="customer-list"><span class="c-date-cap">오픈일</span><input class="c-date" type="date" title="케이스 오픈일"><button title="추가">+</button>';
   const t=add.querySelector('.c-title'), cu=add.querySelector('.c-cust'), dt=add.querySelector('.c-date');
   const addFn=()=>{ const v=t.value.trim(); if(!v) return; cases.push({id:'c'+Date.now(),title:v,customer:cu.value.trim(),status:'대기',updated:dt.value||''}); t.value='';cu.value='';dt.value=''; saveNow('cases',cases); renderCases(); };
   add.querySelector('button').addEventListener('click',addFn);
@@ -7942,7 +7945,7 @@ function renderCases(){
 }
 function caseEditRow(c){
   const ed=document.createElement('div'); ed.className='case-add';
-  ed.innerHTML='<input class="c-title" type="text"><input class="c-cust" type="text" list="customer-list"><input class="c-date" type="date"><button class="e-save">저장</button><button class="e-cancel">취소</button>';
+  ed.innerHTML='<input class="c-title" type="text"><input class="c-cust" type="text" list="customer-list"><span class="c-date-cap">오픈일</span><input class="c-date" type="date" title="케이스 오픈일"><button class="e-save">저장</button><button class="e-cancel">취소</button>';
   const t=ed.querySelector('.c-title'), cu=ed.querySelector('.c-cust'), dt=ed.querySelector('.c-date'); t.value=c.title||''; cu.value=c.customer||''; dt.value=c.updated||'';
   ed.querySelector('.e-save').addEventListener('click',()=>{ c.title=t.value.trim()||c.title; c.customer=cu.value.trim(); c.updated=dt.value||''; editCase.delete(c.id); saveNow('cases',cases); renderCases(); });
   ed.querySelector('.e-cancel').addEventListener('click',()=>{ editCase.delete(c.id); renderCases(); });
@@ -8158,13 +8161,15 @@ async function init(){
     saveTeam(); renderTeamRow(); renderHistory(); toast('금일 → 전일 이동 · 주간 누적에 기록됨');
   });
 
-  const wk=await load('weekly-meeting',{title:'',date:''});
+  const wk=await load('weekly-meeting',{title:'',date:'',time:''});
   document.getElementById('wk-title').value=wk.title||'';
   document.getElementById('wk-date').value=wk.date||'';
+  document.getElementById('wk-time').value=wk.time||'';
   refreshWeekly();
-  let wkt; const saveWk=()=>{ save('weekly-meeting',{title:document.getElementById('wk-title').value,date:document.getElementById('wk-date').value}); refreshWeekly(); };
+  let wkt; const saveWk=()=>{ save('weekly-meeting',{title:document.getElementById('wk-title').value,date:document.getElementById('wk-date').value,time:document.getElementById('wk-time').value}); refreshWeekly(); };
   document.getElementById('wk-title').addEventListener('input',()=>{ clearTimeout(wkt); wkt=setTimeout(saveWk,500); });
   document.getElementById('wk-date').addEventListener('change',saveWk);
+  document.getElementById('wk-time').addEventListener('change',saveWk);
 
   todos=await load('todos',[]); renderTodos();
   document.getElementById('prio-sel').addEventListener('click',e=>{ const btn=e.target.closest('button'); if(!btn) return; prio=btn.dataset.p; [...document.querySelectorAll('#prio-sel button')].forEach(b=>b.classList.toggle('sel', b===btn)); });
