@@ -1305,7 +1305,7 @@ export default {
         let pinOk = await validateUserPin(env, userId, pin);
         if (!pinOk && account.displayName) pinOk = await validateUserPin(env, account.displayName, pin);
         if (!pinOk) return corsResponse({ ok: false, message: 'PIN\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.' }, 401);
-        try { await setUserPin(env, userId, pin); } catch (_) {}
+        // \uC8FC\uC758: \uB85C\uADF8\uC778 \uC2DC PIN \uC790\uB3D9 \uB36E\uC5B4\uC4F0\uAE30 \uC81C\uAC70. PIN\uC740 \uC624\uC9C1 /auth/change-pin(\uBA85\uC2DC\uC801 'PIN \uBCC0\uACBD')\uC73C\uB85C\uB9CC \uBCC0\uACBD\uB428.
 
         const admins = await getAdmins(env);
         const role = account.role || admins[userId] || 'user';
