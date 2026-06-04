@@ -1523,7 +1523,7 @@ export default {
             if (aid) await vtPollAnalysis(vtKey, aid, 6);
             const ures = await fetch(`https://www.virustotal.com/api/v3/urls/${vtUrlId(raw)}`, { headers: H });
             const udata = await ures.json();
-            if (ures.ok && udata?.data?.attributes) await auditLog(env, user, 'VT_LOOKUP', { type, value: raw.slice(0, 60), mal: udata.data.attributes.last_analysis_stats?.malicious || 0 });
+            if (!body.noAudit && ures.ok && udata?.data?.attributes) await auditLog(env, user, 'VT_LOOKUP', { vtType: type, value: raw.slice(0, 60), mal: udata.data.attributes.last_analysis_stats?.malicious || 0 });
             return corsResponse({ ...udata, _type: 'url', _value: raw }, ures.status);
           }
           let vtUrl;
@@ -1533,11 +1533,20 @@ export default {
           const vtRes = await fetch(vtUrl, { headers: H });
           const data = await vtRes.json();
           if (vtRes.ok && data?.data?.attributes) {
-            await auditLog(env, user, 'VT_LOOKUP', { type, value: raw.slice(0, 40), mal: data.data.attributes.last_analysis_stats?.malicious || 0 });
+            if (!body.noAudit) await auditLog(env, user, 'VT_LOOKUP', { vtType: type, value: raw.slice(0, 40), mal: data.data.attributes.last_analysis_stats?.malicious || 0 });
             if (type === 'hash') await saveVtHistory(env, user, raw.toLowerCase(), data.data.attributes);
           }
           return corsResponse({ ...data, _type: type, _value: raw }, vtRes.status);
         } catch (e) { return corsResponse({ error: { message: e.message || 'VT \uC870\uD68C \uC2E4\uD328' } }, 502); }
+      }
+      // \uC5EC\uB7EC \uAC74 \uC77C\uAD04 \uC870\uD68C \uC2DC \uAC10\uC0AC\uB85C\uADF8 1\uAC74\uC73C\uB85C \uC694\uC57D(\uAC1C\uBCC4 \uC870\uD68C\uB294 noAudit\uB85C \uAE30\uB85D \uC0DD\uB7B5)
+      if (path === '/vt/audit-batch' && request.method === 'POST') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        const body = await request.json().catch(() => ({}));
+        const count = Math.max(1, parseInt(body.count) || 1);
+        const mal = Math.max(0, parseInt(body.mal) || 0);
+        await auditLog(env, user, 'VT_LOOKUP', { count, mal, batch: true, value: `${count}\uAC74 \uC77C\uAD04 \uC870\uD68C` });
+        return corsResponse({ ok: true });
       }
       // VT \uD30C\uC77C \uC5C5\uB85C\uB4DC \u2192 \uBD84\uC11D ID \uBC18\uD658
       if (path === '/vt/file' && request.method === 'POST') {

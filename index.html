@@ -4203,10 +4203,10 @@ function vtUpdateCount(){
   el.textContent=(parts.length?parts.join(' · '):'입력 0')+(invalid.length?` · 형식오류 ${invalid.length}`:'');
 }
 function vtRiskColor(mal){return mal>=5?'#f87171':mal>=1?'#fbbf24':'#22d3a5';}
-async function vtLookupOne(item){
+async function vtLookupOne(item, noAudit){
   const value=typeof item==='string'?item:item.value;
   try{
-    const r=await fetch(`${WORKERS}/vt/lookup`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({value})});
+    const r=await fetch(`${WORKERS}/vt/lookup`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({value, noAudit:!!noAudit})});
     const d=await r.json();
     if(d.error){const msg=d.error.message||'조회 실패';return {value,hash:value,ok:false,error:msg,notFound:/not\s*found/i.test(msg)};}
     const t=d._type||(typeof item==='object'?item.type:vtClientType(value));
@@ -4243,13 +4243,14 @@ async function vtLookup(){
   for(let i=0;i<list.length;i++){
     btn.textContent=`조회 중 ${i+1}/${list.length}`;
     res.innerHTML=vtTableHtml(results,list.length,i);
-    results.push(await vtLookupOne(list[i]));
+    results.push(await vtLookupOne(list[i], true));   // 개별 감사로그 생략(일괄 1건으로 기록)
     renderVTHistory();
     await new Promise(r=>setTimeout(r,350));
   }
   res.innerHTML=vtTableHtml(results,list.length,list.length);
   btn.disabled=false;btn.textContent='🔍 조회';
   const okN=results.filter(r=>r.ok).length, malN=results.filter(r=>r.ok&&r.mal>0).length;
+  try{ await fetch(`${WORKERS}/vt/audit-batch`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({count:list.length,mal:malN})}); }catch(_){}
   toast(`VT 조회 완료: ${okN}/${list.length}건 성공 · 악성/의심 ${malN}건`);
 }
 function vtFileDrop(e){
@@ -4511,8 +4512,8 @@ async function loadAudit(){
         it.push(`${a.promptLen||0}자`);
         detail=it.join(' · ');
       }else if(a.type==='VT_LOOKUP'){
-        target=a.name||a.hash||'-';
-        detail=`${a.hash||''} · ${a.mal||0}건 탐지`;
+        if(a.batch||a.count>1){ target=`${a.count||0}건 일괄 조회`; detail=`악성/의심 ${a.mal||0}건`; }
+        else { target=a.value||a.name||a.hash||'-'; detail=(a.vtType?`[${a.vtType}] `:'')+(a.mal!=null?`${a.mal||0}건 탐지`:''); }
       }else if(a.type==='ADMIN_CHANGE'){
         target=a.target||'-';
         detail=`${a.action==='add'?'부여':a.action==='remove'?'회수':'변경'} (${a.role||'admin'})`;
