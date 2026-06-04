@@ -1,7 +1,7 @@
 # ENGR HUB — 프로젝트 메모 (Claude 작업 가이드)
 
 ESCARE 보안기술팀 내부 통합 허브. 단일 `index.html`(약 7,800줄) + Cloudflare Worker(`worker.js`).
-현재 버전: **v1.8.2**
+현재 버전: **v1.9.0** (웹 푸시 알림)
 
 ---
 
@@ -22,10 +22,12 @@ ESCARE 보안기술팀 내부 통합 허브. 단일 `index.html`(약 7,800줄) +
 ```bash
 cp dev/worker.js  prod/worker.js              # 워커는 그대로 복사
 cp dev/index.html prod/index.html
-sed -i 's/engr-hub-proxy-dev\.mj-park\.workers\.dev/engr-hub-proxy.mj-park.workers.dev/g' prod/index.html
-# 확인: grep -oc 'engr-hub-proxy-dev' prod/index.html  → 0 이어야 함
+cp dev/sw.js      prod/sw.js                   # ⚠️ sw.js도 워커 URL 하드코딩 → 반드시 복사+스왑
+sed -i 's/engr-hub-proxy-dev\.mj-park\.workers\.dev/engr-hub-proxy.mj-park.workers.dev/g' prod/index.html prod/sw.js
+# 확인: grep -oc 'engr-hub-proxy-dev' prod/index.html prod/sw.js  → 둘 다 0 이어야 함
 git -C <repo> add -A && git -C <repo> commit -m "..." && git -C <repo> push origin main
 ```
+- ⚠️ 워커 vars/secret도 dev·prod 각각 설정 필요(아래 푸시 참고). prod 워커 배포는 `wrangler deploy --config prod/wrangler.jsonc`.
 - `git -C <절대경로>` 사용 권장 (Bash cwd가 종종 리셋됨).
 - 커밋 trailer: `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`
 
@@ -67,6 +69,14 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
 - **매뉴얼**: 관리자=`manual.html`(full), 일반=`manual-user.html`. (별도 폴더 `engr-hub-manual`에서 `build-manual.js`로 스크린샷 base64 내장 빌드)
 - **권한**: `window.__HUB_IS_ADMIN`. 팀 일보고/감사로그/관리자설정 = 관리자/슈퍼만. 슈퍼 = mj.park(박민준).
 - **Teams 임베드**: iframe 불가(MS가 X-Frame 차단). 딥링크 버튼만 가능. Graph API 연동은 Azure AD 앱+관리자 승인 필요.
+- **웹 푸시 알림(Web Push, Option B)**:
+  - **구성**: `sw.js`(서비스워커, fetch 핸들러 없음=캐시 안 함) + VAPID. **공개키=wrangler.jsonc `vars.VAPID_PUBLIC_KEY`**(공개), **개인키=secret `VAPID_PRIVATE_JWK`**(JWK JSON), `vars.VAPID_SUBJECT`=mailto. dev·prod 동일 키쌍 사용(둘 다 secret 설정 완료).
+  - **방식**: payload-less 푸시(VAPID ES256 JWT만) → SW가 `/push/pending`(엔드포인트 소유 증명, 세션불필요)에서 보류 알림 받아 표시. 암호화(aes128gcm) 미사용.
+  - **워커**: `pushNotify(env,eventKey,actorId,vars)` — 본인(actor) 제외, 사용자 opt-out(`push:pref:<user>`), 관리자 기능별 on/off + 대상 지정(include/exclude) + 멘트 템플릿(`{user}{target}{event}`). KV: `push:subs`(전체 구독 1키), `push:pending:<hash>`, `push:settings`, `push:pref:<user>`. 이벤트 레지스트리 `PUSH_EVENTS`(link/knowledge/eos) → 각 POST 핸들러에서 `ctx.waitUntil(pushNotify(...))`.
+  - **엔드포인트**: `/push/public-key`(GET,무인증) `/push/subscribe` `/push/unsubscribe` `/push/pending`(무인증) `/push/pref`(GET/POST) `/push/test`(POST) `/push/settings`(GET/POST, 관리자).
+  - **클라**: `initPushOnLogin()`(enterApp에서 호출, SW등록+권한있으면 조용히 재구독+`?go=`/postMessage 네비), `enablePush/disablePush/togglePushFromMenu`(상단메뉴 🔔 토글), 관리자설정 `loadPushSettings/savePushSettings`(loadSettings 끝에서 호출, `window.__userMap/__teamNames` 사용).
+  - **제약**: iOS는 **설치형 PWA(홈화면 추가)에서만** 동작(16.4+) — 미설치 iOS는 토글 숨김. 각 사용자가 브라우저에서 "알림 허용" 직접 눌러야 함(Claude/IT 승인 불가). 실제 토스트 표시는 **실기기 확인 필수**.
+  - **이벤트 추가법**: 워커 `PUSH_EVENTS`에 키 추가 + 해당 POST 핸들러에 `ctx.waitUntil(pushNotify(...))` 한 줄. 관리자 UI/타겟팅은 자동 반영. (케이스 트래커는 My Desk 개인데이터라 공유 이벤트 불가)
 
 ---
 
@@ -95,3 +105,4 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
 - 아이폰 상단 메뉴 잘림 수정: 팝오버를 body로 이동(상단바 backdrop-filter가 fixed 기준이 돼 잘림)
 - 로그 분석 단발성 개편(`analyzeLogs`→JSON): 에러/경고/특이사항 시간순 발췌(복사) + 이슈별 KB/커뮤니티 검색링크 + `registerLogLink`로 업무링크 ➕등록. (worker AI mode `logx`, `extractKeywords` 제거)
 - **My Desk 데이터 손실 버그 수정**: 연속 입력 중 디바운스가 계속 밀려 PUT이 안 나가던 문제 → 최대대기 3s + 2초 백스톱 + 이탈 시 keepalive flush. 로드 실패 시 빈 값 덮어쓰기 금지. (모든 카드 save 경로 검증 완료)
+- **웹 푸시 알림(Option B) 구축**: sw.js + VAPID(ES256) + payload-less. 본인 제외/사용자 opt-out/관리자 기능별 on·off/대상 지정(include·exclude)/멘트 템플릿. 이벤트=업무링크·팀노하우·EOS 등록. 상단메뉴 🔔 토글 + 관리자설정 섹션. (실기기 알림 표시 검증 사용자 필요)
