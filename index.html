@@ -6549,7 +6549,7 @@ function renderCustomerRight(c){
   </div>`;
 }
 function renderVTHistory(){
-  const wrap=document.getElementById('vt-history'); if(!wrap)return;
+  const wrap=document.getElementById('vt-history-wrap'); if(!wrap)return;
   const list=Array.isArray(VT_HISTORY)?VT_HISTORY.slice(0,20):[];
   if(!list.length){wrap.innerHTML='<div class="empty">최근 조회 이력이 없습니다.</div>';return;}
   wrap.innerHTML=list.map(x=>{
@@ -6561,7 +6561,7 @@ function renderVTHistory(){
 }
 async function loadSharedVTHistory(force=false){
   if(VT_HISTORY_SHARED_LOADED&&!force)return;
-  const wrap=document.getElementById('vt-history'); if(wrap)wrap.innerHTML='<div class="empty">최근 조회 이력 불러오는 중...</div>';
+  const wrap=document.getElementById('vt-history-wrap'); if(wrap)wrap.innerHTML='<div class="empty">최근 조회 이력 불러오는 중...</div>';
   try{const res=await api('/vt/history'); VT_HISTORY=res.history||[]; VT_HISTORY_SHARED_LOADED=true;}catch(e){VT_HISTORY=VT_HISTORY||[];}
   renderVTHistory();
 }
@@ -7399,7 +7399,7 @@ function onMobSearch(val){
   const page=document.querySelector('.page.active');
   if(!page)return;
   const id=page.id.replace('page-','');
-  const map={dash:'global-search',issues:'f-q',cases:'case-q',customers:'cust-q',links:'link-q',eos:'eos-q',knowledge:'kb-q',log:'log-q',vt:'vt-hash'};
+  const map={dash:'global-search',issues:'f-q',cases:'case-q',customers:'cust-q',links:'links-q',eos:'eos-q',knowledge:'know-q',vt:'vt-input'};
   const inputId=map[id];
   if(!inputId)return;
   const el=document.getElementById(inputId);

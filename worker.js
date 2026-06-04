@@ -1370,7 +1370,7 @@ export default {
       }
 
       if (path === '/auth/login' && request.method === 'POST') {
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         const { name, pin } = body;
         const userId = normalizeUserId(name);
         if (!userId || !pin) return corsResponse({ ok: false, message: '\uACC4\uC815 ID\uC640 PIN\uC744 \uC785\uB825\uD558\uC138\uC694.' }, 400);
@@ -1408,8 +1408,8 @@ export default {
       }
 
       if (path === '/auth/change-pin' && request.method === 'POST') {
-        if (!user) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const body = await request.json();
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        const body = await request.json().catch(() => ({}));
         const oldPin = body.oldPin || '';
         const newPin = body.newPin || '';
         if (!oldPin || !newPin) return corsResponse({ ok: false, message: '\uD604\uC7AC PIN\uACFC \uC0C8 PIN\uC744 \uC785\uB825\uD558\uC138\uC694.' }, 400);
@@ -1471,7 +1471,7 @@ export default {
       //
       if (path === '/ai/generate' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         const { contents, mode = 'technical_analysis', detail = {} } = body;
         const prompt = contents?.[0]?.parts?.[0]?.text;
         if (!prompt) return corsResponse({ ok: false, message: '\uD504\uB86C\uD504\uD2B8\uAC00 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.' }, 400);
@@ -1506,7 +1506,7 @@ export default {
       // VT \uBA40\uD2F0 \uD0C0\uC785 \uC870\uD68C (\uD574\uC2DC/IP/\uB3C4\uBA54\uC778/URL)
       if (path === '/vt/lookup' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ error: { message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' } }, 401);
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         const vtKey = env.VT_KEY || env.VT_API_KEY || '';
         if (!vtKey) return corsResponse({ error: { message: 'VT_KEY \uD658\uACBD\uBCC0\uC218\uAC00 \uC124\uC815\uB418\uC9C0 \uC54A\uC558\uC2B5\uB2C8\uB2E4.' } }, 500);
         const raw = String(body.value || body.hash || '').trim();
@@ -1631,7 +1631,7 @@ export default {
 
       if (path === '/admin/users' && request.method === 'POST') {
         if (!hasSession || !await isSuper(env, user)) return corsResponse({ ok: false, message: 'Forbidden' }, 403);
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         const account = await saveUserAccount(env, {
           id: body.id || body.userId,
           displayName: body.displayName,
@@ -1675,7 +1675,7 @@ export default {
       //
       if (path === '/admin/update' && request.method === 'POST') {
         if (!hasSession || !await isSuper(env, user)) return corsResponse({ ok: false, message: 'Forbidden' }, 403);
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         const { action, user: targetUser, role: newRole } = body;
         const targetId = normalizeUserId(targetUser);
 
@@ -1731,7 +1731,7 @@ export default {
       }
       if (path === '/admin/config' && request.method === 'POST') {
         if (!hasSession || !await isSuper(env, user)) return corsResponse({ ok: false, message: 'Forbidden' }, 403);
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         if (body.rangeMonths !== undefined) await env.ENGR_KV.put('config:range_months', String(body.rangeMonths));
         if (body.sessionMin !== undefined) await env.ENGR_KV.put('config:session_min', String(body.sessionMin));
         if (body.aiSystem !== undefined) await env.ENGR_KV.put('config:ai_system', body.aiSystem);
@@ -1818,7 +1818,7 @@ export default {
       //
       if (path === '/links' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         const raw = await env.ENGR_KV.get('config:links');
         let links = raw ? JSON.parse(raw) : [];
         const newLink = {
@@ -1856,7 +1856,7 @@ export default {
       if (path.startsWith('/links/') && request.method === 'PUT') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const id = path.split('/')[2];
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         const raw = await env.ENGR_KV.get('config:links');
         let links = raw ? JSON.parse(raw) : [];
         const target = links.find(l => l.id === id);
@@ -2007,7 +2007,7 @@ export default {
       }
       if (path === '/private-notes' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         const notes = await loadPrivateNotes(env, user);
         let items = notes.items;
         const item = {
@@ -2028,7 +2028,7 @@ export default {
       if (path.startsWith('/private-notes/') && request.method === 'PUT') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const id = path.split('/')[2];
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         const notes = await loadPrivateNotes(env, user);
         let items = notes.items;
         items = items.map(it => it.id === id ? { ...it, ...body, id, updatedAt: new Date().toISOString() } : it);
@@ -2048,7 +2048,7 @@ export default {
       //
       if (path === '/knowledge' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         const raw = await env.ENGR_KV.get('config:knowledge');
         let items = raw ? JSON.parse(raw) : [];
         const newItem = {
@@ -2087,7 +2087,7 @@ export default {
       if (path.startsWith('/knowledge/') && request.method === 'PUT') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const id = path.split('/')[2];
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         const raw = await env.ENGR_KV.get('config:knowledge');
         let items = raw ? JSON.parse(raw) : [];
         const target = items.find(it => it.id === id);
@@ -2113,13 +2113,15 @@ export default {
 
       //
       if (path === '/eos' && request.method === 'GET') {
-        const raw = await env.ENGR_KV.get('config:eos');
-        return corsResponse({ ok: true, items: raw ? JSON.parse(raw) : [] });
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        let eosItems = [];
+        try { const raw = await env.ENGR_KV.get('config:eos'); if (raw) eosItems = JSON.parse(raw); } catch (_) {}
+        return corsResponse({ ok: true, items: eosItems });
       }
       //
       if (path === '/eos' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         const raw = await env.ENGR_KV.get('config:eos');
         let items = raw ? JSON.parse(raw) : [];
         const newItem = {
@@ -2184,7 +2186,7 @@ export default {
       if (path.startsWith('/eos/') && request.method === 'PUT') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const id = path.split('/')[2];
-        const body = await request.json();
+        const body = await request.json().catch(() => ({}));
         const raw = await env.ENGR_KV.get('config:eos');
         let items = raw ? JSON.parse(raw) : [];
         const target = items.find(it => it.id === id);
