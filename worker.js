@@ -1973,6 +1973,37 @@ export default {
         }
         return corsResponse({ ok: true, sent, gone });
       }
+      if (path === '/push/send' && request.method === 'POST') {
+        // 관리자: 선택한 인원에게 직접 알림 발송
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 사용할 수 있습니다.' }, 403);
+        const body = await request.json().catch(() => ({}));
+        const title = String(body.title || '').slice(0, 80).trim();
+        const text = String(body.body || '').slice(0, 300).trim();
+        const page = String(body.page || '').slice(0, 40);
+        const includeMuted = !!body.includeMuted;
+        const recipients = Array.isArray(body.recipients) ? [...new Set(body.recipients.map(normalizeUserId).filter(Boolean))] : [];
+        if (!title && !text) return corsResponse({ ok: false, message: '제목 또는 내용을 입력하세요.' }, 400);
+        if (!recipients.length) return corsResponse({ ok: false, message: '받을 사람을 선택하세요.' }, 400);
+        const subs = await getPushSubs(env);
+        const payload = { title: title || '📢 알림', body: text, page, ts: Date.now(), tag: 'admin-msg', from: user };
+        let sent = 0, changed = false; const skipped = [];
+        for (const uid of recipients) {
+          if (!includeMuted) {
+            let pref = {}; try { const pr = await env.ENGR_KV.get('push:pref:' + uid); if (pr) pref = JSON.parse(pr); } catch (_) {}
+            if (pref.enabled === false) { skipped.push(uid); continue; }
+          }
+          const list = subs[uid] || [];
+          if (!list.length) { skipped.push(uid); continue; }
+          for (const s of list) {
+            try { await enqueuePending(env, s.endpoint, payload); } catch (_) {}
+            try { const st = await sendWebPush(env, s); if (st >= 200 && st < 300) sent++; else if (st === 404 || st === 410) { subs[uid] = (subs[uid] || []).filter(x => x.endpoint !== s.endpoint); changed = true; } } catch (_) {}
+          }
+          if (subs[uid] && !subs[uid].length) { delete subs[uid]; changed = true; }
+        }
+        if (changed) await savePushSubs(env, subs);
+        await auditLog(env, user, 'PUSH_SEND', { count: sent, to: recipients.length, skipped: skipped.length, title: title || '(제목없음)' });
+        return corsResponse({ ok: true, sent, skipped });
+      }
       if (path === '/push/settings' && request.method === 'GET') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC811\uADFC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const settings = await getPushSettings(env);
