@@ -3621,7 +3621,7 @@ async function runCaseAI(){
 // ── EOS / LICENSE ─────────────────────────────────
 async function loadEOS(){
   try{
-    const r=await fetch(`${WORKERS}/eos`);
+    const r=await fetch(`${WORKERS}/eos`,{headers:authHeaders()});
     const d=await r.json();
     EOS_ITEMS=d.items||[];
     updateEosWarnBadge();
