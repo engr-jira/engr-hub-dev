@@ -2157,20 +2157,21 @@ export default {
         let items = raw ? JSON.parse(raw) : [];
         const newItem = {
           id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-          type: body.type || 'eos',                  // 'eos' or 'license'
           customer: body.customer || '',
-          product: body.product || '',
-          version: body.version || '',
-          licenseName: body.licenseName || '',
-          expireDate: body.expireDate || '',
+          productDesc: body.productDesc || '',
+          siteId: body.siteId || '',
+          quantity: body.quantity || '',
+          serial: body.serial || '',
+          startDate: body.startDate || '',
+          expireDate: body.expireDate || '',   // End Date (지원/만료 종료일 — D-day 기준)
           memo: body.memo || '',
           createdBy: user,
           createdAt: new Date().toISOString(),
         };
         items.push(newItem);
         await env.ENGR_KV.put('config:eos', JSON.stringify(items));
-        await auditLog(env, user, 'EOS_ADD', { itemType: newItem.type, customer: newItem.customer, product: newItem.product, expire: newItem.expireDate, licenseName: newItem.licenseName });
-        ctx.waitUntil(pushNotify(env, 'eos', user, { target: [newItem.product, newItem.customer].filter(Boolean).join(' / ') || (newItem.type === 'license' ? '라이선스' : 'EOS') }));
+        await auditLog(env, user, 'EOS_ADD', { customer: newItem.customer, product: newItem.productDesc, expire: newItem.expireDate });
+        ctx.waitUntil(pushNotify(env, 'eos', user, { target: [newItem.productDesc, newItem.customer].filter(Boolean).join(' / ') || '라이선스' }));
         return corsResponse({ ok: true, item: newItem });
       }
       if (path === '/eos/bulk' && request.method === 'POST') {
@@ -2182,20 +2183,20 @@ export default {
         let store = raw ? JSON.parse(raw) : [];
         const created = [];
         for (const b of items) {
-          if (!b || !b.product || !b.expireDate) continue;
+          if (!b || !b.productDesc) continue;
           const it = {
             id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-            type: b.type || 'eos', customer: b.customer || '', product: b.product || '',
-            version: b.version || '', licenseName: b.licenseName || '', expireDate: b.expireDate || '',
-            memo: b.memo || '', createdBy: user, createdAt: new Date().toISOString(),
+            customer: b.customer || '', productDesc: b.productDesc || '', siteId: b.siteId || '',
+            quantity: b.quantity || '', serial: b.serial || '', startDate: b.startDate || '',
+            expireDate: b.expireDate || '', memo: b.memo || '', createdBy: user, createdAt: new Date().toISOString(),
           };
           store.push(it); created.push(it);
         }
-        if (!created.length) return corsResponse({ ok: false, message: '제품/만료일이 유효한 항목이 없습니다.' }, 400);
+        if (!created.length) return corsResponse({ ok: false, message: 'Product Description이 있는 항목이 없습니다.' }, 400);
         await env.ENGR_KV.put('config:eos', JSON.stringify(store));
         await auditLog(env, user, 'EOS_ADD_BULK', { count: created.length, customer: created[0].customer });
         const cust = created[0].customer || '';
-        const tgt = created.length > 1 ? `${cust} ${created[0].product} 외 ${created.length - 1}건` : [created[0].product, cust].filter(Boolean).join(' / ');
+        const tgt = created.length > 1 ? `${cust} ${created[0].productDesc} 외 ${created.length - 1}건` : [created[0].productDesc, cust].filter(Boolean).join(' / ');
         ctx.waitUntil(pushNotify(env, 'eos', user, { target: tgt }));
         return corsResponse({ ok: true, created: created.length, items: created });
       }
@@ -2224,7 +2225,7 @@ export default {
         if (!await canModifyItem(env, user, target)) return corsResponse({ ok: false, message: '\uC791\uC131\uC790 \uB610\uB294 \uAD00\uB9AC\uC790\uB9CC \uC218\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         items = items.map(it => it.id === id ? { ...it, ...body, id, updatedBy: user, updatedAt: new Date().toISOString() } : it);
         await env.ENGR_KV.put('config:eos', JSON.stringify(items));
-        await auditLog(env, user, 'EOS_UPDATE', { id, itemType: target?.type, customer: target?.customer, product: target?.product, expire: body.expireDate || target?.expireDate, licenseName: body.licenseName || target?.licenseName });
+        await auditLog(env, user, 'EOS_UPDATE', { id, customer: target?.customer, product: body.productDesc || target?.productDesc, expire: body.expireDate || target?.expireDate });
         return corsResponse({ ok: true });
       }
 

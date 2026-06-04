@@ -421,6 +421,14 @@ html[data-theme="light"] .logx-issue{background:#f8fafc}
 .eos-line .eos-l-date{flex:0 0 138px;width:138px!important;color-scheme:dark}
 .eos-line .eos-l-rm{flex:0 0 32px;width:32px;height:34px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--danger);cursor:pointer;font-size:16px;padding:0;line-height:1}
 .eos-line .eos-l-rm:hover{border-color:var(--danger);background:rgba(248,113,113,.1)}
+.eos-lic{position:relative;border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;background:rgba(255,255,255,.02);display:flex;flex-direction:column;gap:8px}
+.eos-lic input{width:100%!important;max-width:none!important;margin:0!important;padding:8px 10px;font-size:12.5px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none;font-family:inherit}
+.eos-lic-grid{display:grid;grid-template-columns:1fr 84px 1.1fr;gap:8px}
+.eos-lic-dates{display:flex;gap:10px;flex-wrap:wrap}
+.eos-lic-dates label{flex:1;min-width:140px;font-size:9.5px;color:var(--text3);font-weight:700;text-transform:uppercase;display:flex;flex-direction:column;gap:4px}
+.eos-lic-dates input[type=date]{width:100%!important}
+.eos-lic-rm{position:absolute;top:8px;right:8px;width:24px;height:24px;border:1px solid var(--border);border-radius:6px;background:var(--panel);color:var(--danger);cursor:pointer;font-size:14px;padding:0;line-height:1;z-index:2}
+.eos-lic-rm:hover{border-color:var(--danger);background:rgba(248,113,113,.12)}
 .eos-banner{background:linear-gradient(135deg,rgba(248,113,113,.1),rgba(251,191,36,.08));border:1px solid rgba(248,113,113,.3);border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px}
 .eos-banner-icon{font-size:24px}
 .eos-banner-text{flex:1}
@@ -1825,7 +1833,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
             <button class="sb-btn" id="nav-issues" onclick="showPage('issues',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>이슈 관리</button>
             <button class="sb-btn" id="nav-cases" onclick="showPage('cases',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>케이스 트래커</button>
             <button class="sb-btn" id="nav-customers" onclick="showPage('customers',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>고객사 프로필</button>
-            <button class="sb-btn" id="nav-eos" onclick="showPage('eos',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>EOS / 라이선스<span class="badge-warn" id="eos-warn-badge" style="display:none">0</span></button>
+            <button class="sb-btn" id="nav-eos" onclick="showPage('eos',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>라이선스<span class="badge-warn" id="eos-warn-badge" style="display:none">0</span></button>
           </div>
         </div>
         <div class="sb-group collapsed" data-group="tools">
@@ -1998,29 +2006,26 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     </div>
 
     <div class="page" id="page-eos">
-      <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--warn);margin-bottom:16px">⏰ EOS / 라이선스 만료 관리. 만료 임박 항목은 로그인 시 강조됩니다. <span onclick="showStorageInfo('eos')" title="데이터 저장 안내" style="cursor:pointer;opacity:.6;font-size:13px">ℹ</span></div>
+      <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--warn);margin-bottom:16px">🔑 고객사 라이선스 관리. 만료일(End Date) 임박 항목은 로그인 시 강조됩니다. <span onclick="showStorageInfo('eos')" title="데이터 저장 안내" style="cursor:pointer;opacity:.6;font-size:13px">ℹ</span></div>
       <div class="action-row">
         <button class="btn btn-indigo" onclick="openEosModal()" style="width:auto;padding:9px 18px">+ 신규 등록</button>
       </div>
       <div class="filter-row">
-        <input id="eos-q" placeholder="고객사 / 제품 / 버전 / 라이선스 검색..." oninput="PAGE_STATE.eos=1;renderEosList()">
-        <select id="eos-type-filter" onchange="PAGE_STATE.eos=1;renderEosList()">
-          <option value="">전체 유형</option><option value="eos">EOS만</option><option value="license">라이선스만</option>
-        </select>
+        <input id="eos-q" placeholder="고객사 / 제품 / 사이트ID / 시리얼 검색..." oninput="PAGE_STATE.eos=1;renderEosList()">
         <select id="eos-pg" class="page-size-select" onchange="changePageSize('eos',this.value);renderEosList()"><option>10</option><option>20</option><option>30</option><option>50</option><option>100</option><option>200</option></select>
         <button class="filter-reset" onclick="resetEosFilters()">✕ 초기화</button>
         <span class="filter-count" id="eos-count">0건</span>
       </div>
       <table class="eos-table">
-        <thead><tr><th>유형</th><th>고객사</th><th>제품/버전</th><th>라이선스명</th><th>만료일</th><th>D-Day</th><th>등록</th><th></th></tr></thead>
+        <thead><tr><th>고객사</th><th>Product Description</th><th>Site ID</th><th>수량</th><th>Serial</th><th>기간 (시작~종료)</th><th>D-Day</th><th></th></tr></thead>
         <tbody id="eos-tbody">
           <tr><td colspan="8" style="text-align:center;padding:40px">
-            <div style="color:var(--text3);font-size:13px;margin-bottom:12px">📋 등록된 항목이 없습니다</div>
-            <div style="font-size:11px;color:var(--text3);line-height:2;max-width:400px;margin:0 auto;text-align:left;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="color:var(--text3);font-size:13px;margin-bottom:12px">📋 등록된 라이선스가 없습니다</div>
+            <div style="font-size:11px;color:var(--text3);line-height:2;max-width:470px;margin:0 auto;text-align:left;background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:14px">
               <strong style="color:var(--text2);display:block;margin-bottom:6px">등록 방법:</strong>
-              • <strong>EOS</strong>: 제품 버전이 지원 종료되는 일자 (예: SEP 14.3 RU8 → 2025-12-31)<br>
-              • <strong>라이선스</strong>: 고객사 라이선스 계약 만료일 (예: DLP Enterprise 라이선스 → 2026-06-30)<br>
-              • 만료 임박 시 사이드바 빨간 뱃지 + 대시보드 상단 배너로 알림
+              • "+ 신규 등록" → 고객사 선택 후 라이선스 항목(Product Description · Site ID · 수량 · Serial · 시작/종료일)을 입력합니다.<br>
+              • 한 고객사에 라이선스가 여러 개면 <strong>"+ 라이선스 추가"</strong>로 줄을 늘려 한 번에 등록합니다.<br>
+              • End Date(만료일) 임박 시 사이드바 빨간 뱃지 + 대시보드 상단 배너로 알림.
             </div>
           </td></tr>
         </tbody>
@@ -2784,7 +2789,7 @@ const pageTitles={
   issues:['이슈 관리','전체 이슈 목록 및 상세 조회'],
   cases:['케이스 트래커','벤더 케이스 현황 및 AI 가이드'],
   customers:['고객사 프로필','Jira 기반 고객사별 현황 자동 집계'],
-  eos:['EOS / 라이선스','제품 EOS 및 라이선스 만료 관리'],
+  eos:['라이선스','고객사 라이선스 만료 관리'],
   log:['로그 분석기','솔루션 로그 AI 분석'],
   vt:['VirusTotal 조회','해시값 기반 악성 여부 분석'],
   links:['업무 링크','자주 접근하는 URL 모음'],
@@ -3074,7 +3079,7 @@ function renderOpsFocus(){
     <div class="ops-focus-card ${nearEos.length?'warn':''}">
       <h4>⏰ 30일 내 만료</h4>
       <div class="big">${nearEos.length}</div>
-      <div class="small">EOS/라이선스 임박<br>${nearEos.slice(0,2).map(x=>escapeHtml((x.customer||'-')+' '+(x.product||''))).join(', ')||'현재 없음'}</div>
+      <div class="small">라이선스 임박<br>${nearEos.slice(0,2).map(x=>escapeHtml((x.customer||'-')+' '+(x.productDesc||x.product||''))).join(', ')||'현재 없음'}</div>
     </div>
     <div class="ops-focus-card">
       <h4>📌 집중 고객사</h4>
@@ -3675,9 +3680,9 @@ function renderEosBanner(){
   <div class="eos-banner">
     <div class="eos-banner-icon">⚠️</div>
     <div class="eos-banner-text">
-      <div class="eos-banner-title">EOS / 라이선스 만료 임박 ${urgent.length}건</div>
+      <div class="eos-banner-title">라이선스 만료 임박 ${urgent.length}건</div>
       <div class="eos-banner-detail">
-        가장 임박: <strong style="color:#fca5a5">${escapeHtml(top.customer)}</strong> · ${escapeHtml(top.product)} ${escapeHtml(top.version||'')}${top.licenseName?' · '+escapeHtml(top.licenseName):''} (${tDays}일 후 ${top.expireDate})
+        가장 임박: <strong style="color:#fca5a5">${escapeHtml(top.customer)}</strong> · ${escapeHtml(top.productDesc||top.product||'')} (${tDays}일 후 ${top.expireDate})
       </div>
     </div>
     <button class="eos-banner-btn" onclick="showPage('eos',document.getElementById('nav-eos'))">자세히 →</button>
@@ -3706,10 +3711,8 @@ function renderOverdueBanner(){
 }
 function renderEosList(){
   const q=(document.getElementById('eos-q')||{}).value?.toLowerCase()||'';
-  const tf=(document.getElementById('eos-type-filter')||{}).value||'';
   let list=[...EOS_ITEMS];
-  if(tf)list=list.filter(it=>it.type===tf);
-  if(q)list=list.filter(it=>(it.customer||'').toLowerCase().includes(q)||(it.product||'').toLowerCase().includes(q)||(it.version||'').toLowerCase().includes(q)||(it.licenseName||'').toLowerCase().includes(q));
+  if(q)list=list.filter(it=>[it.customer,it.productDesc,it.product,it.siteId,it.serial].some(v=>(v||'').toString().toLowerCase().includes(q)));
   list.sort((a,b)=>{
     const da=a.expireDate?new Date(a.expireDate).getTime():Infinity;
     const db=b.expireDate?new Date(b.expireDate).getTime():Infinity;
@@ -3718,23 +3721,28 @@ function renderEosList(){
   const pageList=sliceForPage(list,'eos');
   document.getElementById('eos-count').textContent=pageCountText('eos',list.length);
   const tbody=document.getElementById('eos-tbody');
-  if(!pageList.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3)">등록된 항목이 없습니다</td></tr>`;renderPager('eos-pager','eos',list.length,'renderEosList');return;}
+  if(!pageList.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3)">등록된 라이선스가 없습니다</td></tr>`;renderPager('eos-pager','eos',list.length,'renderEosList');return;}
   tbody.innerHTML=pageList.map(it=>{
-    const days=daysUntil(it.expireDate);
-    let rowClass='',badgeBg,badgeColor,badgeText;
-    if(days<0){rowClass='eos-warn';badgeBg='rgba(248,113,113,.2)';badgeColor='#f87171';badgeText='만료';}
-    else if(days<=7){rowClass='eos-warn';badgeBg='rgba(248,113,113,.2)';badgeColor='#f87171';badgeText='D-'+days;}
-    else if(days<=30){rowClass='eos-warn-near';badgeBg='rgba(251,191,36,.2)';badgeColor='#fbbf24';badgeText='D-'+days;}
-    else if(days<=60){badgeBg='rgba(251,191,36,.12)';badgeColor='#fbbf24';badgeText='D-'+days;}
-    else {badgeBg='rgba(34,211,165,.15)';badgeColor='#22d3a5';badgeText='D-'+days;}
+    const hasEnd=!!it.expireDate;
+    const days=hasEnd?daysUntil(it.expireDate):null;
+    let rowClass='',badgeBg='rgba(148,163,184,.15)',badgeColor='var(--text3)',badgeText='—';
+    if(hasEnd){
+      if(days<0){rowClass='eos-warn';badgeBg='rgba(248,113,113,.2)';badgeColor='#f87171';badgeText='만료';}
+      else if(days<=7){rowClass='eos-warn';badgeBg='rgba(248,113,113,.2)';badgeColor='#f87171';badgeText='D-'+days;}
+      else if(days<=30){rowClass='eos-warn-near';badgeBg='rgba(251,191,36,.2)';badgeColor='#fbbf24';badgeText='D-'+days;}
+      else if(days<=60){badgeBg='rgba(251,191,36,.12)';badgeColor='#fbbf24';badgeText='D-'+days;}
+      else {badgeBg='rgba(34,211,165,.15)';badgeColor='#22d3a5';badgeText='D-'+days;}
+    }
+    const pd=it.productDesc||it.product||'-';
+    const period=[it.startDate,it.expireDate].filter(Boolean).join(' ~ ')||'-';
     return `<tr class="${rowClass}" onclick="openEosDetailModal('${it.id}')" style="cursor:pointer">
-      <td><span class="badge" style="background:${it.type==='eos'?'rgba(167,139,250,.15)':'rgba(34,211,165,.15)'};color:${it.type==='eos'?'#a78bfa':'#22d3a5'}">${it.type==='eos'?'EOS':'라이선스'}</span></td>
       <td style="font-weight:700">${escapeHtml(it.customer||'-')}</td>
-      <td>${escapeHtml(it.product||'-')} <span style="color:var(--text3)">${escapeHtml(it.version||'')}</span></td>
-      <td>${escapeHtml(it.licenseName||'-')}</td>
-      <td>${it.expireDate||'-'}</td>
+      <td>${escapeHtml(pd)}</td>
+      <td style="color:var(--text2)">${escapeHtml(it.siteId||'-')}</td>
+      <td style="text-align:right">${escapeHtml(String(it.quantity||'-'))}</td>
+      <td style="font-family:'Consolas',monospace;font-size:11px">${escapeHtml(it.serial||'-')}</td>
+      <td style="font-size:11px;color:var(--text2);white-space:nowrap">${escapeHtml(period)}</td>
       <td><span class="eos-day-badge" style="background:${badgeBg};color:${badgeColor}">${badgeText}</span></td>
-      <td style="font-size:10px;color:var(--text3)">${escapeHtml(it.createdBy||'-')}</td>
       <td style="white-space:nowrap">
         <button onclick="event.stopPropagation();openEosEditModal('${it.id}')" style="background:none;border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:11px;padding:3px 8px;font-family:inherit;margin-right:4px">✎ 수정</button>
         <button onclick="event.stopPropagation();deleteEos('${it.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px">×</button>
@@ -3746,18 +3754,20 @@ function renderEosList(){
 function openEosDetailModal(id){
   const it=EOS_ITEMS.find(x=>x.id===id);
   if(!it){toast('항목을 찾을 수 없습니다',true);return;}
-  const d=daysUntil(it.expireDate);
-  const label=it.type==='license'?'라이선스':'EOS';
-  const color=d<0?'#f87171':d<=30?'#fbbf24':'#22d3a5';
-  openGenModal(`${label} 상세`,`
+  const hasEnd=!!it.expireDate;
+  const d=hasEnd?daysUntil(it.expireDate):null;
+  const color=!hasEnd?'var(--text3)':d<0?'#f87171':d<=30?'#fbbf24':'#22d3a5';
+  const pd=it.productDesc||it.product||'-';
+  openGenModal('라이선스 상세',`
   <div class="rp-meta">
-    <div class="rp-row"><span>유형</span><span>${label}</span></div>
     <div class="rp-row"><span>고객사</span><span>${escapeHtml(it.customer||'-')}</span></div>
-    <div class="rp-row"><span>제품</span><span>${escapeHtml(it.product||'-')}</span></div>
-    <div class="rp-row"><span>버전</span><span>${escapeHtml(it.version||'-')}</span></div>
-    <div class="rp-row"><span>라이선스명</span><span>${escapeHtml(it.licenseName||'-')}</span></div>
-    <div class="rp-row"><span>만료일</span><span>${escapeHtml(it.expireDate||'-')}</span></div>
-    <div class="rp-row"><span>D-Day</span><span style="color:${color};font-weight:900">${d<0?'만료':`D-${d}`}</span></div>
+    <div class="rp-row"><span>Product Description</span><span>${escapeHtml(pd)}</span></div>
+    <div class="rp-row"><span>Enterprise Site ID</span><span>${escapeHtml(it.siteId||'-')}</span></div>
+    <div class="rp-row"><span>Quantity</span><span>${escapeHtml(String(it.quantity||'-'))}</span></div>
+    <div class="rp-row"><span>Serial Number</span><span>${escapeHtml(it.serial||'-')}</span></div>
+    <div class="rp-row"><span>Start Date</span><span>${escapeHtml(it.startDate||'-')}</span></div>
+    <div class="rp-row"><span>End Date</span><span>${escapeHtml(it.expireDate||'-')}</span></div>
+    <div class="rp-row"><span>D-Day</span><span style="color:${color};font-weight:900">${!hasEnd?'-':d<0?'만료':`D-${d}`}</span></div>
     <div class="rp-row"><span>등록</span><span>${escapeHtml(it.createdBy||'-')} · ${fd(it.createdAt)}</span></div>
   </div>
   ${it.memo?`<div class="rp-desc" style="margin-top:12px">${escapeHtml(it.memo)}</div>`:''}`,
@@ -3765,51 +3775,48 @@ function openEosDetailModal(id){
    <button class="btn btn-indigo" onclick="openEosEditModal('${id}')" style="width:auto;padding:8px 18px">수정</button>`);
 }
 function openEosModal(){
-  const today=new Date().toISOString().slice(0,10);
-  openGenModal('EOS / 라이선스 등록',`
+  openGenModal('고객사 라이선스 등록',`
   <div class="modal-form">
-    <div class="full">
-      <label>유형</label>
-      <select id="eos-form-type"><option value="eos">EOS (제품/버전)</option><option value="license">라이선스</option></select>
-    </div>
     <div class="full"><label>고객사 *</label><input id="eos-form-customer" placeholder="고객사명" list="customer-list"></div>
-    <div class="full"><label>라이선스명 <span style="text-transform:none;color:var(--text3);font-weight:400">(여러 제품 공통 · 선택)</span></label><input id="eos-form-license" placeholder="예: DLP Enterprise 라이선스"></div>
     <div class="full">
-      <label>제품 · 버전 · 만료일 <span style="text-transform:none;color:var(--text3);font-weight:400">— 제품마다 만료일이 다르면 여러 줄로 추가</span></label>
+      <label>라이선스 항목 <span style="text-transform:none;color:var(--text3);font-weight:400">— 사진의 한 줄 = 한 항목. 여러 개면 아래에서 추가</span></label>
       <div id="eos-lines"></div>
-      <button type="button" class="btn btn-ghost" onclick="addEosLine()" style="width:auto;padding:7px 14px;font-size:12px;margin-top:4px">+ 제품/라이선스 추가</button>
+      <button type="button" class="btn btn-ghost" onclick="addEosLine()" style="width:auto;padding:7px 14px;font-size:12px;margin-top:6px">+ 라이선스 추가</button>
     </div>
-    <div class="full"><label>메모 <span style="text-transform:none;color:var(--text3);font-weight:400">(공통)</span></label><textarea id="eos-form-memo" placeholder="비고"></textarea></div>
+    <div class="full"><label>메모 <span style="text-transform:none;color:var(--text3);font-weight:400">(공통 · 선택)</span></label><textarea id="eos-form-memo" placeholder="비고"></textarea></div>
   </div>`,
   `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">취소</button>
    <button class="btn btn-indigo" onclick="saveEos()" style="width:auto;padding:8px 18px">저장</button>`);
-  addEosLine(today);
+  addEosLine();
 }
-function addEosLine(dateVal){
+function addEosLine(){
   const wrap=document.getElementById('eos-lines'); if(!wrap)return;
-  const row=document.createElement('div'); row.className='eos-line';
-  row.innerHTML='<input class="eos-l-product" placeholder="제품 *" title="제품명"><input class="eos-l-version" placeholder="버전" title="버전(선택)"><input type="date" class="eos-l-date" title="만료일 / EOS 일자" value="'+(dateVal||'')+'"><button type="button" class="eos-l-rm" title="이 줄 삭제">×</button>';
-  row.querySelector('.eos-l-rm').addEventListener('click',()=>{ row.remove(); if(!wrap.children.length)addEosLine(); });
+  const row=document.createElement('div'); row.className='eos-lic';
+  row.innerHTML='<button type="button" class="eos-lic-rm" title="이 항목 삭제">×</button>'
+    +'<input class="el-desc" placeholder="Product Description *" title="제품 설명">'
+    +'<div class="eos-lic-grid"><input class="el-site" placeholder="Enterprise Site ID"><input class="el-qty" type="number" placeholder="수량"><input class="el-serial" placeholder="Serial Number"></div>'
+    +'<div class="eos-lic-dates"><label>Start Date<input type="date" class="el-start"></label><label>End Date (만료)<input type="date" class="el-end"></label></div>';
+  row.querySelector('.eos-lic-rm').addEventListener('click',()=>{ row.remove(); if(!wrap.children.length)addEosLine(); });
   wrap.appendChild(row);
-  const p=row.querySelector('.eos-l-product'); if(p)setTimeout(()=>p.focus(),0);
+  const f=row.querySelector('.el-desc'); if(f)setTimeout(()=>f.focus(),0);
 }
 window.addEosLine=addEosLine;
 async function saveEos(){
-  const type=document.getElementById('eos-form-type').value;
   const customer=document.getElementById('eos-form-customer').value.trim();
-  const licenseName=document.getElementById('eos-form-license').value.trim();
   const memo=document.getElementById('eos-form-memo').value.trim();
   if(!customer){toast('고객사는 필수입니다',true);return;}
-  const rows=[...document.querySelectorAll('#eos-lines .eos-line')].map(r=>({
-    product:(r.querySelector('.eos-l-product').value||'').trim(),
-    version:(r.querySelector('.eos-l-version').value||'').trim(),
-    expireDate:r.querySelector('.eos-l-date').value
+  const blocks=[...document.querySelectorAll('#eos-lines .eos-lic')].map(b=>({
+    productDesc:(b.querySelector('.el-desc').value||'').trim(),
+    siteId:(b.querySelector('.el-site').value||'').trim(),
+    quantity:(b.querySelector('.el-qty').value||'').trim(),
+    serial:(b.querySelector('.el-serial').value||'').trim(),
+    startDate:b.querySelector('.el-start').value,
+    expireDate:b.querySelector('.el-end').value
   }));
-  const filled=rows.filter(l=>l.product||l.expireDate);
-  if(!filled.length){toast('제품과 만료일을 1개 이상 입력하세요',true);return;}
-  const invalid=filled.find(l=>!l.product||!l.expireDate);
-  if(invalid){toast('제품명과 만료일이 비어있는 줄이 있습니다',true);return;}
-  const items=filled.map(l=>({type,customer,licenseName,memo,product:l.product,version:l.version,expireDate:l.expireDate}));
+  const filled=blocks.filter(l=>l.productDesc||l.serial||l.expireDate||l.siteId);
+  if(!filled.length){toast('라이선스 항목을 1개 이상 입력하세요',true);return;}
+  if(filled.find(l=>!l.productDesc)){toast('Product Description은 필수입니다',true);return;}
+  const items=filled.map(l=>({customer,memo,...l}));
   try{
     const r=await fetch(`${WORKERS}/eos/bulk`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({items})});
     const d=await r.json();
@@ -3820,36 +3827,32 @@ async function saveEos(){
 function openEosEditModal(id){
   const it=EOS_ITEMS.find(x=>x.id===id);
   if(!it){toast('항목을 찾을 수 없습니다',true);return;}
-  openGenModal('EOS / 라이선스 수정',`
+  openGenModal('라이선스 수정',`
   <div class="modal-form">
-    <div class="full">
-      <label>유형</label>
-      <select id="eos-edit-type">
-        <option value="eos" ${it.type==='eos'?'selected':''}>EOS (제품/버전)</option>
-        <option value="license" ${it.type==='license'?'selected':''}>라이선스</option>
-      </select>
-    </div>
-    <div><label>고객사 *</label><input id="eos-edit-customer" value="${escapeHtml(it.customer||'')}"></div>
-    <div><label>제품 *</label><input id="eos-edit-product" value="${escapeHtml(it.product||'')}"></div>
-    <div><label>버전</label><input id="eos-edit-version" value="${escapeHtml(it.version||'')}"></div>
-    <div><label>라이선스명</label><input id="eos-edit-license" value="${escapeHtml(it.licenseName||'')}"></div>
-    <div class="full"><label>만료일 / EOS 일자 *</label><input type="date" id="eos-edit-date" value="${it.expireDate||''}"></div>
+    <div class="full"><label>고객사 *</label><input id="eos-edit-customer" value="${escapeHtml(it.customer||'')}"></div>
+    <div class="full"><label>Product Description *</label><input id="eos-edit-desc" value="${escapeHtml(it.productDesc||it.product||'')}"></div>
+    <div><label>Enterprise Site ID</label><input id="eos-edit-site" value="${escapeHtml(it.siteId||'')}"></div>
+    <div><label>Quantity</label><input id="eos-edit-qty" type="number" value="${escapeHtml(String(it.quantity||''))}"></div>
+    <div class="full"><label>Serial Number</label><input id="eos-edit-serial" value="${escapeHtml(it.serial||'')}"></div>
+    <div><label>Start Date</label><input type="date" id="eos-edit-start" value="${it.startDate||''}"></div>
+    <div><label>End Date (만료)</label><input type="date" id="eos-edit-end" value="${it.expireDate||''}"></div>
     <div class="full"><label>메모</label><textarea id="eos-edit-memo">${escapeHtml(it.memo||'')}</textarea></div>
   </div>`,
   `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">취소</button>
    <button class="btn btn-indigo" onclick="updateEos('${id}')" style="width:auto;padding:8px 18px">저장</button>`);
 }
 async function updateEos(id){
-  const type=document.getElementById('eos-edit-type').value;
   const customer=document.getElementById('eos-edit-customer').value.trim();
-  const product=document.getElementById('eos-edit-product').value.trim();
-  const version=document.getElementById('eos-edit-version').value.trim();
-  const licenseName=document.getElementById('eos-edit-license').value.trim();
-  const expireDate=document.getElementById('eos-edit-date').value;
+  const productDesc=document.getElementById('eos-edit-desc').value.trim();
+  const siteId=document.getElementById('eos-edit-site').value.trim();
+  const quantity=document.getElementById('eos-edit-qty').value.trim();
+  const serial=document.getElementById('eos-edit-serial').value.trim();
+  const startDate=document.getElementById('eos-edit-start').value;
+  const expireDate=document.getElementById('eos-edit-end').value;
   const memo=document.getElementById('eos-edit-memo').value.trim();
-  if(!customer||!product||!expireDate){toast('고객사, 제품, 만료일은 필수입니다',true);return;}
+  if(!customer||!productDesc){toast('고객사와 Product Description은 필수입니다',true);return;}
   try{
-    const r=await fetch(`${WORKERS}/eos/${id}`,{method:'PUT',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({type,customer,product,version,licenseName,expireDate,memo})});
+    const r=await fetch(`${WORKERS}/eos/${id}`,{method:'PUT',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({customer,productDesc,siteId,quantity,serial,startDate,expireDate,memo})});
     const d=await r.json();
     if(!d.ok){toast(d.message||'수정 실패',true);return;}
     toast('수정 완료');closeGenModal();await loadEOS();renderEosList();
@@ -4547,7 +4550,7 @@ async function loadAudit(){
         target=a.title||'-';
       }else if(a.type==='EOS_ADD_BULK'){
         target=`${a.customer||'-'} (${a.count||0}건)`;
-        detail=`[EOS/라이선스] 일괄 등록 ${a.count||0}건`;
+        detail=`[라이선스] 일괄 등록 ${a.count||0}건`;
       }else if(a.type==='PUSH_SEND'){
         target=a.title||'알림';
         detail=`${a.count||0}명 발송${a.skipped?` · ${a.skipped}명 제외`:''}`;
@@ -4944,8 +4947,8 @@ function renderCustomerRight(){
       <div class="rp-row"><span>완료율</span><span style="color:${rate>=80?"#2de6b8":rate>=50?"#fcd34d":"#fc8181"};font-weight:700">${rate}%</span></div>
     </div>
     ${eosForCust.length?`<div style="margin-bottom:12px">
-      <div style="font-size:10px;color:#fcd34d;font-weight:700;margin-bottom:6px">⏰ EOS / 라이선스 (${eosForCust.length})</div>
-      ${eosForCust.map(e=>{const d2=daysUntil(e.expireDate);const col=d2<0?"#fc8181":d2<=30?"#fcd34d":"#2de6b8";return`<div style="display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.04);border-radius:8px;font-size:11px;margin-bottom:4px"><span style="color:#c5cee8">${escapeHtml(e.product)} ${escapeHtml(e.version||"")}</span><span style="color:${col};font-weight:700">${d2<0?"만료":"D-"+d2}</span></div>`;}).join("")}
+      <div style="font-size:10px;color:#fcd34d;font-weight:700;margin-bottom:6px">🔑 라이선스 (${eosForCust.length})</div>
+      ${eosForCust.map(e=>{const d2=daysUntil(e.expireDate);const col=d2<0?"#fc8181":d2<=30?"#fcd34d":"#2de6b8";return`<div style="display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.04);border-radius:8px;font-size:11px;margin-bottom:4px"><span style="color:#c5cee8">${escapeHtml(e.productDesc||e.product||"")}</span><span style="color:${col};font-weight:700">${d2<0?"만료":"D-"+d2}</span></div>`;}).join("")}
     </div>`:""}
     <div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:8px;text-transform:uppercase">최근 이슈 (최대 8건)</div>
     ${recent.map(i=>{const cs={"완료":"#2de6b8","진행 중":"#818cf8","미해결":"#fc8181"};const col=cs[i.status]||"#94a3b8";return`<div style="padding:8px 10px;background:rgba(255,255,255,.04);border-left:3px solid ${col};border-radius:0 8px 8px 0;margin-bottom:5px;cursor:pointer" onclick="showPage('issues',document.getElementById('nav-issues'));document.getElementById('f-q').value='${escapeHtml(i.key)}';PAGE=1;renderIssues();">
@@ -5046,7 +5049,7 @@ function showStorageInfo(tab){
     issues:"<strong>Jira 이슈</strong><br>Jira에서 실시간 동기화 · 브라우저 메모리 저장<br>새로고침 시 재동기화 · 로그아웃/탭 닫으면 초기화",
     links:"<strong>업무 링크</strong><br>Cloudflare KV 서버 저장 · 영구 보존<br>모든 팀원이 동일하게 조회",
     knowledge:"<strong>팀 노하우</strong><br>Cloudflare KV 서버 저장 · 영구 보존<br>모든 팀원이 동일하게 조회",
-    eos:"<strong>EOS / 라이선스</strong><br>Cloudflare KV 서버 저장 · 영구 보존<br>모든 팀원이 동일하게 조회",
+    eos:"<strong>라이선스</strong><br>Cloudflare KV 서버 저장 · 영구 보존<br>모든 팀원이 동일하게 조회",
     audit:"<strong>감사 로그</strong><br>Cloudflare KV 서버 저장 · 90일 자동 삭제<br>최대 500건 표시",
   };
   if(!info[tab])return;
@@ -5794,7 +5797,7 @@ function renderOpsFocus(){
   const wrap=document.getElementById('ops-focus');
   if(!wrap)return;
   const sec=(title,items,empty,mapper)=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="font-size:12px;font-weight:800;color:#e8edff;margin-bottom:8px">${title}</div>${items.length?items.map(mapper).join(''):`<div style="font-size:11px;color:var(--text3);padding:8px">${empty}</div>`}</div>`;
-  wrap.innerHTML=`<div class="chart-card"><div class="chart-title">운영 포커스</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">${sec('7일 이상 미완료 일반 이슈',overdue,'대상 없음',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fcd34d">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#f87171">${daysSince(i.date)}일</span></div>`)}${sec('High 이상 미완료 일반 이슈',highOpen,'대상 없음',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'high',label:'High 이상 미완료 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fca5a5">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#fca5a5">${i.pri}</span></div>`)}${sec('메타 미완성 (고객사·레이블·범주·기한)',metaInc,'모두 입력됨 ✓',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'incomplete',label:'메타 미완성 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fbbf24">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,38)} <span style="float:right;color:#fbbf24">${metaMissingFields(i).join('·')}</span></div>`)}${sec('60일 내 EOS/라이선스',nearEos,'대상 없음',x=>`<div onclick="showPage('eos',document.getElementById('nav-eos'));document.getElementById('eos-q').value=${jsAttr(x.customer)};PAGE_STATE.eos=1;renderEosList();" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fcd34d">${escapeHtml(x.customer)}</b> ${escapeHtml(x.product)} <span style="float:right;color:#fcd34d">D-${daysUntil(x.expireDate)}</span></div>`)}</div></div>`;
+  wrap.innerHTML=`<div class="chart-card"><div class="chart-title">운영 포커스</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">${sec('7일 이상 미완료 일반 이슈',overdue,'대상 없음',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fcd34d">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#f87171">${daysSince(i.date)}일</span></div>`)}${sec('High 이상 미완료 일반 이슈',highOpen,'대상 없음',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'high',label:'High 이상 미완료 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fca5a5">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#fca5a5">${i.pri}</span></div>`)}${sec('메타 미완성 (고객사·레이블·범주·기한)',metaInc,'모두 입력됨 ✓',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'incomplete',label:'메타 미완성 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fbbf24">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,38)} <span style="float:right;color:#fbbf24">${metaMissingFields(i).join('·')}</span></div>`)}${sec('60일 내 라이선스 만료',nearEos,'대상 없음',x=>`<div onclick="showPage('eos',document.getElementById('nav-eos'));document.getElementById('eos-q').value=${jsAttr(x.customer)};PAGE_STATE.eos=1;renderEosList();" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fcd34d">${escapeHtml(x.customer)}</b> ${escapeHtml(x.productDesc||x.product||'')} <span style="float:right;color:#fcd34d">D-${daysUntil(x.expireDate)}</span></div>`)}</div></div>`;
 }
 
 function buildCustomers(){
@@ -5819,7 +5822,7 @@ function renderCustomerRight(){
   const recent=[...c.general].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
   const eosForCust=EOS_ITEMS.filter(e=>e.customer===c.name);
   const rate=c.general.length?Math.round(done.length/c.general.length*100):0;
-  document.getElementById("cust-right").innerHTML=`<div class="rpanel"><div style="font-size:16px;font-weight:800;color:#f0f4ff;margin-bottom:14px">${escapeHtml(c.name)}</div><div class="rp-meta"><div class="rp-row"><span>제품</span><span style="flex-wrap:wrap;display:flex;gap:4px">${[...c.products].map(p=>`<span class="badge" style="background:${(LC_MAP[p]||"#94a3b8")}22;color:${(LC_MAP[p]||"#94a3b8")}">${escapeHtml(p)}</span>`).join("")||"-"}</span></div><div class="rp-row"><span>담당자</span><span>${escapeHtml([...c.assignees].join(", ")||"-")}</span></div><div class="rp-row"><span>일반 이슈</span><span>${c.general.length}건 (완료 ${done.length} / 미완료 ${open.length})</span></div><div class="rp-row"><span>케이스</span><span>${c.cases.length}건 (완료 ${caseDone.length} / 미완료 ${caseOpen.length})</span></div><div class="rp-row"><span>일반 이슈 완료율</span><span style="color:${rate>=80?"#2de6b8":rate>=50?"#fcd34d":"#fc8181"};font-weight:700">${rate}%</span></div></div><div class="jump-row"><button class="btn btn-ghost" onclick="setIssueNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사: '+c.name)}}})">일반 이슈 보기</button><button class="btn btn-ghost" onclick="setCaseNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사 케이스: '+c.name)}}})">케이스 보기</button></div>${eosForCust.length?`<div style="margin:12px 0"><div style="font-size:10px;color:#fcd34d;font-weight:700;margin-bottom:6px">⏰ EOS / 라이선스 (${eosForCust.length})</div>${eosForCust.map(e=>{const d2=daysUntil(e.expireDate);const col=d2<0?"#fc8181":d2<=30?"#fcd34d":"#2de6b8";return`<div style="display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.04);border-radius:8px;font-size:11px;margin-bottom:4px"><span style="color:#c5cee8">${escapeHtml(e.product)} ${escapeHtml(e.version||"")}</span><span style="color:${col};font-weight:700">${d2<0?"만료":"D-"+d2}</span></div>`;}).join("")}</div>`:""}<div style="font-size:10px;color:var(--text3);font-weight:700;margin:12px 0 8px;text-transform:uppercase">최근 일반 이슈 (최대 8건)</div>${recent.map(i=>{const col=SC[i.status]||"#94a3b8";return`<div style="padding:8px 10px;background:rgba(255,255,255,.04);border-left:3px solid ${col};border-radius:0 8px 8px 0;margin-bottom:5px;cursor:pointer" onclick="setIssueNavigationFilter({q:${jsAttr(i.key)}})"><div style="font-size:11px;font-weight:700;color:${col}">${i.key} <span style="color:var(--text3);font-weight:400">${fd(i.date)}</span></div><div style="font-size:12px;color:#c5cee8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(cleanTitle(i.title))}</div></div>`;}).join("")||'<div style="font-size:11px;color:var(--text3);padding:8px">최근 일반 이슈 없음</div>'}</div>`;
+  document.getElementById("cust-right").innerHTML=`<div class="rpanel"><div style="font-size:16px;font-weight:800;color:#f0f4ff;margin-bottom:14px">${escapeHtml(c.name)}</div><div class="rp-meta"><div class="rp-row"><span>제품</span><span style="flex-wrap:wrap;display:flex;gap:4px">${[...c.products].map(p=>`<span class="badge" style="background:${(LC_MAP[p]||"#94a3b8")}22;color:${(LC_MAP[p]||"#94a3b8")}">${escapeHtml(p)}</span>`).join("")||"-"}</span></div><div class="rp-row"><span>담당자</span><span>${escapeHtml([...c.assignees].join(", ")||"-")}</span></div><div class="rp-row"><span>일반 이슈</span><span>${c.general.length}건 (완료 ${done.length} / 미완료 ${open.length})</span></div><div class="rp-row"><span>케이스</span><span>${c.cases.length}건 (완료 ${caseDone.length} / 미완료 ${caseOpen.length})</span></div><div class="rp-row"><span>일반 이슈 완료율</span><span style="color:${rate>=80?"#2de6b8":rate>=50?"#fcd34d":"#fc8181"};font-weight:700">${rate}%</span></div></div><div class="jump-row"><button class="btn btn-ghost" onclick="setIssueNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사: '+c.name)}}})">일반 이슈 보기</button><button class="btn btn-ghost" onclick="setCaseNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사 케이스: '+c.name)}}})">케이스 보기</button></div>${eosForCust.length?`<div style="margin:12px 0"><div style="font-size:10px;color:#fcd34d;font-weight:700;margin-bottom:6px">🔑 라이선스 (${eosForCust.length})</div>${eosForCust.map(e=>{const d2=daysUntil(e.expireDate);const col=d2<0?"#fc8181":d2<=30?"#fcd34d":"#2de6b8";return`<div style="display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.04);border-radius:8px;font-size:11px;margin-bottom:4px"><span style="color:#c5cee8">${escapeHtml(e.productDesc||e.product||"")}</span><span style="color:${col};font-weight:700">${d2<0?"만료":"D-"+d2}</span></div>`;}).join("")}</div>`:""}<div style="font-size:10px;color:var(--text3);font-weight:700;margin:12px 0 8px;text-transform:uppercase">최근 일반 이슈 (최대 8건)</div>${recent.map(i=>{const col=SC[i.status]||"#94a3b8";return`<div style="padding:8px 10px;background:rgba(255,255,255,.04);border-left:3px solid ${col};border-radius:0 8px 8px 0;margin-bottom:5px;cursor:pointer" onclick="setIssueNavigationFilter({q:${jsAttr(i.key)}})"><div style="font-size:11px;font-weight:700;color:${col}">${i.key} <span style="color:var(--text3);font-weight:400">${fd(i.date)}</span></div><div style="font-size:12px;color:#c5cee8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(cleanTitle(i.title))}</div></div>`;}).join("")||'<div style="font-size:11px;color:var(--text3);padding:8px">최근 일반 이슈 없음</div>'}</div>`;
 }
 
 /* ── v1.5.5: case/customer/status/dashboard/sidebar stability patch ───────────── */
@@ -7272,7 +7275,7 @@ function showPage(name,btn){
   const page=document.getElementById('page-'+name); if(page)page.classList.add('active');
   document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
   const nav=btn||document.getElementById('nav-'+name); if(nav)nav.classList.add('active');
-  const titleMap={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'EOS / 라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk'};
+  const titleMap={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk'};
   const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',eos:'제품 EOS 및 라이선스 체크',log:'로그 업로드 및 증상 기반 AI 분석',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',private:'로그인 사용자 전용 일정, 팁, 할일, 개인 참고',audit:'사용자 작업 이력',settings:'초기 데이터 및 저장소 관리'};
   const title=document.getElementById('page-title'); if(title)title.textContent=titleMap[name]||'HUB';
   const desc=document.getElementById('page-desc'); if(desc)desc.textContent=descMap[name]||'';
@@ -7471,7 +7474,7 @@ function syncMobSheet(panelId){
 /* mobile primary nav + compact admin settings */
 const MOBILE_PRIMARY_NAV=['nav-dash','nav-issues','nav-cases','nav-customers'];
 const MOBILE_MORE_NAV=['nav-mydesk','nav-eos','nav-log','nav-vt','nav-links','nav-knowledge','nav-audit','nav-settings'];
-const MOBILE_NAV_LABELS={eos:'EOS / 라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk'};
+const MOBILE_NAV_LABELS={eos:'라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk'};
 function mobilePageNameFromNav(id){return String(id||'').replace(/^nav-/,'');}
 function canShowMobileMoreItem(id){
   if(id==='nav-audit')return !!(IS_ADMIN||IS_SUPER);
