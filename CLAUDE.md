@@ -90,3 +90,6 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
 - 로그인 유지/자동로그인(아이디·PIN 저장)
 - PWA(홈화면/바탕화면 설치), 앱 제목 "ESCARE - 보안기술팀"
 - My Desk: 카드 제목 폰트 통일(sans), 열 수 1/2/3 토글(사용자별 저장)
+- 상단바: 큰시계 + 그룹메뉴(검색 제거, 연결상태 폰트 확대), 헤더 구분선 `#app::before/::after` 단일 오버레이
+- 아이폰 상단 메뉴 잘림 수정: 팝오버를 body로 이동(상단바 backdrop-filter가 fixed 기준이 돼 잘림)
+- 로그 분석 단발성 개편(`analyzeLogs`→JSON): 에러/경고/특이사항 시간순 발췌(복사) + 이슈별 KB/커뮤니티 검색링크 + `registerLogLink`로 업무링크 ➕등록. (worker AI mode `logx`, `extractKeywords` 제거)
