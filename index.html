@@ -325,6 +325,7 @@ html[data-theme="light"] .logx-issue{background:#f8fafc}
 .logx-reg{border:none;border-left:1px solid var(--border2);background:rgba(99,102,241,.12);color:var(--accent3);font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;font-family:inherit;white-space:nowrap}
 .logx-reg:hover{background:rgba(99,102,241,.24)}
 .logx-reg.done{background:rgba(45,230,184,.15);color:var(--success);cursor:default}
+.logx-link.logx-none{padding:6px 10px;color:var(--text3);font-size:11px;opacity:.55;border-style:dashed}
 .file-drop{border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;margin-bottom:12px;background:var(--panel);cursor:pointer}
 .file-drop:hover,.file-drop.drag{border-color:var(--accent);background:rgba(99,102,241,.05)}
 .file-list{display:flex;flex-direction:column;gap:4px;margin-top:8px}
@@ -2005,28 +2006,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     </div>
 
     <div class="page" id="page-log">
-      <div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--purple);margin-bottom:16px">🔬 로그를 붙여넣거나 파일을 올리면 <b>에러·경고·특이사항을 시간순으로 발췌</b>하고, 관련 <b>KB·커뮤니티 검색 링크</b>를 찾아줍니다. 링크 옆 <b>➕등록</b>으로 업무 링크에 저장, 발췌 로그는 📋로 복사하세요. (파일 ≤20MB)</div>
+      <div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--purple);margin-bottom:16px">🔬 로그를 붙여넣거나 파일을 올리면 <b>에러·경고·특이사항을 시간순으로 발췌</b>하고, <b>Google·KB·Broadcom 검색 링크</b>를 제품명과 함께 찾아줍니다. 링크 옆 <b>➕등록</b>으로 업무 링크에 저장, 발췌 로그는 📋로 복사하세요. (파일 ≤20MB)</div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">
-        <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-          <select id="log-product" class="admin-input" style="width:auto;min-width:200px">
-            <option value="SEP">SEP</option><option value="SEPM">SEPM</option><option value="DLP">DLP</option>
-            <option value="PP">PP (PowerPack)</option><option value="ProxySG">ProxySG / BCWF</option>
-            <option value="CloudSWG">Cloud SWG / WSS</option><option value="CASB">CloudSOC / CASB</option>
-            <option value="Windows">Windows Server</option><option value="Oracle">Oracle DB</option>
-            <option value="MSSQL">MS-SQL</option><option value="기타">기타</option>
-          </select>
-          <button onclick="clearLogInput()" class="btn btn-ghost" style="width:auto;padding:7px 14px">지우기</button>
-        </div>
         <div class="file-drop" id="log-drop" onclick="document.getElementById('log-file').click()">
           <div style="font-size:12px;color:var(--text2);margin-bottom:6px">📁 파일을 드래그하거나 클릭</div>
           <div style="font-size:10px;color:var(--text3)">.log / .txt / .zip / .csv · 최대 20MB · 여러 개/ZIP 가능</div>
           <input type="file" id="log-file" accept=".log,.txt,.zip,.csv" multiple style="display:none">
           <div id="log-file-list" class="file-list"></div>
         </div>
-        <div style="margin:14px 0 10px">
-          <label style="font-size:11px;color:var(--text3);font-weight:700;display:block;margin-bottom:6px">증상 / 재현 조건</label>
-          <textarea id="log-symptom" class="admin-textarea log-symptom" placeholder="예: 특정 클라이언트에서 정책 업데이트 실패, 콘솔에는 Download Protection Content Failures 발생, 재부팅 후에도 반복..." style="min-height:76px"></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 6px">
+          <label style="font-size:11px;color:var(--text3);font-weight:700">증상 / 재현 조건 <span style="color:var(--purple)">— 제품명을 꼭 포함</span></label>
+          <button onclick="clearLogInput()" class="btn btn-ghost" style="width:auto;padding:5px 12px;font-size:11px">지우기</button>
         </div>
+        <textarea id="log-symptom" class="admin-textarea log-symptom" placeholder="제품명 + 증상을 적어주세요 (정확한 검색을 위해 제품명 필수).&#10;예) Symantec SEP — 특정 클라이언트 정책 업데이트 실패, 콘솔에 Download Protection Content Failures, 재부팅 후 반복&#10;예) Windows Server 2019 — 이벤트뷰어에 LSASS 오류 후 재부팅" style="min-height:84px"></textarea>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
           <label style="font-size:11px;color:var(--text3);font-weight:700">로그 붙여넣기 / 직접 입력</label>
           <div style="display:flex;align-items:center;gap:8px">
@@ -4043,7 +4035,6 @@ function collectLogContent(){
 }
 async function analyzeLogs(){
   const log=collectLogContent();
-  const product=document.getElementById('log-product').value;
   const symptom=(document.getElementById('log-symptom')?.value||'').trim();
   const res=document.getElementById('log-result');
   if(!log){toast('로그를 입력하거나 파일을 올려주세요',true);return;}
@@ -4051,45 +4042,50 @@ async function analyzeLogs(){
   btn.disabled=true;btn.textContent='발췌 중...';
   if(res)res.innerHTML='<div class="loading">에러·경고·특이사항 발췌 중...</div>';
   try{
-    const raw=await callAI(`당신은 ${product} 로그 분석가입니다. 아래 로그에서 ERROR/WARN/실패/예외/타임아웃/비정상 등 "특이사항" 라인만 골라 시간 순서대로 발췌하고, 핵심 이슈와 검색 키워드를 뽑으세요.
-${symptom?('참고 증상: '+symptom):''}
+    const raw=await callAI(`당신은 보안/인프라 로그 분석가입니다. 아래 증상과 로그를 보고 (1) 제품·벤더 식별 (2) ERROR/WARN/실패/예외/타임아웃/비정상 등 "특이사항" 라인만 시간순 발췌 (3) 핵심 이슈와 검색 키워드 추출.
+${symptom?('증상/제품: '+symptom):'(증상 입력 없음 — 로그로 추정)'}
 출력은 아래 JSON "하나만" (그 외 설명/마크다운 금지):
-{"excerpt":"발췌한 로그 라인들 — 시간순, 원문 그대로, 줄바꿈 \\n 포함","issues":[{"level":"error|warn|info","summary":"한국어 한 줄 설명","term":"검색용 핵심 키워드/에러코드(영문 위주, 5단어 이내)"}]}
-issues는 최대 6개. 특이사항이 없으면 {"excerpt":"특이사항 없음","issues":[]}.
+{"product":"구체 제품명(예: Symantec SEP, Windows Server, Oracle DB; 모르면 \\"\\")","vendor":"broadcom|microsoft|oracle|other","excerpt":"발췌 로그 — 시간순, 원문 그대로, 줄바꿈 \\n 포함","issues":[{"level":"error|warn|info","summary":"한국어 한 줄","term":"검색 키워드/에러코드(영문 위주, 5단어 이내)"}]}
+벤더 기준: SEP/SEPM/DLP/Endpoint/ProxySG/BlueCoat/Carbon Black/PacketShaper/CASB/Symantec=broadcom · Windows/MSSQL/SQL Server/.NET/AD/IIS/Azure=microsoft · Oracle DB=oracle · 그 외=other.
+issues 최대 6개. 특이사항 없으면 issues는 [].
 
 로그:
-${log.slice(0,28000)}`,'logx',{product,size:log.length});
+${log.slice(0,28000)}`,'logx',{size:log.length});
     let data=null;
     try{ const m=raw&&raw.match(/\{[\s\S]*\}/); data=JSON.parse(m?m[0]:raw); }catch(_){}
     if(!data||typeof data.excerpt!=='string'){
       res.innerHTML=`<div class="vt-result"><div class="sec-title">분석 결과</div><pre class="logx-pre">${escapeHtml(raw||'(빈 응답)')}</pre><button class="btn btn-cyan" data-t="${escapeHtml(raw||'')}" onclick="copyText(this.dataset.t)" style="width:auto;padding:8px 16px;margin-top:10px">📋 복사</button></div>`;
     }else{
-      res.innerHTML=renderLogResult(data, product);
+      res.innerHTML=renderLogResult(data);
     }
   }catch(e){ if(res)res.innerHTML=`<div style="color:var(--danger);padding:16px">오류: ${escapeHtml(e.message)}</div>`; }
   btn.disabled=false;btn.textContent='🔬 에러 발췌 & 링크 찾기';
 }
-function logSearchLinks(term, product){
-  const base=(product&&product!=='기타')?product+' ':'';
-  const q=encodeURIComponent(base+term), tq=encodeURIComponent(term);
-  const broadcom=['SEP','SEPM','DLP','PP','ProxySG','CloudSWG','CASB'].includes(product);
-  const ms=['Windows','MSSQL'].includes(product);
-  const out=[{label:'🔍 Google', src:'Google', url:`https://www.google.com/search?q=${q}`}];
-  if(broadcom) out.push({label:'📚 Broadcom KB', src:'Broadcom', url:`https://support.broadcom.com/web/ecx/search?searchString=${tq}`});
-  else if(ms) out.push({label:'📚 MS Learn', src:'Microsoft', url:`https://learn.microsoft.com/search/?terms=${tq}`});
-  else if(product==='Oracle') out.push({label:'📚 Oracle', src:'Oracle', url:`https://www.google.com/search?q=oracle+${tq}`});
-  else out.push({label:'📚 KB 검색', src:'KB', url:`https://www.google.com/search?q=${q}+KB`});
-  return out;
+// 제품명을 항상 검색어에 포함(엉뚱한 결과 방지). Google / KB / Broadcom 3종, 해당 없으면 url=null(없음).
+function logSearchLinks(term, product, vendor){
+  const pt=((product||'').trim()+' '+(term||'')).trim() || (term||'');
+  const q=encodeURIComponent(pt);
+  const links=[{key:'Google', label:'🔍 Google', url:`https://www.google.com/search?q=${q}`}];
+  if(vendor==='microsoft') links.push({key:'KB', label:'📚 MS Learn', url:`https://learn.microsoft.com/search/?terms=${q}`});
+  else if(vendor==='broadcom') links.push({key:'KB', label:'📚 KB', url:`https://www.google.com/search?q=${encodeURIComponent(pt+' site:knowledge.broadcom.com')}`});
+  else if(vendor==='oracle') links.push({key:'KB', label:'📚 Oracle Docs', url:`https://www.google.com/search?q=${encodeURIComponent(pt+' site:docs.oracle.com')}`});
+  else links.push({key:'KB', label:'KB', url:null});
+  if(vendor==='broadcom') links.push({key:'Broadcom', label:'🏢 Broadcom', url:`https://support.broadcom.com/web/ecx/search?searchString=${q}`});
+  else links.push({key:'Broadcom', label:'Broadcom', url:null});
+  return links;
 }
-function renderLogResult(data, product){
+function renderLogResult(data){
   const col=l=>l==='error'?'#f87171':l==='warn'?'#fbbf24':'#22d3a5';
+  const product=(data.product||'').trim();
+  const vendor=data.vendor||'other';
   const excerpt=data.excerpt||'특이사항 없음';
   const issues=Array.isArray(data.issues)?data.issues:[];
   const issuesHtml=issues.map(it=>{
-    const links=logSearchLinks(it.term||it.summary||'', product);
+    const links=logSearchLinks(it.term||it.summary||'', product, vendor);
     const rows=links.map(ln=>{
-      const title=`[${product}] ${(it.term||it.summary||'').slice(0,60)} · ${ln.src}`;
-      return `<div class="logx-link"><a href="${ln.url}" target="_blank" rel="noopener">${ln.label}</a><button class="logx-reg" data-title="${escapeHtml(title)}" data-url="${escapeHtml(ln.url)}" onclick="registerLogLink(this.dataset.title,this.dataset.url,this)" title="업무 링크에 등록">➕ 등록</button></div>`;
+      if(!ln.url) return `<div class="logx-link logx-none">${ln.key} 없음</div>`;
+      const title=`[${product||'로그'}] ${(it.term||it.summary||'').slice(0,50)} · ${ln.key}`;
+      return `<div class="logx-link"><a href="${ln.url}" target="_blank" rel="noopener">${ln.label}</a><button class="logx-reg" data-title="${escapeHtml(title)}" data-url="${escapeHtml(ln.url)}" onclick="registerLogLink(this.dataset.title,this.dataset.url,this)" title="업무 링크에 등록">➕</button></div>`;
     }).join('');
     return `<div class="logx-issue">
       <div class="logx-issue-head"><span class="badge" style="background:${col(it.level)}22;color:${col(it.level)}">${String(it.level||'info').toUpperCase()}</span><span class="logx-sum">${escapeHtml(it.summary||it.term||'')}</span></div>
@@ -4097,10 +4093,11 @@ function renderLogResult(data, product){
       <div class="logx-links">${rows}</div>
     </div>`;
   }).join('');
+  const prodLabel=product?`<span style="font-weight:400;color:var(--text3);font-size:11px">— 제품: ${escapeHtml(product)}</span>`:'<span style="font-weight:400;color:var(--warn,#fbbf24);font-size:11px">— 제품 미상(증상에 제품명을 적으면 정확해져요)</span>';
   return `<div class="vt-result">
     <div class="sec-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">📋 발췌된 로그 (시간순)<button class="btn btn-cyan" data-t="${escapeHtml(excerpt)}" onclick="copyText(this.dataset.t)" style="width:auto;padding:6px 14px;font-size:11px">📋 복사</button></div>
     <pre class="logx-pre">${escapeHtml(excerpt)}</pre>
-    ${issues.length?`<div class="sec-title" style="margin-top:16px">🔎 핵심 이슈 & 추천 링크 <span style="font-weight:400;color:var(--text3);font-size:11px">— ➕로 업무 링크에 등록</span></div>${issuesHtml}`:'<div style="color:var(--text3);font-size:12px;margin-top:10px">추출된 핵심 이슈가 없습니다.</div>'}
+    ${issues.length?`<div class="sec-title" style="margin-top:16px">🔎 핵심 이슈 & 추천 링크 ${prodLabel}</div>${issuesHtml}`:'<div style="color:var(--text3);font-size:12px;margin-top:10px">추출된 핵심 이슈가 없습니다.</div>'}
   </div>`;
 }
 async function registerLogLink(title, url, btn){
