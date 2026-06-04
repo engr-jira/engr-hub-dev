@@ -414,6 +414,13 @@ html[data-theme="light"] .logx-issue{background:#f8fafc}
 .modal-form label{display:block;font-size:10px;color:var(--text3);margin-bottom:5px;font-weight:700;text-transform:uppercase}
 .modal-form input,.modal-form select,.modal-form textarea{width:100%;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:9px 12px;color:var(--text);font-size:12px;outline:none;font-family:inherit}
 .modal-form textarea{resize:vertical;min-height:60px}
+.eos-line{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+.eos-line input{margin:0!important}
+.eos-line .eos-l-product{flex:1 1 90px;min-width:80px;width:auto!important}
+.eos-line .eos-l-version{flex:0 0 84px;width:84px!important}
+.eos-line .eos-l-date{flex:0 0 138px;width:138px!important;color-scheme:dark}
+.eos-line .eos-l-rm{flex:0 0 32px;width:32px;height:34px;border:1px solid var(--border);border-radius:8px;background:none;color:var(--danger);cursor:pointer;font-size:16px;padding:0;line-height:1}
+.eos-line .eos-l-rm:hover{border-color:var(--danger);background:rgba(248,113,113,.1)}
 .eos-banner{background:linear-gradient(135deg,rgba(248,113,113,.1),rgba(251,191,36,.08));border:1px solid rgba(248,113,113,.3);border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px}
 .eos-banner-icon{font-size:24px}
 .eos-banner-text{flex:1}
@@ -2506,14 +2513,17 @@ try{
 function toggleTheme(){applyTheme(UI_THEME==='light'?'dark':'light');}
 function syncThemeToggle(){
   const btn=document.getElementById('theme-toggle');
-  if(!btn)return;
+  // 헤더 = 현재 상태, 버튼 = 전환할(반대) 상태 — 아이콘·문구 일치
   const light=UI_THEME==='light';
+  const stEl=document.getElementById('top-theme-state');
+  if(stEl)stEl.textContent=light?'라이트 모드':'다크 모드';
+  if(!btn)return;
   btn.setAttribute('aria-pressed',light?'true':'false');
-  btn.title=light?'다크 모드로 전환':'밝은 모드로 전환';
+  btn.title=light?'다크 모드로 전환':'라이트 모드로 전환';
   const icon=document.getElementById('theme-icon');
   const label=document.getElementById('theme-label');
-  if(icon)icon.textContent=light?'☀':'☾';
-  if(label)label.textContent=light?'밝은':'다크';
+  if(icon)icon.textContent=light?'☾':'☀';   // 전환 대상 아이콘(→다크=달 / →라이트=해)
+  if(label)label.textContent=light?'다크':'라이트';
 }
 applyTheme(UI_THEME,{persist:false});
 
@@ -3741,30 +3751,49 @@ function openEosModal(){
       <label>유형</label>
       <select id="eos-form-type"><option value="eos">EOS (제품/버전)</option><option value="license">라이선스</option></select>
     </div>
-    <div><label>고객사 *</label><input id="eos-form-customer" placeholder="고객사명"></div>
-    <div><label>제품 *</label><input id="eos-form-product" placeholder="예: SEP, DLP, ProxySG"></div>
-    <div><label>버전</label><input id="eos-form-version" placeholder="예: 14.3 RU8"></div>
-    <div><label>라이선스명</label><input id="eos-form-license" placeholder="라이선스 이름"></div>
-    <div class="full"><label>만료일 / EOS 일자 *</label><input type="date" id="eos-form-date" value="${today}"></div>
-    <div class="full"><label>메모</label><textarea id="eos-form-memo" placeholder="비고"></textarea></div>
+    <div class="full"><label>고객사 *</label><input id="eos-form-customer" placeholder="고객사명" list="customer-list"></div>
+    <div class="full"><label>라이선스명 <span style="text-transform:none;color:var(--text3);font-weight:400">(여러 제품 공통 · 선택)</span></label><input id="eos-form-license" placeholder="예: DLP Enterprise 라이선스"></div>
+    <div class="full">
+      <label>제품 · 버전 · 만료일 <span style="text-transform:none;color:var(--text3);font-weight:400">— 제품마다 만료일이 다르면 여러 줄로 추가</span></label>
+      <div id="eos-lines"></div>
+      <button type="button" class="btn btn-ghost" onclick="addEosLine()" style="width:auto;padding:7px 14px;font-size:12px;margin-top:4px">+ 제품/라이선스 추가</button>
+    </div>
+    <div class="full"><label>메모 <span style="text-transform:none;color:var(--text3);font-weight:400">(공통)</span></label><textarea id="eos-form-memo" placeholder="비고"></textarea></div>
   </div>`,
   `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">취소</button>
    <button class="btn btn-indigo" onclick="saveEos()" style="width:auto;padding:8px 18px">저장</button>`);
+  addEosLine(today);
 }
+function addEosLine(dateVal){
+  const wrap=document.getElementById('eos-lines'); if(!wrap)return;
+  const row=document.createElement('div'); row.className='eos-line';
+  row.innerHTML='<input class="eos-l-product" placeholder="제품 *" title="제품명"><input class="eos-l-version" placeholder="버전" title="버전(선택)"><input type="date" class="eos-l-date" title="만료일 / EOS 일자" value="'+(dateVal||'')+'"><button type="button" class="eos-l-rm" title="이 줄 삭제">×</button>';
+  row.querySelector('.eos-l-rm').addEventListener('click',()=>{ row.remove(); if(!wrap.children.length)addEosLine(); });
+  wrap.appendChild(row);
+  const p=row.querySelector('.eos-l-product'); if(p)setTimeout(()=>p.focus(),0);
+}
+window.addEosLine=addEosLine;
 async function saveEos(){
   const type=document.getElementById('eos-form-type').value;
   const customer=document.getElementById('eos-form-customer').value.trim();
-  const product=document.getElementById('eos-form-product').value.trim();
-  const version=document.getElementById('eos-form-version').value.trim();
   const licenseName=document.getElementById('eos-form-license').value.trim();
-  const expireDate=document.getElementById('eos-form-date').value;
   const memo=document.getElementById('eos-form-memo').value.trim();
-  if(!customer||!product||!expireDate){toast('고객사, 제품, 만료일은 필수입니다',true);return;}
+  if(!customer){toast('고객사는 필수입니다',true);return;}
+  const rows=[...document.querySelectorAll('#eos-lines .eos-line')].map(r=>({
+    product:(r.querySelector('.eos-l-product').value||'').trim(),
+    version:(r.querySelector('.eos-l-version').value||'').trim(),
+    expireDate:r.querySelector('.eos-l-date').value
+  }));
+  const filled=rows.filter(l=>l.product||l.expireDate);
+  if(!filled.length){toast('제품과 만료일을 1개 이상 입력하세요',true);return;}
+  const invalid=filled.find(l=>!l.product||!l.expireDate);
+  if(invalid){toast('제품명과 만료일이 비어있는 줄이 있습니다',true);return;}
+  const items=filled.map(l=>({type,customer,licenseName,memo,product:l.product,version:l.version,expireDate:l.expireDate}));
   try{
-    const r=await fetch(`${WORKERS}/eos`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({type,customer,product,version,licenseName,expireDate,memo})});
+    const r=await fetch(`${WORKERS}/eos/bulk`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({items})});
     const d=await r.json();
     if(!d.ok){toast(d.message||'저장 실패',true);return;}
-    toast('등록 완료');closeGenModal();await loadEOS();renderEosList();
+    toast((d.created>1?d.created+'건 ':'')+'등록 완료');closeGenModal();await loadEOS();renderEosList();
   }catch(e){toast('오류: '+e.message,true);}
 }
 function openEosEditModal(id){
@@ -6219,12 +6248,18 @@ async function refreshPushState(){
 }
 function pushIsOn(){ try{ return __pushState.subscribed && __pushState.enabled && Notification.permission==='granted'; }catch(_){ return false; } }
 function syncNotifMenuItem(){
-  const el=document.getElementById('tmp-notif'); if(!el)return;
-  if(!pushSupported() || (isIOSDevice() && !isStandaloneApp())){ el.style.display='none'; return; }
-  el.style.display='flex';
+  const el=document.getElementById('tmp-notif');
+  const row=document.getElementById('top-notif-state-row');
+  const st=document.getElementById('top-notif-state');
+  const supported = pushSupported() && !(isIOSDevice() && !isStandaloneApp());
+  if(el) el.style.display = supported ? 'flex' : 'none';
+  if(row) row.style.display = supported ? 'flex' : 'none';
+  if(!supported) return;
+  let denied=false; try{ denied=(Notification.permission==='denied'); }catch(_){}
   const on=pushIsOn();
+  if(st){ st.textContent = denied ? '권한 차단됨' : (on?'켜짐':'꺼짐'); st.className = (denied||!on) ? 'warn' : 'ok'; }
   const ic=document.getElementById('tmp-notif-ic'), lb=document.getElementById('tmp-notif-label');
-  if(ic)ic.textContent=on?'🔔':'🔕';
+  if(ic)ic.textContent=on?'🔕':'🔔';   // 전환 동작: 켜짐→끄기(🔕) / 꺼짐→켜기(🔔)
   if(lb)lb.textContent=on?'알림 끄기':'알림 켜기';
 }
 async function enablePush(){
@@ -7084,6 +7119,8 @@ function renderTopbarStatusV159(){
         </div>
         <div class="tmp-status"><span>Jira</span><span class="${connected?'ok':'warn'}" id="top-jira">${connected?'연결됨':'대기'}</span></div>
         <div class="tmp-status"><span>동기화</span><span id="top-count">${gi||ci?`일반 ${gi} / 케이스 ${ci}`:'-'}</span></div>
+        <div class="tmp-status"><span>현재 화면</span><span id="top-theme-state">-</span></div>
+        <div class="tmp-status" id="top-notif-state-row" style="display:none"><span>현재 알림</span><span id="top-notif-state">-</span></div>
         <div class="tmp-sep"></div>
         <button class="tmp-item" type="button" onclick="closeTopMenu();syncJira()"><span class="tmp-ic">🔄</span> Jira 새로고침</button>
         <button class="tmp-item" type="button" onclick="closeTopMenu();window.open('${manualHref}','_blank','noopener')"><span class="tmp-ic">📖</span> 사용 매뉴얼</button>

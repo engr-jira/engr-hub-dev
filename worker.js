@@ -2131,6 +2131,32 @@ export default {
         ctx.waitUntil(pushNotify(env, 'eos', user, { target: [newItem.product, newItem.customer].filter(Boolean).join(' / ') || (newItem.type === 'license' ? '라이선스' : 'EOS') }));
         return corsResponse({ ok: true, item: newItem });
       }
+      if (path === '/eos/bulk' && request.method === 'POST') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        const body = await request.json().catch(() => ({}));
+        const items = Array.isArray(body.items) ? body.items : [];
+        if (!items.length) return corsResponse({ ok: false, message: '등록할 항목이 없습니다.' }, 400);
+        const raw = await env.ENGR_KV.get('config:eos');
+        let store = raw ? JSON.parse(raw) : [];
+        const created = [];
+        for (const b of items) {
+          if (!b || !b.product || !b.expireDate) continue;
+          const it = {
+            id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+            type: b.type || 'eos', customer: b.customer || '', product: b.product || '',
+            version: b.version || '', licenseName: b.licenseName || '', expireDate: b.expireDate || '',
+            memo: b.memo || '', createdBy: user, createdAt: new Date().toISOString(),
+          };
+          store.push(it); created.push(it);
+        }
+        if (!created.length) return corsResponse({ ok: false, message: '제품/만료일이 유효한 항목이 없습니다.' }, 400);
+        await env.ENGR_KV.put('config:eos', JSON.stringify(store));
+        await auditLog(env, user, 'EOS_ADD_BULK', { count: created.length, customer: created[0].customer });
+        const cust = created[0].customer || '';
+        const tgt = created.length > 1 ? `${cust} ${created[0].product} 외 ${created.length - 1}건` : [created[0].product, cust].filter(Boolean).join(' / ');
+        ctx.waitUntil(pushNotify(env, 'eos', user, { target: tgt }));
+        return corsResponse({ ok: true, created: created.length, items: created });
+      }
       //
       if (path.startsWith('/eos/') && request.method === 'DELETE') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
