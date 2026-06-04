@@ -122,3 +122,4 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
   - ⚠️ **회귀 발견·수정**: `/eos` GET에 인증 추가하니 클라 `loadEOS`가 인증 없이 호출해 EOS 목록이 빈 채로 떴음 → `loadEOS` fetch에 `authHeaders()` 추가(dev·prod 배포). **교훈: 워커 엔드포인트에 인증 추가 시 해당 엔드포인트를 부르는 모든 클라 fetch가 authHeaders를 쓰는지 확인.**
   - 감사로그 뱃지 라벨 추가: `EOS_ADD_BULK`/`AI_CALL`(원시 표기 → EOS+/AI).
 - **관리자 직접 알림 발송**: 관리자설정 푸시 섹션 '✉️ 직접 알림 보내기'(수신자 선택+제목+내용) → `/push/send`. 종단(실기) 발송 검증 완료. 감사 뱃지 `PUSH_SEND`(알림).
+- **EOS → 고객사 라이선스 관리 개편**: 버전 EOS 유형 제거, 라이선스 단일. 항목 필드 = `productDesc`(Product Description)·`siteId`(Enterprise Site ID)·`quantity`·`serial`(Serial Number)·`startDate`·`expireDate`(=End Date, **D-day/경고 기준 유지**). 구필드(product/version/type/licenseName)는 읽기 시 `productDesc||product` 폴백(구데이터 호환). 등록 모달=라이선스 블록(`.eos-lic`) 다중 추가→`/eos/bulk`. 나브/타이틀 'EOS / 라이선스'→'라이선스'. 실기 검증 완료(사진 3행 등록·테이블·모달·정렬·폴백). ⚠️ 고객사프로필 `renderCustomerRight`는 중복정의(2곳)라 둘 다 수정함.
