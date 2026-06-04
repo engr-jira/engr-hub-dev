@@ -43,6 +43,7 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
 - **My Desk JS는 IIFE 스코프**: `init/applyLayout/COLS/saveLayout/setMyDeskCols` 등은 `window`에 없음. 인라인 `onclick`에서 쓰려면 `window.fn=fn`으로 노출 필요. (단, `resetMyDesk`는 메인 스크립트에 있어 전역)
 - **My Desk @scope**: `@scope (#page-mydesk){...}` + 별도 `--serif/--sans/--gold` 등 자체 변수. 라이트모드는 `#mydesk-light` 스타일에서 스코프 변수 재정의.
 - **My Desk 저장**: 서버 KV `mydesk:<user>` ↔ `/mydesk` GET/PUT. 클라 헬퍼 `load/save/saveNow`, `window.__MD_STORE` 캐시. 카드순서=`layout3`, 숨김=`hidden`, 열수=`mdCols`.
+  - **저장 동기화(손실 방지)**: `__mdQueueServerSave`=디바운스 600ms+**최대대기 3s**, 2초 주기 백스톱, `pagehide`/`visibilitychange` 시 `__mdFlushNow`(keepalive) flush. `__mdServerSaveNow`=즉시. ⚠️ 로드 GET 실패 시 **빈 store로 덮어쓰지 말 것**(`__mdLoaded=false`로 저장 보류 — 안 그러면 다음 save가 서버 원본 파괴). `loadMyDeskForUser`는 `!CURRENT_USER`면 return + `__mdInited`로 init 1회 보장(리스너 중복=todo 중복입력 방지).
 
 ---
 
@@ -93,3 +94,4 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
 - 상단바: 큰시계 + 그룹메뉴(검색 제거, 연결상태 폰트 확대), 헤더 구분선 `#app::before/::after` 단일 오버레이
 - 아이폰 상단 메뉴 잘림 수정: 팝오버를 body로 이동(상단바 backdrop-filter가 fixed 기준이 돼 잘림)
 - 로그 분석 단발성 개편(`analyzeLogs`→JSON): 에러/경고/특이사항 시간순 발췌(복사) + 이슈별 KB/커뮤니티 검색링크 + `registerLogLink`로 업무링크 ➕등록. (worker AI mode `logx`, `extractKeywords` 제거)
+- **My Desk 데이터 손실 버그 수정**: 연속 입력 중 디바운스가 계속 밀려 PUT이 안 나가던 문제 → 최대대기 3s + 2초 백스톱 + 이탈 시 keepalive flush. 로드 실패 시 빈 값 덮어쓰기 금지. (모든 카드 save 경로 검증 완료)
