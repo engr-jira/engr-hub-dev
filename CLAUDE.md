@@ -44,6 +44,7 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
 - **중복 함수 정의 다수**: 같은 이름 함수가 여러 번 정의됨 → **마지막 정의가 적용**(hoisting). 반드시 *활성(마지막)* 정의를 수정. 예: `renderTopbarStatus` = `renderTopbarStatusV159`(마지막).
 - **My Desk JS는 IIFE 스코프**: `init/applyLayout/COLS/saveLayout/setMyDeskCols` 등은 `window`에 없음. 인라인 `onclick`에서 쓰려면 `window.fn=fn`으로 노출 필요. (단, `resetMyDesk`는 메인 스크립트에 있어 전역)
 - **⚠️ `normalizeAdminSettingsUI()` 함정**: 관리자 설정의 `.admin-section` summary/`.admin-card h3`/`.admin-card.soft`를 **DOM 순서(index) 기준으로 덮어씀**. 설정 페이지에 새 섹션/카드 추가 시 인덱스가 밀려 라벨이 깨짐. **새 섹션은 반드시 `class="admin-section np"`** 부여(정규화 셀렉터가 `:not(.np)`로 제외). 푸시 섹션이 이 방식으로 보호됨.
+- **⚠️ `auditLog(env,user,type,detail)` 함정**: 저장 시 `{...user, type, ...detail}`라 **detail에 `type` 키가 있으면 액션 type을 덮어씀**(감사로그 뱃지/필터 깨짐). detail엔 `type` 대신 `vtType`/`itemType` 등 다른 키 사용. (과거 VT가 `type:'hash'`로 덮어써 'hash' 뱃지로 보이던 버그 수정함)
 - **My Desk @scope**: `@scope (#page-mydesk){...}` + 별도 `--serif/--sans/--gold` 등 자체 변수. 라이트모드는 `#mydesk-light` 스타일에서 스코프 변수 재정의.
 - **My Desk 저장**: 서버 KV `mydesk:<user>` ↔ `/mydesk` GET/PUT. 클라 헬퍼 `load/save/saveNow`, `window.__MD_STORE` 캐시. 카드순서=`layout3`, 숨김=`hidden`, 열수=`mdCols`.
   - **저장 동기화(손실 방지)**: `__mdQueueServerSave`=디바운스 600ms+**최대대기 3s**, 2초 주기 백스톱, `pagehide`/`visibilitychange` 시 `__mdFlushNow`(keepalive) flush. `__mdServerSaveNow`=즉시. ⚠️ 로드 GET 실패 시 **빈 store로 덮어쓰지 말 것**(`__mdLoaded=false`로 저장 보류 — 안 그러면 다음 save가 서버 원본 파괴). `loadMyDeskForUser`는 `!CURRENT_USER`면 return + `__mdInited`로 init 1회 보장(리스너 중복=todo 중복입력 방지).
@@ -109,3 +110,4 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
 - **웹 푸시 알림(Option B) 구축**: sw.js + VAPID(ES256) + payload-less. 본인 제외/사용자 opt-out/관리자 기능별 on·off/대상 지정(include·exclude)/멘트 템플릿. 이벤트=업무링크·팀노하우·EOS 등록. 상단메뉴 🔔 토글 + 관리자설정 섹션. (실기기 알림 표시 검증 사용자 필요)
 - 푸시 관리자 섹션 표시 수정(normalizeAdminSettingsUI index 충돌 → `.np` 제외). My Desk: 주간미팅 시간 입력, 벤더케이스 날짜=오픈일 명확화, 바로가기 RDP 포트 입력(.rdp/mstsc 반영).
 - 상단 메뉴 토글 일관화: '현재 화면/현재 알림' 상태 줄 + 버튼은 전환(반대) 동작 기준(아이콘·문구 일치). EOS/라이선스 복수 등록: 모달에서 제품/버전/만료일 줄 여러 개 추가 → `/eos/bulk`(요약 알림 1회). 수정/삭제는 행 단위 유지.
+- VT 다중 해시 일괄 조회 → 감사로그 1건 요약(`noAudit` + `/vt/audit-batch`). auditLog detail `type` 덮어쓰기 버그 수정(→`vtType`).
