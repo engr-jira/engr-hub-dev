@@ -75,7 +75,7 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
   - **구성**: `sw.js`(서비스워커, fetch 핸들러 없음=캐시 안 함) + VAPID. **공개키=wrangler.jsonc `vars.VAPID_PUBLIC_KEY`**(공개), **개인키=secret `VAPID_PRIVATE_JWK`**(JWK JSON), `vars.VAPID_SUBJECT`=mailto. dev·prod 동일 키쌍 사용(둘 다 secret 설정 완료).
   - **방식**: payload-less 푸시(VAPID ES256 JWT만) → SW가 `/push/pending`(엔드포인트 소유 증명, 세션불필요)에서 보류 알림 받아 표시. 암호화(aes128gcm) 미사용.
   - **워커**: `pushNotify(env,eventKey,actorId,vars)` — 본인(actor) 제외, 사용자 opt-out(`push:pref:<user>`), 관리자 기능별 on/off + 대상 지정(include/exclude) + 멘트 템플릿(`{user}{target}{event}`). KV: `push:subs`(전체 구독 1키), `push:pending:<hash>`, `push:settings`, `push:pref:<user>`. 이벤트 레지스트리 `PUSH_EVENTS`(link/knowledge/eos) → 각 POST 핸들러에서 `ctx.waitUntil(pushNotify(...))`.
-  - **엔드포인트**: `/push/public-key`(GET,무인증) `/push/subscribe` `/push/unsubscribe` `/push/pending`(무인증) `/push/pref`(GET/POST) `/push/test`(POST) `/push/settings`(GET/POST, 관리자).
+  - **엔드포인트**: `/push/public-key`(GET,무인증) `/push/subscribe` `/push/unsubscribe` `/push/pending`(무인증) `/push/pref`(GET/POST) `/push/test`(POST) `/push/settings`(GET/POST, 관리자) `/push/send`(POST, 관리자 — 특정 인원 직접 발송: recipients[]/title/body/includeMuted, opt-out 존중·중요공지 강제, `PUSH_SEND` 감사).
   - **클라**: `initPushOnLogin()`(enterApp에서 호출, SW등록+권한있으면 조용히 재구독+`?go=`/postMessage 네비), `enablePush/disablePush/togglePushFromMenu`(상단메뉴 🔔 토글), 관리자설정 `loadPushSettings/savePushSettings`(loadSettings 끝에서 호출, `window.__userMap/__teamNames` 사용).
   - **제약**: iOS는 **설치형 PWA(홈화면 추가)에서만** 동작(16.4+) — 미설치 iOS는 토글 숨김. 각 사용자가 브라우저에서 "알림 허용" 직접 눌러야 함(Claude/IT 승인 불가). 실제 토스트 표시는 **실기기 확인 필수**.
   - **이벤트 추가법**: 워커 `PUSH_EVENTS`에 키 추가 + 해당 POST 핸들러에 `ctx.waitUntil(pushNotify(...))` 한 줄. 관리자 UI/타겟팅은 자동 반영. (케이스 트래커는 My Desk 개인데이터라 공유 이벤트 불가)
@@ -121,3 +121,4 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
 - **로그인 실기 검증(mj.park)**: 전 페이지 콘솔 에러 0. My Desk 지속성(서버 반영)·주간시간·케이스 오픈일·RDP 포트 / EOS 복수등록 / VT 이력표시·다중조회 감사 1건(VT 뱃지) / **웹푸시 실제 종단 전송 성공(SW가 OS 알림 표시 확인)** / 토글 상태표시 / 로그분석 AI / 이슈 808건 로드 — 전부 정상.
   - ⚠️ **회귀 발견·수정**: `/eos` GET에 인증 추가하니 클라 `loadEOS`가 인증 없이 호출해 EOS 목록이 빈 채로 떴음 → `loadEOS` fetch에 `authHeaders()` 추가(dev·prod 배포). **교훈: 워커 엔드포인트에 인증 추가 시 해당 엔드포인트를 부르는 모든 클라 fetch가 authHeaders를 쓰는지 확인.**
   - 감사로그 뱃지 라벨 추가: `EOS_ADD_BULK`/`AI_CALL`(원시 표기 → EOS+/AI).
+- **관리자 직접 알림 발송**: 관리자설정 푸시 섹션 '✉️ 직접 알림 보내기'(수신자 선택+제목+내용) → `/push/send`. 종단(실기) 발송 검증 완료. 감사 뱃지 `PUSH_SEND`(알림).
