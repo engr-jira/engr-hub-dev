@@ -425,8 +425,11 @@ html[data-theme="light"] .logx-issue{background:#f8fafc}
 .eos-lic input{width:100%!important;max-width:none!important;margin:0!important;padding:8px 10px;font-size:12.5px;background:var(--panel);border:1px solid var(--border);border-radius:8px;color:var(--text);outline:none;font-family:inherit}
 .eos-lic-grid{display:grid;grid-template-columns:1fr 84px 1.1fr;gap:8px}
 .eos-lic-dates{display:flex;gap:10px;flex-wrap:wrap}
-.eos-lic-dates label{flex:1;min-width:140px;font-size:9.5px;color:var(--text3);font-weight:700;text-transform:uppercase;display:flex;flex-direction:column;gap:4px}
-.eos-lic-dates input[type=date]{width:100%!important}
+.eos-lic-dates label{flex:1;min-width:150px;font-size:9.5px;color:var(--text3);font-weight:700;text-transform:uppercase;display:flex;flex-direction:column;gap:4px}
+.eos-lic-dates .el-date-wrap{display:flex;gap:6px;align-items:center}
+.eos-lic-dates .el-date-wrap input[type=date]{flex:1;width:auto!important;min-width:0}
+.eos-lic-dates .el-cal{flex:0 0 42px;height:34px;border:1px solid var(--border);border-radius:8px;background:var(--panel);color:var(--text2);cursor:pointer;font-size:14px;padding:0;line-height:1}
+.eos-lic-dates .el-cal:hover{border-color:var(--accent3);background:rgba(129,140,248,.12)}
 .eos-lic-rm{position:absolute;top:8px;right:8px;width:24px;height:24px;border:1px solid var(--border);border-radius:6px;background:var(--panel);color:var(--danger);cursor:pointer;font-size:14px;padding:0;line-height:1;z-index:2}
 .eos-lic-rm:hover{border-color:var(--danger);background:rgba(248,113,113,.12)}
 .eos-banner{background:linear-gradient(135deg,rgba(248,113,113,.1),rgba(251,191,36,.08));border:1px solid rgba(248,113,113,.3);border-radius:12px;padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:12px}
@@ -3795,8 +3798,12 @@ function addEosLine(){
   row.innerHTML='<button type="button" class="eos-lic-rm" title="이 항목 삭제">×</button>'
     +'<input class="el-desc" placeholder="Product Description *" title="제품 설명">'
     +'<div class="eos-lic-grid"><input class="el-site" placeholder="Enterprise Site ID"><input class="el-qty" type="number" placeholder="수량"><input class="el-serial" placeholder="Serial Number"></div>'
-    +'<div class="eos-lic-dates"><label>Start Date<input type="date" class="el-start"></label><label>End Date (만료)<input type="date" class="el-end"></label></div>';
+    +'<div class="eos-lic-dates">'
+      +'<label>START DATE<span class="el-date-wrap"><input type="date" class="el-start" data-date-button="1"><button type="button" class="el-cal" tabindex="-1" title="달력 열기">📅</button></span></label>'
+      +'<label>END DATE (만료)<span class="el-date-wrap"><input type="date" class="el-end" data-date-button="1"><button type="button" class="el-cal" tabindex="-1" title="달력 열기">📅</button></span></label>'
+    +'</div>';
   row.querySelector('.eos-lic-rm').addEventListener('click',()=>{ row.remove(); if(!wrap.children.length)addEosLine(); });
+  row.querySelectorAll('.el-cal').forEach(b=>b.addEventListener('click',()=>{ const i=b.previousElementSibling; try{ i.showPicker?i.showPicker():i.focus(); }catch(_){ i.focus(); } }));
   wrap.appendChild(row);
   const f=row.querySelector('.el-desc'); if(f)setTimeout(()=>f.focus(),0);
 }
@@ -7233,7 +7240,7 @@ function enhanceDateButtons(){
     const btn=document.createElement('button');
     btn.type='button';
     btn.className='date-open-btn';
-    btn.textContent='달력';
+    btn.textContent='📅';
     btn.title='달력 열기';
     btn.onclick=()=>{
       try{input.showPicker ? input.showPicker() : input.focus();}catch(_){input.focus();}
