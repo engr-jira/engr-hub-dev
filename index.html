@@ -4067,7 +4067,6 @@ function logSearchLinks(term, product){
   else if(ms) out.push({label:'📚 MS Learn', src:'Microsoft', url:`https://learn.microsoft.com/search/?terms=${tq}`});
   else if(product==='Oracle') out.push({label:'📚 Oracle', src:'Oracle', url:`https://www.google.com/search?q=oracle+${tq}`});
   else out.push({label:'📚 KB 검색', src:'KB', url:`https://www.google.com/search?q=${q}+KB`});
-  out.push({label:'💬 커뮤니티', src:'커뮤니티', url:`https://stackoverflow.com/search?q=${tq}`});
   return out;
 }
 function renderLogResult(data, product){
@@ -6103,16 +6102,25 @@ function autoLogin(){
 // ── PWA 설치: 상단 메뉴의 '앱 설치' 항목으로 노출 (방해되는 플로팅 버튼 제거) ──
 let __deferredInstall=null;
 function isStandaloneApp(){try{return window.matchMedia('(display-mode:standalone)').matches||window.navigator.standalone;}catch(_){return false;}}
+function isIOSDevice(){try{return /iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);}catch(_){return false;}}
 function syncInstallMenuItem(){
   const el=document.getElementById('tmp-install'); if(!el)return;
-  el.style.display=(__deferredInstall&&!isStandaloneApp())?'flex':'none';
+  // 안드로이드/크롬=beforeinstallprompt, iOS=사파리 공유 안내. 이미 설치(standalone)면 숨김.
+  el.style.display=(!isStandaloneApp() && (!!__deferredInstall || isIOSDevice()))?'flex':'none';
 }
 async function pwaInstall(){
   closeTopMenu();
-  if(!__deferredInstall){toast('이미 설치되었거나, 브라우저 메뉴의 "홈 화면에 추가"를 이용해 주세요.',true);return;}
-  __deferredInstall.prompt();
-  try{await __deferredInstall.userChoice;}catch(_){}
-  __deferredInstall=null; syncInstallMenuItem();
+  if(__deferredInstall){ __deferredInstall.prompt(); try{await __deferredInstall.userChoice;}catch(_){} __deferredInstall=null; syncInstallMenuItem(); return; }
+  if(isIOSDevice()){
+    openGenModal('📲 아이폰에 앱 설치',`<div style="font-size:13px;line-height:2;color:var(--text2)">
+      <b>Safari</b> 하단의 <b>공유</b> 버튼 <span style="display:inline-block;border:1px solid var(--border2);border-radius:5px;padding:0 7px;color:var(--accent3)">⬆</span> 을 누르고,<br>
+      메뉴에서 <b>"홈 화면에 추가"</b> 를 선택하세요.<br><br>
+      홈 화면에 <b>ESCARE</b> 아이콘이 생기고, 주소 입력 없이 앱처럼 열립니다.<br><br>
+      <span style="color:var(--text3);font-size:12px">※ 반드시 <b>Safari</b>에서 열어야 추가됩니다(다른 브라우저는 제한).</span>
+    </div>`,`<button class="btn btn-indigo" onclick="closeGenModal()" style="width:auto;padding:8px 18px">확인</button>`);
+    return;
+  }
+  toast('이미 설치되었거나, 브라우저 메뉴의 "홈 화면에 추가"를 이용해 주세요.',true);
 }
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();__deferredInstall=e;syncInstallMenuItem();});
 window.addEventListener('appinstalled',()=>{__deferredInstall=null;syncInstallMenuItem();try{toast&&toast('앱이 설치되었습니다 ✓');}catch(_){}});
