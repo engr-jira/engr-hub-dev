@@ -108,3 +108,4 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
 - **My Desk 데이터 손실 버그 수정**: 연속 입력 중 디바운스가 계속 밀려 PUT이 안 나가던 문제 → 최대대기 3s + 2초 백스톱 + 이탈 시 keepalive flush. 로드 실패 시 빈 값 덮어쓰기 금지. (모든 카드 save 경로 검증 완료)
 - **웹 푸시 알림(Option B) 구축**: sw.js + VAPID(ES256) + payload-less. 본인 제외/사용자 opt-out/관리자 기능별 on·off/대상 지정(include·exclude)/멘트 템플릿. 이벤트=업무링크·팀노하우·EOS 등록. 상단메뉴 🔔 토글 + 관리자설정 섹션. (실기기 알림 표시 검증 사용자 필요)
 - 푸시 관리자 섹션 표시 수정(normalizeAdminSettingsUI index 충돌 → `.np` 제외). My Desk: 주간미팅 시간 입력, 벤더케이스 날짜=오픈일 명확화, 바로가기 RDP 포트 입력(.rdp/mstsc 반영).
+- 상단 메뉴 토글 일관화: '현재 화면/현재 알림' 상태 줄 + 버튼은 전환(반대) 동작 기준(아이콘·문구 일치). EOS/라이선스 복수 등록: 모달에서 제품/버전/만료일 줄 여러 개 추가 → `/eos/bulk`(요약 알림 1회). 수정/삭제는 행 단위 유지.
