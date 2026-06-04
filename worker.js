@@ -1240,6 +1240,84 @@ async function resetHubData(env) {
   return { ok: true, deleted, truncated };
 }
 
+// ════════════════ Web Push (VAPID, payload-less + SW pending fetch) ════════════════
+// 이벤트 등록 시 구독자에게 OS 알림. 본인(actor) 제외 · 사용자 opt-out · 관리자 기능별 on/off · 대상 지정 · 멘트 템플릿.
+const PUSH_EVENTS = {
+  link:      { label: '업무 링크 등록',    defTitle: '🔗 새 업무 링크',     defBody: "{user}님이 '{target}' 등록", page: 'links' },
+  knowledge: { label: '팀 노하우 등록',    defTitle: '📚 새 팀 노하우',     defBody: "{user}님이 '{target}' 등록", page: 'knowledge' },
+  eos:       { label: 'EOS/라이선스 등록', defTitle: '⏳ EOS/라이선스 등록', defBody: "{user}님이 '{target}' 등록", page: 'eos' },
+};
+function u8ToB64url(u){ let s=''; for(let i=0;i<u.length;i++)s+=String.fromCharCode(u[i]); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+async function vapidAuthHeader(env, audience){
+  const jwkRaw = env.VAPID_PRIVATE_JWK, pub = env.VAPID_PUBLIC_KEY, sub = env.VAPID_SUBJECT || 'mailto:admin@example.com';
+  if(!jwkRaw || !pub) throw new Error('VAPID not configured');
+  const jwk = typeof jwkRaw === 'string' ? JSON.parse(jwkRaw) : jwkRaw;
+  const key = await crypto.subtle.importKey('jwk', { kty:'EC', crv:'P-256', d:jwk.d, x:jwk.x, y:jwk.y, ext:true }, { name:'ECDSA', namedCurve:'P-256' }, false, ['sign']);
+  const enc = new TextEncoder();
+  const header = u8ToB64url(enc.encode(JSON.stringify({ typ:'JWT', alg:'ES256' })));
+  const payload = u8ToB64url(enc.encode(JSON.stringify({ aud:audience, exp:Math.floor(Date.now()/1000)+12*3600, sub })));
+  const signingInput = `${header}.${payload}`;
+  const sig = await crypto.subtle.sign({ name:'ECDSA', hash:'SHA-256' }, key, enc.encode(signingInput));
+  return { Authorization:`vapid t=${signingInput}.${u8ToB64url(new Uint8Array(sig))}, k=${pub}` };
+}
+async function sendWebPush(env, sub, ttl=86400){
+  const u = new URL(sub.endpoint);
+  const auth = await vapidAuthHeader(env, `${u.protocol}//${u.host}`);
+  const res = await fetch(sub.endpoint, { method:'POST', headers:{ ...auth, TTL:String(ttl) } });
+  return res.status; // 201=ok, 404/410=만료(구독 제거)
+}
+async function getPushSubs(env){ try{ const r=await env.ENGR_KV.get('push:subs'); return r?JSON.parse(r):{}; }catch(_){ return {}; } }
+async function savePushSubs(env, s){ await env.ENGR_KV.put('push:subs', JSON.stringify(s)); }
+async function getPushSettings(env){
+  let s={}; try{ const r=await env.ENGR_KV.get('push:settings'); if(r)s=JSON.parse(r); }catch(_){}
+  const events={};
+  for(const [k,def] of Object.entries(PUSH_EVENTS)){
+    const e=(s.events&&s.events[k])||{};
+    events[k]={ enabled:e.enabled!==false, title:e.title||def.defTitle, body:e.body||def.defBody, label:def.label };
+  }
+  return { events, include:Array.isArray(s.include)?s.include:[], exclude:Array.isArray(s.exclude)?s.exclude:[] };
+}
+function fillTemplate(tpl, vars){ return String(tpl||'').replace(/\{(\w+)\}/g,(m,k)=> vars[k]!==undefined?vars[k]:m); }
+async function endpointHash(endpoint){ const b=await crypto.subtle.digest('SHA-256', new TextEncoder().encode(endpoint)); return u8ToB64url(new Uint8Array(b)).slice(0,40); }
+async function enqueuePending(env, endpoint, payload){
+  const pk='push:pending:'+await endpointHash(endpoint);
+  let pend=[]; try{ const r=await env.ENGR_KV.get(pk); if(r)pend=JSON.parse(r); }catch(_){}
+  pend.push(payload); if(pend.length>30)pend=pend.slice(-30);
+  await env.ENGR_KV.put(pk, JSON.stringify(pend), { expirationTtl:60*60*24*7 });
+}
+async function pushNotify(env, eventKey, actorId, vars){
+  try{
+    const def=PUSH_EVENTS[eventKey]; if(!def)return;
+    const settings=await getPushSettings(env);
+    const ev=settings.events[eventKey];
+    if(!ev || !ev.enabled) return;
+    const subs=await getPushSubs(env);
+    const actorNorm=normalizeUserId(actorId||'');
+    const include=settings.include.map(normalizeUserId).filter(Boolean);
+    const exclude=settings.exclude.map(normalizeUserId).filter(Boolean);
+    let recipients=Object.keys(subs);
+    if(include.length) recipients=recipients.filter(u=>include.includes(u));
+    recipients=recipients.filter(u=> !exclude.includes(u) && u!==actorNorm);
+    if(!recipients.length) return;
+    let users={}; try{ users=await getUsers(env); }catch(_){}
+    const actorName=(users[actorNorm]&&users[actorNorm].displayName)||actorId||'팀원';
+    const fullVars={ user:actorName, event:def.label, ...vars };
+    const payload={ title:fillTemplate(ev.title,fullVars), body:fillTemplate(ev.body,fullVars), page:def.page, ts:Date.now(), tag:eventKey };
+    let changed=false;
+    for(const uid of recipients){
+      let pref={}; try{ const pr=await env.ENGR_KV.get('push:pref:'+uid); if(pr)pref=JSON.parse(pr); }catch(_){}
+      if(pref.enabled===false) continue;
+      const list=subs[uid]||[];
+      for(const s of list){
+        try{ await enqueuePending(env, s.endpoint, payload); }catch(_){}
+        try{ const st=await sendWebPush(env, s); if(st===404||st===410){ subs[uid]=(subs[uid]||[]).filter(x=>x.endpoint!==s.endpoint); changed=true; } }catch(_){}
+      }
+      if(subs[uid] && !subs[uid].length){ delete subs[uid]; changed=true; }
+    }
+    if(changed) await savePushSubs(env, subs);
+  }catch(_){}
+}
+
 //
 export default {
   async fetch(request, env, ctx) {
@@ -1747,6 +1825,7 @@ export default {
         links.push(newLink);
         await env.ENGR_KV.put('config:links', JSON.stringify(links));
         await auditLog(env, user, 'LINK_ADD', { title: newLink.title });
+        ctx.waitUntil(pushNotify(env, 'link', user, { target: newLink.title || '제목 없음' }));
         return corsResponse({ ok: true, link: newLink });
       }
       if (path.match(/^\/links\/[^/]+\/comments(?:\/[^/]+)?$/)) {
@@ -1821,6 +1900,97 @@ export default {
         try { await env.ENGR_KV.delete(`mydesk:${user}`); } catch (_) {}
         return corsResponse({ ok: true });
       }
+      // \u2500\u2500 Web Push \u2500\u2500
+      if (path === '/push/public-key' && request.method === 'GET') {
+        return corsResponse({ ok: true, publicKey: env.VAPID_PUBLIC_KEY || '', configured: !!(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_JWK) });
+      }
+      if (path === '/push/subscribe' && request.method === 'POST') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        const body = await request.json().catch(() => ({}));
+        const sub = body.subscription;
+        if (!sub || !sub.endpoint) return corsResponse({ ok: false, message: '\uAD6C\uB3C5 \uC815\uBCF4\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.' }, 400);
+        const subs = await getPushSubs(env);
+        const list = (subs[user] || []).filter(s => s.endpoint !== sub.endpoint);
+        list.push({ endpoint: sub.endpoint, keys: sub.keys || {}, ua: (request.headers.get('user-agent') || '').slice(0, 140), ts: Date.now() });
+        subs[user] = list;
+        await savePushSubs(env, subs);
+        await env.ENGR_KV.put('push:pref:' + user, JSON.stringify({ enabled: true }));
+        return corsResponse({ ok: true });
+      }
+      if (path === '/push/unsubscribe' && request.method === 'POST') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        const body = await request.json().catch(() => ({}));
+        const subs = await getPushSubs(env);
+        if (subs[user]) {
+          if (body.endpoint) subs[user] = subs[user].filter(s => s.endpoint !== body.endpoint);
+          else delete subs[user];
+          if (subs[user] && !subs[user].length) delete subs[user];
+          await savePushSubs(env, subs);
+        }
+        await env.ENGR_KV.put('push:pref:' + user, JSON.stringify({ enabled: false }));
+        return corsResponse({ ok: true });
+      }
+      if (path === '/push/pending' && request.method === 'POST') {
+        // \uC11C\uBE44\uC2A4\uC6CC\uCEE4\uAC00 \uD638\uCD9C: \uC5D4\uB4DC\uD3EC\uC778\uD2B8 \uC18C\uC720 \uC99D\uBA85\uB9CC\uC73C\uB85C \uBCF4\uB958 \uC54C\uB9BC \uC218\uB839 \uD6C4 \uBE44\uC6C0(\uC138\uC158 \uBD88\uD544\uC694)
+        const body = await request.json().catch(() => ({}));
+        if (!body.endpoint) return corsResponse({ ok: false, items: [] }, 400);
+        const pk = 'push:pending:' + await endpointHash(body.endpoint);
+        let pend = []; try { const r = await env.ENGR_KV.get(pk); if (r) pend = JSON.parse(r); } catch (_) {}
+        if (pend.length) await env.ENGR_KV.delete(pk);
+        return corsResponse({ ok: true, items: pend });
+      }
+      if (path === '/push/pref' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        let pref = { enabled: true }; try { const r = await env.ENGR_KV.get('push:pref:' + user); if (r) pref = JSON.parse(r); } catch (_) {}
+        const subs = await getPushSubs(env);
+        return corsResponse({ ok: true, enabled: pref.enabled !== false, subscribed: !!(subs[user] && subs[user].length), configured: !!(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_JWK) });
+      }
+      if (path === '/push/pref' && request.method === 'POST') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        const body = await request.json().catch(() => ({}));
+        await env.ENGR_KV.put('push:pref:' + user, JSON.stringify({ enabled: body.enabled !== false }));
+        return corsResponse({ ok: true });
+      }
+      if (path === '/push/test' && request.method === 'POST') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        const subs = await getPushSubs(env);
+        const list = subs[user] || [];
+        if (!list.length) return corsResponse({ ok: false, message: '\uC774 \uAE30\uAE30\uC5D0\uC11C \uBA3C\uC800 \uC54C\uB9BC\uC744 \uCF1C\uC8FC\uC138\uC694.' }, 400);
+        const payload = { title: '\uD83D\uDD14 \uD14C\uC2A4\uD2B8 \uC54C\uB9BC', body: '\uC54C\uB9BC\uC774 \uC815\uC0C1 \uB3D9\uC791\uD569\uB2C8\uB2E4.', page: 'mydesk', ts: Date.now(), tag: 'test' };
+        let sent = 0, gone = 0;
+        for (const s of list) {
+          try { await enqueuePending(env, s.endpoint, payload); } catch (_) {}
+          try { const st = await sendWebPush(env, s); if (st >= 200 && st < 300) sent++; else if (st === 404 || st === 410) gone++; } catch (_) {}
+        }
+        return corsResponse({ ok: true, sent, gone });
+      }
+      if (path === '/push/settings' && request.method === 'GET') {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC811\uADFC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
+        const settings = await getPushSettings(env);
+        const subs = await getPushSubs(env);
+        const subscribers = Object.keys(subs).map(u => ({ id: u, devices: (subs[u] || []).length }));
+        return corsResponse({ ok: true, settings, subscribers, configured: !!(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_JWK) });
+      }
+      if (path === '/push/settings' && request.method === 'POST') {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC811\uADFC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
+        const body = await request.json().catch(() => ({}));
+        const cur = await getPushSettings(env);
+        const events = {};
+        for (const k of Object.keys(PUSH_EVENTS)) {
+          const inc = (body.events && body.events[k]) || {};
+          const base = cur.events[k];
+          events[k] = {
+            enabled: inc.enabled !== undefined ? !!inc.enabled : base.enabled,
+            title: inc.title !== undefined ? String(inc.title).slice(0, 80) : base.title,
+            body: inc.body !== undefined ? String(inc.body).slice(0, 160) : base.body,
+          };
+        }
+        const include = Array.isArray(body.include) ? body.include.map(normalizeUserId).filter(Boolean) : cur.include;
+        const exclude = Array.isArray(body.exclude) ? body.exclude.map(normalizeUserId).filter(Boolean) : cur.exclude;
+        await env.ENGR_KV.put('push:settings', JSON.stringify({ events, include, exclude }));
+        await auditLog(env, user, 'PUSH_SETTINGS_CHANGE', { keys: Object.keys(body) });
+        return corsResponse({ ok: true });
+      }
       if (path === '/private-notes' && request.method === 'GET') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const notes = await loadPrivateNotes(env, user);
@@ -1886,6 +2056,7 @@ export default {
         items.push(newItem);
         await env.ENGR_KV.put('config:knowledge', JSON.stringify(items));
         await auditLog(env, user, 'KNOWLEDGE_ADD', { product: newItem.product, title: newItem.title });
+        ctx.waitUntil(pushNotify(env, 'knowledge', user, { target: newItem.title || newItem.product || '노하우' }));
         return corsResponse({ ok: true, item: newItem });
       }
       if (path.match(/^\/knowledge\/[^/]+\/comments(?:\/[^/]+)?$/)) {
@@ -1957,6 +2128,7 @@ export default {
         items.push(newItem);
         await env.ENGR_KV.put('config:eos', JSON.stringify(items));
         await auditLog(env, user, 'EOS_ADD', { itemType: newItem.type, customer: newItem.customer, product: newItem.product, expire: newItem.expireDate, licenseName: newItem.licenseName });
+        ctx.waitUntil(pushNotify(env, 'eos', user, { target: [newItem.product, newItem.customer].filter(Boolean).join(' / ') || (newItem.type === 'license' ? '라이선스' : 'EOS') }));
         return corsResponse({ ok: true, item: newItem });
       }
       //

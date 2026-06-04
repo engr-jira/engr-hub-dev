@@ -15,7 +15,9 @@
     }
   ],
   "vars": {
-    "KB_ALLOW_PAID_SEARCH": "false"
+    "KB_ALLOW_PAID_SEARCH": "false",
+    "VAPID_PUBLIC_KEY": "BL4LqjU9WFgx6kRXPMSEgrD0_e7P2cFafDK5dVWQlUrCRvrYKNKrvHxZ9gzLKSoKCpTDLg_Fgweps1ERO6UCndw",
+    "VAPID_SUBJECT": "mailto:passikmj@gmail.com"
   },
   "triggers": {
     "crons": []
