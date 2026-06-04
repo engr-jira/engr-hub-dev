@@ -306,6 +306,21 @@ html[data-theme="light"] .btn-indigo:hover,html[data-theme="light"] .btn-green:h
 .vt-hist-hash{color:var(--text3);font-size:10px;font-family:monospace}
 .log-textarea{width:100%;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;color:var(--text);font-size:11px;font-family:'Consolas',monospace;resize:vertical;min-height:160px;outline:none;line-height:1.6}
 .log-textarea:focus{border-color:var(--accent)}
+/* 로그 발췌 결과 */
+.logx-pre{background:rgba(0,0,0,.28);border:1px solid var(--border2);border-radius:10px;padding:12px 14px;margin-top:8px;font-family:'Consolas','Courier New',monospace;font-size:11.5px;line-height:1.65;color:var(--text);white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto}
+html[data-theme="light"] .logx-pre{background:#f4f6fb;color:#0f172a}
+.logx-issue{border:1px solid var(--border);border-radius:11px;padding:11px 13px;margin-top:9px;background:rgba(255,255,255,.02)}
+html[data-theme="light"] .logx-issue{background:#f8fafc}
+.logx-issue-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.logx-sum{font-size:13px;font-weight:700;color:var(--text)}
+.logx-term{font-family:'Consolas',monospace;font-size:11px;color:var(--text3);margin-bottom:8px;word-break:break-all}
+.logx-links{display:flex;flex-wrap:wrap;gap:8px}
+.logx-link{display:inline-flex;align-items:center;gap:0;border:1px solid var(--border2);border-radius:8px;overflow:hidden}
+.logx-link a{font-size:11.5px;color:var(--cyan);text-decoration:none;padding:6px 10px;white-space:nowrap}
+.logx-link a:hover{background:rgba(34,211,238,.1)}
+.logx-reg{border:none;border-left:1px solid var(--border2);background:rgba(99,102,241,.12);color:var(--accent3);font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.logx-reg:hover{background:rgba(99,102,241,.24)}
+.logx-reg.done{background:rgba(45,230,184,.15);color:var(--success);cursor:default}
 .file-drop{border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;margin-bottom:12px;background:var(--panel);cursor:pointer}
 .file-drop:hover,.file-drop.drag{border-color:var(--accent);background:rgba(99,102,241,.05)}
 .file-list{display:flex;flex-direction:column;gap:4px;margin-top:8px}
@@ -1986,7 +2001,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     </div>
 
     <div class="page" id="page-log">
-      <div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--purple);margin-bottom:16px">🔬 로그를 <b>직접 붙여넣기</b> 하거나 파일(.log/.txt/.zip/.csv)을 업로드해 AI 분석 — 파일 최대 20MB, 분석 결과는 우측 상단 📋 복사 버튼으로 가져갈 수 있어요.</div>
+      <div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--purple);margin-bottom:16px">🔬 로그를 붙여넣거나 파일을 올리면 <b>에러·경고·특이사항을 시간순으로 발췌</b>하고, 관련 <b>KB·커뮤니티 검색 링크</b>를 찾아줍니다. 링크 옆 <b>➕등록</b>으로 업무 링크에 저장, 발췌 로그는 📋로 복사하세요. (파일 ≤20MB)</div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">
         <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
           <select id="log-product" class="admin-input" style="width:auto;min-width:200px">
@@ -2017,8 +2032,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         </div>
         <textarea id="log-input" class="log-textarea" placeholder="여기에 로그를 붙여넣으세요 (Ctrl+V) 또는 위에서 파일을 업로드하세요.  분석은 Ctrl+Enter" oninput="updateLogCharCount()" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();analyzeLogs();}"></textarea>
         <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="btn btn-purple" id="log-btn" onclick="analyzeLogs()" style="width:auto;padding:10px 20px">🔬 로그 분석</button>
-          <button class="btn btn-cyan" onclick="extractKeywords()" style="width:auto;padding:10px 20px">🔑 키워드 추출</button>
+          <button class="btn btn-purple" id="log-btn" onclick="analyzeLogs()" style="width:auto;padding:10px 20px">🔬 에러 발췌 &amp; 링크 찾기</button>
         </div>
       </div>
       <div id="log-result"></div>
@@ -4007,55 +4021,75 @@ async function analyzeLogs(){
   const log=collectLogContent();
   const product=document.getElementById('log-product').value;
   const symptom=(document.getElementById('log-symptom')?.value||'').trim();
-  if(!log){toast('로그 입력 필요',true);return;}
-  const fileNames=LOG_FILES.map(f=>f.name).join(', ')||'직접입력';
+  const res=document.getElementById('log-result');
+  if(!log){toast('로그를 입력하거나 파일을 올려주세요',true);return;}
   const btn=document.getElementById('log-btn');
-  btn.disabled=true;btn.textContent='분석 중...';
-  openAIModal('🔬',`${product} 로그 분석`,product,'<div class="loading">AI 분석 중...</div>');
+  btn.disabled=true;btn.textContent='발췌 중...';
+  if(res)res.innerHTML='<div class="loading">에러·경고·특이사항 발췌 중...</div>';
   try{
-    const text=await callAI(`당신은 ${product} 로그 분석 전문가입니다. 아래 사용자가 입력한 증상/재현 조건과 로그를 함께 분석하세요.
-
-사용자가 입력한 증상/재현 조건:
-${symptom||'(입력 없음)'}
-
-**🔍 핵심 이벤트 요약**
-**📌 증상과 로그의 연결 지점**
-**📌 주요 관찰 포인트**
-**🧩 원인 분석** (확인 사실 vs 추정 구분)
-**⚡ 즉시 조치 방안**
-**🛡 재발 방지**
-**🔎 추가 확인 로그/명령어**
+    const raw=await callAI(`당신은 ${product} 로그 분석가입니다. 아래 로그에서 ERROR/WARN/실패/예외/타임아웃/비정상 등 "특이사항" 라인만 골라 시간 순서대로 발췌하고, 핵심 이슈와 검색 키워드를 뽑으세요.
+${symptom?('참고 증상: '+symptom):''}
+출력은 아래 JSON "하나만" (그 외 설명/마크다운 금지):
+{"excerpt":"발췌한 로그 라인들 — 시간순, 원문 그대로, 줄바꿈 \\n 포함","issues":[{"level":"error|warn|info","summary":"한국어 한 줄 설명","term":"검색용 핵심 키워드/에러코드(영문 위주, 5단어 이내)"}]}
+issues는 최대 6개. 특이사항이 없으면 {"excerpt":"특이사항 없음","issues":[]}.
 
 로그:
-${log.slice(0,28000)}`,'log',{product,files:fileNames,size:log.length,hasSymptom:!!symptom});
-    setAIModalBody(text);
-    document.getElementById('ai-modal-meta').textContent=`${product} · ${fileNames} · ${(log.length/1024).toFixed(1)}KB`;
-  }catch(e){setAIModalBody(`<div style="color:var(--danger);padding:20px">오류: ${e.message}</div>`,true);}
-  btn.disabled=false;btn.textContent='🔬 로그 분석';
+${log.slice(0,28000)}`,'logx',{product,size:log.length});
+    let data=null;
+    try{ const m=raw&&raw.match(/\{[\s\S]*\}/); data=JSON.parse(m?m[0]:raw); }catch(_){}
+    if(!data||typeof data.excerpt!=='string'){
+      res.innerHTML=`<div class="vt-result"><div class="sec-title">분석 결과</div><pre class="logx-pre">${escapeHtml(raw||'(빈 응답)')}</pre><button class="btn btn-cyan" data-t="${escapeHtml(raw||'')}" onclick="copyText(this.dataset.t)" style="width:auto;padding:8px 16px;margin-top:10px">📋 복사</button></div>`;
+    }else{
+      res.innerHTML=renderLogResult(data, product);
+    }
+  }catch(e){ if(res)res.innerHTML=`<div style="color:var(--danger);padding:16px">오류: ${escapeHtml(e.message)}</div>`; }
+  btn.disabled=false;btn.textContent='🔬 에러 발췌 & 링크 찾기';
 }
-async function extractKeywords(){
-  const log=collectLogContent();
-  const product=document.getElementById('log-product').value;
-  const symptom=(document.getElementById('log-symptom')?.value||'').trim();
-  if(!log){toast('로그 입력 필요',true);return;}
-  const fileNames=LOG_FILES.map(f=>f.name).join(', ')||'직접입력';
-  openAIModal('🔑',`${product} 키워드 추출`,product,'<div class="loading">추출 중...</div>');
+function logSearchLinks(term, product){
+  const base=(product&&product!=='기타')?product+' ':'';
+  const q=encodeURIComponent(base+term), tq=encodeURIComponent(term);
+  const broadcom=['SEP','SEPM','DLP','PP','ProxySG','CloudSWG','CASB'].includes(product);
+  const ms=['Windows','MSSQL'].includes(product);
+  const out=[{label:'🔍 Google', src:'Google', url:`https://www.google.com/search?q=${q}`}];
+  if(broadcom) out.push({label:'📚 Broadcom KB', src:'Broadcom', url:`https://support.broadcom.com/web/ecx/search?searchString=${tq}`});
+  else if(ms) out.push({label:'📚 MS Learn', src:'Microsoft', url:`https://learn.microsoft.com/search/?terms=${tq}`});
+  else if(product==='Oracle') out.push({label:'📚 Oracle', src:'Oracle', url:`https://www.google.com/search?q=oracle+${tq}`});
+  else out.push({label:'📚 KB 검색', src:'KB', url:`https://www.google.com/search?q=${q}+KB`});
+  out.push({label:'💬 커뮤니티', src:'커뮤니티', url:`https://stackoverflow.com/search?q=${tq}`});
+  return out;
+}
+function renderLogResult(data, product){
+  const col=l=>l==='error'?'#f87171':l==='warn'?'#fbbf24':'#22d3a5';
+  const excerpt=data.excerpt||'특이사항 없음';
+  const issues=Array.isArray(data.issues)?data.issues:[];
+  const issuesHtml=issues.map(it=>{
+    const links=logSearchLinks(it.term||it.summary||'', product);
+    const rows=links.map(ln=>{
+      const title=`[${product}] ${(it.term||it.summary||'').slice(0,60)} · ${ln.src}`;
+      return `<div class="logx-link"><a href="${ln.url}" target="_blank" rel="noopener">${ln.label}</a><button class="logx-reg" data-title="${escapeHtml(title)}" data-url="${escapeHtml(ln.url)}" onclick="registerLogLink(this.dataset.title,this.dataset.url,this)" title="업무 링크에 등록">➕ 등록</button></div>`;
+    }).join('');
+    return `<div class="logx-issue">
+      <div class="logx-issue-head"><span class="badge" style="background:${col(it.level)}22;color:${col(it.level)}">${String(it.level||'info').toUpperCase()}</span><span class="logx-sum">${escapeHtml(it.summary||it.term||'')}</span></div>
+      ${it.term?`<div class="logx-term">${escapeHtml(it.term)}</div>`:''}
+      <div class="logx-links">${rows}</div>
+    </div>`;
+  }).join('');
+  return `<div class="vt-result">
+    <div class="sec-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">📋 발췌된 로그 (시간순)<button class="btn btn-cyan" data-t="${escapeHtml(excerpt)}" onclick="copyText(this.dataset.t)" style="width:auto;padding:6px 14px;font-size:11px">📋 복사</button></div>
+    <pre class="logx-pre">${escapeHtml(excerpt)}</pre>
+    ${issues.length?`<div class="sec-title" style="margin-top:16px">🔎 핵심 이슈 & 추천 링크 <span style="font-weight:400;color:var(--text3);font-size:11px">— ➕로 업무 링크에 등록</span></div>${issuesHtml}`:'<div style="color:var(--text3);font-size:12px;margin-top:10px">추출된 핵심 이슈가 없습니다.</div>'}
+  </div>`;
+}
+async function registerLogLink(title, url, btn){
+  if(!url){toast('URL이 없습니다',true);return;}
   try{
-    const text=await callAI(`${product} 로그에서 핵심 키워드 추출:
-사용자가 입력한 증상/재현 조건: ${symptom||'(입력 없음)'}
-
-**탐지/이벤트명**: 
-**파일/경로**: 
-**IP/호스트**: 
-**사용자/계정**: 
-**위험 수준**: 
-**액션/결과**: 
-
-로그:
-${log.slice(0,15000)}`,'keywords',{product,files:fileNames});
-    setAIModalBody(text);
-    document.getElementById('ai-modal-meta').textContent=`${product} · ${fileNames}`;
-  }catch(e){setAIModalBody(`<div style="color:var(--danger);padding:20px">오류: ${e.message}</div>`,true);}
+    const r=await fetch(`${WORKERS}/links`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({title:String(title).slice(0,120),url,category:'로그분석',desc:'로그 분석에서 등록'})});
+    const d=await r.json();
+    if(!d.ok){toast(d.message||'등록 실패',true);return;}
+    toast('업무 링크에 등록됨 ✓');
+    if(btn){btn.textContent='✓ 등록됨';btn.disabled=true;btn.classList.add('done');}
+    try{await loadLinks();renderLinks();}catch(_){}
+  }catch(e){toast('오류: '+e.message,true);}
 }
 
 // ── VIRUSTOTAL ────────────────────────────────────
@@ -6808,6 +6842,8 @@ function renderTopbarStatus(){
 }
 function renderTopbarStatusV159(){
   const right=document.querySelector('.topbar-right'); if(!right)return;
+  // body로 빠져나간 모바일 메뉴 팝오버 잔여물 정리(중복 id 방지)
+  const _stale=document.getElementById('top-menu-pop'); if(_stale && _stale.parentElement===document.body) _stale.remove();
   const gi=getGeneralIssues().length, ci=getCaseIssueBase().length;
   const connected=!!(ISSUES&&ISSUES.length);
   const manualHref=(IS_ADMIN||IS_SUPER)?'manual.html':'manual-user.html';
@@ -6857,22 +6893,28 @@ function tickTopClock(){
 function toggleTopMenu(e){
   if(e){e.stopPropagation();}
   const p=document.getElementById('top-menu-pop'); if(!p)return;
-  const open=p.classList.toggle('show');
-  const b=document.getElementById('top-menu-btn'); if(b)b.setAttribute('aria-expanded',open?'true':'false');
-  // 모바일: 버튼 위치 기준으로 뷰포트에 고정 배치 → 부모 클리핑/위치 문제로 안 열리는 현상 방지
+  const b=document.getElementById('top-menu-btn');
+  const willOpen=!p.classList.contains('show');
   let mob=false; try{mob=window.matchMedia('(max-width:700px)').matches;}catch(_){}
-  if(open && b && mob){
-    const r=b.getBoundingClientRect();
-    p.style.position='fixed';
-    p.style.top=(r.bottom+6)+'px';
-    p.style.right=Math.max(8,(window.innerWidth-r.right))+'px';
-    p.style.left='auto';
-  }else if(!mob){
-    p.style.position='';p.style.top='';p.style.right='';p.style.left='';
-  }
+  if(willOpen){
+    if(mob && b){
+      // iOS Safari: 상단바 backdrop-filter가 fixed 기준이 돼 메뉴가 잘림 → body로 빼서 뷰포트 기준 고정
+      if(p.parentElement!==document.body) document.body.appendChild(p);
+      const r=b.getBoundingClientRect();
+      p.style.position='fixed';
+      p.style.top=(r.bottom+6)+'px';
+      p.style.right=Math.max(8,Math.round(window.innerWidth-r.right))+'px';
+      p.style.left='auto';
+      p.style.zIndex='2000';
+    }else{
+      p.style.position='';p.style.top='';p.style.right='';p.style.left='';p.style.zIndex='';
+    }
+    p.classList.add('show');
+    if(b)b.setAttribute('aria-expanded','true');
+  }else{ closeTopMenu(); }
 }
 function closeTopMenu(){ const p=document.getElementById('top-menu-pop'); if(p)p.classList.remove('show'); const b=document.getElementById('top-menu-btn'); if(b)b.setAttribute('aria-expanded','false'); }
-document.addEventListener('click',e=>{ const m=document.querySelector('.top-menu'); if(m&&!m.contains(e.target))closeTopMenu(); });
+document.addEventListener('click',e=>{ const m=document.querySelector('.top-menu'); const pop=document.getElementById('top-menu-pop'); if(m && !m.contains(e.target) && !(pop&&pop.contains(e.target))) closeTopMenu(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeTopMenu(); });
 renderTopbarStatus=renderTopbarStatusV159;
 function enhanceDateButtons(){
