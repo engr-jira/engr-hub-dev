@@ -5405,25 +5405,53 @@ function toggleIncompleteFilter(){
   PAGE=1;renderIssues();
 }
 // ── My Desk 서버(KV) 동기화 — 사용자별, 기기 간 동일 ──
-let __mdSaveTimer=null;
+// 데이터 손실 방지 3중 안전장치:
+//  (1) 디바운스(600ms) + 최대대기(3s): 연속 입력으로 타이머가 계속 밀려도 3초마다 강제 저장
+//  (2) 페이지 이탈(새로고침/탭전환/닫기) 시 keepalive로 보류분 즉시 flush
+//  (3) 로드 GET 실패 시 빈 값으로 덮어쓰지 않음 — 로컬 표시 + 서버 저장 보류(서버 원본 보호)
+let __mdSaveTimer=null, __mdDirty=false, __mdFirstDirtyTs=0;
+function __mdPutStore(useKeepalive){
+  __mdDirty=false; __mdFirstDirtyTs=0;
+  clearTimeout(__mdSaveTimer); __mdSaveTimer=null;
+  const opts={method:'PUT',body:JSON.stringify({store:window.__MD_STORE||{}})};
+  if(useKeepalive)opts.keepalive=true;   // 이탈 중에도 전송 보장(본문 64KB 이내)
+  try{ return hubApi('/mydesk',opts).catch(()=>{}); }catch(_){ }
+}
 window.__mdQueueServerSave=function(){
   if(!CURRENT_USER||!window.__mdLoaded)return;
+  if(!__mdDirty){ __mdDirty=true; __mdFirstDirtyTs=Date.now(); }
+  if(Date.now()-__mdFirstDirtyTs>=3000){ __mdPutStore(false); return; } // 최대대기 초과 → 즉시 저장
   clearTimeout(__mdSaveTimer);
-  __mdSaveTimer=setTimeout(()=>{ hubApi('/mydesk',{method:'PUT',body:JSON.stringify({store:window.__MD_STORE||{}})}).catch(()=>{}); },600);
+  __mdSaveTimer=setTimeout(()=>__mdPutStore(false),600);
 };
 window.__mdServerSaveNow=function(){
   if(!CURRENT_USER||!window.__mdLoaded)return;
-  clearTimeout(__mdSaveTimer);
-  hubApi('/mydesk',{method:'PUT',body:JSON.stringify({store:window.__MD_STORE||{}})}).catch(()=>{});
+  __mdPutStore(false);
 };
+window.__mdFlushNow=function(){
+  if(!CURRENT_USER||!window.__mdLoaded||!__mdDirty)return;
+  __mdPutStore(true);
+};
+window.addEventListener('pagehide',()=>{ try{ window.__mdFlushNow&&window.__mdFlushNow(); }catch(_){ } });
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden'){ try{ window.__mdFlushNow&&window.__mdFlushNow(); }catch(_){ } } });
+// 주기적 백스톱: 보류분이 2초 이상 지나면 강제 저장(keepalive 불안정 대비, 새로고침 직전까지 손실 최소화)
+setInterval(()=>{ try{ if(__mdDirty&&CURRENT_USER&&window.__mdLoaded&&Date.now()-__mdFirstDirtyTs>=2000)__mdPutStore(false); }catch(_){ } },2000);
 async function loadMyDeskForUser(){
-  if(window.__mdLoadedUser===CURRENT_USER&&window.__mdLoaded)return;
+  if(!CURRENT_USER)return;                                   // 로그인 전 호출 차단(빈 사용자로 로드 금지)
+  if(window.__mdLoadedUser===CURRENT_USER&&window.__mdInited)return; // 이 사용자로 이미 1회 초기화됨
   if(window.__mdLoading)return;
-  window.__mdLoading=true; window.__mdLoaded=false;
-  try{ const d=await hubApi('/mydesk'); window.__MD_STORE=(d&&d.data)||{}; }
-  catch(_){ window.__MD_STORE={}; }
-  window.__mdLoaded=true; window.__mdLoadedUser=CURRENT_USER;
-  try{ if(typeof window.__mydeskInit==='function') await window.__mydeskInit(); }catch(_){}
+  window.__mdLoading=true;
+  let ok=false;
+  try{ const d=await hubApi('/mydesk'); window.__MD_STORE=(d&&d.data)||{}; ok=true; }
+  catch(_){ ok=false; }
+  if(ok){ window.__mdLoaded=true; }
+  else {
+    // 서버 로드 실패: 빈 값 덮어쓰기 금지(파괴적 PUT 방지). 로컬값으로 표시하고 서버 저장은 보류.
+    window.__mdLoaded=false;
+    if(typeof toast==='function')toast('서버 연결이 불안정합니다 — 변경사항이 저장되지 않을 수 있어요. 잠시 후 새로고침 해주세요.');
+  }
+  window.__mdLoadedUser=CURRENT_USER;
+  try{ if(!window.__mdInited){ window.__mdInited=true; if(typeof window.__mydeskInit==='function') await window.__mydeskInit(); } }catch(_){}
   window.__mdLoading=false;
 }
 function resetMyDesk(){
