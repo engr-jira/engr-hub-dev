@@ -2548,7 +2548,7 @@ function normalizeExternalUrl(url){
 }
 
 // ── AUTH ──────────────────────────────────────────
-async function login(){
+async function login(opts){
   const name=document.getElementById('l-name').value.trim();
   const pin=document.getElementById('l-pin').value.trim();
   if(!name||!pin){toast('계정 ID와 PIN을 입력해주세요',true);return;}
@@ -2557,7 +2557,19 @@ async function login(){
   try{
     const r=await fetch(`${WORKERS}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,pin})});
     const d=await r.json();
-    if(!d.ok){toast(d.message||'로그인 실패',true);btn.disabled=false;btn.textContent='접속하기 →';return;}
+    if(!d.ok){
+      // 자동 로그인(저장 PIN)이 실패하면 저장정보가 낡은 것 → 깨끗이 비우고 수동 입력 유도(반복 실패 방지)
+      if(opts&&opts.auto){
+        ['engr_remember','engr_saved_user','engr_saved_pin'].forEach(k=>localStorage.removeItem(k));
+        const pe=document.getElementById('l-pin'); if(pe){pe.value='';}
+        const rc=document.getElementById('l-remember'); if(rc)rc.checked=false;
+        toast('저장된 자동 로그인 정보가 만료되어 해제했습니다. PIN을 다시 입력해 주세요.',true);
+        if(pe)pe.focus();
+      }else{
+        toast(d.message||'로그인 실패',true);
+      }
+      btn.disabled=false;btn.textContent='접속하기 →';return;
+    }
     CURRENT_USER=d.userId||d.name||name.toLowerCase();
     CURRENT_DISPLAY=d.displayName||CURRENT_USER;
     IS_ADMIN=d.isAdmin;IS_SUPER=d.isSuperAdmin;USER_ROLE=d.role||'user';SESSION_MIN=d.sessionMin||120;
@@ -6070,15 +6082,15 @@ function autoLogin(){
   if(!name||!pin)return false;
   const nameEl=document.getElementById('l-name'),pinEl=document.getElementById('l-pin'),rc=document.getElementById('l-remember');
   if(nameEl)nameEl.value=name; if(pinEl)pinEl.value=pin; if(rc)rc.checked=true;
-  return login();
+  return login({auto:true});  // 실패 시 저장정보 자동 해제(반복 실패 방지)
 }
 (function init(){
   const remembered=localStorage.getItem('engr_remember')==='1';
   const savedUser=localStorage.getItem('engr_saved_user')||localStorage.getItem('engr_user')||'';
   if(savedUser){const el=document.getElementById('l-name');if(el)el.value=savedUser;}
+  // PIN은 화면에 미리 채우지 않음(낡은 값이 그대로 제출돼 실패하는 혼란 방지). 자동 로그인만 내부적으로 저장 PIN 사용.
   if(remembered){
     const rc=document.getElementById('l-remember');if(rc)rc.checked=true;
-    try{const p=localStorage.getItem('engr_saved_pin');if(p){const el=document.getElementById('l-pin');if(el)el.value=decodeURIComponent(escape(atob(p)));}}catch(_){}
   }
   localStorage.removeItem('engr_pin');
   restoreSession().then(ok=>{
