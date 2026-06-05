@@ -6384,7 +6384,13 @@ async function loadPushSettings(){
   renderPeople('push-exclude-wrap',excSel,'push-exc');
   renderPeople('push-send-people',new Set(),'push-send-r');
   const sub=document.getElementById('push-subscribers');
-  if(sub){ const list=data.subscribers||[]; sub.innerHTML=list.length?('🔔 알림 켠 사용자: '+list.map(s=>`${escapeHtml(nameOf(s.id))} <span style="color:var(--text3)">(${s.devices}대)</span>`).join(', ')):'아직 알림을 켠 사용자가 없습니다.'; }
+  if(sub){
+    const list=data.subscribers||[];
+    const dev=list.reduce((n,s)=>n+(Number(s.devices)||0),0);
+    sub.innerHTML=list.length
+      ?('🔔 <b>구독된 기기</b> — '+list.length+'명 / '+dev+'대: '+list.map(s=>`${escapeHtml(nameOf(s.id))} <span style="color:var(--text3)">(${s.devices}대)</span>`).join(', ')+'<div style="font-size:10.5px;color:var(--text3);margin-top:6px">※ 알림을 켠 뒤 끄지 않은 기기 목록입니다(앱에서 끈 사람은 즉시 제외). 브라우저 권한을 끄거나 만료·삭제된 기기는 다음 알림 발송 시 자동 정리됩니다.</div>')
+      :'아직 알림을 켠 사용자가 없습니다.';
+  }
 }
 async function savePushSettings(){
   const events={};

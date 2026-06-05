@@ -2011,7 +2011,12 @@ export default {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC811\uADFC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const settings = await getPushSettings(env);
         const subs = await getPushSubs(env);
-        const subscribers = Object.keys(subs).map(u => ({ id: u, devices: (subs[u] || []).length }));
+        const subscribers = [];
+        for (const u of Object.keys(subs)) {
+          let pf = {}; try { const pr = await env.ENGR_KV.get('push:pref:' + u); if (pr) pf = JSON.parse(pr); } catch (_) {}
+          if (pf.enabled === false) continue;   // 알림 끈 사용자는 발송 대상이 아니므로 목록에서 제외
+          subscribers.push({ id: u, devices: (subs[u] || []).length });
+        }
         return corsResponse({ ok: true, settings, subscribers, configured: !!(env.VAPID_PUBLIC_KEY && env.VAPID_PRIVATE_JWK) });
       }
       if (path === '/push/settings' && request.method === 'POST') {
