@@ -2245,7 +2245,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           <option value="">전체 유형</option><option value="LOGIN">로그인</option><option value="AI_REQUEST">AI 요청</option>
           <option value="VT_LOOKUP">VT 조회</option><option value="ADMIN_CHANGE">권한 변경</option>
           <option value="CONFIG_CHANGE">설정 변경</option><option value="LINK_ADD">링크 등록</option>
-          <option value="EOS_ADD">EOS 등록</option>
+          <option value="EOS_ADD">라이선스 등록</option>
         </select>
         <select id="audit-limit" class="page-size-select" onchange="loadAudit()">
           <option value="10" selected>10건</option><option value="20">20건</option><option value="30">30건</option><option value="50">50건</option><option value="100">100건</option><option value="200">200건</option>
@@ -2433,7 +2433,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
       <div id="admin-action-status" class="admin-action-status" role="status" aria-live="polite"></div>
 
       <details class="admin-section" open>
-        <summary><span>시스템 설정</span><small>조회 기간 · 세션 · EOS · AI 지침</small></summary>
+        <summary><span>시스템 설정</span><small>조회 기간 · 세션 · 라이선스 · AI 지침</small></summary>
         <div class="admin-card">
           <h3>🔧 시스템 설정</h3>
           <div class="admin-row">
@@ -2451,7 +2451,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
             </select>
           </div>
           <div class="admin-row">
-            <label>EOS 경고 일수</label>
+            <label>라이선스 경고 일수</label>
             <input id="cfg-eos-warn" class="admin-input" style="max-width:240px" placeholder="60,30,7">
             <span style="font-size:10px;color:var(--text3)">콤마로 구분</span>
           </div>
@@ -2541,7 +2541,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <div class="admin-card soft">
           <h3>ℹ 권한 안내</h3>
           <div style="font-size:12px;color:var(--text2);line-height:2">
-            <div>• <strong>일반 사용자</strong> — 대시보드, 이슈, 케이스 트래커, EOS, 로그 분석, VT, 업무 링크</div>
+            <div>• <strong>일반 사용자</strong> — 대시보드, 이슈, 케이스 트래커, 라이선스, 로그 분석, VT, 업무 링크</div>
             <div>• <strong style="color:var(--warn)">일반 관리자</strong> — + 감사 로그 열람, 업무 링크 등록/삭제</div>
             <div>• <strong style="color:var(--accent3)">최상위 관리자</strong> — + 시스템 설정, 권한 부여</div>
           </div>
@@ -2581,7 +2581,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
             <button id="storage-stats-btn" class="btn btn-indigo" onclick="refreshStorageStats()">🗄 저장소 / KV 사용량 조회</button>
             <button id="storage-backup-btn" class="btn btn-green" onclick="downloadHubBackup()">⬇ 전체 HUB 데이터 백업</button>
           </div>
-          <div class="storage-toolbar-note">백업은 링크/노하우/EOS/관리자 설정만 포함합니다. Secret, PIN, JIRA Token, Gemini Key 등 Cloudflare 환경 변수는 포함하지 않습니다.</div>
+          <div class="storage-toolbar-note">백업은 링크/노하우/라이선스/관리자 설정만 포함합니다. Secret, PIN, JIRA Token, Gemini Key 등 Cloudflare 환경 변수는 포함하지 않습니다.</div>
         </div>
       </details>
 
@@ -4678,7 +4678,7 @@ async function loadAudit(){
         detail=`${a.count||0}명 발송${a.skipped?` · ${a.skipped}명 제외`:''}`;
       }else if(a.type==='EOS_ADD'||a.type==='EOS_UPDATE'||a.type==='EOS_DELETE'){
         target=`${a.customer||'-'} · ${a.product||'-'}`;
-        const eosTypeLabel=a.itemType==='license'?'라이선스':'EOS';
+        const eosTypeLabel='라이선스';
         const action=a.type==='EOS_ADD'?'등록':a.type==='EOS_UPDATE'?'수정':'삭제';
         detail=`[${eosTypeLabel}] ${action} · 만료 ${a.expire||'-'}${a.licenseName?' · '+escapeHtml(a.licenseName):''}`;
       }else if(a.type==='LOGIN'){
@@ -4802,7 +4802,7 @@ async function deleteUserAccount(id){
 }
 async function purgeUserAccount(id){
   if(!id||id===SUPER_ADMIN){toast('최고 관리자는 삭제할 수 없습니다.',true);return;}
-  if(!confirm(`⚠ ${id} 계정을 완전히 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없으며 계정 정보와 PIN이 삭제됩니다.\n등록자가 만든 업무 데이터(링크/노하우/EOS 등)는 유지됩니다.`))return;
+  if(!confirm(`⚠ ${id} 계정을 완전히 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없으며 계정 정보와 PIN이 삭제됩니다.\n등록자가 만든 업무 데이터(링크/노하우/라이선스 등)는 유지됩니다.`))return;
   if(!confirm(`정말로 ${id} 계정을 삭제합니까?`))return;
   try{
     const d=await hubApi(`/admin/users/${encodeURIComponent(id)}?purge=true`,{method:'DELETE'});
@@ -4919,7 +4919,7 @@ async function resetUserPin(){
   }catch(e){toast('PIN 초기화 실패: '+e.message,true);setAdminActionStatus('PIN 초기화 실패: '+e.message,'err');}
 }
 function resetAllHubData(){
-  if(!confirm('업무 링크, 노하우, EOS/라이선스, 개인 메모, VT 이력, AI 캐시/사용량/감사 로그를 초기화합니다.\n관리자/시스템 설정은 유지됩니다.\n\n계속하려면 로그인 PIN을 입력해야 합니다.'))return;
+  if(!confirm('업무 링크, 노하우, 라이선스, 개인 메모, VT 이력, AI 캐시/사용량/감사 로그를 초기화합니다.\n관리자/시스템 설정은 유지됩니다.\n\n계속하려면 로그인 PIN을 입력해야 합니다.'))return;
   // 기존 모달 재활용 or 인라인 PIN 입력
   const pin=window.__resetPin||(()=>{
     const p=document.createElement('div');
@@ -7948,7 +7948,7 @@ function normalizeAdminSettingsUI(){
   const title=root.querySelector('.sec-title');
   if(title)title.textContent='관리자 설정';
   const summaries=[
-    ['기본 설정','조회 기간, 세션, EOS, AI 지침'],
+    ['기본 설정','조회 기간, 세션, 라이선스, AI 지침'],
     ['사용자 / 권한','계정 등록과 역할 관리'],
     ['PIN 관리','사용자 PIN 초기화'],
     ['초기 데이터 / 저장소','KB 수집, KV 사용량, 백업'],
@@ -7963,7 +7963,7 @@ function normalizeAdminSettingsUI(){
   root.querySelectorAll('.admin-section:not(.np) .admin-card h3').forEach((h,idx)=>{if(heads[idx])h.textContent=heads[idx];});
   const guide=root.querySelector('.admin-section:not(.np) .admin-card.soft');
   if(guide)guide.style.display='none';
-  const labels=[['cfg-range','데이터 조회 기간'],['cfg-session','세션 타임아웃'],['cfg-eos-warn','EOS 경고 일수']];
+  const labels=[['cfg-range','데이터 조회 기간'],['cfg-session','세션 타임아웃'],['cfg-eos-warn','라이선스 경고 일수']];
   labels.forEach(([id,text])=>{const input=document.getElementById(id);const label=input?.closest('.admin-row')?.querySelector('label');if(label)label.textContent=text;});
   const aiLabel=document.getElementById('cfg-ai-system')?.parentElement?.querySelector('label');
   if(aiLabel)aiLabel.textContent='AI 시스템 지침';
