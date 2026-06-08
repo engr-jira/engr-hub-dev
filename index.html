@@ -1997,6 +1997,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <select id="cust-pg" class="page-size-select" onchange="changePageSize('customers',this.value);renderCustomers()"><option>10</option><option>20</option><option>30</option><option>50</option><option>100</option><option>200</option></select>
         <button class="filter-reset" onclick="resetCustomerFilters()">✕ 초기화</button>
         <span class="filter-count" id="cust-count">0개 고객사</span>
+        <button class="btn" id="cust-history-btn" onclick="openCustomerHistory()" style="margin-left:6px">📜 업무 이력</button>
       </div>
       <div class="two-col">
         <div>
@@ -2005,6 +2006,37 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         </div>
         <div id="cust-right">
           <div class="rpanel"><div class="rp-empty"><p style="font-size:13px;color:var(--text3)">고객사를 선택하면<br>상세 현황이 표시됩니다</p></div></div>
+        </div>
+      </div>
+      <div id="cust-history-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto">
+        <style>
+        #cust-history-modal .chl{display:flex;flex-direction:column;gap:3px;font-size:10.5px;color:var(--text3)}
+        #cust-history-modal input,#cust-history-modal select{background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:6px;padding:5px 7px;color:var(--text,#e2e8f0);font-size:12px}
+        #cust-history-modal .ch-tbl{width:100%;border-collapse:collapse;font-size:12px}
+        #cust-history-modal .ch-tbl th,#cust-history-modal .ch-tbl td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+        #cust-history-modal .ch-tbl th{position:sticky;top:0;background:var(--bg2);color:var(--text3);font-size:11px;z-index:1}
+        </style>
+        <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:22px;width:min(980px,96vw)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <h3 style="margin:0;font-size:16px">📜 고객사 업무 이력 조회 <span style="font-size:11px;color:var(--text3);font-weight:400">· Jira 직접 조회(캐시 기간 무관)</span></h3>
+            <button class="btn" onclick="closeCustomerHistory()">닫기</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px;margin-bottom:10px">
+            <label class="chl">고객사<input id="ch-customer" placeholder="예: 우리카드"></label>
+            <label class="chl">기간 기준<select id="ch-datefield"><option value="created">생성일</option><option value="updated">수정일</option></select></label>
+            <label class="chl">시작일<input id="ch-from" type="date"></label>
+            <label class="chl">종료일<input id="ch-to" type="date"></label>
+            <label class="chl">제품(라벨)<select id="ch-product"><option value="">전체</option><option>DLP</option><option>SEP</option><option>PP</option></select></label>
+            <label class="chl">유형<select id="ch-type"><option value="">전체</option><option value="task">작업</option><option value="subtask">하위 작업</option></select></label>
+            <label class="chl">담당자<input id="ch-assignee" placeholder="표시이름"></label>
+            <label class="chl">상태<input id="ch-status" placeholder="예: 완료"></label>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+            <button class="btn btn-indigo" onclick="runCustomerHistory()">조회</button>
+            <button class="btn" onclick="copyHistoryTable()">표 복사</button>
+            <span id="ch-status-text" class="muted" style="font-size:11px;word-break:break-all"></span>
+          </div>
+          <div id="ch-results" style="max-height:56vh;overflow:auto"></div>
         </div>
       </div>
     </div>
@@ -7446,6 +7478,7 @@ async function loadFeatureFlags(){
 }
 function applyFeatureFlags(){
   Object.entries(FEATURE_NAV).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.style.display=FEATURE_FLAGS[k]===false?'none':'';});
+  const hb=document.getElementById('cust-history-btn'); if(hb)hb.style.display=FEATURE_FLAGS.history===false?'none':'';
 }
 function renderFeatureFlagsAdmin(){
   const w=document.getElementById('feature-flags-wrap'); if(!w)return;
@@ -7455,6 +7488,58 @@ async function saveFeatureFlags(){
   const flags={}; document.querySelectorAll('#feature-flags-wrap input[data-ff]').forEach(c=>{flags[c.dataset.ff]=c.checked;});
   try{ const d=await hubApi('/features',{method:'POST',body:JSON.stringify({flags})}); FEATURE_FLAGS={...FEATURE_FLAGS,...(d.flags||{})}; applyFeatureFlags(); toast('기능 토글을 저장했습니다'); }
   catch(e){ toast('저장 실패: '+e.message); }
+}
+/* ── §2 고객사 업무 이력 (Jira /team/history) ─────────── */
+let HISTORY_ITEMS=[];
+function openCustomerHistory(){
+  if(FEATURE_FLAGS.history===false){toast('비활성화된 기능입니다');return;}
+  const m=document.getElementById('cust-history-modal'); if(!m)return;
+  const cust=(typeof CUST_SEL!=='undefined'&&CUST_SEL)?CUST_SEL.name:'';
+  const ci=document.getElementById('ch-customer'); if(cust&&ci&&!ci.value)ci.value=cust;
+  const from=document.getElementById('ch-from'), to=document.getElementById('ch-to');
+  if(from&&!from.value){ const d=new Date(); d.setFullYear(d.getFullYear()-1); from.value=d.toISOString().slice(0,10); if(to)to.value=new Date().toISOString().slice(0,10); }
+  m.style.display='flex';
+}
+function closeCustomerHistory(){ const m=document.getElementById('cust-history-modal'); if(m)m.style.display='none'; }
+async function runCustomerHistory(){
+  const g=id=>document.getElementById(id)?.value?.trim()||'';
+  const payload={customer:g('ch-customer'),dateField:g('ch-datefield'),from:g('ch-from'),to:g('ch-to'),product:g('ch-product'),type:g('ch-type'),assignee:g('ch-assignee'),status:g('ch-status')};
+  const st=document.getElementById('ch-status-text'), res=document.getElementById('ch-results');
+  if(st)st.textContent='조회 중...'; if(res)res.innerHTML='';
+  try{
+    const d=await hubApi('/team/history',{method:'POST',body:JSON.stringify(payload)});
+    HISTORY_ITEMS=d.items||[];
+    if(st)st.textContent=`${d.count}건`+(d.jql?` · ${d.jql}`:'');
+    renderHistoryResults();
+  }catch(e){ if(st)st.textContent=''; if(res)res.innerHTML=`<div style="color:var(--danger);padding:16px">조회 실패: ${escapeHtml(e.message)}</div>`; }
+}
+function histClsBadge(cls){
+  if(!cls)return '';
+  if(cls.customer)return ` <span class="badge" style="background:#34d39922;color:#34d399">${escapeHtml(cls.customer)}</span>`;
+  if(cls.kind==='vendorcase')return ' <span class="badge" style="background:#60a5fa22;color:#60a5fa">벤더케이스</span>';
+  if(cls.kind==='unclassified')return ` <span class="badge" style="background:#fbbf2422;color:#fbbf24" title="${escapeAttr(cls.bracket||'')}">미분류 ⚑</span>`;
+  if(cls.kind==='internal')return ' <span class="badge" style="background:#94a3b822;color:#94a3b8">내부</span>';
+  return '';
+}
+function renderHistoryResults(){
+  const res=document.getElementById('ch-results'); if(!res)return;
+  if(!HISTORY_ITEMS.length){ res.innerHTML='<div class="muted" style="padding:16px">결과가 없습니다.</div>'; return; }
+  const rows=HISTORY_ITEMS.map(i=>`<tr>
+    <td><a href="https://escare-engr.atlassian.net/browse/${escapeAttr(i.key)}" target="_blank" rel="noopener" style="color:#60a5fa;white-space:nowrap">${escapeHtml(i.key)}</a></td>
+    <td style="max-width:340px">${escapeHtml(i.summary||'')}${histClsBadge(i.cls)}</td>
+    <td>${escapeHtml(i.status||'')}</td><td>${escapeHtml(i.assignee||'-')}</td>
+    <td style="font-size:11px">${(i.labels||[]).map(l=>escapeHtml(l)).join(', ')}</td>
+    <td style="white-space:nowrap">${i.type==='subtask'?'하위':'작업'}</td>
+    <td style="white-space:nowrap">${escapeHtml((i.created||'').slice(0,10))}</td>
+    <td style="white-space:nowrap">${escapeHtml((i.updated||'').slice(0,10))}</td>
+  </tr>`).join('');
+  res.innerHTML=`<table class="ch-tbl"><tr><th>키</th><th>제목</th><th>상태</th><th>담당</th><th>라벨</th><th>유형</th><th>생성</th><th>수정</th></tr>${rows}</table>`;
+}
+function copyHistoryTable(){
+  if(!HISTORY_ITEMS.length){toast('복사할 결과가 없습니다');return;}
+  const head=['키','제목','상태','담당','라벨','유형','생성','수정'];
+  const lines=[head.join('\t')].concat(HISTORY_ITEMS.map(i=>[i.key,(i.summary||'').replace(/\s+/g,' '),i.status,i.assignee,(i.labels||[]).join('|'),i.type==='subtask'?'하위':'작업',(i.created||'').slice(0,10),(i.updated||'').slice(0,10)].map(v=>v||'').join('\t')));
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>toast(`${HISTORY_ITEMS.length}건 복사`)).catch(()=>toast('복사 실패'));
 }
 function hubApi(path,options={}){
   return fetch(`${WORKERS}${path}`,{
