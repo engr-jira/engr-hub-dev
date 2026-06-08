@@ -39,6 +39,29 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
 
 ---
 
+## 1.5 D1 / 신규 기능 (Phase 0 + F1~F4 + §5 + §H) — dev 적용 완료
+
+**Cloudflare D1**(SQLite) 도입. dev DB `engr-hub-dev-db`(id `b3da16b6-16ac-4181-871b-a7eca09dc046`), 바인딩 **`env.DB`**, APAC.
+- `wrangler.jsonc`에 `d1_databases`(binding DB) 추가. **워커 배포는 OAuth(wrangler login)로 OK**(바인딩은 설정값).
+- **D1 DDL/데이터 작업**은 OAuth 토큰으로 실패(error 10000) → **커스텀 API 토큰**(D1 Edit + Workers KV Storage Edit) 필요. 토큰은 코드/문서 금지·작업 후 삭제. 예: `CLOUDFLARE_API_TOKEN="$(cat <파일>)" npx wrangler d1 execute engr-hub-dev-db --remote --file d1/<x>.sql --config wrangler.jsonc`. (이번 세션 토큰은 사용 후 삭제함 — 추후 D1 작업 시 MJ가 재발급/공유)
+- **테이블**(`d1/schema.sql`·`seed.sql`·`audit.sql`): `compat_matrix` / `customers`(name·aliases·active, 14곳 시드) / `app_settings`(key·value) / `team_daily_snapshot` / `audit_log`(§H).
+- **app_settings 키**: `monitor_allowlist`(["mj.park"]) · `monitor_daily_time`(08:30) · `feature_flags`(JSON) · `audit_read_d1`(on/off, dev=on).
+
+**⚠️ 운영(prod) 동기화 시 필수**: prod 워커도 `env.DB` 호출 → dev worker.js를 prod로 복사하기 **전에 prod 전용 D1 DB 생성 + prod `wrangler.jsonc`에 d1_databases 바인딩 + schema/seed 적용**이 선행돼야 함. (D1 코드는 대부분 try/catch·`env.DB?` 가드라 크래시는 안 나지만 compat 저장 실패·고객사 분류 degrade.) **운영 D1 도입·마이그레이션은 MJ 명시 요청 시에만.**
+
+**신규 기능**(전부 dev 배포 완료):
+- **§1 호환성 매트릭스**(`/compat` CRUD+`/confirm`, nav-compat, page-compat, AI mode `cmpx`): D1 compat_matrix. 조회=세션, 변경·확정=관리자. confirmed=공식(✓)·draft=초안. 감사 `MATRIX_ADD/UPDATE/CONFIRM/DELETE`(**matrixType** 키).
+- **§2 고객사 업무 이력**(`/team/history`): 고객사 페이지 필터바 '📜 업무 이력' 모달 → Jira 직접 JQL(기간/제품/유형/담당/상태). 분류배지(classifyBracket cls). 감사 `HIST_VIEW`(**histType**).
+- **§3 팀 업무 모니터**(`/team/daily`·`/weekly`·`/snapshot`, **mj.park allowlist** 서버 enforced): 대시보드 카드(mj.park만). **Cron `30 23 * * *`(08:30 KST)** → `scheduled()` → `buildDailySnapshot` → team_daily_snapshot. 미분류⚑는 플래그만(자동추가 안 함). 감사 `MON_VIEW`(**monType**).
+- **§4 NSIS 분석기**(프론트 전용·워커 무변경, nav-nsis, page-nsis): 파서(섹션/Exec/Reg/다운로드/IOC)+**Mermaid 흐름도**(`vendor/mermaid.min.js` v10.9.6 UMD 지연로드; `.nojekyll`+`.gitattributes`(vendor binary))+AI mode `nsisx`(callAI는 mode로 캐시키/길이만 좌우, 시스템프롬프트 불변 → 워커 무변경)+IOC '클릭→VT'(`vt-input` 프리필).
+- **§5 기능 토글**(`/features` GET/POST, app_settings feature_flags): 관리자설정 '🧩 기능 토글'(admin-section np). off→nav 숨김(`applyFeatureFlags`/`FEATURE_NAV={compat,nsis}`)+서버 403(compat GET·team/*). `/features`가 `monAllowed`도 반환(§3 카드 노출). 감사 `FEATURE_TOGGLE`(**featFlags**). ※현재 **신규4기능(compat/history/monitor/nsis)만** 토글(스펙의 전-메뉴 토글+settings 락아웃가드까지는 후속).
+- **§I UI 문구 정합**: 잔여 'EOS'→'라이선스' 10곳(내부키·감사type·§1의 정당한 EOS·EOL 보존). normalizeAdminSettingsUI가 덮는 부제/라벨은 **JS배열+HTML 둘 다** 수정.
+- **§H 감사로그 KV→D1**: `auditLog`가 KV(`auditLatest:` 유지)+D1(`audit_log`) **이중쓰기**(Promise.allSettled, id=KV키접미사로 멱등). `/kv/audit`는 `audit_read_d1='on'`이면 **D1 우선→KV 폴백**. 슈퍼 엔드포인트 `/admin/migrate/audit-{status,backfill,readsource}` + 관리자설정 '감사로그 D1 이전'(슈퍼, IS_SUPER 가드). 감사 `AUDIT_MIGRATE`(**migPhase**). **dev=read D1 컷오버 완료**(dev KV 0건이라 백필 불필요). 이중쓰기는 grace로 상시 유지(롤백 가능). **운영 미반영.**
+
+**이 세션 배포 방식**: 사용자 지시("DEV 배포까지 쭉")로 **dev `main` 직접 배포**(기능별 브랜치 생략, `feat/hub-d1-foundation`만 병합 후 이후 main). **prod 전부 미반영.** 실기 검증=MJ.
+
+---
+
 ## 2. 코드 함정 (꼭 기억)
 
 - **중복 함수 정의 다수**: 같은 이름 함수가 여러 번 정의됨 → **마지막 정의가 적용**(hoisting). 반드시 *활성(마지막)* 정의를 수정. 예: `renderTopbarStatus` = `renderTopbarStatusV159`(마지막).
