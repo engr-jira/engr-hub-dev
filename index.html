@@ -18,7 +18,7 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#141928;--sidebar:#1a2035;--panel:#212640;--card:#262d47;--card2:#2e3655;
+  --bg:#141928;--sidebar:#1a2035;--panel:#212640;--card:#262d47;--card2:#2e3655;--bg2:#1b2136;
   --border:#3a4266;--border2:#4a5480;--accent:#6366f1;--accent2:#818cf8;--accent3:#c4ceff;
   --success:#2de6b8;--warn:#fcd34d;--danger:#fc8181;--purple:#c4b5fd;--pink:#f9a8d4;--cyan:#67e8f9;
   --text:#f8faff;--text2:#c5cee8;--text3:#7b89aa;
@@ -974,7 +974,7 @@ html[data-theme="light"] .top-clock .tc-time{color:#1e293b}
 <style id="codex-mobile-dark">
 @media(max-width:700px){
   :root{
-    --bg:#111624!important;--sidebar:#141a2b!important;--panel:#1a2034!important;--card:#202743!important;--card2:#252e4d!important;
+    --bg:#111624!important;--sidebar:#141a2b!important;--panel:#1a2034!important;--card:#202743!important;--card2:#252e4d!important;--bg2:#171d30!important;
     --border:#354060!important;--border2:#465173!important;--accent:#6366f1!important;--accent2:#8da2ff!important;--accent3:#d6ddff!important;
     --text:#f8faff!important;--text2:#c8d1ea!important;--text3:#8795b5!important;
   }
@@ -1162,7 +1162,7 @@ html[data-theme="light"] .admin-action-status.info{background:#eef2ff;border-col
 @media(max-width:700px){
   .top-theme{width:100%!important;min-width:0!important;flex:initial!important;height:32px!important;min-height:32px!important;border-radius:999px!important;padding:0 8px!important;font-size:10px!important;overflow:hidden!important;text-overflow:ellipsis!important;justify-content:center!important}
   .top-logout{grid-column:span 1!important}
-  html[data-theme="light"]{--bg:#eceff5!important;--sidebar:#161c2e!important;--panel:#ffffff!important;--card:#ffffff!important;--card2:#f4f6fb!important;--border:#e4e8f0!important;--border2:#d4dbe8!important;--text:#0f172a!important;--text2:#475569!important;--text3:#7a8699!important}
+  html[data-theme="light"]{--bg:#eceff5!important;--sidebar:#161c2e!important;--panel:#ffffff!important;--card:#ffffff!important;--card2:#f4f6fb!important;--border:#e4e8f0!important;--border2:#d4dbe8!important;--text:#0f172a!important;--text2:#475569!important;--text3:#7a8699!important;--bg2:#ffffff!important}
   html[data-theme="light"] body{background:var(--bg)!important;color:var(--text)!important}
   html[data-theme="light"] #cfg{background:
     radial-gradient(620px 520px at 16% 16%, rgba(99,102,241,.16), transparent 60%),
@@ -1859,6 +1859,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           <button class="sb-group-head" type="button" onclick="toggleNavGroup(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9z"/></svg>관리자<span class="sb-group-chev">▾</span></button>
           <div class="sb-group-body">
             <button class="sb-btn" id="nav-audit" onclick="showPage('audit',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/></svg>감사 로그</button>
+            <button class="sb-btn" id="nav-monitor" onclick="showPage('monitor',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18 17V9M13 17V5M8 17v-3"/></svg>팀 업무 모니터</button>
             <button class="sb-btn" id="nav-settings" onclick="showPage('settings',this)" style="display:none"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>관리자 설정</button>
           </div>
         </div>
@@ -1926,20 +1927,19 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <div class="chart-card"><h4>완료율 (5건 이상)</h4><div id="rank-rate"></div></div>
         <div class="chart-card"><h4>월별 추이 (최근 6개월)</h4><svg class="line-chart" id="trend-chart" viewBox="0 0 400 140"></svg></div>
       </div>
-      <div id="team-monitor-section" style="display:none">
-        <div class="sec-title">팀 업무 모니터 <span style="font-size:11px;color:var(--text3);font-weight:400">· mj.park 전용</span></div>
-        <div class="chart-card">
-          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-            <button class="btn btn-indigo" onclick="loadMonitor('daily')">오늘</button>
-            <button class="btn" onclick="loadMonitor('weekly')">최근 7일</button>
-            <button class="btn" onclick="loadMonitor('snapshot')">저장된 스냅샷</button>
-            <span id="monitor-status" class="muted" style="font-size:11.5px"></span>
-          </div>
-          <div id="monitor-body"></div>
-        </div>
-      </div>
       <div class="sec-title">최근 이슈 (10건)</div>
       <div id="dash-list" class="issue-list"></div>
+    </div>
+
+    <div class="page" id="page-monitor">
+      <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--text2,#cbd5e1);margin-bottom:16px">📊 팀 업무 모니터 — 일/주 단위 ENGR 이슈 갱신 현황(담당자별) + 미분류⚑ 검토. <strong>mj.park 전용.</strong></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
+        <button class="btn btn-indigo" onclick="loadMonitor('daily')">오늘</button>
+        <button class="btn" onclick="loadMonitor('weekly')">최근 7일</button>
+        <button class="btn" onclick="loadMonitor('snapshot')">저장된 스냅샷</button>
+        <span id="monitor-status" class="muted" style="font-size:11.5px"></span>
+      </div>
+      <div id="monitor-body"></div>
     </div>
 
     <div class="page" id="page-issues">
@@ -2063,6 +2063,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
       #page-compat .cm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
       #page-compat .cm-grid label,#compat-modal .cm-note{display:flex;flex-direction:column;font-size:11px;color:var(--text3);gap:4px}
       #compat-modal input,#compat-modal textarea{background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text,#e2e8f0);font-size:13px;font-family:inherit}
+      #page-compat .btn,#page-nsis .btn,#page-monitor .btn,#compat-ai-modal .btn,#cust-history-modal .btn,#audit-mig-section .btn{width:auto;min-width:0}
+      table.srt th{cursor:pointer;user-select:none;white-space:nowrap}
+      table.srt th:hover{color:var(--text,#e2e8f0)}
+      .srt-ar{opacity:.7;font-size:9px;margin-left:2px}
       </style>
       <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--text2,#cbd5e1);margin-bottom:16px">🧩 제품·OS 호환성 / EOS·EOL 매트릭스. <strong style="color:#34d399">✓ 확정</strong> 항목이 공식 기준이며, <span class="badge-warn">초안</span>은 검토 중입니다. EOS 임박(90일 이내)은 색으로 강조됩니다.</div>
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px">
@@ -2147,7 +2151,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <button class="filter-reset" onclick="resetEosFilters()">✕ 초기화</button>
         <span class="filter-count" id="eos-count">0건</span>
       </div>
-      <table class="eos-table">
+      <table class="eos-table srt">
         <thead><tr><th>고객사</th><th>Product Description</th><th>Site ID</th><th>수량</th><th>Serial</th><th>기간 (시작~종료)</th><th>D-Day</th><th></th></tr></thead>
         <tbody id="eos-tbody">
           <tr><td colspan="8" style="text-align:center;padding:40px">
@@ -2279,7 +2283,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <span id="audit-count" class="filter-count"></span>
       </div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden">
-        <table class="audit-table">
+        <table class="audit-table srt">
           <thead><tr><th>유형</th><th>사용자</th><th>대상/내용</th><th>상세</th><th>일시</th></tr></thead>
           <tbody id="audit-tbody"></tbody>
         </table>
@@ -4509,7 +4513,7 @@ function vtTableHtml(results,total,done){
   </div>`:'';
   return `<div class="vt-result">${head}${copyBar}
     ${ok.length?`<div class="sec-title" style="margin:4px 0 8px">✅ 조회 성공 ${ok.length}건</div>
-      <table class="eos-table"><thead><tr><th>유형</th><th>대상</th><th>탐지</th><th>위험도</th><th>탐지명 / 정보</th><th>VT</th></tr></thead><tbody>${okRows}</tbody></table>`:''}
+      <table class="eos-table srt"><thead><tr><th>유형</th><th>대상</th><th>탐지</th><th>위험도</th><th>탐지명 / 정보</th><th>VT</th></tr></thead><tbody>${okRows}</tbody></table>`:''}
     ${nf.length?`<div class="sec-title" style="margin:16px 0 8px">❔ 미발견 / 오류 ${nf.length}건</div>
       <table class="eos-table"><thead><tr><th>대상</th><th>사유</th></tr></thead><tbody>${nfRows}</tbody></table>`:''}
   </div>`;
@@ -7443,8 +7447,8 @@ function showPage(name,btn){
   const page=document.getElementById('page-'+name); if(page)page.classList.add('active');
   document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
   const nav=btn||document.getElementById('nav-'+name); if(nav)nav.classList.add('active');
-  const titleMap={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',nsis:'NSIS 분석기'};
-  const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',eos:'고객사 라이선스 만료 관리',log:'로그 업로드 및 증상 기반 AI 분석',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',private:'로그인 사용자 전용 일정, 팁, 할일, 개인 참고',audit:'사용자 작업 이력',settings:'초기 데이터 및 저장소 관리',compat:'제품·OS 호환성 / EOS·EOL 매트릭스',nsis:'설치 스크립트 구조·보안 분석'};
+  const titleMap={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',nsis:'NSIS 분석기',monitor:'팀 업무 모니터'};
+  const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',eos:'고객사 라이선스 만료 관리',log:'로그 업로드 및 증상 기반 AI 분석',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',private:'로그인 사용자 전용 일정, 팁, 할일, 개인 참고',audit:'사용자 작업 이력',settings:'초기 데이터 및 저장소 관리',compat:'제품·OS 호환성 / EOS·EOL 매트릭스',nsis:'설치 스크립트 구조·보안 분석',monitor:'일/주 단위 팀 업무 갱신 현황'};
   const title=document.getElementById('page-title'); if(title)title.textContent=titleMap[name]||'HUB';
   const desc=document.getElementById('page-desc'); if(desc)desc.textContent=descMap[name]||'';
   expandActiveNavGroup(name);
@@ -7455,6 +7459,7 @@ function showPage(name,btn){
     if(typeof loadMyDeskForUser==='function')loadMyDeskForUser();
   }
   if(name==='compat')loadCompat();
+  if(name==='monitor')loadMonitor('daily');
   renderCurrent();
   ensureRelativeDateOptions();
   setTimeout(enhanceDateButtons,0);
@@ -7493,7 +7498,7 @@ function renderCompat(){
     <td>${r.status==='confirmed'?'<span style="color:#34d399;white-space:nowrap">✓ 확정</span>':'<span class="badge-warn">초안</span>'}</td>
     ${admin?`<td style="white-space:nowrap">${r.status!=='confirmed'?`<button style="${CMB}" onclick="confirmCompat(${r.id})">확정</button>`:''}<button style="${CMB}" onclick="openCompatModal(${r.id})">수정</button><button style="${CMB};color:var(--danger)" onclick="deleteCompat(${r.id})">삭제</button></td>`:''}
   </tr>`).join('');
-  wrap.innerHTML=`<table class="data-tbl">${head}${body}</table>`;
+  wrap.innerHTML=`<table class="data-tbl srt">${head}${body}</table>`;
 }
 function openCompatModal(id){
   const m=document.getElementById('compat-modal'); if(!m)return;
@@ -7599,7 +7604,7 @@ function copyCompatTable(){
 }
 /* ── §5 기능 토글 ───────────────────────────────────── */
 let FEATURE_FLAGS={compat:true,history:true,monitor:true,nsis:true};
-const FEATURE_SPECIAL=[['history','고객사 업무 이력'],['monitor','팀 업무 모니터 (mj.park)']];
+const FEATURE_SPECIAL=[['history','고객사 업무 이력']];
 const FEATURE_PROTECTED={settings:1};
 const FEATURE_WARN={audit:'끄면 감사 로그 메뉴가 숨겨집니다(역할 권한은 그대로).'};
 function getMenuToggleList(){
@@ -7684,7 +7689,7 @@ function renderHistoryResults(){
     <td style="white-space:nowrap">${escapeHtml((i.created||'').slice(0,10))}</td>
     <td style="white-space:nowrap">${escapeHtml((i.updated||'').slice(0,10))}</td>
   </tr>`).join('');
-  res.innerHTML=`<table class="ch-tbl"><tr><th>키</th><th>제목</th><th>상태</th><th>담당</th><th>라벨</th><th>유형</th><th>생성</th><th>수정</th></tr>${rows}</table>`;
+  res.innerHTML=`<table class="ch-tbl srt"><tr><th>키</th><th>제목</th><th>상태</th><th>담당</th><th>라벨</th><th>유형</th><th>생성</th><th>수정</th></tr>${rows}</table>`;
 }
 function copyHistoryTable(){
   if(!HISTORY_ITEMS.length){toast('복사할 결과가 없습니다');return;}
@@ -7695,8 +7700,8 @@ function copyHistoryTable(){
 /* ── §3 팀 업무 모니터 (mj.park 전용) ─────────────── */
 let MONITOR_ALLOWED=false;
 function applyMonitorVisibility(){
-  const sec=document.getElementById('team-monitor-section');
-  if(sec)sec.style.display=(MONITOR_ALLOWED && FEATURE_FLAGS.monitor!==false)?'':'none';
+  const nav=document.getElementById('nav-monitor');
+  if(nav)nav.style.display=(MONITOR_ALLOWED && FEATURE_FLAGS.monitor!==false)?'':'none';
 }
 async function loadMonitor(kind){
   const st=document.getElementById('monitor-status'), body=document.getElementById('monitor-body');
@@ -7866,6 +7871,38 @@ async function auditMigReadSource(d1){
   try{ await hubApi('/admin/migrate/audit-readsource',{method:'POST',body:JSON.stringify({d1})}); toast('전환했습니다'); loadAuditMigStatus(); }
   catch(e){ toast('전환 실패: '+e.message); }
 }
+/* ── 공용: 표 컬럼 정렬 (table.srt 헤더 클릭) ── */
+function hubSortTable(table, colIdx, th){
+  const allRows=[...table.rows];
+  let headIdx=allRows.findIndex(r=>r.querySelector('th')); if(headIdx<0)headIdx=0;
+  const dataRows=allRows.filter((r,i)=>i>headIdx && !r.querySelector('th'));
+  if(dataRows.length<2)return;
+  const dir=th.getAttribute('data-srt')==='asc'?'desc':'asc';
+  [...th.parentElement.children].forEach(c=>{c.removeAttribute('data-srt');const a=c.querySelector('.srt-ar');if(a)a.remove();});
+  th.setAttribute('data-srt',dir);
+  const cellVal=r=>{const c=r.children[colIdx];if(!c)return '';return String(c.getAttribute('data-sort')??c.textContent).trim();};
+  const numericRe=/^[\s\d.,%\-+]+$/;
+  const isDate=s=>/^\d{4}-\d{2}-\d{2}/.test(s);
+  dataRows.sort((a,b)=>{
+    const x=cellVal(a),y=cellVal(b);
+    if(x===''&&y!=='')return 1; if(y===''&&x!=='')return -1; if(x===''&&y==='')return 0;
+    let cmp;
+    if(isDate(x)&&isDate(y))cmp=x.localeCompare(y);
+    else if(numericRe.test(x)&&numericRe.test(y)){const nx=parseFloat(x.replace(/[,\s%]/g,'')),ny=parseFloat(y.replace(/[,\s%]/g,''));cmp=(isNaN(nx)?0:nx)-(isNaN(ny)?0:ny);}
+    else cmp=x.localeCompare(y,'ko',{numeric:true});
+    return dir==='asc'?cmp:-cmp;
+  });
+  const parent=dataRows[0].parentNode;
+  dataRows.forEach(r=>parent.appendChild(r));
+  const ar=document.createElement('span'); ar.className='srt-ar'; ar.textContent=dir==='asc'?'▲':'▼'; th.appendChild(ar);
+}
+document.addEventListener('click',function(e){
+  const th=e.target.closest('th'); if(!th)return;
+  const table=th.closest('table.srt'); if(!table)return;
+  if(!th.parentElement.querySelector('th'))return;
+  if(th.querySelector('input,select,button'))return;
+  hubSortTable(table, [...th.parentElement.children].indexOf(th), th);
+});
 function hubApi(path,options={}){
   return fetch(`${WORKERS}${path}`,{
     ...options,
@@ -8050,7 +8087,7 @@ function syncMobSheet(panelId){
 /* mobile primary nav + compact admin settings */
 const MOBILE_PRIMARY_NAV=['nav-dash','nav-issues','nav-cases','nav-customers'];
 const MOBILE_MORE_NAV=['nav-mydesk','nav-eos','nav-log','nav-vt','nav-links','nav-knowledge','nav-audit','nav-settings'];
-const MOBILE_NAV_LABELS={eos:'라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',nsis:'NSIS 분석기'};
+const MOBILE_NAV_LABELS={eos:'라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',nsis:'NSIS 분석기',monitor:'팀 모니터'};
 function mobilePageNameFromNav(id){return String(id||'').replace(/^nav-/,'');}
 function canShowMobileMoreItem(id){
   if(id==='nav-audit')return !!(IS_ADMIN||IS_SUPER);
