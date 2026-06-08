@@ -2477,6 +2477,21 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         </div>
       </details>
 
+      <details class="admin-section np" id="audit-mig-section" style="display:none">
+        <summary><span>🗄️ 감사로그 D1 이전</span><small>§H KV→D1 마이그레이션 (슈퍼)</small></summary>
+        <div class="admin-card">
+          <h3>🗄️ 감사로그 마이그레이션</h3>
+          <div id="audit-mig-status" style="font-size:12px;color:var(--text2,#cbd5e1);margin-bottom:10px">상태 불러오는 중...</div>
+          <div class="storage-actions" style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" onclick="auditMigBackfill()">과거 KV→D1 백필</button>
+            <button class="btn btn-indigo" onclick="auditMigReadSource(true)">읽기 D1 전환</button>
+            <button class="btn" onclick="auditMigReadSource(false)">읽기 KV 복귀</button>
+            <button class="btn" onclick="loadAuditMigStatus()">상태 새로고침</button>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6">이중쓰기(1단계)는 상시 적용 중(KV+D1 동시). 백필 → '읽기 D1 전환' 후 검증하세요. <strong>운영(prod) 반영은 별도 명시 요청 시에만.</strong></div>
+        </div>
+      </details>
+
       <details class="admin-section np">
         <summary><span>🔔 푸시 알림</span><small>기능별 on/off · 멘트 수정 · 수신 대상</small></summary>
         <div class="admin-card">
@@ -7507,6 +7522,7 @@ async function loadFeatureFlags(){
 function applyFeatureFlags(){
   Object.entries(FEATURE_NAV).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.style.display=FEATURE_FLAGS[k]===false?'none':'';});
   const hb=document.getElementById('cust-history-btn'); if(hb)hb.style.display=FEATURE_FLAGS.history===false?'none':'';
+  const am=document.getElementById('audit-mig-section'); if(am){am.style.display=IS_SUPER?'':'none'; if(IS_SUPER&&typeof loadAuditMigStatus==='function')loadAuditMigStatus();}
 }
 function renderFeatureFlagsAdmin(){
   const w=document.getElementById('feature-flags-wrap'); if(!w)return;
@@ -7690,6 +7706,33 @@ async function analyzeNsisAI(){
     const txt=await callAI(prompt,'nsisx',{feature:'nsis'});
     if(out)out.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;white-space:pre-wrap;font-size:13px;line-height:1.65">${escapeHtml(txt)}</div><div class="muted" style="font-size:10.5px;margin-top:4px">AI 추정 — 확정 판단은 검토 필요 · ${escapeHtml(aiModelLabel(LAST_AI_MODEL))}</div>`;
   }catch(e){ if(out)out.innerHTML=`<div style="color:var(--danger);padding:10px">AI 분석 실패: ${escapeHtml(e.message)}</div>`; }
+}
+/* ── §H 감사로그 마이그레이션 (슈퍼) ─────────────── */
+async function loadAuditMigStatus(){
+  const el=document.getElementById('audit-mig-status'); if(!el)return;
+  try{ const d=await hubApi('/admin/migrate/audit-status'); el.innerHTML=`D1 적재 <b>${d.d1Count}</b>건 · 읽기 소스 <b style="color:${d.readD1?'#34d399':'#fbbf24'}">${d.readD1?'D1':'KV(기존)'}</b>`; }
+  catch(e){ el.textContent='상태 조회 실패: '+e.message; }
+}
+async function auditMigBackfill(){
+  if(!confirm('기존 KV 감사로그를 D1로 백필합니다(멱등·안전). 계속할까요?'))return;
+  const el=document.getElementById('audit-mig-status'); let total=0, rounds=0;
+  try{
+    for(const prefix of ['auditLatest:','audit:']){
+      let cursor=null;
+      do{
+        const d=await hubApi('/admin/migrate/audit-backfill',{method:'POST',body:JSON.stringify({prefix,cursor})});
+        total+=d.inserted||0; cursor=d.cursor; rounds++;
+        if(el)el.textContent=`백필 중... ${total}건 적재 (${rounds}배치)`;
+        if(rounds>300){toast('배치 상한 — 한 번 더 실행하세요');break;}
+      }while(cursor);
+    }
+    toast(`백필 완료: ${total}건 적재`); loadAuditMigStatus();
+  }catch(e){ toast('백필 실패: '+e.message); loadAuditMigStatus(); }
+}
+async function auditMigReadSource(d1){
+  if(!confirm(d1?'감사로그 읽기를 D1로 전환합니다. 계속?':'감사로그 읽기를 KV(기존)로 되돌립니다. 계속?'))return;
+  try{ await hubApi('/admin/migrate/audit-readsource',{method:'POST',body:JSON.stringify({d1})}); toast('전환했습니다'); loadAuditMigStatus(); }
+  catch(e){ toast('전환 실패: '+e.message); }
 }
 function hubApi(path,options={}){
   return fetch(`${WORKERS}${path}`,{

@@ -1365,6 +1365,9 @@ async function getFeatureFlags(env) {
   try { const r = await env.DB.prepare("SELECT value FROM app_settings WHERE key='feature_flags'").first(); if (r && r.value) return { ...def, ...JSON.parse(r.value) }; } catch (_) {}
   return def;
 }
+async function getAuditReadD1(env) {
+  try { const r = await env.DB.prepare("SELECT value FROM app_settings WHERE key='audit_read_d1'").first(); return r?.value === 'on'; } catch (_) { return false; }
+}
 function jqlEsc(s) { return String(s).replace(/["\\]/g, '\\$&'); }
 function nextDayStr(d) { const dt = new Date(d + 'T00:00:00Z'); dt.setUTCDate(dt.getUTCDate() + 1); return dt.toISOString().slice(0, 10); }
 const TEAM_FIELDS = ['summary', 'status', 'assignee', 'reporter', 'labels', 'issuetype', 'created', 'updated', 'duedate', 'customfield_10134'];
@@ -1656,6 +1659,20 @@ export default {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC811\uADFC\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const limit = Math.max(1, Math.min(100, parseInt(url.searchParams.get('limit') || '50', 10) || 50));
         const filter = url.searchParams.get('filter') || '';
+        // §H 3단계: 읽기 D1 우선(app_settings audit_read_d1='on') → D1 비었으면 KV 폴백
+        if (await getAuditReadD1(env)) {
+          try {
+            const q = filter
+              ? env.DB.prepare('SELECT ts,ts_num,user,type,detail_json FROM audit_log WHERE type=? ORDER BY ts_num DESC LIMIT ?').bind(filter, limit)
+              : env.DB.prepare('SELECT ts,ts_num,user,type,detail_json FROM audit_log ORDER BY ts_num DESC LIMIT ?').bind(limit);
+            const r = await q.all();
+            const rows = r.results || [];
+            if (rows.length) {
+              const logs = rows.map(x => ({ ts: x.ts, tsNum: x.ts_num, user: x.user, type: x.type, ...(() => { try { return JSON.parse(x.detail_json || '{}'); } catch { return {}; } })() }));
+              return corsResponse(logs);
+            }
+          } catch (_) {}
+        }
         const prefix = 'auditLatest:';
         let list = await env.ENGR_KV.list({ prefix, limit });
 
@@ -1678,6 +1695,42 @@ export default {
         return corsResponse(logs);
       }
 
+      // ── §H 감사로그 KV→D1 마이그레이션 (슈퍼) ──
+      if (path === '/admin/migrate/audit-status' && request.method === 'GET') {
+        if (!hasSession || !await isSuper(env, user)) return corsResponse({ ok: false, message: '슈퍼 관리자만 가능합니다.' }, 403);
+        let d1Count = 0; try { const r = await env.DB.prepare('SELECT count(*) AS c FROM audit_log').first(); d1Count = r?.c || 0; } catch (_) {}
+        return corsResponse({ ok: true, d1Count, readD1: await getAuditReadD1(env) });
+      }
+      if (path === '/admin/migrate/audit-backfill' && request.method === 'POST') {
+        if (!hasSession || !await isSuper(env, user)) return corsResponse({ ok: false, message: '슈퍼 관리자만 가능합니다.' }, 403);
+        const body = await request.json().catch(() => ({}));
+        const prefix = body.prefix === 'audit:' ? 'audit:' : 'auditLatest:';
+        const page = await env.ENGR_KV.list({ prefix, cursor: body.cursor || undefined, limit: 100 });
+        const keys = page.keys || [];
+        const vals = await Promise.all(keys.map(k => env.ENGR_KV.get(k.name).catch(() => null)));
+        const stmts = [];
+        keys.forEach((k, i) => {
+          if (!vals[i]) return;
+          let item; try { item = JSON.parse(vals[i]); } catch { return; }
+          const id = k.name.replace(/^(auditLatest:|audit:)/, '');
+          const tsNum = item.tsNum || Date.parse(item.ts) || 0;
+          const { ts, tsNum: _t, user: u, type: ty, ...detail } = item;
+          stmts.push(env.DB.prepare('INSERT OR IGNORE INTO audit_log (id,ts,ts_num,user,type,detail_json) VALUES (?,?,?,?,?,?)').bind(id, ts || new Date(tsNum).toISOString(), tsNum, u || '', ty || '', JSON.stringify(detail)));
+        });
+        let inserted = 0;
+        if (stmts.length) { try { const res = await env.DB.batch(stmts); inserted = res.reduce((n, r) => n + (r.meta?.changes || 0), 0); } catch (e) { return corsResponse({ ok: false, message: 'D1 배치 실패: ' + e.message }, 500); } }
+        await auditLog(env, user, 'AUDIT_MIGRATE', { migPhase: 'backfill', prefix, scanned: keys.length, inserted });
+        return corsResponse({ ok: true, scanned: keys.length, inserted, cursor: page.list_complete ? null : page.cursor, done: !!page.list_complete });
+      }
+      if (path === '/admin/migrate/audit-readsource' && request.method === 'POST') {
+        if (!hasSession || !await isSuper(env, user)) return corsResponse({ ok: false, message: '슈퍼 관리자만 가능합니다.' }, 403);
+        const body = await request.json().catch(() => ({}));
+        const v = body.d1 ? 'on' : 'off';
+        try { await env.DB.prepare("INSERT INTO app_settings (key,value) VALUES ('audit_read_d1',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(v).run(); }
+        catch (e) { return corsResponse({ ok: false, message: '저장 실패: ' + e.message }, 500); }
+        await auditLog(env, user, 'AUDIT_MIGRATE', { migPhase: 'readsource', readD1: v });
+        return corsResponse({ ok: true, readD1: v === 'on' });
+      }
 
       //
       if (path === '/admin/list' && request.method === 'GET') {
