@@ -419,13 +419,16 @@ async function auditLog(env, user, type, detail = {}) {
     const now = Date.now();
     const rand = crypto.randomUUID().slice(0, 8);
     const rev = String(9999999999999 - now).padStart(13, '0');
-    const item = JSON.stringify({
-      ts: new Date(now).toISOString(),
-      tsNum: now,
-      user, type, ...detail,
-    });
+    const id = `${rev}:${type}:${rand}`;
+    const tsIso = new Date(now).toISOString();
+    const item = JSON.stringify({ ts: tsIso, tsNum: now, user, type, ...detail });
     const ttl = { expirationTtl: 60 * 60 * 24 * 90 };
-    await env.ENGR_KV.put(`auditLatest:${rev}:${type}:${rand}`, item, ttl);
+    // §H 1단계: KV(기존, 소스 유지) + D1(audit_log, 가산) 이중쓰기. 둘 다 best-effort, 동일 id로 멱등.
+    const kvP = env.ENGR_KV.put(`auditLatest:${id}`, item, ttl);
+    const d1P = env.DB
+      ? env.DB.prepare('INSERT OR IGNORE INTO audit_log (id,ts,ts_num,user,type,detail_json) VALUES (?,?,?,?,?,?)').bind(id, tsIso, now, user, type, JSON.stringify(detail)).run()
+      : Promise.resolve();
+    await Promise.allSettled([kvP, d1P]);
   } catch (_) {}
 }
 
