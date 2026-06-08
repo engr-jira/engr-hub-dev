@@ -1925,6 +1925,18 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <div class="chart-card"><h4>완료율 (5건 이상)</h4><div id="rank-rate"></div></div>
         <div class="chart-card"><h4>월별 추이 (최근 6개월)</h4><svg class="line-chart" id="trend-chart" viewBox="0 0 400 140"></svg></div>
       </div>
+      <div id="team-monitor-section" style="display:none">
+        <div class="sec-title">팀 업무 모니터 <span style="font-size:11px;color:var(--text3);font-weight:400">· mj.park 전용</span></div>
+        <div class="chart-card">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+            <button class="btn btn-indigo" onclick="loadMonitor('daily')">오늘</button>
+            <button class="btn" onclick="loadMonitor('weekly')">최근 7일</button>
+            <button class="btn" onclick="loadMonitor('snapshot')">저장된 스냅샷</button>
+            <span id="monitor-status" class="muted" style="font-size:11.5px"></span>
+          </div>
+          <div id="monitor-body"></div>
+        </div>
+      </div>
       <div class="sec-title">최근 이슈 (10건)</div>
       <div id="dash-list" class="issue-list"></div>
     </div>
@@ -7473,8 +7485,8 @@ let FEATURE_FLAGS={compat:true,history:true,monitor:true,nsis:true};
 const FEATURE_META=[['compat','호환성 매트릭스'],['history','고객사 업무 이력'],['monitor','팀 업무 모니터'],['nsis','NSIS 분석기']];
 const FEATURE_NAV={compat:'nav-compat'};
 async function loadFeatureFlags(){
-  try{ const d=await hubApi('/features'); FEATURE_FLAGS={...FEATURE_FLAGS,...(d.flags||{})}; }catch(_){}
-  applyFeatureFlags(); renderFeatureFlagsAdmin();
+  try{ const d=await hubApi('/features'); FEATURE_FLAGS={...FEATURE_FLAGS,...(d.flags||{})}; MONITOR_ALLOWED=!!d.monAllowed; }catch(_){}
+  applyFeatureFlags(); renderFeatureFlagsAdmin(); applyMonitorVisibility();
 }
 function applyFeatureFlags(){
   Object.entries(FEATURE_NAV).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.style.display=FEATURE_FLAGS[k]===false?'none':'';});
@@ -7540,6 +7552,33 @@ function copyHistoryTable(){
   const head=['키','제목','상태','담당','라벨','유형','생성','수정'];
   const lines=[head.join('\t')].concat(HISTORY_ITEMS.map(i=>[i.key,(i.summary||'').replace(/\s+/g,' '),i.status,i.assignee,(i.labels||[]).join('|'),i.type==='subtask'?'하위':'작업',(i.created||'').slice(0,10),(i.updated||'').slice(0,10)].map(v=>v||'').join('\t')));
   navigator.clipboard.writeText(lines.join('\n')).then(()=>toast(`${HISTORY_ITEMS.length}건 복사`)).catch(()=>toast('복사 실패'));
+}
+/* ── §3 팀 업무 모니터 (mj.park 전용) ─────────────── */
+let MONITOR_ALLOWED=false;
+function applyMonitorVisibility(){
+  const sec=document.getElementById('team-monitor-section');
+  if(sec)sec.style.display=(MONITOR_ALLOWED && FEATURE_FLAGS.monitor!==false)?'':'none';
+}
+async function loadMonitor(kind){
+  const st=document.getElementById('monitor-status'), body=document.getElementById('monitor-body');
+  if(st)st.textContent='조회 중...'; if(body)body.innerHTML='';
+  try{
+    let items, caption;
+    if(kind==='snapshot'){ const d=await hubApi('/team/snapshot'); const s=d.snapshot; if(!s){ if(st)st.textContent='저장된 스냅샷이 없습니다 (매일 08:30 자동 생성).'; return; } items=s.items||[]; caption=`스냅샷 ${s.day} · 생성 ${(s.built_at||'').slice(0,16).replace('T',' ')}`; }
+    else if(kind==='daily'){ const d=await hubApi('/team/daily',{method:'POST',body:JSON.stringify({})}); items=d.items||[]; caption=`오늘(${d.day}) 갱신 ${d.count}건`; }
+    else { const d=await hubApi('/team/weekly',{method:'POST',body:JSON.stringify({days:7})}); items=d.items||[]; caption=`최근 ${d.days}일 갱신 ${d.count}건`; }
+    if(st)st.textContent='';
+    renderMonitor(items, caption);
+  }catch(e){ if(st)st.textContent=''; if(body)body.innerHTML=`<div style="color:var(--danger);padding:10px">조회 실패: ${escapeHtml(e.message)}</div>`; }
+}
+function renderMonitor(items, caption){
+  const body=document.getElementById('monitor-body'); if(!body)return;
+  const byA={}; (items||[]).forEach(i=>{const a=i.assignee||'미지정';(byA[a]=byA[a]||[]).push(i);});
+  const order=Object.keys(byA).sort((a,b)=>byA[b].length-byA[a].length);
+  const unclassified=(items||[]).filter(i=>i.cls&&i.cls.kind==='unclassified');
+  const flag=unclassified.length?`<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--warn)">⚑ 미분류 브래킷 ${unclassified.length}건 — 검토 필요(자동 추가 안 함): ${unclassified.slice(0,10).map(i=>escapeHtml(i.cls.bracket||'')).join(', ')}${unclassified.length>10?' …':''}</div>`:'';
+  const cards=order.map(a=>`<div class="chart-card soft" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-bottom:6px"><span>${escapeHtml(a)}</span><span style="color:var(--text3)">${byA[a].length}건</span></div>${byA[a].map(i=>`<div style="font-size:11.5px;padding:3px 0;border-bottom:1px solid var(--border)"><a href="https://escare-engr.atlassian.net/browse/${escapeAttr(i.key)}" target="_blank" rel="noopener" style="color:#60a5fa">${escapeHtml(i.key)}</a> <span style="color:var(--text3)">${escapeHtml(i.status||'')}</span> ${escapeHtml(i.summary||'')}${histClsBadge(i.cls)}</div>`).join('')}</div>`).join('');
+  body.innerHTML=`<div class="muted" style="font-size:11.5px;margin-bottom:8px">${escapeHtml(caption)} · 담당 ${order.length}명</div>${flag}${cards||'<div class="muted">결과 없음</div>'}`;
 }
 function hubApi(path,options={}){
   return fetch(`${WORKERS}${path}`,{

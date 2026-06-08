@@ -1369,6 +1369,16 @@ function mapJiraIssue(it, custList) {
   const f = it.fields || {};
   return { key: it.key, summary: f.summary || '', status: f.status?.name || '', assignee: f.assignee?.displayName || '-', labels: f.labels || [], type: f.issuetype?.subtask ? 'subtask' : 'task', created: f.created || '', updated: f.updated || '', duedate: f.duedate || '', cls: classifyBracket(f.summary, custList) };
 }
+async function buildDailySnapshot(env, day) {
+  const jql = `project = ENGR AND updated >= "${day}" AND updated < "${nextDayStr(day)}" ORDER BY updated DESC`;
+  const issues = await jiraSearchJql(env, jql, TEAM_FIELDS, 12);
+  const custList = await getCustomersD1(env);
+  const items = issues.map(it => mapJiraIssue(it, custList));
+  const payload = { day, count: items.length, items };
+  const built_at = new Date().toISOString();
+  try { await env.DB.prepare("INSERT INTO team_daily_snapshot (day,payload_json,built_at) VALUES (?,?,?) ON CONFLICT(day) DO UPDATE SET payload_json=excluded.payload_json, built_at=excluded.built_at").bind(day, JSON.stringify(payload), built_at).run(); } catch (_) {}
+  return { ...payload, built_at };
+}
 
 //
 export default {
@@ -2290,7 +2300,7 @@ export default {
       // \u2500\u2500 \u00A75 \uAE30\uB2A5 \uD1A0\uAE00 (feature_flags \u00B7 app_settings) \u2500\u2500
       if (path === '/features' && request.method === 'GET') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        return corsResponse({ ok: true, flags: await getFeatureFlags(env) });
+        return corsResponse({ ok: true, flags: await getFeatureFlags(env), monAllowed: await isMonitorAllowed(env, user) });
       }
       if (path === '/features' && request.method === 'POST') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
@@ -2393,6 +2403,17 @@ export default {
         return corsResponse({ ok: true, ...meta, count: items.length, items });
       }
 
+      // \u2500\u2500 \u00A73 \uD300 \uBAA8\uB2C8\uD130 \uC2A4\uB0C5\uC0F7 \uC870\uD68C (mj.park) \u2500\u2500
+      if (path === '/team/snapshot' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        if (!(await getFeatureFlags(env)).monitor) return corsResponse({ ok: false, message: '\uBE44\uD65C\uC131\uD654\uB41C \uAE30\uB2A5\uC785\uB2C8\uB2E4.' }, 403);
+        if (!await isMonitorAllowed(env, user)) { await auditLog(env, user, 'MON_VIEW', { monType: 'snapshot', denied: true }); return corsResponse({ ok: false, message: '\uC811\uADFC \uAD8C\uD55C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4(\uD300 \uBAA8\uB2C8\uD130 \uD5C8\uC6A9\uBAA9\uB85D).' }, 403); }
+        let snap = null;
+        try { const r = await env.DB.prepare('SELECT day,payload_json,built_at FROM team_daily_snapshot ORDER BY day DESC LIMIT 1').first(); if (r && r.payload_json) snap = { day: r.day, built_at: r.built_at, ...JSON.parse(r.payload_json) }; } catch (_) {}
+        await auditLog(env, user, 'MON_VIEW', { monType: 'snapshot', count: snap?.count || 0 });
+        return corsResponse({ ok: true, snapshot: snap });
+      }
+
       return corsResponse({ ok: false, message: '\uC5C6\uB294 \uACBD\uB85C\uC785\uB2C8\uB2E4.' }, 404);
     } catch (err) {
       return corsResponse({ ok: false, message: err.message || '\uC11C\uBC84 \uC624\uB958' }, 500);
@@ -2401,6 +2422,10 @@ export default {
 
   // \u2500\u2500 Cron Scheduled Handler \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   async scheduled(event, env, ctx) {
-    // no scheduled tasks
+    // §3 일일 팀 업무 스냅샷 (08:30 KST = 23:30 UTC). KST 당일 updated 이슈 저장.
+    try {
+      const kstDay = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+      ctx.waitUntil(buildDailySnapshot(env, kstDay));
+    } catch (_) {}
   },
 };

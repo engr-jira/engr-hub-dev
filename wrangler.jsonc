@@ -27,6 +27,6 @@
     "VAPID_SUBJECT": "mailto:passikmj@gmail.com"
   },
   "triggers": {
-    "crons": []
+    "crons": ["30 23 * * *"]
   }
 }
