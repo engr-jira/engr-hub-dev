@@ -14,6 +14,13 @@
       "id": "3f5cbc0b749c4c2e89763b3ff60d30b8"
     }
   ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "engr-hub-dev-db",
+      "database_id": "b3da16b6-16ac-4181-871b-a7eca09dc046"
+    }
+  ],
   "vars": {
     "KB_ALLOW_PAID_SEARCH": "false",
     "VAPID_PUBLIC_KEY": "BL4LqjU9WFgx6kRXPMSEgrD0_e7P2cFafDK5dVWQlUrCRvrYKNKrvHxZ9gzLKSoKCpTDLg_Fgweps1ERO6UCndw",

@@ -1321,6 +1321,50 @@ async function pushNotify(env, eventKey, actorId, vars){
   }catch(_){}
 }
 
+// ════════════ Phase 0 · D1 foundation (feat/hub-d1-foundation) — spec §C/§B ════════════
+// 커스텀 JQL Jira 검색 (자격증명 서버측 = mj.park 토큰, 클라 노출 0)
+async function jiraSearchJql(env, jql, fields, maxPages = 8) {
+  if (!env.JIRA_TOKEN) throw new Error('JIRA_TOKEN 미설정');
+  const headers = { 'Authorization': 'Basic ' + btoa('mj.park@escare.co.kr:' + env.JIRA_TOKEN), 'Content-Type': 'application/json', 'Accept': 'application/json' };
+  let all = [], token, pages = 0;
+  do {
+    const body = { jql, maxResults: 100, fieldsByKeys: false, fields };
+    if (token) body.nextPageToken = token;
+    const res = await fetch('https://escare-engr.atlassian.net/rest/api/3/search/jql', { method: 'POST', headers, body: JSON.stringify(body) });
+    if (!res.ok) throw new Error('Jira ' + res.status + ': ' + (await res.text()).slice(0, 160));
+    const page = await res.json();
+    all = all.concat(page.issues || []);
+    token = page.nextPageToken; pages++;
+  } while (token && pages < maxPages);
+  return all;
+}
+// 브래킷 분류(§B): customer / vendorcase / unclassified / internal / none
+function extractBracket(s) { const m = /^\s*\[([^\]]+)\]/.exec(s || ''); return m ? m[1].trim() : ''; }
+function classifyBracket(summary, custList) {
+  const b = extractBracket(summary);
+  if (!b) return { kind: 'none', bracket: '' };
+  if (/^\d{6,}$/.test(b) || /^[A-Z]{2,3}\d+$/i.test(b) || /^hands-?on$/i.test(b)) return { kind: 'vendorcase', bracket: b };
+  for (const c of custList) { if (c.name === b || (c.aliases || []).includes(b)) return { kind: 'customer', bracket: b, customer: c.name }; }
+  if (/[가-힣]/.test(b)) return { kind: 'unclassified', bracket: b };   // 한글 신규 → 미분류(자동추가 안 함)
+  return { kind: 'internal', bracket: b };
+}
+async function getCustomersD1(env) {
+  try { const r = await env.DB.prepare('SELECT name, aliases FROM customers WHERE active=1').all(); return (r.results || []).map(c => ({ name: c.name, aliases: (() => { try { return JSON.parse(c.aliases || '[]'); } catch { return []; } })() })); }
+  catch (_) { return []; }
+}
+async function getMonitorAllowlist(env) {
+  try { const r = await env.DB.prepare("SELECT value FROM app_settings WHERE key='monitor_allowlist'").first(); if (r && r.value) return JSON.parse(r.value); } catch (_) {}
+  return ['mj.park'];
+}
+async function isMonitorAllowed(env, user) { const list = await getMonitorAllowlist(env); return list.map(normalizeUserId).includes(normalizeUserId(user)); }
+function jqlEsc(s) { return String(s).replace(/["\\]/g, '\\$&'); }
+function nextDayStr(d) { const dt = new Date(d + 'T00:00:00Z'); dt.setUTCDate(dt.getUTCDate() + 1); return dt.toISOString().slice(0, 10); }
+const TEAM_FIELDS = ['summary', 'status', 'assignee', 'reporter', 'labels', 'issuetype', 'created', 'updated', 'duedate', 'customfield_10134'];
+function mapJiraIssue(it, custList) {
+  const f = it.fields || {};
+  return { key: it.key, summary: f.summary || '', status: f.status?.name || '', assignee: f.assignee?.displayName || '-', labels: f.labels || [], type: f.issuetype?.subtask ? 'subtask' : 'task', created: f.created || '', updated: f.updated || '', duedate: f.duedate || '', cls: classifyBracket(f.summary, custList) };
+}
+
 //
 export default {
   async fetch(request, env, ctx) {
@@ -2237,6 +2281,50 @@ export default {
         return corsResponse({ ok: true });
       }
 
+
+      // \u2500\u2500 F2/F3 JQL \uC804\uC6A9 \uC5D4\uB4DC\uD3EC\uC778\uD2B8 (Phase 0 \uACE8\uACA9, \uB85C\uC9C1\uC740 \u00A72/\u00A73\uC5D0\uC11C \uD655\uC7A5) \u2500\u2500
+      if (path === '/team/history' && request.method === 'POST') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        const body = await request.json().catch(() => ({}));
+        const df = (body.dateField === 'updated') ? 'updated' : 'created';
+        const parts = ['project = ENGR'];
+        if (/^\d{4}-\d{2}-\d{2}$/.test(body.from || '')) parts.push(`${df} >= "${body.from}"`);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(body.to || '')) parts.push(`${df} <= "${body.to} 23:59"`);
+        if (body.customer) parts.push(`summary ~ "${jqlEsc(body.customer)}"`);
+        if (body.product) parts.push(`labels = "${jqlEsc(body.product)}"`);
+        if (body.status) parts.push(`status = "${jqlEsc(body.status)}"`);
+        if (body.type === 'subtask') parts.push('issuetype = "\uD558\uC704 \uC791\uC5C5"');
+        else if (body.type === 'task') parts.push('issuetype = "\uC791\uC5C5"');
+        const jql = parts.join(' AND ') + ` ORDER BY ${df} DESC`;
+        let issues; try { issues = await jiraSearchJql(env, jql, TEAM_FIELDS, 10); } catch (e) { return corsResponse({ ok: false, message: 'Jira \uC870\uD68C \uC2E4\uD328: ' + e.message }, 502); }
+        const custList = await getCustomersD1(env);
+        let items = issues.map(it => mapJiraIssue(it, custList));
+        if (body.customer) items = items.filter(x => x.cls.customer === body.customer || x.cls.bracket === body.customer);   // \uBE0C\uB798\uD0B7 \uC815\uBC00 \uD544\uD130
+        if (body.assignee) items = items.filter(x => x.assignee === body.assignee);   // \uB2F4\uB2F9\uC790 \uD6C4\uCC98\uB9AC(\u00A72\uC5D0\uC11C accountId \uB9E4\uD551 \uC608\uC815)
+        await auditLog(env, user, 'HIST_VIEW', { histType: 'history', count: items.length });
+        return corsResponse({ ok: true, jql, count: items.length, items });
+      }
+      if ((path === '/team/daily' || path === '/team/weekly') && request.method === 'POST') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        const isDaily = path === '/team/daily';
+        if (!await isMonitorAllowed(env, user)) { await auditLog(env, user, 'MON_VIEW', { monType: isDaily ? 'daily' : 'weekly', denied: true }); return corsResponse({ ok: false, message: '\uC811\uADFC \uAD8C\uD55C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4(\uD300 \uBAA8\uB2C8\uD130 \uD5C8\uC6A9\uBAA9\uB85D).' }, 403); }
+        const body = await request.json().catch(() => ({}));
+        let jql, meta;
+        if (isDaily) {
+          const day = /^\d{4}-\d{2}-\d{2}$/.test(body.day || '') ? body.day : new Date().toISOString().slice(0, 10);
+          jql = `project = ENGR AND updated >= "${day}" AND updated < "${nextDayStr(day)}" ORDER BY updated DESC`;
+          meta = { monType: 'daily', day };
+        } else {
+          const days = Math.max(1, Math.min(31, parseInt(body.days) || 7));
+          jql = `project = ENGR AND updated >= "-${days}d" ORDER BY updated DESC`;
+          meta = { monType: 'weekly', days };
+        }
+        let issues; try { issues = await jiraSearchJql(env, jql, TEAM_FIELDS, 12); } catch (e) { return corsResponse({ ok: false, message: 'Jira \uC870\uD68C \uC2E4\uD328: ' + e.message }, 502); }
+        const custList = await getCustomersD1(env);
+        const items = issues.map(it => mapJiraIssue(it, custList));
+        await auditLog(env, user, 'MON_VIEW', { ...meta, count: items.length });
+        return corsResponse({ ok: true, ...meta, count: items.length, items });
+      }
 
       return corsResponse({ ok: false, message: '\uC5C6\uB294 \uACBD\uB85C\uC785\uB2C8\uB2E4.' }, 404);
     } catch (err) {
