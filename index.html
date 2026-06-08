@@ -1845,6 +1845,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           <div class="sb-group-body">
             <button class="sb-btn" id="nav-log" onclick="showPage('log',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>로그 분석기</button>
             <button class="sb-btn" id="nav-vt" onclick="showPage('vt',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>VirusTotal 조회</button>
+            <button class="sb-btn" id="nav-nsis" onclick="showPage('nsis',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13l2 2 4-4"/></svg>NSIS 분석기</button>
           </div>
         </div>
         <div class="sb-group collapsed" data-group="collab">
@@ -2094,6 +2095,21 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           </div>
         </div>
       </div>
+    </div>
+    <div class="page" id="page-nsis">
+      <div style="background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--text2,#cbd5e1);margin-bottom:16px">🧰 NSIS(.nsi) 설치 스크립트 분석 — 구조 추출 · 설치 흐름도 · AI 보안 분석 · 추출 IOC를 VirusTotal로 조회. (입력 내용은 분석에만 사용)</div>
+      <textarea id="nsis-input" placeholder="NSIS 스크립트(.nsi / .nsh) 내용을 붙여넣으세요..." style="width:100%;min-height:200px;background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text,#e2e8f0);font-family:monospace;font-size:12.5px;resize:vertical"></textarea>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
+        <input type="file" id="nsis-file" accept=".nsi,.nsh,.txt" style="display:none" onchange="nsisLoadFile(event)">
+        <button class="btn" onclick="document.getElementById('nsis-file').click()">파일 열기</button>
+        <button class="btn btn-indigo" onclick="runNsisParse()">분석</button>
+        <button class="btn" onclick="renderNsisDiagram()">설치 흐름도</button>
+        <button class="btn" onclick="analyzeNsisAI()">AI 보안 분석</button>
+        <button class="btn" onclick="nsisClear()">지우기</button>
+      </div>
+      <div id="nsis-summary"></div>
+      <div id="nsis-diagram" style="margin-top:14px"></div>
+      <div id="nsis-ai" style="margin-top:14px"></div>
     </div>
     <div class="page" id="page-eos">
       <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--warn);margin-bottom:16px">🔑 고객사 라이선스 관리. 만료일(End Date) 임박 항목은 로그인 시 강조됩니다. <span onclick="showStorageInfo('eos')" title="데이터 저장 안내" style="cursor:pointer;opacity:.6;font-size:13px">ℹ</span></div>
@@ -7387,8 +7403,8 @@ function showPage(name,btn){
   const page=document.getElementById('page-'+name); if(page)page.classList.add('active');
   document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
   const nav=btn||document.getElementById('nav-'+name); if(nav)nav.classList.add('active');
-  const titleMap={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스'};
-  const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',eos:'고객사 라이선스 만료 관리',log:'로그 업로드 및 증상 기반 AI 분석',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',private:'로그인 사용자 전용 일정, 팁, 할일, 개인 참고',audit:'사용자 작업 이력',settings:'초기 데이터 및 저장소 관리',compat:'제품·OS 호환성 / EOS·EOL 매트릭스'};
+  const titleMap={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',nsis:'NSIS 분석기'};
+  const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',eos:'고객사 라이선스 만료 관리',log:'로그 업로드 및 증상 기반 AI 분석',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',private:'로그인 사용자 전용 일정, 팁, 할일, 개인 참고',audit:'사용자 작업 이력',settings:'초기 데이터 및 저장소 관리',compat:'제품·OS 호환성 / EOS·EOL 매트릭스',nsis:'설치 스크립트 구조·보안 분석'};
   const title=document.getElementById('page-title'); if(title)title.textContent=titleMap[name]||'HUB';
   const desc=document.getElementById('page-desc'); if(desc)desc.textContent=descMap[name]||'';
   expandActiveNavGroup(name);
@@ -7483,7 +7499,7 @@ function copyCompatTable(){
 /* ── §5 기능 토글 ───────────────────────────────────── */
 let FEATURE_FLAGS={compat:true,history:true,monitor:true,nsis:true};
 const FEATURE_META=[['compat','호환성 매트릭스'],['history','고객사 업무 이력'],['monitor','팀 업무 모니터'],['nsis','NSIS 분석기']];
-const FEATURE_NAV={compat:'nav-compat'};
+const FEATURE_NAV={compat:'nav-compat',nsis:'nav-nsis'};
 async function loadFeatureFlags(){
   try{ const d=await hubApi('/features'); FEATURE_FLAGS={...FEATURE_FLAGS,...(d.flags||{})}; MONITOR_ALLOWED=!!d.monAllowed; }catch(_){}
   applyFeatureFlags(); renderFeatureFlagsAdmin(); applyMonitorVisibility();
@@ -7579,6 +7595,101 @@ function renderMonitor(items, caption){
   const flag=unclassified.length?`<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--warn)">⚑ 미분류 브래킷 ${unclassified.length}건 — 검토 필요(자동 추가 안 함): ${unclassified.slice(0,10).map(i=>escapeHtml(i.cls.bracket||'')).join(', ')}${unclassified.length>10?' …':''}</div>`:'';
   const cards=order.map(a=>`<div class="chart-card soft" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-bottom:6px"><span>${escapeHtml(a)}</span><span style="color:var(--text3)">${byA[a].length}건</span></div>${byA[a].map(i=>`<div style="font-size:11.5px;padding:3px 0;border-bottom:1px solid var(--border)"><a href="https://escare-engr.atlassian.net/browse/${escapeAttr(i.key)}" target="_blank" rel="noopener" style="color:#60a5fa">${escapeHtml(i.key)}</a> <span style="color:var(--text3)">${escapeHtml(i.status||'')}</span> ${escapeHtml(i.summary||'')}${histClsBadge(i.cls)}</div>`).join('')}</div>`).join('');
   body.innerHTML=`<div class="muted" style="font-size:11.5px;margin-bottom:8px">${escapeHtml(caption)} · 담당 ${order.length}명</div>${flag}${cards||'<div class="muted">결과 없음</div>'}`;
+}
+/* ── §4 NSIS 설치 스크립트 분석기 ───────────────────── */
+let NSIS_PARSED=null, MERMAID_LOADED=false;
+function nsisClear(){ ['nsis-input','nsis-summary','nsis-diagram','nsis-ai'].forEach((id,i)=>{const el=document.getElementById(id);if(el)el[i?'innerHTML':'value']='';}); NSIS_PARSED=null; }
+function nsisLoadFile(ev){
+  const f=ev.target.files?.[0]; if(!f)return;
+  if(f.size>2*1024*1024){toast('파일이 너무 큽니다 (2MB 이하)');return;}
+  const r=new FileReader(); r.onload=()=>{const el=document.getElementById('nsis-input');if(el)el.value=r.result||'';toast('파일을 불러왔습니다');}; r.readAsText(f);
+  ev.target.value='';
+}
+function parseNsis(src){
+  const lines=String(src||'').split(/\r?\n/);
+  const defines=[],sections=[],functions=[],files=[],regs=[],execs=[],shortcuts=[],downloads=[],deletes=[];
+  const urls=new Set(),ips=new Set(),hashes=new Set();
+  for(const raw of lines){
+    const line=raw.trim(); if(!line||line[0]===';'||line[0]==='#')continue;
+    let m;
+    if(m=/^!define\s+(\S+)\s*(.*)$/i.exec(line))defines.push(m[1]+(m[2]?(' = '+m[2]):''));
+    else if(m=/^Section\s+(?:\/o\s+)?"?([^"]*)"?/i.exec(line))sections.push({name:(m[1]||'(unnamed)').trim()});
+    else if(m=/^Function\s+(\S+)/i.exec(line))functions.push(m[1]);
+    else if(m=/^File\b\s+(.+)$/i.exec(line))files.push(m[1].replace(/^\/\S+\s+/,'').replace(/"/g,'').trim());
+    else if(m=/^(WriteRegStr|WriteRegDWORD|WriteRegExpandStr|DeleteRegKey|DeleteRegValue)\b\s+(.+)$/i.exec(line))regs.push((m[1]+' '+m[2]).replace(/"/g,'').trim());
+    else if(m=/^(ExecWait|ExecShell|Exec|nsExec::ExecToLog|nsExec::ExecToStack|nsExec::Exec)\b\s+(.+)$/i.exec(line))execs.push(m[2].replace(/"/g,'').trim());
+    else if(m=/^CreateShortCut\b\s+(.+)$/i.exec(line))shortcuts.push(m[1].replace(/"/g,'').trim());
+    else if(m=/^(Delete|RMDir)\b\s+(.+)$/i.exec(line))deletes.push((m[1]+' '+m[2]).replace(/"/g,'').trim());
+    if(/inetc::get|NSISdl::download|INetC|nsisdl|inetc::head/i.test(line))downloads.push(line.replace(/"/g,'').slice(0,160));
+    (line.match(/https?:\/\/[^\s"'<>)]+/gi)||[]).forEach(u=>urls.add(u));
+    (line.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)||[]).forEach(x=>ips.add(x));
+    (line.match(/\b[a-f0-9]{64}\b|\b[a-f0-9]{40}\b|\b[a-f0-9]{32}\b/gi)||[]).forEach(h=>hashes.add(h.toLowerCase()));
+  }
+  return {defines,sections,functions,files,regs,execs,shortcuts,downloads,deletes,indicators:{urls:[...urls],ips:[...ips],hashes:[...hashes]}};
+}
+function runNsisParse(){
+  const src=document.getElementById('nsis-input')?.value?.trim();
+  if(!src){toast('NSIS 스크립트를 입력하세요');return;}
+  NSIS_PARSED=parseNsis(src); renderNsisSummary(NSIS_PARSED);
+}
+function renderNsisSummary(p){
+  const el=document.getElementById('nsis-summary'); if(!el)return;
+  const chip=(label,n,col)=>`<span style="display:inline-block;background:${col}22;color:${col};border-radius:6px;padding:3px 9px;font-size:12px;margin:2px">${label} ${n}</span>`;
+  const list=(title,arr,max=14)=>arr.length?`<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;color:var(--text2,#cbd5e1)">${title} (${arr.length})</summary><div style="font-size:11.5px;color:var(--text3);font-family:monospace;white-space:pre-wrap;margin-top:6px;max-height:170px;overflow:auto">${arr.slice(0,max).map(x=>escapeHtml(String(x))).join('\n')}${arr.length>max?'\n…':''}</div></details>`:'';
+  const ind=p.indicators, iocs=[...ind.urls,...ind.ips,...ind.hashes];
+  const risky=(p.downloads.length||p.execs.length)?`<div style="margin-top:8px;font-size:11.5px;color:var(--warn)">⚠️ 외부 다운로드/임의 실행 항목이 있습니다 — AI 보안 분석 권장</div>`:'';
+  el.innerHTML=`<div style="margin-bottom:6px">${chip('📦 섹션',p.sections.length,'#60a5fa')}${chip('🔧 함수',p.functions.length,'#a78bfa')}${chip('📄 File',p.files.length,'#34d399')}${chip('▶️ Exec',p.execs.length,'#f59e0b')}${chip('🗝️ Reg',p.regs.length,'#f472b6')}${chip('⬇️ 다운로드',p.downloads.length,'#fb7185')}${chip('🔗 URL',ind.urls.length,'#22d3ee')}${chip('🌐 IP',ind.ips.length,'#22d3ee')}${chip('#️⃣ Hash',ind.hashes.length,'#22d3ee')}</div>${risky}
+    ${list('섹션',p.sections.map(s=>s.name))}${list('실행(Exec)',p.execs)}${list('레지스트리',p.regs)}${list('다운로드',p.downloads)}${list('파일(File)',p.files)}${list('!define',p.defines)}
+    ${iocs.length?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">위협 인텔(VT) 조회 — 클릭 시 VirusTotal 페이지로 전달:</div>${iocs.slice(0,24).map(v=>`<button onclick="nsisToVT(${jsAttr(v)})" style="${CMB};margin:2px">${escapeHtml(v.length>42?v.slice(0,42)+'…':v)}</button>`).join('')}</div>`:''}`;
+}
+function nsisToVT(v){
+  showPage('vt');
+  setTimeout(()=>{ const inp=document.getElementById('vt-input'); if(inp){inp.value=v; inp.focus(); inp.dispatchEvent(new Event('input',{bubbles:true})); } toast('VirusTotal로 전달했습니다 — 조회 버튼을 누르세요'); },60);
+}
+function ensureMermaid(){
+  return new Promise((resolve,reject)=>{
+    if(window.mermaid&&MERMAID_LOADED)return resolve(window.mermaid);
+    const done=()=>{try{window.mermaid.initialize({startOnLoad:false,theme:'dark',securityLevel:'strict',flowchart:{useMaxWidth:true}});MERMAID_LOADED=true;resolve(window.mermaid);}catch(e){reject(e);}};
+    if(window.mermaid)return done();
+    const s=document.createElement('script'); s.src='vendor/mermaid.min.js';
+    s.onload=done; s.onerror=()=>reject(new Error('Mermaid 번들 로드 실패'));
+    document.head.appendChild(s);
+  });
+}
+function nsisMermaidSrc(p){
+  const mzL=s=>String(s||'').replace(/["\[\]`<>(){}\n\r]/g,' ').replace(/\s+/g,' ').trim().slice(0,38)||'(미지정)';
+  let g='flowchart TD\n  start(["⚙️ Installer 시작"])\n';
+  let prev='start';
+  (p.sections.length?p.sections:[{name:'설치'}]).forEach((s,i)=>{ const id='S'+i; g+=`  ${id}["📦 ${mzL(s.name)}"]\n  ${prev} --> ${id}\n`; prev=id; });
+  if(p.downloads.length)g+=`  ${prev} --> DL["⬇️ 외부 다운로드 ${p.downloads.length}"]\n  class DL warn\n`;
+  if(p.files.length)g+=`  ${prev} --> FF["📄 File 설치 ${p.files.length}"]\n`;
+  if(p.regs.length)g+=`  ${prev} --> RR["🗝️ Registry ${p.regs.length}"]\n`;
+  if(p.execs.length)g+=`  ${prev} --> XX["▶️ 실행 ${p.execs.length}"]\n  class XX warn\n`;
+  g+=`  ${prev} --> done(["✅ 완료"])\n  classDef warn fill:#7f1d1d,stroke:#f87171,color:#fee2e2\n`;
+  return g;
+}
+async function renderNsisDiagram(){
+  const wrap=document.getElementById('nsis-diagram'); if(!wrap)return;
+  const src=document.getElementById('nsis-input')?.value?.trim();
+  if(!src){toast('먼저 스크립트를 입력하세요');return;}
+  if(!NSIS_PARSED)NSIS_PARSED=parseNsis(src);
+  wrap.innerHTML='<div class="muted" style="padding:14px">다이어그램 생성 중...</div>';
+  try{
+    const mer=await ensureMermaid();
+    const r=await mer.render('nsisFlow'+(window.__nsisN=(window.__nsisN||0)+1), nsisMermaidSrc(NSIS_PARSED));
+    wrap.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;overflow:auto">${r.svg}</div>`;
+  }catch(e){ wrap.innerHTML=`<div style="color:var(--danger);padding:10px">다이어그램 실패: ${escapeHtml(e.message)}</div>`; }
+}
+async function analyzeNsisAI(){
+  const src=document.getElementById('nsis-input')?.value?.trim();
+  if(!src){toast('NSIS 스크립트를 입력하세요');return;}
+  const out=document.getElementById('nsis-ai'); if(out)out.innerHTML='<div class="muted" style="padding:10px">AI 보안 분석 중...</div>';
+  const p=NSIS_PARSED||parseNsis(src);
+  const prompt=`다음은 NSIS(Nullsoft) 설치 스크립트다. 보안 엔지니어 관점에서 분석하라.\n1) 설치 동작 요약 — 무엇을 설치/실행/기록하는가\n2) 보안상 주의점 — 외부 다운로드, 임의 실행(ExecWait/nsExec), 레지스트리/권한 변경, 의심 URL·IP\n3) 위험도(낮음/보통/높음)와 근거\n한국어로 간결히. 추정과 확인된 사실을 구분하라.\n\n[추출 요약] 섹션 ${p.sections.length} · File ${p.files.length} · Exec ${p.execs.length} · Reg ${p.regs.length} · 다운로드 ${p.downloads.length} · URL ${p.indicators.urls.length} · IP ${p.indicators.ips.length} · Hash ${p.indicators.hashes.length}\n\n[스크립트]\n${src.slice(0,16000)}`;
+  try{
+    const txt=await callAI(prompt,'nsisx',{feature:'nsis'});
+    if(out)out.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;white-space:pre-wrap;font-size:13px;line-height:1.65">${escapeHtml(txt)}</div><div class="muted" style="font-size:10.5px;margin-top:4px">AI 추정 — 확정 판단은 검토 필요 · ${escapeHtml(aiModelLabel(LAST_AI_MODEL))}</div>`;
+  }catch(e){ if(out)out.innerHTML=`<div style="color:var(--danger);padding:10px">AI 분석 실패: ${escapeHtml(e.message)}</div>`; }
 }
 function hubApi(path,options={}){
   return fetch(`${WORKERS}${path}`,{
@@ -7764,7 +7875,7 @@ function syncMobSheet(panelId){
 /* mobile primary nav + compact admin settings */
 const MOBILE_PRIMARY_NAV=['nav-dash','nav-issues','nav-cases','nav-customers'];
 const MOBILE_MORE_NAV=['nav-mydesk','nav-eos','nav-log','nav-vt','nav-links','nav-knowledge','nav-audit','nav-settings'];
-const MOBILE_NAV_LABELS={eos:'라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스'};
+const MOBILE_NAV_LABELS={eos:'라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',nsis:'NSIS 분석기'};
 function mobilePageNameFromNav(id){return String(id||'').replace(/^nav-/,'');}
 function canShowMobileMoreItem(id){
   if(id==='nav-audit')return !!(IS_ADMIN||IS_SUPER);
