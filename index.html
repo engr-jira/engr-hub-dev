@@ -2010,7 +2010,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <select id="cust-pg" class="page-size-select" onchange="changePageSize('customers',this.value);renderCustomers()"><option>10</option><option>20</option><option>30</option><option>50</option><option>100</option><option>200</option></select>
         <button class="filter-reset" onclick="resetCustomerFilters()">✕ 초기화</button>
         <span class="filter-count" id="cust-count">0개 고객사</span>
-        <button class="btn" id="cust-history-btn" onclick="openCustomerHistory()" style="margin-left:6px">📜 업무 이력</button>
+        <button class="btn btn-indigo" id="cust-history-btn" onclick="openCustomerHistory()">📜 업무 이력 조회</button>
       </div>
       <div class="two-col">
         <div>
@@ -2024,7 +2024,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
       <div id="cust-history-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto">
         <style>
         #cust-history-modal .chl{display:flex;flex-direction:column;gap:3px;font-size:10.5px;color:var(--text3)}
-        #cust-history-modal input,#cust-history-modal select{background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:6px;padding:5px 7px;color:var(--text,#e2e8f0);font-size:12px}
+        #cust-history-modal input,#cust-history-modal select{background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:6px;padding:5px 7px;color:var(--text,#e2e8f0);font-size:12px;width:100%;box-sizing:border-box}
+        #cust-history-modal .drow{display:flex;gap:4px;align-items:center}
+        #cust-history-modal .drow input{flex:1;min-width:0}
+        #cust-history-modal .date-open-btn{flex:none;width:auto;padding:4px 7px;font-size:12px}
         #cust-history-modal .ch-tbl{width:100%;border-collapse:collapse;font-size:12px}
         #cust-history-modal .ch-tbl th,#cust-history-modal .ch-tbl td{padding:6px 8px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
         #cust-history-modal .ch-tbl th{position:sticky;top:0;background:var(--bg2);color:var(--text3);font-size:11px;z-index:1}
@@ -2037,8 +2040,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px;margin-bottom:10px">
             <label class="chl">고객사<input id="ch-customer" placeholder="예: 우리카드"></label>
             <label class="chl">기간 기준<select id="ch-datefield"><option value="created">생성일</option><option value="updated">수정일</option></select></label>
-            <label class="chl">시작일<input id="ch-from" type="date"></label>
-            <label class="chl">종료일<input id="ch-to" type="date"></label>
+            <label class="chl">시작일<div class="drow"><input id="ch-from" type="date"></div></label>
+            <label class="chl">종료일<div class="drow"><input id="ch-to" type="date"></div></label>
             <label class="chl">제품(라벨)<select id="ch-product"><option value="">전체</option><option>DLP</option><option>SEP</option><option>PP</option></select></label>
             <label class="chl">유형<select id="ch-type"><option value="">전체</option><option value="task">작업</option><option value="subtask">하위 작업</option></select></label>
             <label class="chl">담당자<input id="ch-assignee" placeholder="표시이름"></label>
@@ -2063,7 +2066,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
       #page-compat .cm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
       #page-compat .cm-grid label,#compat-modal .cm-note{display:flex;flex-direction:column;font-size:11px;color:var(--text3);gap:4px}
       #compat-modal input,#compat-modal textarea{background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text,#e2e8f0);font-size:13px;font-family:inherit}
-      #page-compat .btn,#page-nsis .btn,#page-monitor .btn,#compat-ai-modal .btn,#cust-history-modal .btn,#audit-mig-section .btn{width:auto;min-width:0}
+      #cust-history-btn,#page-compat .btn,#page-nsis .btn,#page-monitor .btn,#compat-ai-modal .btn,#cust-history-modal .btn,#audit-mig-section .btn{width:auto;min-width:0}
       table.srt th{cursor:pointer;user-select:none;white-space:nowrap}
       table.srt th:hover{color:var(--text,#e2e8f0)}
       .srt-ar{opacity:.7;font-size:9px;margin-left:2px}
@@ -2073,10 +2076,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <div style="font-size:12.5px;font-weight:700;margin-bottom:8px">📚 벤더 KB — DLP / SEP System Requirements</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <select id="vendor-kb-product" onchange="vendorKbVersions()" style="background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text,#e2e8f0);font-size:12.5px"><option value="DLP">Symantec DLP</option><option value="SEP">Symantec SEP</option></select>
-          <select id="vendor-kb-version" style="background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text,#e2e8f0);font-size:12.5px"></select>
-          <button class="btn btn-indigo" onclick="openVendorSysReq('sysreq')">📄 System Requirements 열기</button>
-          <button class="btn" id="vendor-kb-notes-btn" onclick="openVendorSysReq('notes')" style="display:none">릴리스 노트</button>
-          <button class="btn compat-admin" style="display:none" onclick="vendorAIMatrix()">🤖 이 버전 OS 매트릭스 AI 채우기</button>
+          <select id="vendor-kb-version" onchange="vendorKbUpdateButtons()" style="background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text,#e2e8f0);font-size:12.5px"></select>
+          <button class="btn btn-indigo" id="vkb-sysreq" onclick="openVendorKb('sysreq')">📄 System Requirements</button>
+          <button class="btn" id="vkb-new" onclick="openVendorKb('whatsnew')" style="display:none">✨ What's New</button>
+          <button class="btn" id="vkb-notes" onclick="openVendorKb('notes')" style="display:none">📝 릴리스 노트</button>
+          <button class="btn compat-admin" style="display:none" onclick="vendorAIMatrix()">🤖 OS 매트릭스 AI 채우기</button>
         </div>
         <div style="font-size:10.5px;color:var(--text3);margin-top:7px">버전 선택 → 공식 System Requirements 페이지(Broadcom)를 새 탭으로 엽니다. AI 채우기는 추정 매트릭스를 표에 <b>초안</b>으로 넣어줍니다(공식 링크로 검증·확정).</div>
       </div>
@@ -2096,7 +2100,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
             <button class="btn" onclick="closeCompatAICandidates()">닫기</button>
           </div>
           <div style="font-size:11px;color:var(--warn);margin-bottom:10px">⚠ AI 추정값입니다. 저장 시 모두 <b>초안</b>으로 들어가며, 표에서 검토·수정 후 <b>확정</b>하세요.</div>
-          <div style="max-height:52vh;overflow:auto"><table class="data-tbl" style="width:100%"><tr><th style="width:30px"></th><th>제품</th><th>OS</th><th>지원</th><th>EOS</th><th>비고</th></tr><tbody id="compat-ai-rows"></tbody></table></div>
+          <div style="max-height:52vh;overflow:auto"><table class="data-tbl srt" style="width:100%"><tr><th style="width:30px"></th><th>제품</th><th>버전</th><th>OS</th><th>지원</th><th>비고</th></tr><tbody id="compat-ai-rows"></tbody></table></div>
           <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
             <button class="btn" onclick="closeCompatAICandidates()">취소</button>
             <button class="btn btn-indigo" onclick="saveCompatAICandidates()">선택 항목 초안 저장</button>
@@ -7521,44 +7525,55 @@ async function confirmCompat(id){ if(!confirm('이 행을 확정 처리할까요
 async function deleteCompat(id){ if(!confirm('이 행을 삭제할까요?'))return; try{ await hubApi(`/compat/${id}`,{method:'DELETE'}); toast('삭제했습니다'); loadCompat(); }catch(e){ toast('실패: '+e.message); } }
 /* ── §1 벤더 KB (DLP/SEP) System Requirements 바로가기 ── */
 const _SEPSYS='https://techdocs.broadcom.com/us/en/symantec-security-software/endpoint-security-and-management/endpoint-protection/all/release-notes/system-requirements-for-v53308029-d69e1453.html';
+const _SEPNEW='https://techdocs.broadcom.com/us/en/symantec-security-software/endpoint-security-and-management/endpoint-protection/all/release-notes/what-s-new-for-all-releases-of-14-x-v117739871-d43e160.html';
 const _SEPPDF='https://techdocs.broadcom.com/content/dam/broadcom/techdocs/us/en/dita/symantec-security-software/endpoint-security-and-management/endpoint-protection/generated-pdfs/';
+const _DLP='https://techdocs.broadcom.com/us/en/symantec-security-software/information-security/data-loss-prevention/';
 const VENDOR_KB={
   DLP:[
-    {v:'16.0.2',sysreq:'https://techdocs.broadcom.com/us/en/symantec-security-software/information-security/data-loss-prevention/16-0-2/dlp-system-requirements/system-requirements-and-recommendations.html'},
-    {v:'16.0.1',sysreq:'https://techdocs.broadcom.com/us/en/symantec-security-software/information-security/data-loss-prevention/16-0-1/DLP-system-requirements/system-requirements-and-recommendations-v19666017-d366e1680.html'},
-    {v:'16.0',sysreq:'https://techdocs.broadcom.com/us/en/symantec-security-software/information-security/data-loss-prevention/16-0/DLP-system-requirements.html'},
+    {v:'26.1',sysreq:_DLP+'26-1/dlp-system-requirements.html',whatsnew:_DLP+'26-1/new-and-changed/what-s-new-in-data-loss-prevention.html',notes:_DLP+'26-1/new-and-changed/release-notes.html'},
+    {v:'25.1',sysreq:_DLP+'25-1/dlp-system-requirements.html',whatsnew:_DLP+'25-1/new-and-changed/what-s-new-in-data-loss-prevention.html',notes:_DLP+'25-1/new-and-changed/release-notes.html'},
+    {v:'16.1',sysreq:_DLP+'16-1/dlp-system-requirements.html',whatsnew:_DLP+'16-1/new-and-changed/what-s-new-in-data-loss-prevention.html',notes:_DLP+'16-1/new-and-changed/release-notes.html'},
+    {v:'16.0 RU2 (16.0.2)',sysreq:_DLP+'16-0-2/dlp-system-requirements/system-requirements-and-recommendations.html',notes:_DLP+'16-0-2/release-notes/dlp-16-0-ru2-release-notes.html'},
+    {v:'16.0 RU1 (16.0.1)',sysreq:_DLP+'16-0-1/DLP-system-requirements/system-requirements-and-recommendations-v19666017-d366e1680.html'},
+    {v:'16.0 MP1',sysreq:_DLP+'16-0/DLP-system-requirements.html',notes:_DLP+'16-0/Release-Notes/symantec-data-loss-prevention-16-0-mp1-release-notes.html'},
+    {v:'16.0',sysreq:_DLP+'16-0/DLP-system-requirements.html'},
     {v:'15.8',sysreq:'https://techdocs.broadcom.com/content/dam/broadcom/techdocs/symantec-security-software/information-security/data-loss-prevention/generated-pdfs/Symantec_DLP_15-8_System_Requirements_Guide.pdf'}
   ],
   SEP:[
-    {v:'14.4',sysreq:_SEPSYS,notes:_SEPPDF+'Release-Notes-SEP14-4.pdf'},
-    {v:'14.3 RU10',sysreq:_SEPSYS,notes:_SEPPDF+'Release-Notes-SEP14-3RU10.pdf'},
-    {v:'14.3 RU9',sysreq:_SEPSYS,notes:_SEPPDF+'Release-Notes-SEP14-3RU9.pdf'},
-    {v:'14.3 RU8',sysreq:_SEPSYS,notes:_SEPPDF+'Release-Notes-SEP14-3RU8.pdf'}
+    {v:'14.4',sysreq:_SEPSYS,whatsnew:_SEPNEW,notes:_SEPPDF+'Release-Notes-SEP14-4.pdf'},
+    {v:'14.3 RU10',sysreq:_SEPSYS,whatsnew:_SEPNEW,notes:_SEPPDF+'Release-Notes-SEP14-3RU10.pdf'},
+    {v:'14.3 RU9',sysreq:_SEPSYS,whatsnew:_SEPNEW,notes:_SEPPDF+'Release-Notes-SEP14-3RU9.pdf'},
+    {v:'14.3 RU8',sysreq:_SEPSYS,whatsnew:_SEPNEW,notes:_SEPPDF+'Release-Notes-SEP14-3RU8.pdf'}
   ]
 };
 function vendorKbVersions(){
   const prodEl=document.getElementById('vendor-kb-product'); if(!prodEl)return;
   const prod=prodEl.value, sel=document.getElementById('vendor-kb-version');
   if(sel)sel.innerHTML=(VENDOR_KB[prod]||[]).map(x=>`<option value="${escapeHtml(x.v)}">${escapeHtml(x.v)}</option>`).join('');
-  const nb=document.getElementById('vendor-kb-notes-btn'); if(nb)nb.style.display=(VENDOR_KB[prod]||[]).some(x=>x.notes)?'':'none';
+  vendorKbUpdateButtons();
 }
 function vendorKbEntry(){ const p=document.getElementById('vendor-kb-product')?.value, v=document.getElementById('vendor-kb-version')?.value; return (VENDOR_KB[p]||[]).find(x=>x.v===v); }
-function openVendorSysReq(which){
+function vendorKbUpdateButtons(){
+  const e=vendorKbEntry()||{};
+  const set=(id,on)=>{const b=document.getElementById(id);if(b)b.style.display=on?'':'none';};
+  set('vkb-sysreq',!!e.sysreq); set('vkb-new',!!e.whatsnew); set('vkb-notes',!!e.notes);
+}
+function openVendorKb(which){
   const e=vendorKbEntry(); if(!e){toast('버전을 선택하세요');return;}
-  const url=which==='notes'?e.notes:e.sysreq; if(!url){toast('해당 링크가 없습니다');return;}
+  const url=e[which]; if(!url){toast('해당 링크가 없습니다');return;}
   window.open(url,'_blank','noopener');
 }
 async function vendorAIMatrix(){
   const prod=document.getElementById('vendor-kb-product')?.value, e=vendorKbEntry();
   if(!e){toast('버전을 선택하세요');return;}
-  const name=`Symantec ${prod} ${e.v}`;
+  const brand='Symantec '+prod;
   toast('AI 생성 중... (수 초)');
-  const pr=`너는 보안제품 호환성 DB 보조자다. "${name}"의 지원 OS 매트릭스를 주요 OS(Windows 10, Windows 11, Windows Server 2016/2019/2022, 서버/엔드포인트 구분)에 대해 JSON 배열로만 답하라(설명·코드블록 금지). 각 원소: {"product":"${name}","product_version":"${e.v}","os":"","os_version":"","supported":"지원|미지원|조건부","eos_date":"","eol_date":"","note":"서버/엔드포인트 등 구분","source":"${e.sysreq}"}. 모르는 값은 빈 문자열. 최대 10개.`;
+  const pr=`너는 보안제품 호환성 DB 보조자다. "${brand} ${e.v}"의 지원 OS 매트릭스를 주요 OS(Windows 10, Windows 11, Windows Server 2016/2019/2022/2025, 서버/엔드포인트 구분)에 대해 JSON 배열로만 답하라(설명·코드블록 금지). 각 원소: {"product":"${brand}","product_version":"${e.v}","os":"","os_version":"","supported":"지원|미지원|조건부","eos_date":"","eol_date":"","note":"서버/엔드포인트 등","source":"${e.sysreq}"}. product에는 버전을 넣지 마라. 모르는 값은 빈 문자열. 최대 10개.`;
   try{
     const txt=await callAI(pr,'cmpx',{feature:'compat'});
     const mt=txt.match(/\[[\s\S]*\]/); if(!mt)throw new Error('AI 응답에서 JSON 배열을 찾지 못함');
     let arr=JSON.parse(mt[0]); if(!Array.isArray(arr)||!arr.length)throw new Error('생성된 후보 없음');
-    COMPAT_AI_CANDS=arr.slice(0,14).map(o=>({product:o.product||name,product_version:o.product_version||e.v,os:o.os||'',os_version:o.os_version||'',supported:o.supported||'',eos_date:o.eos_date||'',eol_date:o.eol_date||'',note:o.note||'',source:o.source||e.sysreq}));
+    COMPAT_AI_CANDS=arr.slice(0,14).map(o=>({product:brand,product_version:o.product_version||e.v,os:o.os||'',os_version:o.os_version||'',supported:o.supported||'',eos_date:o.eos_date||'',eol_date:o.eol_date||'',note:o.note||'',source:o.source||e.sysreq}));
     showCompatAICandidates();
   }catch(err){ toast('AI 매트릭스 실패: '+err.message); }
 }
@@ -7579,10 +7594,10 @@ function showCompatAICandidates(){
   const m=document.getElementById('compat-ai-modal'), body=document.getElementById('compat-ai-rows'); if(!m||!body)return;
   body.innerHTML=COMPAT_AI_CANDS.map((r,i)=>`<tr>
     <td><input type="checkbox" class="cai-pick" data-i="${i}" checked></td>
-    <td>${escapeHtml((r.product||'')+' '+(r.product_version||''))}</td>
+    <td>${escapeHtml(r.product||'')}</td>
+    <td>${escapeHtml(r.product_version||'')}</td>
     <td>${escapeHtml((r.os||'')+' '+(r.os_version||''))}</td>
     <td>${escapeHtml(r.supported||'-')}</td>
-    <td>${escapeHtml(r.eos_date||'-')}</td>
     <td style="max-width:220px">${escapeHtml(r.note||'')}</td>
   </tr>`).join('');
   m.style.display='flex';
@@ -7794,31 +7809,69 @@ function ensureMermaid(){
     document.head.appendChild(s);
   });
 }
-function nsisMermaidSrc(p){
-  const ICON={dir:'📁',file:'📄',reg:'🗝️',regdel:'🗝️➖',exec:'▶️',shortcut:'🔗',download:'⬇️',delete:'🗑️'};
-  const BICON={section:'📦',function:'🔧',global:'⚙️'};
-  const WARNK={exec:1,download:1,regdel:1};
-  const enc=s=>{ let r=String(s||'').replace(/[\r\n]+/g,' ').replace(/\s+/g,' ').trim(); if(r.length>56)r=r.slice(0,56)+'…'; return r.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\[/g,'&#91;').replace(/\]/g,'&#93;').replace(/[(){}#|]/g,c=>'&#'+c.charCodeAt(0)+';')||'·'; };
-  const MAX=140;
-  let g='flowchart TD\n  start(["⚙️ 설치 시작"])\n', prev='start', warns=[], n=0, truncated=false;
-  const blocks=(p.blocks&&p.blocks.length)?p.blocks:[{name:'설치 동작',kind:'section',ops:[]}];
-  for(let i=0;i<blocks.length&&!truncated;i++){
-    const b=blocks[i], bid='B'+i;
-    g+=`  ${bid}{{"${BICON[b.kind]||'📦'} ${enc(b.name)}"}}\n  ${prev} --> ${bid}\n`;
-    let inner=bid;
-    const ops=b.ops||[];
-    for(let j=0;j<ops.length;j++){
-      if(n>=MAX){truncated=true;break;}
-      const o=ops[j], nid='N'+i+'_'+j;
-      g+=`  ${nid}["${ICON[o.kind]||'•'} ${enc(o.detail||o.kind)}"]\n  ${inner} --> ${nid}\n`;
-      if(WARNK[o.kind])warns.push(nid);
-      inner=nid; n++;
-    }
-    prev=inner;
+function nsisFlowMermaid(src){
+  const rawLines=String(src||'').split(/\r?\n/), toks=[];
+  for(let raw of rawLines){
+    let line=raw.trim(); if(!line||line[0]===';'||line[0]==='#')continue;
+    let note=''; const ci=line.search(/\s;/);
+    if(ci>=0 && (line.slice(0,ci).match(/"/g)||[]).length%2===0){ note=line.slice(ci+1).replace(/^[\s;]+/,'').trim(); line=line.slice(0,ci).trim(); }
+    if(!line)continue; let m;
+    if(m=/^(?:Section|SectionGroup)\b\s*(?:\/o\s+)?"?([^"]*)"?/i.exec(line)){toks.push({t:'block',kind:'section',name:(m[1]||'Section').trim()});continue;}
+    if(/^(?:SectionEnd|SectionGroupEnd)\b/i.test(line))continue;
+    if(m=/^Function\s+(\S+)/i.exec(line)){toks.push({t:'block',kind:'function',name:m[1]});continue;}
+    if(/^FunctionEnd\b/i.test(line))continue;
+    if(m=/^\$\{(IfNot|Unless|If)\}\s*(.*)$/i.exec(line)){toks.push({t:'if',cond:(/Not|Unless/i.test(m[1])?'NOT ':'')+m[2].trim(),note});continue;}
+    if(/^\$\{Else\}/i.test(line)){toks.push({t:'else'});continue;}
+    if(m=/^\$\{ElseIf\}\s*(.*)$/i.exec(line)){toks.push({t:'elseif',cond:m[1].trim(),note});continue;}
+    if(/^\$\{(?:EndIf|EndUnless)\}/i.test(line)){toks.push({t:'endif'});continue;}
+    if(m=/^\$\{(?:Switch|Select)\}\s*(.*)$/i.exec(line)){toks.push({t:'if',cond:'switch '+m[1].trim(),note});continue;}
+    if(/^\$\{(?:EndSwitch|EndSelect)\}/i.test(line)){toks.push({t:'endif'});continue;}
+    if(m=/^IfFileExists\s+(.+?)\s+(\S+)(?:\s+(\S+))?$/i.exec(line)){toks.push({t:'cond',text:note||('File 존재? '+m[1].replace(/"/g,'')),yes:m[2],no:m[3]});continue;}
+    if(m=/^IfErrors\s+(\S+)(?:\s+(\S+))?$/i.exec(line)){toks.push({t:'cond',text:note||'에러 발생?',yes:m[1],no:m[2]});continue;}
+    if(m=/^IfRebootFlag\s+(\S+)(?:\s+(\S+))?$/i.exec(line)){toks.push({t:'cond',text:note||'재부팅 플래그?',yes:m[1],no:m[2]});continue;}
+    if(m=/^StrCmpS?\s+(.+?)\s+(\S+)(?:\s+(\S+))?$/i.exec(line)){toks.push({t:'cond',text:note||('StrCmp '+m[1]),yes:m[2],no:m[3]});continue;}
+    if(m=/^Goto\s+(\S+)/i.exec(line)){toks.push({t:'goto',label:m[1]});continue;}
+    if(m=/^([A-Za-z_][\w.\-]*):$/.exec(line)){toks.push({t:'label',name:m[1]});continue;}
+    if(m=/^Call\s+(\S+)/i.exec(line)){toks.push({t:'op',icon:'⮞ Call',detail:m[1],note});continue;}
+    if(m=/^File\b\s+(.+)$/i.exec(line)){toks.push({t:'op',icon:'📄 File',detail:m[1].replace(/^\/\S+\s+/,'').replace(/"/g,''),note});continue;}
+    if(m=/^SetOutPath\s+(.+)$/i.exec(line)){toks.push({t:'op',icon:'📁 OutPath',detail:m[1].replace(/"/g,''),note});continue;}
+    if(m=/^CreateDirectory\s+(.+)$/i.exec(line)){toks.push({t:'op',icon:'📁 MkDir',detail:m[1].replace(/"/g,''),note});continue;}
+    if(m=/^(?:WriteRegStr|WriteRegDWORD|WriteRegExpandStr|WriteRegBin|WriteRegMultiStr)\b\s+(.+)$/i.exec(line)){toks.push({t:'op',icon:'🗝️ WriteReg',detail:m[1].replace(/"/g,''),note});continue;}
+    if(m=/^(?:DeleteRegKey|DeleteRegValue)\b\s+(.+)$/i.exec(line)){toks.push({t:'op',icon:'🗝️➖ DelReg',detail:m[1].replace(/"/g,''),warn:1,note});continue;}
+    if(m=/^(?:ExecWait|ExecShell|Exec)\b\s+(.+)$/i.exec(line)){toks.push({t:'op',icon:'▶️ Exec',detail:m[1].replace(/"/g,''),warn:1,note});continue;}
+    if(m=/^nsExec::\w+\s+(.+)$/i.exec(line)){toks.push({t:'op',icon:'▶️ nsExec',detail:m[1].replace(/"/g,''),warn:1,note});continue;}
+    if(m=/^CreateShortCut\b\s+(.+)$/i.exec(line)){toks.push({t:'op',icon:'🔗 Shortcut',detail:m[1].replace(/"/g,'').split(/\s{2,}/)[0],note});continue;}
+    if(m=/^(Delete|RMDir)\b\s+(.+)$/i.exec(line)){toks.push({t:'op',icon:'🗑️ '+m[1],detail:m[2].replace(/"/g,''),warn:1,note});continue;}
+    if(/^(?:inetc::get|NSISdl::download|INetC::get)\b/i.test(line)){toks.push({t:'op',icon:'⬇️ Download',detail:line.replace(/"/g,'').slice(0,60),warn:1,note});continue;}
+    if(m=/^(StrCpy|IntOp|ReadRegStr|ReadEnvStr|SetRebootFlag|Var|Push|Pop)\b\s*(.*)$/i.exec(line)){toks.push({t:'op',icon:'▫️ '+m[1],detail:(m[2]||'').replace(/"/g,'').slice(0,46),note});continue;}
   }
-  g+=`  ${prev} --> done(["✅ 완료"])\n`;
-  if(truncated)g+=`  more["… 이하 작업 ${MAX}개 초과 — 상세 목록 참고"]\n  ${prev} --> more\n`;
+  return buildFlow(toks);
+}
+function buildFlow(toks){
+  let nid=0; const lines=[], edges=[], warns=[];
+  const enc=s=>{ let r=String(s||'').replace(/[\r\n]+/g,' ').replace(/\$\{(\w+)\}/g,'$1').replace(/\s+/g,' ').trim(); if(r.length>48)r=r.slice(0,48)+'…'; return r.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/[\[\](){}#|]/g,c=>'&#'+c.charCodeAt(0)+';')||'·'; };
+  const node=(shape,text)=>{const i='f'+(nid++);let s;if(shape==='dec')s=i+'{"'+enc(text)+'"}';else if(shape==='term')s=i+'(["'+enc(text)+'"])';else if(shape==='block')s=i+'[["'+enc(text)+'"]]';else if(shape==='label')s=i+'>"'+enc(text)+'"]';else s=i+'["'+enc(text)+'"]';lines.push('  '+s);return i;};
+  const edge=(a,b,l)=>{edges.push(l?('  '+a+' -->|'+enc(l)+'| '+b):('  '+a+' --> '+b));};
+  const start=node('term','⚙️ START'); let pending=[{id:start}];
+  const connect=to=>{ pending.forEach(p=>edge(p.id,to,p.label)); pending=[]; };
+  const labelNodes={}; const ensureLabel=name=>{ if(!labelNodes[name])labelNodes[name]=node('label','▸ '+name); return labelNodes[name]; };
+  const ifStack=[]; const MAX=170; let n=0, trunc=false;
+  for(const tk of toks){
+    if(n>=MAX){trunc=true;break;}
+    if(tk.t==='block'){ const b=node('block',(tk.kind==='function'?'🔧 ':'📦 ')+tk.name); connect(b); pending=[{id:b}]; n++; }
+    else if(tk.t==='op'){ const o=node('proc',tk.icon+': '+(tk.detail||'')+(tk.note?(' — '+tk.note):'')); connect(o); if(tk.warn)warns.push(o); pending=[{id:o}]; n++; }
+    else if(tk.t==='if'){ const d=node('dec',tk.note||tk.cond); connect(d); ifStack.push({dec:d,trueEnds:[],elseStarted:false}); pending=[{id:d,label:'예'}]; n++; }
+    else if(tk.t==='elseif'){ const fr=ifStack[ifStack.length-1]; if(fr){ fr.trueEnds.push(...pending); const d=node('dec',tk.note||tk.cond); edge(fr.dec,d,'아니오'); fr.dec=d; pending=[{id:d,label:'예'}]; n++; } }
+    else if(tk.t==='else'){ const fr=ifStack[ifStack.length-1]; if(fr){ fr.trueEnds.push(...pending); fr.elseStarted=true; pending=[{id:fr.dec,label:'아니오'}]; } }
+    else if(tk.t==='endif'){ const fr=ifStack.pop(); if(fr){ const ends=[...fr.trueEnds,...pending]; if(!fr.elseStarted)ends.push({id:fr.dec,label:'아니오'}); pending=ends; } }
+    else if(tk.t==='cond'){ const d=node('dec',tk.text); connect(d); const np=[]; if(tk.yes)edge(d,ensureLabel(tk.yes),'예'); else np.push({id:d,label:'예'}); if(tk.no)edge(d,ensureLabel(tk.no),'아니오'); else np.push({id:d,label:'아니오'}); pending=np; n++; }
+    else if(tk.t==='goto'){ connect(ensureLabel(tk.label)); pending=[]; }
+    else if(tk.t==='label'){ const t=ensureLabel(tk.name); connect(t); pending=[{id:t}]; }
+  }
+  const endN=node('term','✅ END'); pending.forEach(p=>edge(p.id,endN,p.label));
+  let g='flowchart TD\n'+lines.join('\n')+'\n'+edges.join('\n')+'\n';
   if(warns.length)g+='  classDef warn fill:#7f1d1d,stroke:#f87171,color:#fee2e2\n  class '+warns.join(',')+' warn\n';
+  if(trunc)g+='  '+endN+' -.-> trunc["… 노드 170개 초과 — 상세 목록 참고"]\n';
   return g;
 }
 async function renderNsisDiagram(){
@@ -7829,7 +7882,7 @@ async function renderNsisDiagram(){
   wrap.innerHTML='<div class="muted" style="padding:14px">다이어그램 생성 중...</div>';
   try{
     const mer=await ensureMermaid();
-    const r=await mer.render('nsisFlow'+(window.__nsisN=(window.__nsisN||0)+1), nsisMermaidSrc(NSIS_PARSED));
+    const r=await mer.render('nsisFlow'+(window.__nsisN=(window.__nsisN||0)+1), nsisFlowMermaid(src));
     wrap.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;overflow:auto">${r.svg}</div>`;
   }catch(e){ wrap.innerHTML=`<div style="color:var(--danger);padding:10px">다이어그램 실패: ${escapeHtml(e.message)}</div>`; }
 }
