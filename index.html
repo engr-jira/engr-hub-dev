@@ -1837,6 +1837,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
             <button class="sb-btn" id="nav-cases" onclick="showPage('cases',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>케이스 트래커</button>
             <button class="sb-btn" id="nav-customers" onclick="showPage('customers',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>고객사 프로필</button>
             <button class="sb-btn" id="nav-eos" onclick="showPage('eos',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>라이선스<span class="badge-warn" id="eos-warn-badge" style="display:none">0</span></button>
+            <button class="sb-btn" id="nav-compat" onclick="showPage('compat',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>호환성 매트릭스</button>
           </div>
         </div>
         <div class="sb-group collapsed" data-group="tools">
@@ -2008,6 +2009,48 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
       </div>
     </div>
 
+    <div class="page" id="page-compat">
+      <style>
+      #page-compat .data-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+      #page-compat .data-tbl th,#page-compat .data-tbl td{padding:7px 9px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+      #page-compat .data-tbl th{background:var(--bg2);font-size:11.5px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border2)}
+      #page-compat .data-tbl tr:hover td{background:rgba(255,255,255,.02)}
+      #page-compat .cm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
+      #page-compat .cm-grid label,#compat-modal .cm-note{display:flex;flex-direction:column;font-size:11px;color:var(--text3);gap:4px}
+      #compat-modal input,#compat-modal textarea{background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text,#e2e8f0);font-size:13px;font-family:inherit}
+      </style>
+      <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--text2,#cbd5e1);margin-bottom:16px">🧩 제품·OS 호환성 / EOS·EOL 매트릭스. <strong style="color:#34d399">✓ 확정</strong> 항목이 공식 기준이며, <span class="badge-warn">초안</span>은 검토 중입니다. EOS 임박(90일 이내)은 색으로 강조됩니다.</div>
+      <div class="filter-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+        <input id="compat-q" placeholder="제품 / OS / 버전 / 비고 검색..." oninput="renderCompat()" style="flex:1;min-width:200px">
+        <button class="btn" onclick="loadCompat()">새로고침</button>
+        <button class="btn" onclick="copyCompatTable()">표 복사</button>
+        <button class="btn compat-admin" style="display:none" onclick="compatAICandidate()">AI 후보</button>
+        <button class="btn btn-indigo compat-admin" style="display:none" onclick="openCompatModal()">+ 행 추가</button>
+      </div>
+      <div id="compat-summary" class="muted" style="font-size:11.5px;margin-bottom:8px"></div>
+      <div id="compat-table-wrap"></div>
+      <div id="compat-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:center;justify-content:center;padding:20px">
+        <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:22px;width:min(580px,94vw);max-height:88vh;overflow:auto">
+          <h3 id="compat-modal-title" style="margin:0 0 16px;font-size:16px">행 추가</h3>
+          <input type="hidden" id="cm-id">
+          <div class="cm-grid">
+            <label>제품 *<input id="cm-product"></label>
+            <label>제품 버전<input id="cm-product_version"></label>
+            <label>OS<input id="cm-os"></label>
+            <label>OS 버전<input id="cm-os_version"></label>
+            <label>지원 여부<input id="cm-supported" placeholder="지원 / 미지원 / 조건부"></label>
+            <label>출처<input id="cm-source"></label>
+            <label>EOS 날짜<input id="cm-eos_date" type="date"></label>
+            <label>EOL 날짜<input id="cm-eol_date" type="date"></label>
+          </div>
+          <label class="cm-note" style="margin-top:10px">비고<textarea id="cm-note" rows="3"></textarea></label>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">
+            <button class="btn" onclick="closeCompatModal()">취소</button>
+            <button class="btn btn-indigo" onclick="saveCompat()">저장</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="page" id="page-eos">
       <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--warn);margin-bottom:16px">🔑 고객사 라이선스 관리. 만료일(End Date) 임박 항목은 로그인 시 강조됩니다. <span onclick="showStorageInfo('eos')" title="데이터 저장 안내" style="cursor:pointer;opacity:.6;font-size:13px">ℹ</span></div>
       <div class="action-row">
@@ -7288,8 +7331,8 @@ function showPage(name,btn){
   const page=document.getElementById('page-'+name); if(page)page.classList.add('active');
   document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
   const nav=btn||document.getElementById('nav-'+name); if(nav)nav.classList.add('active');
-  const titleMap={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk'};
-  const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',eos:'고객사 라이선스 만료 관리',log:'로그 업로드 및 증상 기반 AI 분석',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',private:'로그인 사용자 전용 일정, 팁, 할일, 개인 참고',audit:'사용자 작업 이력',settings:'초기 데이터 및 저장소 관리'};
+  const titleMap={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스'};
+  const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',eos:'고객사 라이선스 만료 관리',log:'로그 업로드 및 증상 기반 AI 분석',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',private:'로그인 사용자 전용 일정, 팁, 할일, 개인 참고',audit:'사용자 작업 이력',settings:'초기 데이터 및 저장소 관리',compat:'제품·OS 호환성 / EOS·EOL 매트릭스'};
   const title=document.getElementById('page-title'); if(title)title.textContent=titleMap[name]||'HUB';
   const desc=document.getElementById('page-desc'); if(desc)desc.textContent=descMap[name]||'';
   expandActiveNavGroup(name);
@@ -7299,9 +7342,87 @@ function showPage(name,btn){
     const tp=document.getElementById('md-team-report-panel');if(tp)tp.style.display=(IS_ADMIN||IS_SUPER)?'':'none';
     if(typeof loadMyDeskForUser==='function')loadMyDeskForUser();
   }
+  if(name==='compat')loadCompat();
   renderCurrent();
   ensureRelativeDateOptions();
   setTimeout(enhanceDateButtons,0);
+}
+/* ── §1 호환성·EOS 매트릭스 ─────────────────────────── */
+let COMPAT_ROWS=[];
+const CMB='font-size:11px;padding:3px 7px;margin:0 1px;background:#1e293b;border:1px solid var(--border);border-radius:6px;color:var(--text,#e2e8f0);cursor:pointer';
+function compatDday(d){ if(!d)return null; const t=new Date(d+'T00:00:00'); if(isNaN(t))return null; const today=new Date(); today.setHours(0,0,0,0); return Math.round((t-today)/86400000); }
+function compatDdayHtml(d){ const n=compatDday(d); if(n===null)return ''; const col=n<0?'var(--danger)':n<=90?'var(--warn)':'var(--text3)'; const lab=n<0?`D+${-n}`:`D-${n}`; return ` <span style="color:${col};font-weight:600;font-size:11px">${lab}</span>`; }
+async function loadCompat(){
+  document.querySelectorAll('.compat-admin').forEach(b=>b.style.display=(IS_ADMIN||IS_SUPER)?'':'none');
+  const wrap=document.getElementById('compat-table-wrap'); if(wrap)wrap.innerHTML='<div class="muted" style="padding:20px">불러오는 중...</div>';
+  try{ const d=await hubApi('/compat'); COMPAT_ROWS=d.items||[]; }
+  catch(e){ COMPAT_ROWS=[]; if(wrap)wrap.innerHTML=`<div style="color:var(--danger);padding:20px">조회 실패: ${escapeHtml(e.message)}</div>`; return; }
+  renderCompat();
+}
+function renderCompat(){
+  const wrap=document.getElementById('compat-table-wrap'); if(!wrap)return;
+  const q=(document.getElementById('compat-q')?.value||'').trim().toLowerCase();
+  const admin=!!(IS_ADMIN||IS_SUPER);
+  let rows=COMPAT_ROWS;
+  if(q)rows=rows.filter(r=>[r.product,r.product_version,r.os,r.os_version,r.note,r.supported].some(v=>(v||'').toLowerCase().includes(q)));
+  const sum=document.getElementById('compat-summary');
+  if(sum)sum.textContent=`총 ${rows.length}행 · 확정 ${rows.filter(r=>r.status==='confirmed').length} · 초안 ${rows.filter(r=>r.status!=='confirmed').length}`;
+  if(!rows.length){ wrap.innerHTML='<div class="muted" style="padding:20px">데이터가 없습니다.'+(admin?' “+ 행 추가” 또는 “AI 후보”로 등록하세요.':'')+'</div>'; return; }
+  const supBadge=s=>{ s=s||''; const c=/미지원|불가|no/i.test(s)?'var(--danger)':/조건|부분|partial/i.test(s)?'var(--warn)':/지원|ok|yes/i.test(s)?'#34d399':'var(--text3)'; return `<span style="color:${c};font-weight:600">${escapeHtml(s||'-')}</span>`; };
+  const head=`<tr><th>제품</th><th>버전</th><th>OS</th><th>OS버전</th><th>지원</th><th>EOS</th><th>EOL</th><th>비고</th><th>상태</th>${admin?'<th>작업</th>':''}</tr>`;
+  const body=rows.map(r=>`<tr>
+    <td><strong>${escapeHtml(r.product||'-')}</strong></td><td>${escapeHtml(r.product_version||'')}</td>
+    <td>${escapeHtml(r.os||'')}</td><td>${escapeHtml(r.os_version||'')}</td>
+    <td>${supBadge(r.supported)}</td>
+    <td>${r.eos_date?escapeHtml(r.eos_date)+compatDdayHtml(r.eos_date):'-'}</td>
+    <td>${r.eol_date?escapeHtml(r.eol_date):'-'}</td>
+    <td style="max-width:240px">${escapeHtml(r.note||'')}${r.source?`<br><span class="muted" style="font-size:11px">출처: ${escapeHtml(r.source)}</span>`:''}</td>
+    <td>${r.status==='confirmed'?'<span style="color:#34d399;white-space:nowrap">✓ 확정</span>':'<span class="badge-warn">초안</span>'}</td>
+    ${admin?`<td style="white-space:nowrap">${r.status!=='confirmed'?`<button style="${CMB}" onclick="confirmCompat(${r.id})">확정</button>`:''}<button style="${CMB}" onclick="openCompatModal(${r.id})">수정</button><button style="${CMB};color:var(--danger)" onclick="deleteCompat(${r.id})">삭제</button></td>`:''}
+  </tr>`).join('');
+  wrap.innerHTML=`<table class="data-tbl">${head}${body}</table>`;
+}
+function openCompatModal(id){
+  const m=document.getElementById('compat-modal'); if(!m)return;
+  const row=id?COMPAT_ROWS.find(r=>r.id===id):null;
+  document.getElementById('compat-modal-title').textContent=row?'행 수정':'행 추가';
+  document.getElementById('cm-id').value=row?row.id:'';
+  ['product','product_version','os','os_version','supported','eos_date','eol_date','note','source'].forEach(k=>{const el=document.getElementById('cm-'+k);if(el)el.value=row?(row[k]||''):'';});
+  m.style.display='flex';
+}
+function closeCompatModal(){ const m=document.getElementById('compat-modal'); if(m)m.style.display='none'; }
+async function saveCompat(){
+  const id=document.getElementById('cm-id').value;
+  const get=k=>document.getElementById('cm-'+k)?.value?.trim()||'';
+  const payload={product:get('product'),product_version:get('product_version'),os:get('os'),os_version:get('os_version'),supported:get('supported'),eos_date:get('eos_date'),eol_date:get('eol_date'),note:get('note'),source:get('source')};
+  if(!payload.product){toast('제품명을 입력하세요');return;}
+  try{ await hubApi(id?`/compat/${id}`:'/compat',{method:id?'PUT':'POST',body:JSON.stringify(payload)}); toast(id?'수정했습니다':'추가했습니다 (초안)'); closeCompatModal(); loadCompat(); }
+  catch(e){ toast('저장 실패: '+e.message); }
+}
+async function confirmCompat(id){ if(!confirm('이 행을 확정 처리할까요? (공식 기준으로 노출)'))return; try{ await hubApi(`/compat/${id}/confirm`,{method:'POST'}); toast('확정했습니다'); loadCompat(); }catch(e){ toast('실패: '+e.message); } }
+async function deleteCompat(id){ if(!confirm('이 행을 삭제할까요?'))return; try{ await hubApi(`/compat/${id}`,{method:'DELETE'}); toast('삭제했습니다'); loadCompat(); }catch(e){ toast('실패: '+e.message); } }
+async function compatAICandidate(){
+  const product=prompt('AI 후보를 채울 제품명 (예: ESCARE DLP Agent)'); if(!product)return;
+  const os=prompt('OS (예: Windows 11 23H2) — 비워도 됩니다')||'';
+  toast('AI 조회 중...');
+  const pr=`너는 보안제품 호환성 DB 보조자다. 아래 제품/OS의 호환성·지원종료 정보를 추정해 JSON 한 줄로만 답하라(설명·코드블록 금지). 형식: {"product":"","product_version":"","os":"","os_version":"","supported":"지원|미지원|조건부","eos_date":"YYYY-MM-DD","eol_date":"YYYY-MM-DD","note":"근거/주의","source":""}. 불확실하면 해당 값은 빈 문자열로 둬라. 제품:${product} / OS:${os}`;
+  try{
+    const txt=await callAI(pr,'cmpx',{feature:'compat'});
+    const mt=txt.match(/\{[\s\S]*\}/); if(!mt)throw new Error('AI 응답에서 JSON을 찾지 못함');
+    const o=JSON.parse(mt[0]);
+    openCompatModal(null);
+    ['product','product_version','os','os_version','supported','eos_date','eol_date','note'].forEach(k=>{const el=document.getElementById('cm-'+k);if(el&&o[k])el.value=o[k];});
+    if(!document.getElementById('cm-product').value)document.getElementById('cm-product').value=product;
+    document.getElementById('cm-source').value=o.source||('AI 추정 · '+aiModelLabel(LAST_AI_MODEL));
+    toast('AI 후보를 채웠습니다. 검토 후 저장하세요 (초안).');
+  }catch(e){ toast('AI 후보 실패: '+e.message); }
+}
+function copyCompatTable(){
+  const q=(document.getElementById('compat-q')?.value||'').trim().toLowerCase();
+  let rows=COMPAT_ROWS; if(q)rows=rows.filter(r=>[r.product,r.product_version,r.os,r.os_version,r.note,r.supported].some(v=>(v||'').toLowerCase().includes(q)));
+  const head=['제품','버전','OS','OS버전','지원','EOS','EOL','비고','상태'];
+  const lines=[head.join('\t')].concat(rows.map(r=>[r.product,r.product_version,r.os,r.os_version,r.supported,r.eos_date,r.eol_date,(r.note||'').replace(/\s+/g,' '),r.status==='confirmed'?'확정':'초안'].map(v=>v||'').join('\t')));
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>toast(`표 ${rows.length}행을 복사했습니다`)).catch(()=>toast('복사 실패'));
 }
 function hubApi(path,options={}){
   return fetch(`${WORKERS}${path}`,{
@@ -7487,7 +7608,7 @@ function syncMobSheet(panelId){
 /* mobile primary nav + compact admin settings */
 const MOBILE_PRIMARY_NAV=['nav-dash','nav-issues','nav-cases','nav-customers'];
 const MOBILE_MORE_NAV=['nav-mydesk','nav-eos','nav-log','nav-vt','nav-links','nav-knowledge','nav-audit','nav-settings'];
-const MOBILE_NAV_LABELS={eos:'라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk'};
+const MOBILE_NAV_LABELS={eos:'라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스'};
 function mobilePageNameFromNav(id){return String(id||'').replace(/^nav-/,'');}
 function canShowMobileMoreItem(id){
   if(id==='nav-audit')return !!(IS_ADMIN||IS_SUPER);

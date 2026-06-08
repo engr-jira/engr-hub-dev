@@ -2282,6 +2282,50 @@ export default {
       }
 
 
+      // \u2500\u2500 \u00A71 \uD638\uD658\uC131\u00B7EOS \uB9E4\uD2B8\uB9AD\uC2A4 (compat_matrix \u00B7 D1) \u2500\u2500
+      if (path === '/compat' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        const q = (new URL(request.url).searchParams.get('q') || '').trim().toLowerCase();
+        let rows = [];
+        try { const r = await env.DB.prepare('SELECT * FROM compat_matrix ORDER BY product, product_version, os').all(); rows = r.results || []; } catch (_) {}
+        if (q) rows = rows.filter(x => [x.product, x.product_version, x.os, x.os_version, x.note, x.supported].some(v => (v || '').toLowerCase().includes(q)));
+        return corsResponse({ ok: true, items: rows });
+      }
+      if (path === '/compat' && request.method === 'POST') {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
+        const b = await request.json().catch(() => ({}));
+        const now = new Date().toISOString();
+        try {
+          const r = await env.DB.prepare('INSERT INTO compat_matrix (product,product_version,os,os_version,supported,eos_date,eol_date,note,source,status,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+            .bind(b.product || '', b.product_version || '', b.os || '', b.os_version || '', b.supported || '', b.eos_date || '', b.eol_date || '', b.note || '', b.source || '', 'draft', now).run();
+          await auditLog(env, user, 'MATRIX_ADD', { matrixType: 'compat', product: b.product || '', os: b.os || '' });
+          return corsResponse({ ok: true, id: r.meta?.last_row_id });
+        } catch (e) { return corsResponse({ ok: false, message: '\uC800\uC7A5 \uC2E4\uD328: ' + e.message }, 500); }
+      }
+      if (path.startsWith('/compat/') && path.endsWith('/confirm') && request.method === 'POST') {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
+        const id = parseInt(path.split('/')[2]) || 0;
+        try { await env.DB.prepare("UPDATE compat_matrix SET status='confirmed', verified_by=?, verified_at=? WHERE id=?").bind(user, new Date().toISOString(), id).run(); await auditLog(env, user, 'MATRIX_CONFIRM', { matrixType: 'compat', id }); return corsResponse({ ok: true }); }
+        catch (e) { return corsResponse({ ok: false, message: e.message }, 500); }
+      }
+      if (path.startsWith('/compat/') && request.method === 'PUT') {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
+        const id = parseInt(path.split('/')[2]) || 0;
+        const b = await request.json().catch(() => ({}));
+        try {
+          await env.DB.prepare('UPDATE compat_matrix SET product=?,product_version=?,os=?,os_version=?,supported=?,eos_date=?,eol_date=?,note=?,source=?,updated_at=? WHERE id=?')
+            .bind(b.product || '', b.product_version || '', b.os || '', b.os_version || '', b.supported || '', b.eos_date || '', b.eol_date || '', b.note || '', b.source || '', new Date().toISOString(), id).run();
+          await auditLog(env, user, 'MATRIX_UPDATE', { matrixType: 'compat', id });
+          return corsResponse({ ok: true });
+        } catch (e) { return corsResponse({ ok: false, message: e.message }, 500); }
+      }
+      if (path.startsWith('/compat/') && request.method === 'DELETE') {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
+        const id = parseInt(path.split('/')[2]) || 0;
+        try { await env.DB.prepare('DELETE FROM compat_matrix WHERE id=?').bind(id).run(); await auditLog(env, user, 'MATRIX_DELETE', { matrixType: 'compat', id }); return corsResponse({ ok: true }); }
+        catch (e) { return corsResponse({ ok: false, message: e.message }, 500); }
+      }
+
       // \u2500\u2500 F2/F3 JQL \uC804\uC6A9 \uC5D4\uB4DC\uD3EC\uC778\uD2B8 (Phase 0 \uACE8\uACA9, \uB85C\uC9C1\uC740 \u00A72/\u00A73\uC5D0\uC11C \uD655\uC7A5) \u2500\u2500
       if (path === '/team/history' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
