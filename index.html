@@ -2074,6 +2074,20 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
       </div>
       <div id="compat-summary" class="muted" style="font-size:11.5px;margin-bottom:8px"></div>
       <div id="compat-table-wrap"></div>
+      <div id="compat-ai-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto">
+        <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:22px;width:min(840px,96vw)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <h3 style="margin:0;font-size:16px">🤖 AI 호환성 후보 <span style="font-size:11px;color:var(--text3);font-weight:400">· 검토 후 초안 저장</span></h3>
+            <button class="btn" onclick="closeCompatAICandidates()">닫기</button>
+          </div>
+          <div style="font-size:11px;color:var(--warn);margin-bottom:10px">⚠ AI 추정값입니다. 저장 시 모두 <b>초안</b>으로 들어가며, 표에서 검토·수정 후 <b>확정</b>하세요.</div>
+          <div style="max-height:52vh;overflow:auto"><table class="data-tbl" style="width:100%"><tr><th style="width:30px"></th><th>제품</th><th>OS</th><th>지원</th><th>EOS</th><th>비고</th></tr><tbody id="compat-ai-rows"></tbody></table></div>
+          <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+            <button class="btn" onclick="closeCompatAICandidates()">취소</button>
+            <button class="btn btn-indigo" onclick="saveCompatAICandidates()">선택 항목 초안 저장</button>
+          </div>
+        </div>
+      </div>
       <div id="compat-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:center;justify-content:center;padding:20px">
         <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:14px;padding:22px;width:min(580px,94vw);max-height:88vh;overflow:auto">
           <h3 id="compat-modal-title" style="margin:0 0 16px;font-size:16px">행 추가</h3>
@@ -7488,21 +7502,38 @@ async function saveCompat(){
 }
 async function confirmCompat(id){ if(!confirm('이 행을 확정 처리할까요? (공식 기준으로 노출)'))return; try{ await hubApi(`/compat/${id}/confirm`,{method:'POST'}); toast('확정했습니다'); loadCompat(); }catch(e){ toast('실패: '+e.message); } }
 async function deleteCompat(id){ if(!confirm('이 행을 삭제할까요?'))return; try{ await hubApi(`/compat/${id}`,{method:'DELETE'}); toast('삭제했습니다'); loadCompat(); }catch(e){ toast('실패: '+e.message); } }
+let COMPAT_AI_CANDS=[];
 async function compatAICandidate(){
-  const product=prompt('AI 후보를 채울 제품명 (예: ESCARE DLP Agent)'); if(!product)return;
-  const os=prompt('OS (예: Windows 11 23H2) — 비워도 됩니다')||'';
-  toast('AI 조회 중...');
-  const pr=`너는 보안제품 호환성 DB 보조자다. 아래 제품/OS의 호환성·지원종료 정보를 추정해 JSON 한 줄로만 답하라(설명·코드블록 금지). 형식: {"product":"","product_version":"","os":"","os_version":"","supported":"지원|미지원|조건부","eos_date":"YYYY-MM-DD","eol_date":"YYYY-MM-DD","note":"근거/주의","source":""}. 불확실하면 해당 값은 빈 문자열로 둬라. 제품:${product} / OS:${os}`;
+  const product=prompt('AI로 호환성 행을 생성할 제품/버전\n(예: Symantec Endpoint Protection 14.4)'); if(!product)return;
+  toast('AI 생성 중... (수 초)');
+  const pr=`너는 보안제품 호환성 DB 보조자다. 제품 "${product}"의 OS별 호환성·지원종료(EOS/EOL)를 주요 OS(Windows 10, Windows 11, Windows Server 2016/2019/2022 등)에 대해 추정해 JSON 배열로만 답하라(설명·코드블록·주석 금지). 각 원소: {"product":"","product_version":"","os":"","os_version":"","supported":"지원|미지원|조건부","eos_date":"YYYY-MM-DD","eol_date":"YYYY-MM-DD","note":"근거/주의","source":""}. 모르는 값은 빈 문자열. 최대 8개.`;
   try{
     const txt=await callAI(pr,'cmpx',{feature:'compat'});
-    const mt=txt.match(/\{[\s\S]*\}/); if(!mt)throw new Error('AI 응답에서 JSON을 찾지 못함');
-    const o=JSON.parse(mt[0]);
-    openCompatModal(null);
-    ['product','product_version','os','os_version','supported','eos_date','eol_date','note'].forEach(k=>{const el=document.getElementById('cm-'+k);if(el&&o[k])el.value=o[k];});
-    if(!document.getElementById('cm-product').value)document.getElementById('cm-product').value=product;
-    document.getElementById('cm-source').value=o.source||('AI 추정 · '+aiModelLabel(LAST_AI_MODEL));
-    toast('AI 후보를 채웠습니다. 검토 후 저장하세요 (초안).');
+    const mt=txt.match(/\[[\s\S]*\]/); if(!mt)throw new Error('AI 응답에서 JSON 배열을 찾지 못했습니다');
+    let arr=JSON.parse(mt[0]); if(!Array.isArray(arr)||!arr.length)throw new Error('생성된 후보가 없습니다');
+    COMPAT_AI_CANDS=arr.slice(0,12).map(o=>({product:o.product||product,product_version:o.product_version||'',os:o.os||'',os_version:o.os_version||'',supported:o.supported||'',eos_date:o.eos_date||'',eol_date:o.eol_date||'',note:o.note||'',source:o.source||('AI 추정 · '+aiModelLabel(LAST_AI_MODEL))}));
+    showCompatAICandidates();
   }catch(e){ toast('AI 후보 실패: '+e.message); }
+}
+function showCompatAICandidates(){
+  const m=document.getElementById('compat-ai-modal'), body=document.getElementById('compat-ai-rows'); if(!m||!body)return;
+  body.innerHTML=COMPAT_AI_CANDS.map((r,i)=>`<tr>
+    <td><input type="checkbox" class="cai-pick" data-i="${i}" checked></td>
+    <td>${escapeHtml((r.product||'')+' '+(r.product_version||''))}</td>
+    <td>${escapeHtml((r.os||'')+' '+(r.os_version||''))}</td>
+    <td>${escapeHtml(r.supported||'-')}</td>
+    <td>${escapeHtml(r.eos_date||'-')}</td>
+    <td style="max-width:220px">${escapeHtml(r.note||'')}</td>
+  </tr>`).join('');
+  m.style.display='flex';
+}
+function closeCompatAICandidates(){ const m=document.getElementById('compat-ai-modal'); if(m)m.style.display='none'; }
+async function saveCompatAICandidates(){
+  const picks=[...document.querySelectorAll('#compat-ai-rows .cai-pick:checked')].map(c=>COMPAT_AI_CANDS[+c.dataset.i]).filter(Boolean);
+  if(!picks.length){toast('저장할 행을 선택하세요');return;}
+  let ok=0;
+  for(const r of picks){ try{ await hubApi('/compat',{method:'POST',body:JSON.stringify(r)}); ok++; }catch(_){} }
+  closeCompatAICandidates(); toast(`${ok}/${picks.length}건 초안 저장`); loadCompat();
 }
 function copyCompatTable(){
   const q=(document.getElementById('compat-q')?.value||'').trim().toLowerCase();
@@ -7513,24 +7544,45 @@ function copyCompatTable(){
 }
 /* ── §5 기능 토글 ───────────────────────────────────── */
 let FEATURE_FLAGS={compat:true,history:true,monitor:true,nsis:true};
-const FEATURE_META=[['compat','호환성 매트릭스'],['history','고객사 업무 이력'],['monitor','팀 업무 모니터'],['nsis','NSIS 분석기']];
-const FEATURE_NAV={compat:'nav-compat',nsis:'nav-nsis'};
+const FEATURE_SPECIAL=[['history','고객사 업무 이력'],['monitor','팀 업무 모니터 (mj.park)']];
+const FEATURE_PROTECTED={settings:1};
+const FEATURE_WARN={audit:'끄면 감사 로그 메뉴가 숨겨집니다(역할 권한은 그대로).'};
+function getMenuToggleList(){
+  const out=[], seen=new Set();
+  document.querySelectorAll('.sb-btn[id^="nav-"]').forEach(b=>{
+    const key=b.id.replace('nav-',''); if(!key||seen.has(key))return; seen.add(key);
+    out.push({key,label:(b.textContent||'').replace(/\s+/g,' ').trim().replace(/\s*\d+$/,'').trim()||key});
+  });
+  FEATURE_SPECIAL.forEach(([key,label])=>{ if(!seen.has(key)){seen.add(key);out.push({key,label});} });
+  return out;
+}
 async function loadFeatureFlags(){
   try{ const d=await hubApi('/features'); FEATURE_FLAGS={...FEATURE_FLAGS,...(d.flags||{})}; MONITOR_ALLOWED=!!d.monAllowed; }catch(_){}
   applyFeatureFlags(); renderFeatureFlagsAdmin(); applyMonitorVisibility();
 }
 function applyFeatureFlags(){
-  Object.entries(FEATURE_NAV).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.style.display=FEATURE_FLAGS[k]===false?'none':'';});
+  if(!document.getElementById('feat-off-style')){const st=document.createElement('style');st.id='feat-off-style';st.textContent='.sb-btn.feat-off{display:none!important}';document.head.appendChild(st);}
+  document.querySelectorAll('.sb-btn[id^="nav-"]').forEach(btn=>{
+    const key=btn.id.replace('nav-','');
+    if(FEATURE_PROTECTED[key]){btn.classList.remove('feat-off');return;}  // settings 등은 락아웃 방지(토글 불가)
+    btn.classList.toggle('feat-off', FEATURE_FLAGS[key]===false);          // 클래스만 추가/제거 → 역할 게이트(인라인) 보존
+  });
   const hb=document.getElementById('cust-history-btn'); if(hb)hb.style.display=FEATURE_FLAGS.history===false?'none':'';
   const am=document.getElementById('audit-mig-section'); if(am){am.style.display=IS_SUPER?'':'none'; if(IS_SUPER&&typeof loadAuditMigStatus==='function')loadAuditMigStatus();}
+  if(typeof applyMonitorVisibility==='function')applyMonitorVisibility();
 }
 function renderFeatureFlagsAdmin(){
   const w=document.getElementById('feature-flags-wrap'); if(!w)return;
-  w.innerHTML=FEATURE_META.map(([k,label])=>`<label style="display:flex;align-items:center;gap:9px;padding:7px 0;font-size:13px;cursor:pointer;border-bottom:1px solid var(--border)"><input type="checkbox" data-ff="${k}" ${FEATURE_FLAGS[k]!==false?'checked':''} style="width:16px;height:16px"> <span>${label}</span> <code style="font-size:10px;color:var(--text3);margin-left:auto">${k}</code></label>`).join('');
+  w.innerHTML=getMenuToggleList().map(({key,label})=>{
+    const locked=!!FEATURE_PROTECTED[key], on=FEATURE_FLAGS[key]!==false;
+    const tail=locked?'<span style="font-size:10px;color:var(--text3)">잠금</span>':(FEATURE_WARN[key]?`<span title="${FEATURE_WARN[key]}" style="color:var(--warn)">⚠</span>`:'');
+    return `<label style="display:flex;align-items:center;gap:9px;padding:7px 0;font-size:13px;cursor:${locked?'not-allowed':'pointer'};border-bottom:1px solid var(--border);opacity:${locked?'.6':'1'}"><input type="checkbox" data-ff="${key}" ${(on||locked)?'checked':''} ${locked?'disabled':''} style="width:16px;height:16px"> <span>${escapeHtml(label)}</span> <code style="font-size:10px;color:var(--text3);margin-left:auto">${key}</code>${tail}</label>`;
+  }).join('');
 }
 async function saveFeatureFlags(){
   const flags={}; document.querySelectorAll('#feature-flags-wrap input[data-ff]').forEach(c=>{flags[c.dataset.ff]=c.checked;});
-  try{ const d=await hubApi('/features',{method:'POST',body:JSON.stringify({flags})}); FEATURE_FLAGS={...FEATURE_FLAGS,...(d.flags||{})}; applyFeatureFlags(); toast('기능 토글을 저장했습니다'); }
+  flags.settings=true;  // 락아웃 방지
+  try{ const d=await hubApi('/features',{method:'POST',body:JSON.stringify({flags})}); FEATURE_FLAGS={...FEATURE_FLAGS,...(d.flags||{})}; applyFeatureFlags(); renderFeatureFlagsAdmin(); toast('기능 토글을 저장했습니다'); }
   catch(e){ toast('저장 실패: '+e.message); }
 }
 /* ── §2 고객사 업무 이력 (Jira /team/history) ─────────── */
@@ -7625,18 +7677,23 @@ function parseNsis(src){
   const lines=String(src||'').split(/\r?\n/);
   const defines=[],sections=[],functions=[],files=[],regs=[],execs=[],shortcuts=[],downloads=[],deletes=[];
   const urls=new Set(),ips=new Set(),hashes=new Set();
+  let cur=null;
+  const ensure=()=>{ if(!cur){cur={name:'(전역/초기화)',seq:[],counts:{}};sections.push(cur);} return cur; };
+  const addOp=k=>{ const s=ensure(); s.counts[k]=(s.counts[k]||0)+1; if(!s.seq.includes(k))s.seq.push(k); };
   for(const raw of lines){
     const line=raw.trim(); if(!line||line[0]===';'||line[0]==='#')continue;
     let m;
     if(m=/^!define\s+(\S+)\s*(.*)$/i.exec(line))defines.push(m[1]+(m[2]?(' = '+m[2]):''));
-    else if(m=/^Section\s+(?:\/o\s+)?"?([^"]*)"?/i.exec(line))sections.push({name:(m[1]||'(unnamed)').trim()});
-    else if(m=/^Function\s+(\S+)/i.exec(line))functions.push(m[1]);
-    else if(m=/^File\b\s+(.+)$/i.exec(line))files.push(m[1].replace(/^\/\S+\s+/,'').replace(/"/g,'').trim());
-    else if(m=/^(WriteRegStr|WriteRegDWORD|WriteRegExpandStr|DeleteRegKey|DeleteRegValue)\b\s+(.+)$/i.exec(line))regs.push((m[1]+' '+m[2]).replace(/"/g,'').trim());
-    else if(m=/^(ExecWait|ExecShell|Exec|nsExec::ExecToLog|nsExec::ExecToStack|nsExec::Exec)\b\s+(.+)$/i.exec(line))execs.push(m[2].replace(/"/g,'').trim());
-    else if(m=/^CreateShortCut\b\s+(.+)$/i.exec(line))shortcuts.push(m[1].replace(/"/g,'').trim());
-    else if(m=/^(Delete|RMDir)\b\s+(.+)$/i.exec(line))deletes.push((m[1]+' '+m[2]).replace(/"/g,'').trim());
-    if(/inetc::get|NSISdl::download|INetC|nsisdl|inetc::head/i.test(line))downloads.push(line.replace(/"/g,'').slice(0,160));
+    else if(m=/^Section\s+(?:\/o\s+)?"?([^"]*)"?/i.exec(line)){cur={name:(m[1]||'(이름없음)').trim(),seq:[],counts:{}};sections.push(cur);}
+    else if(/^SectionEnd/i.test(line))cur=null;
+    else if(m=/^Function\s+(\S+)/i.exec(line)){functions.push(m[1]);cur=null;}
+    else if(/^FunctionEnd/i.test(line))cur=null;
+    else if(m=/^File\b\s+(.+)$/i.exec(line)){files.push(m[1].replace(/^\/\S+\s+/,'').replace(/"/g,'').trim());addOp('file');}
+    else if(m=/^(WriteRegStr|WriteRegDWORD|WriteRegExpandStr|DeleteRegKey|DeleteRegValue)\b\s+(.+)$/i.exec(line)){regs.push((m[1]+' '+m[2]).replace(/"/g,'').trim());addOp('reg');}
+    else if(m=/^(ExecWait|ExecShell|Exec|nsExec::ExecToLog|nsExec::ExecToStack|nsExec::Exec)\b\s+(.+)$/i.exec(line)){execs.push(m[2].replace(/"/g,'').trim());addOp('exec');}
+    else if(m=/^CreateShortCut\b\s+(.+)$/i.exec(line)){shortcuts.push(m[1].replace(/"/g,'').trim());addOp('shortcut');}
+    else if(m=/^(Delete|RMDir)\b\s+(.+)$/i.exec(line)){deletes.push((m[1]+' '+m[2]).replace(/"/g,'').trim());addOp('delete');}
+    if(/inetc::get|NSISdl::download|INetC|nsisdl|inetc::head/i.test(line)){downloads.push(line.replace(/"/g,'').slice(0,160));addOp('download');}
     (line.match(/https?:\/\/[^\s"'<>)]+/gi)||[]).forEach(u=>urls.add(u));
     (line.match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g)||[]).forEach(x=>ips.add(x));
     (line.match(/\b[a-f0-9]{64}\b|\b[a-f0-9]{40}\b|\b[a-f0-9]{32}\b/gi)||[]).forEach(h=>hashes.add(h.toLowerCase()));
@@ -7673,15 +7730,26 @@ function ensureMermaid(){
   });
 }
 function nsisMermaidSrc(p){
-  const mzL=s=>String(s||'').replace(/["\[\]`<>(){}\n\r]/g,' ').replace(/\s+/g,' ').trim().slice(0,38)||'(미지정)';
-  let g='flowchart TD\n  start(["⚙️ Installer 시작"])\n';
-  let prev='start';
-  (p.sections.length?p.sections:[{name:'설치'}]).forEach((s,i)=>{ const id='S'+i; g+=`  ${id}["📦 ${mzL(s.name)}"]\n  ${prev} --> ${id}\n`; prev=id; });
-  if(p.downloads.length)g+=`  ${prev} --> DL["⬇️ 외부 다운로드 ${p.downloads.length}"]\n  class DL warn\n`;
-  if(p.files.length)g+=`  ${prev} --> FF["📄 File 설치 ${p.files.length}"]\n`;
-  if(p.regs.length)g+=`  ${prev} --> RR["🗝️ Registry ${p.regs.length}"]\n`;
-  if(p.execs.length)g+=`  ${prev} --> XX["▶️ 실행 ${p.execs.length}"]\n  class XX warn\n`;
-  g+=`  ${prev} --> done(["✅ 완료"])\n  classDef warn fill:#7f1d1d,stroke:#f87171,color:#fee2e2\n`;
+  const ICON={file:'📄 파일',reg:'🗝️ 레지스트리',exec:'▶️ 실행',shortcut:'🔗 바로가기',download:'⬇️ 다운로드',delete:'🗑️ 삭제'};
+  const WARNK={exec:1,download:1};
+  const mzL=s=>String(s||'').replace(/["\[\]`<>(){}|\n\r]/g,' ').replace(/\s+/g,' ').trim().slice(0,34)||'(이름없음)';
+  let g='flowchart TD\n  start(["⚙️ 설치 시작"])\n';
+  let prev='start'; const warns=[];
+  const secs=p.sections.length?p.sections:[{name:'설치 동작',seq:[],counts:{}}];
+  secs.forEach((s,i)=>{
+    const sid='S'+i;
+    g+=`  ${sid}["📦 ${mzL(s.name)}"]\n  ${prev} --> ${sid}\n`;
+    let inner=sid;
+    (s.seq||[]).forEach((kind,j)=>{
+      const nid='S'+i+'x'+j;
+      g+=`  ${nid}["${ICON[kind]||kind} ${s.counts[kind]||0}"]\n  ${inner} --> ${nid}\n`;
+      if(WARNK[kind])warns.push(nid);
+      inner=nid;
+    });
+    prev=inner;
+  });
+  g+=`  ${prev} --> done(["✅ 완료"])\n`;
+  if(warns.length)g+='  classDef warn fill:#7f1d1d,stroke:#f87171,color:#fee2e2\n  class '+warns.join(',')+' warn\n';
   return g;
 }
 async function renderNsisDiagram(){
