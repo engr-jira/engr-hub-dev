@@ -7598,6 +7598,7 @@ async function deleteCompat(id){ if(!confirm('이 행을 삭제할까요?'))retu
 /* ── §1 벤더 KB (DLP/SEP) System Requirements 바로가기 ── */
 const _SEPSYS='https://techdocs.broadcom.com/us/en/symantec-security-software/endpoint-security-and-management/endpoint-protection/all/release-notes/system-requirements-for-v53308029-d69e1453.html';
 const _SEPNEW='https://techdocs.broadcom.com/us/en/symantec-security-software/endpoint-security-and-management/endpoint-protection/all/release-notes/what-s-new-for-all-releases-of-14-x-v117739871-d43e160.html';
+const _SEPRN='https://techdocs.broadcom.com/us/en/symantec-security-software/endpoint-security-and-management/endpoint-protection/all/release-notes/';  // 버전별 What's New base (curl 200 검증)
 const _SEPPDF='https://techdocs.broadcom.com/content/dam/broadcom/techdocs/us/en/dita/symantec-security-software/endpoint-security-and-management/endpoint-protection/generated-pdfs/';
 const _DLP='https://techdocs.broadcom.com/us/en/symantec-security-software/information-security/data-loss-prevention/';
 const VENDOR_KB={
@@ -7615,10 +7616,14 @@ const VENDOR_KB={
     {v:'15.8',eos:'2025-04-30',sysreq:'https://techdocs.broadcom.com/content/dam/broadcom/techdocs/symantec-security-software/information-security/data-loss-prevention/generated-pdfs/Symantec_DLP_15-8_System_Requirements_Guide.pdf'}
   ],
   SEP:[
-    {v:'14.4',sysreq:_SEPSYS,whatsnew:_SEPNEW,notes:_SEPPDF+'Release-Notes-SEP14-4.pdf'},
-    {v:'14.3 RU10',sysreq:_SEPSYS,whatsnew:_SEPNEW,notes:_SEPPDF+'Release-Notes-SEP14-3RU10.pdf'},
-    {v:'14.3 RU9',sysreq:_SEPSYS,whatsnew:_SEPNEW,notes:_SEPPDF+'Release-Notes-SEP14-3RU9.pdf'},
-    {v:'14.3 RU8',sysreq:_SEPSYS,whatsnew:_SEPNEW,notes:_SEPPDF+'Release-Notes-SEP14-3RU8.pdf'}
+    // SEP: Broadcom 공개 KB에 EOS 미발표(=지원중) → eos 라벨 없음. 패치 서브버전은 전용 PDF가 없어 부모 RU 문서 상속.
+    {v:'14.4',sysreq:_SEPSYS,whatsnew:_SEPRN+'what-s-new-for-symantec-endpoint-protection-144.html',notes:_SEPPDF+'Release-Notes-SEP14-4.pdf'},
+    {v:'14.3 RU10',sysreq:_SEPSYS,whatsnew:_SEPRN+'Whats-new-for-Symantec-Endpoint-Protection-14-3-RU10.html',notes:_SEPPDF+'Release-Notes-SEP14-3RU10.pdf'},
+    {v:'14.3 RU10 Patch 1',sysreq:_SEPSYS,whatsnew:_SEPRN+'Whats-new-for-Symantec-Endpoint-Protection-14-3-RU10.html',notes:_SEPPDF+'Release-Notes-SEP14-3RU10.pdf'},
+    {v:'14.3 RU9',sysreq:_SEPSYS,whatsnew:_SEPRN+'Whats-new-for-Symantec-Endpoint-Protection-14-3-RU9.html',notes:_SEPPDF+'Release-Notes-SEP14-3RU9.pdf'},
+    {v:'14.3 RU9 Patch 2',sysreq:_SEPSYS,whatsnew:_SEPRN+'Whats-new-for-Symantec-Endpoint-Protection-14-3-RU9.html',notes:_SEPPDF+'Release-Notes-SEP14-3RU9.pdf'},
+    {v:'14.3 RU8',sysreq:_SEPSYS,whatsnew:_SEPRN+'Whats-new-for-Symantec-Endpoint-Protection-14-3-RU8.html',notes:_SEPPDF+'Release-Notes-SEP14-3RU8.pdf'},
+    {v:'14.3 RU8 Patch 3',sysreq:_SEPSYS,whatsnew:_SEPRN+'Whats-new-for-Symantec-Endpoint-Protection-14-3-RU8.html',notes:_SEPPDF+'Release-Notes-SEP14-3RU8.pdf'}
   ]
 };
 function vendorKbVersions(){
