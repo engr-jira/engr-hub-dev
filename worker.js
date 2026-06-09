@@ -2425,7 +2425,7 @@ export default {
         const parts = ['project = ENGR'];
         if (/^\d{4}-\d{2}-\d{2}$/.test(body.from || '')) parts.push(`${df} >= "${body.from}"`);
         if (/^\d{4}-\d{2}-\d{2}$/.test(body.to || '')) parts.push(`${df} <= "${body.to} 23:59"`);
-        if (body.customer) parts.push(`summary ~ "${jqlEsc(body.customer)}"`);
+        if (body.customer) parts.push(`text ~ "${jqlEsc(body.customer)}"`);   // summary~만이면 점검 등 요약 외 위치 누락 → text(요약+설명+댓글+텍스트필드)로 포함
         if (body.product) parts.push(`labels = "${jqlEsc(body.product)}"`);
         if (body.status) parts.push(`status = "${jqlEsc(body.status)}"`);
         if (body.type === 'subtask') parts.push('issuetype = "\uD558\uC704 \uC791\uC5C5"');
