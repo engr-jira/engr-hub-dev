@@ -568,7 +568,7 @@ All outputs are review drafts for humans; never instruct automatic customer send
   //
   const fullText = `[SYSTEM]${systemPrompt}\n[USER]${clippedPrompt}`;
   const hash = await sha256Hex(mode + '|' + fullText);
-  const cacheKey = `ai:v2:${mode}:${hash.slice(0, 40)}`;
+  const cacheKey = `ai:v3:${mode}:${hash.slice(0, 40)}`;  // v3: 옛 워커가 text를 배열로 저장한 오염 캐시 무효화(callAI 비-string 방어와 함께)
 
   //
   try {

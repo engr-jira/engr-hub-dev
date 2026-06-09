@@ -2077,7 +2077,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <div style="font-size:12.5px;font-weight:700;margin-bottom:8px">📚 벤더 KB — DLP / SEP System Requirements</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <select id="vendor-kb-product" onchange="vendorKbVersions()" style="background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text,#e2e8f0);font-size:12.5px"><option value="DLP">Symantec DLP</option><option value="SEP">Symantec SEP</option></select>
-          <select id="vendor-kb-version" onchange="vendorKbUpdateButtons()" style="background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text,#e2e8f0);font-size:12.5px"></select>
+          <input id="vendor-kb-version" list="vendor-kb-vlist" onchange="vendorKbUpdateButtons()" oninput="vendorKbUpdateButtons()" autocomplete="off" placeholder="버전 선택/입력" title="프리셋 선택 또는 EOS 안 된 임의 버전 직접 입력(AI 매트릭스 조회 가능)" style="background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text,#e2e8f0);font-size:12.5px;width:172px"><datalist id="vendor-kb-vlist"></datalist>
           <button class="btn btn-indigo" id="vkb-sysreq" onclick="openVendorKb('sysreq')">📄 System Requirements</button>
           <button class="btn" id="vkb-new" onclick="openVendorKb('whatsnew')" style="display:none">✨ What's New</button>
           <button class="btn" id="vkb-notes" onclick="openVendorKb('notes')" style="display:none">📝 릴리스 노트</button>
@@ -5553,7 +5553,9 @@ async function callAI(prompt,mode='technical_analysis',detail={}){
   }
   const d=await r.json();
   LAST_AI_MODEL=d._model||'';
-  return d.candidates?.[0]?.content?.parts?.[0]?.text||'응답을 받지 못했습니다.';
+  const _t=d.candidates?.[0]?.content?.parts?.[0]?.text;
+  if(_t==null)return '응답을 받지 못했습니다.';
+  return (typeof _t==='string')?_t:JSON.stringify(_t);  // 캐시 오염 등으로 배열/객체가 와도 항상 string 보장
 }
 function aiModelLabel(m){
   m=String(m||'').toLowerCase();
@@ -7618,8 +7620,10 @@ const VENDOR_KB={
 };
 function vendorKbVersions(){
   const prodEl=document.getElementById('vendor-kb-product'); if(!prodEl)return;
-  const prod=prodEl.value, sel=document.getElementById('vendor-kb-version');
-  if(sel)sel.innerHTML=(VENDOR_KB[prod]||[]).map(x=>`<option value="${escapeHtml(x.v)}">${escapeHtml(x.v)}</option>`).join('');
+  const prod=prodEl.value, list=document.getElementById('vendor-kb-vlist'), inp=document.getElementById('vendor-kb-version');
+  const arr=VENDOR_KB[prod]||[];
+  if(list)list.innerHTML=arr.map(x=>`<option value="${escapeHtml(x.v)}"></option>`).join('');
+  if(inp)inp.value=arr[0]?arr[0].v:'';
   vendorKbUpdateButtons();
 }
 function vendorKbEntry(){ const p=document.getElementById('vendor-kb-product')?.value, v=document.getElementById('vendor-kb-version')?.value; return (VENDOR_KB[p]||[]).find(x=>x.v===v); }
@@ -7635,15 +7639,16 @@ function openVendorKb(which){
 }
 async function vendorAIMatrix(){
   const prod=document.getElementById('vendor-kb-product')?.value, e=vendorKbEntry();
-  if(!e){toast('버전을 선택하세요');return;}
-  const brand='Symantec '+prod;
+  const ver=(document.getElementById('vendor-kb-version')?.value||'').trim();
+  if(!ver){toast('버전을 선택/입력하세요');return;}
+  const brand='Symantec '+prod, src=(e&&e.sysreq)||'';
   toast('AI 생성 중... (수 초)');
-  const pr=`너는 보안제품 호환성 DB 보조자다. "${brand} ${e.v}"의 지원 OS 매트릭스를 JSON 배열로만 답하라(설명·코드블록 금지). ★중요: 지원상태(지원/미지원/조건부)가 동일한 OS는 한 행으로 묶어라 — os 필드에 "Windows 10 / 11, Windows Server 2016~2022"처럼 나열. 상태가 다른 OS만 별도 행. 동일 버전을 OS마다 반복하지 말 것. 총 2~4행으로 최소화. 각 원소: {"product":"${brand}","product_version":"${e.v}","os":"","os_version":"","supported":"지원|미지원|조건부","eos_date":"","eol_date":"","note":"서버/엔드포인트 구분 등","source":"${e.sysreq}"}. product에는 버전을 넣지 마라. 모르는 값은 빈 문자열.`;
+  const pr=`너는 보안제품 호환성 DB 보조자다. "${brand} ${ver}"의 지원 OS 매트릭스를 JSON 배열로만 답하라(설명·코드블록 금지). ★중요: 지원상태(지원/미지원/조건부)가 동일한 OS는 한 행으로 묶어라 — os 필드에 "Windows 10 / 11, Windows Server 2016~2022"처럼 나열. 상태가 다른 OS만 별도 행. 동일 버전을 OS마다 반복하지 말 것. 총 2~4행으로 최소화. 각 원소: {"product":"${brand}","product_version":"${ver}","os":"","os_version":"","supported":"지원|미지원|조건부","eos_date":"","eol_date":"","note":"서버/엔드포인트 구분 등","source":"${src}"}. product에는 버전을 넣지 마라. 모르는 값은 빈 문자열.`;
   try{
     const txt=await callAI(pr,'cmpx',{feature:'compat'});
     const mt=txt.match(/\[[\s\S]*\]/); if(!mt)throw new Error('AI 응답에서 JSON 배열을 찾지 못함');
     let arr=JSON.parse(mt[0]); if(!Array.isArray(arr)||!arr.length)throw new Error('생성된 후보 없음');
-    COMPAT_AI_CANDS=arr.slice(0,14).map(o=>({product:brand,product_version:o.product_version||e.v,os:o.os||'',os_version:o.os_version||'',supported:o.supported||'',eos_date:o.eos_date||'',eol_date:o.eol_date||'',note:o.note||'',source:o.source||e.sysreq}));
+    COMPAT_AI_CANDS=arr.slice(0,14).map(o=>({product:brand,product_version:o.product_version||ver,os:o.os||'',os_version:o.os_version||'',supported:o.supported||'',eos_date:o.eos_date||'',eol_date:o.eol_date||'',note:o.note||'',source:o.source||src}));
     showCompatAICandidates();
   }catch(err){ toast('AI 매트릭스 실패: '+err.message); }
 }
@@ -7937,14 +7942,20 @@ function buildFlow(toks){
     _f.push(t);
   }
   toks=_f; const labelInfo=_li;
-  // "op; Goto X"가 같은 X로 2회 이상 반복(분기 대입: 요일명 등) → 한 노드로 축약
+  // 부채꼴/switch 축약: [cond(상대점프)? op+ goto X]가 같은 X로 2회+ 반복 → 한 노드
+  // StrCmp $3 0 0 +3 처럼 yes/no가 상대점프(0,+N,-N)인 cond는 라벨이 아니므로 케이스 셀렉터로 흡수(가짜 0/+3 노드 제거)
+  const _isRel=s=>/^[+-]?\d+$/.test(String(s==null?'':s).trim());
+  const _unit=(start)=>{ let k=start;
+    while(toks[k] && toks[k].t==='cond' && _isRel(toks[k].yes) && _isRel(toks[k].no)) k++;
+    const ops=[]; while(toks[k] && toks[k].t==='op'){ ops.push(toks[k]); k++; }
+    if(ops.length && toks[k] && toks[k].t==='goto') return {ops, goto:toks[k].label, end:k+1};
+    return null; };
   const _g=[];
   for(let i=0;i<toks.length;){
-    if(toks[i].t==='op' && toks[i+1] && toks[i+1].t==='goto'){
-      const target=toks[i+1].label, items=[toks[i]]; let j=i+2;
-      while(toks[j] && toks[j].t==='op' && toks[j+1] && toks[j+1].t==='goto' && toks[j+1].label===target){ items.push(toks[j]); j+=2; }
-      if(items.length>=2){ _g.push({t:'gotorun',items,goto:target}); i=j; continue; }
-    }
+    const u0=_unit(i);
+    if(u0){ const items=[...u0.ops]; const target=u0.goto; let end=u0.end, cnt=1, u;
+      while((u=_unit(end)) && u.goto===target){ items.push(...u.ops); end=u.end; cnt++; }
+      if(cnt>=2){ _g.push({t:'gotorun',items,goto:target}); i=end; continue; } }
     _g.push(toks[i]); i++;
   }
   toks=_g;
@@ -7961,7 +7972,7 @@ function buildFlow(toks){
     if(n>=MAX){trunc=true;break;}
     if(tk.t==='block'){ const b=node('block',(tk.kind==='function'?'🔧 ':'📦 ')+tk.name); connect(b); pending=[{id:b}]; n++; }
     else if(tk.t==='op'){ const o=node('proc',opLabel(tk)); connect(o); if(tk.warn)warns.push(o); pending=[{id:o}]; n++; }
-    else if(tk.t==='gotorun'){ const lbl=(tk.items[0].icon||'▫️')+' 분기 '+tk.items.length+'개: '+tk.items.map(o=>o.detail||'').slice(0,5).join(', ')+(tk.items.length>5?' …':''); const nd=node('proc',lbl); connect(nd); edge(nd, ensureLabel(tk.goto)); pending=[]; n++; }
+    else if(tk.t==='gotorun'){ const lbl='🔀 '+tk.items.length+'-분기 → '+tk.goto+': '+tk.items.map(o=>o.detail||'').filter(Boolean).slice(0,6).join(' / ')+(tk.items.length>6?' …':''); const nd=node('proc',lbl); connect(nd); pending=[{id:nd}]; n++; }
     else if(tk.t==='if'){ const d=node('dec','❓ '+(tk.note||tk.cond)); connect(d); ifStack.push({dec:d,trueEnds:[],elseStarted:false}); pending=[{id:d,label:'예'}]; n++; }
     else if(tk.t==='elseif'){ const fr=ifStack[ifStack.length-1]; if(fr){ fr.trueEnds.push(...pending); const d=node('dec','❓ '+(tk.note||tk.cond)); edge(fr.dec,d,'아니오'); fr.dec=d; pending=[{id:d,label:'예'}]; n++; } }
     else if(tk.t==='else'){ const fr=ifStack[ifStack.length-1]; if(fr){ fr.trueEnds.push(...pending); fr.elseStarted=true; pending=[{id:fr.dec,label:'아니오'}]; } }
