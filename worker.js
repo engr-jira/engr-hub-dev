@@ -2392,14 +2392,14 @@ export default {
       if (path.startsWith('/compat/') && path.endsWith('/confirm') && request.method === 'POST') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const id = parseInt(path.split('/')[2]) || 0;
-        if (!id) return corsResponse({ ok: false, message: '잘못된 id 입니다.' }, 400);
+        if (!(id > 0)) return corsResponse({ ok: false, message: '잘못된 id 입니다.' }, 400);
         try { await env.DB.prepare("UPDATE compat_matrix SET status='confirmed', verified_by=?, verified_at=? WHERE id=?").bind(user, new Date().toISOString(), id).run(); await auditLog(env, user, 'MATRIX_CONFIRM', { matrixType: 'compat', id }); return corsResponse({ ok: true }); }
         catch (e) { return corsResponse({ ok: false, message: e.message }, 500); }
       }
       if (path.startsWith('/compat/') && request.method === 'PUT') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const id = parseInt(path.split('/')[2]) || 0;
-        if (!id) return corsResponse({ ok: false, message: '잘못된 id 입니다.' }, 400);
+        if (!(id > 0)) return corsResponse({ ok: false, message: '잘못된 id 입니다.' }, 400);
         const b = await request.json().catch(() => ({}));
         try {
           await env.DB.prepare('UPDATE compat_matrix SET product=?,product_version=?,os=?,os_version=?,supported=?,eos_date=?,eol_date=?,note=?,source=?,updated_at=? WHERE id=?')
@@ -2411,7 +2411,7 @@ export default {
       if (path.startsWith('/compat/') && request.method === 'DELETE') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const id = parseInt(path.split('/')[2]) || 0;
-        if (!id) return corsResponse({ ok: false, message: '잘못된 id 입니다.' }, 400);
+        if (!(id > 0)) return corsResponse({ ok: false, message: '잘못된 id 입니다.' }, 400);
         try { await env.DB.prepare('DELETE FROM compat_matrix WHERE id=?').bind(id).run(); await auditLog(env, user, 'MATRIX_DELETE', { matrixType: 'compat', id }); return corsResponse({ ok: true }); }
         catch (e) { return corsResponse({ ok: false, message: e.message }, 500); }
       }
