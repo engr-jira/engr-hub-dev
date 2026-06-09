@@ -1346,9 +1346,9 @@ function extractBracket(s) { const m = /^\s*\[([^\]]+)\]/.exec(s || ''); return 
 function classifyBracket(summary, custList) {
   const b = extractBracket(summary);
   if (!b) return { kind: 'none', bracket: '' };
-  if (/^\d{6,}$/.test(b) || /^[A-Z]{2,3}\d+$/i.test(b) || /^hands-?on$/i.test(b)) return { kind: 'vendorcase', bracket: b };
+  if (/^\d{6,}$/.test(b) || /^[A-Z]{2,3}\d+$/i.test(b) || /^hands[\s-]?on$/i.test(b)) return { kind: 'vendorcase', bracket: b };
   for (const c of custList) { if (c.name === b || (c.aliases || []).includes(b)) return { kind: 'customer', bracket: b, customer: c.name }; }
-  if (/[가-힣]/.test(b)) return { kind: 'unclassified', bracket: b };   // 한글 신규 → 미분류(자동추가 안 함)
+  if (/[가-힣]/.test(b)) return { kind: 'customer', bracket: b, customer: b };   // 한글 브래킷 = 고객사명으로 간주(마스터 미등록도)
   return { kind: 'internal', bracket: b };
 }
 async function getCustomersD1(env) {

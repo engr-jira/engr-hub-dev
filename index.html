@@ -1708,7 +1708,7 @@ html[data-theme="light"] .rank-pos.top2 { color:#64748b !important; }
   .footer .saved{opacity:0;transition:opacity .3s}
   .footer .saved.show{opacity:1}
 
-  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+  .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.62);display:none;align-items:center;justify-content:center;z-index:9990;padding:20px}
   .modal-bg.show{display:flex}
   .modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;max-width:560px;width:100%;box-shadow:0 30px 60px -20px rgba(0,0,0,.85)}
   .modal h3{font-family:var(--sans);font-size:16px;font-weight:800;margin-bottom:8px}
@@ -1936,7 +1936,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
         <button class="btn btn-indigo" onclick="loadMonitor('daily')">오늘</button>
         <button class="btn" onclick="loadMonitor('weekly')">최근 7일</button>
-        <button class="btn" onclick="loadMonitor('snapshot')">저장된 스냅샷</button>
+        <button class="btn" onclick="loadMonitor('snapshot')" title="매일 08:30(KST) Cron이 자동 저장한 그날의 ENGR 갱신 현황. Jira 재조회 없이 즉시 표시.">저장된 스냅샷</button>
         <span id="monitor-status" class="muted" style="font-size:11.5px"></span>
       </div>
       <div id="monitor-body"></div>
@@ -2138,6 +2138,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <button class="btn btn-indigo" onclick="runNsisParse()">분석</button>
         <button class="btn" onclick="renderNsisDiagram()">설치 흐름도</button>
         <button class="btn" onclick="analyzeNsisAI()">AI 보안 분석</button>
+        <button class="btn" onclick="analyzeNsisImprove()">💡 개선안</button>
         <button class="btn" onclick="nsisClear()">지우기</button>
       </div>
       <div id="nsis-summary"></div>
@@ -2427,7 +2428,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
 
       <div class="panel" data-card="cases">
         <div class="panel-head">
-          <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot" style="background:var(--amber);box-shadow:0 0 0 3px rgba(230,184,95,.15)"></span>벤더 케이스</h2>
+          <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot" style="background:var(--amber);box-shadow:0 0 0 3px rgba(230,184,95,.15)"></span>벤더 케이스 메모</h2>
           <span class="meta" id="cases-count">0건</span>
         </div>
         <div id="cases-list"></div>
@@ -3745,6 +3746,7 @@ function renderCaseRight(){
   if(!CASE_SEL)return;
   const c=CASE_SEL,sc=SC[c.status]||'#94a3b8';
   const days=daysSince(c.date);
+  const refIssues=(typeof getGeneralIssues==='function'?getGeneralIssues():[]).filter(i=>typeof issueCaseMatches==='function'&&issueCaseMatches(i,c));
   document.getElementById('case-right').innerHTML=`
   <div class="rpanel">
     <div class="rp-title">${escapeHtml(cleanTitle(c.title))}</div>
@@ -5909,6 +5911,7 @@ function renderCaseRight(loading=false){
   if(!CASE_SEL)return;
   const c=CASE_SEL,sc=SC[c.status]||'#94a3b8';
   const days=daysSince(c.date);
+  const refIssues=(typeof getGeneralIssues==='function'?getGeneralIssues():[]).filter(i=>typeof issueCaseMatches==='function'&&issueCaseMatches(i,c));
   document.getElementById('case-right').innerHTML=`
   <div class="rpanel">
     <div class="rp-title">${escapeHtml(cleanTitle(c.title))}</div>
@@ -5924,6 +5927,7 @@ function renderCaseRight(loading=false){
     ${c.desc?`<div class="rp-desc">${adfToHtml(c.desc)}</div>`:''}
     ${c.attachments&&c.attachments.length?`<div style="margin-bottom:12px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px">📎 첨부파일 (${c.attachments.length})</div>${c.attachments.map(a=>`<div class="rp-attach-item">📄 ${escapeHtml(a.name)} <span style="color:var(--text3);margin-left:auto">${(a.size/1024).toFixed(1)}KB</span></div>`).join('')}</div>`:''}
     ${c.comments&&c.comments.length?`<div class="rp-comments" style="margin-bottom:12px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px">💬 코멘트 (${c.comments.length})</div>${c.comments.map(cm=>`<div class="rp-comment-item"><div class="rp-comment-author">${escapeHtml(cm.author)} · ${fdt(cm.created)}</div><div class="rp-comment-body">${adfToHtml(cm.body)}</div></div>`).join('')}</div>`:''}
+    ${refIssues.length?`<div style="margin-bottom:12px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px">🔗 이 케이스를 참조한 일반 이슈 (${refIssues.length})</div>${refIssues.slice(0,8).map(i=>`<div class="rp-attach-item" style="cursor:pointer" onclick="v154GoIssueExact('${escapeAttr(i.key)}')">${escapeHtml(i.key)} · ${escapeHtml(cleanTitle(i.title||i.summary||''))} <span style="color:var(--text3);margin-left:auto">${escapeHtml(i.status||'')}</span></div>`).join('')}</div>`:''}
     <div class="case-ai-grid">
       <button class="btn btn-cyan" onclick="runCaseAI('summary')">요약</button>
       <button class="btn btn-purple" onclick="runCaseAI('tech')">기술 분석</button>
@@ -7589,7 +7593,7 @@ async function vendorAIMatrix(){
   if(!e){toast('버전을 선택하세요');return;}
   const brand='Symantec '+prod;
   toast('AI 생성 중... (수 초)');
-  const pr=`너는 보안제품 호환성 DB 보조자다. "${brand} ${e.v}"의 지원 OS 매트릭스를 주요 OS(Windows 10, Windows 11, Windows Server 2016/2019/2022/2025, 서버/엔드포인트 구분)에 대해 JSON 배열로만 답하라(설명·코드블록 금지). 각 원소: {"product":"${brand}","product_version":"${e.v}","os":"","os_version":"","supported":"지원|미지원|조건부","eos_date":"","eol_date":"","note":"서버/엔드포인트 등","source":"${e.sysreq}"}. product에는 버전을 넣지 마라. 모르는 값은 빈 문자열. 최대 10개.`;
+  const pr=`너는 보안제품 호환성 DB 보조자다. "${brand} ${e.v}"의 지원 OS 매트릭스를 JSON 배열로만 답하라(설명·코드블록 금지). ★중요: 지원상태(지원/미지원/조건부)가 동일한 OS는 한 행으로 묶어라 — os 필드에 "Windows 10 / 11, Windows Server 2016~2022"처럼 나열. 상태가 다른 OS만 별도 행. 동일 버전을 OS마다 반복하지 말 것. 총 2~4행으로 최소화. 각 원소: {"product":"${brand}","product_version":"${e.v}","os":"","os_version":"","supported":"지원|미지원|조건부","eos_date":"","eol_date":"","note":"서버/엔드포인트 구분 등","source":"${e.sysreq}"}. product에는 버전을 넣지 마라. 모르는 값은 빈 문자열.`;
   try{
     const txt=await callAI(pr,'cmpx',{feature:'compat'});
     const mt=txt.match(/\[[\s\S]*\]/); if(!mt)throw new Error('AI 응답에서 JSON 배열을 찾지 못함');
@@ -7602,7 +7606,7 @@ let COMPAT_AI_CANDS=[];
 async function compatAICandidate(){
   const product=prompt('AI로 호환성 행을 생성할 제품/버전\n(예: Symantec Endpoint Protection 14.4)'); if(!product)return;
   toast('AI 생성 중... (수 초)');
-  const pr=`너는 보안제품 호환성 DB 보조자다. 제품 "${product}"의 OS별 호환성·지원종료(EOS/EOL)를 주요 OS(Windows 10, Windows 11, Windows Server 2016/2019/2022 등)에 대해 추정해 JSON 배열로만 답하라(설명·코드블록·주석 금지). 각 원소: {"product":"","product_version":"","os":"","os_version":"","supported":"지원|미지원|조건부","eos_date":"YYYY-MM-DD","eol_date":"YYYY-MM-DD","note":"근거/주의","source":""}. 모르는 값은 빈 문자열. 최대 8개.`;
+  const pr=`너는 보안제품 호환성 DB 보조자다. 제품 "${product}"의 호환성·지원종료(EOS/EOL)를 JSON 배열로만 답하라(설명·코드블록·주석 금지). ★중요: 지원상태가 동일한 OS는 한 행으로 묶어라(os 필드에 "Windows 10 / 11, Windows Server 2016~2022"처럼 나열). 상태가 다른 OS만 별도 행. 동일 버전 반복 금지. 총 2~5행으로 최소화. 각 원소: {"product":"제품명(버전 제외)","product_version":"","os":"","os_version":"","supported":"지원|미지원|조건부","eos_date":"YYYY-MM-DD","eol_date":"YYYY-MM-DD","note":"근거/주의","source":""}. 모르는 값은 빈 문자열.`;
   try{
     const txt=await callAI(pr,'cmpx',{feature:'compat'});
     const mt=txt.match(/\[[\s\S]*\]/); if(!mt)throw new Error('AI 응답에서 JSON 배열을 찾지 못했습니다');
@@ -7848,7 +7852,7 @@ function nsisFlowMermaid(src){
     if(/^\$\{(?:EndIf|EndUnless)\}/i.test(line)){toks.push({t:'endif'});continue;}
     if(m=/^\$\{(?:Switch|Select)\}\s*(.*)$/i.exec(line)){toks.push({t:'if',cond:'switch '+m[1].trim(),note});continue;}
     if(/^\$\{(?:EndSwitch|EndSelect)\}/i.test(line)){toks.push({t:'endif'});continue;}
-    if(m=/^IfFileExists\s+(.+?)\s+(\S+)(?:\s+(\S+))?$/i.exec(line)){toks.push({t:'cond',text:note||('File 존재? '+m[1].replace(/"/g,'')),yes:m[2],no:m[3]});continue;}
+    if(m=/^IfFileExists\s+("[^"]*"|\S+)\s+(\S+)(?:\s+(\S+))?$/i.exec(line)){toks.push({t:'cond',text:note||('File 존재? '+m[1].replace(/"/g,'')),yes:m[2],no:m[3]});continue;}
     if(m=/^IfErrors\s+(\S+)(?:\s+(\S+))?$/i.exec(line)){toks.push({t:'cond',text:note||'에러 발생?',yes:m[1],no:m[2]});continue;}
     if(m=/^IfRebootFlag\s+(\S+)(?:\s+(\S+))?$/i.exec(line)){toks.push({t:'cond',text:note||'재부팅 플래그?',yes:m[1],no:m[2]});continue;}
     if(m=/^StrCmpS?\s+(.+?)\s+(\S+)(?:\s+(\S+))?$/i.exec(line)){toks.push({t:'cond',text:note||('StrCmp '+m[1]),yes:m[2],no:m[3]});continue;}
@@ -7918,6 +7922,16 @@ async function analyzeNsisAI(){
     const txt=await callAI(prompt,'nsisx',{feature:'nsis'});
     if(out)out.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;white-space:pre-wrap;font-size:13px;line-height:1.65">${escapeHtml(txt)}</div><div class="muted" style="font-size:10.5px;margin-top:4px">AI 추정 — 확정 판단은 검토 필요 · ${escapeHtml(aiModelLabel(LAST_AI_MODEL))}</div>`;
   }catch(e){ if(out)out.innerHTML=`<div style="color:var(--danger);padding:10px">AI 분석 실패: ${escapeHtml(e.message)}</div>`; }
+}
+async function analyzeNsisImprove(){
+  const src=document.getElementById('nsis-input')?.value?.trim();
+  if(!src){toast('NSIS 스크립트를 입력하세요');return;}
+  const out=document.getElementById('nsis-ai'); if(out)out.innerHTML='<div class="muted" style="padding:10px">AI 개선안 도출 중...</div>';
+  const prompt=`다음은 NSIS(Nullsoft) 설치 스크립트다. 설치 엔지니어 관점에서 이 스크립트의 개선안을 제시하라.\n1) 버그·오류 가능성 — 잔존 프로세스/파일, 64/32비트 분기, 권한, 재부팅 처리\n2) 견고성·멱등성 — 재설치/업그레이드 안전, 실패 시 롤백, IfErrors/에러 처리\n3) 보안 하드닝 — 불필요한 임의 실행 축소, 외부 다운로드 무결성 검증, 레지스트리 최소 권한\n4) 모범사례·현대화 — LogicLib 활용, 상세 로그(ShowInstDetails), 언인스톨러 정합성\n각 항목을 구체적으로(어느 부분을 어떻게 고치는지, 가능하면 코드 스니펫). 한국어. 확정과 추정을 구분.\n\n[스크립트]\n${src.slice(0,16000)}`;
+  try{
+    const txt=await callAI(prompt,'nsisx',{feature:'nsis_improve'});
+    if(out)out.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px;white-space:pre-wrap;font-size:13px;line-height:1.65"><div style="font-weight:700;color:#a78bfa;margin-bottom:8px">💡 스크립트 개선안</div>${escapeHtml(txt)}</div><div class="muted" style="font-size:10.5px;margin-top:4px">AI 추정 — 적용 전 검토 필요 · ${escapeHtml(aiModelLabel(LAST_AI_MODEL))}</div>`;
+  }catch(e){ if(out)out.innerHTML=`<div style="color:var(--danger);padding:10px">개선안 도출 실패: ${escapeHtml(e.message)}</div>`; }
 }
 /* ── §H 감사로그 마이그레이션 (슈퍼) ─────────────── */
 async function loadAuditMigStatus(){
@@ -8880,7 +8894,7 @@ const CARD_META=[
   {id:'tools',name:'빠른 도구',color:'var(--amber)'},
   {id:'notes',name:'메모',color:'var(--red)'},
   {id:'shortcuts',name:'바로가기·원격',color:'var(--blue)'},
-  {id:'cases',name:'벤더 케이스',color:'var(--amber)'},
+  {id:'cases',name:'벤더 케이스 메모',color:'var(--amber)'},
   {id:'accounts',name:'고객사',color:'var(--green)'},
 ];
 let hiddenCards=new Set();
