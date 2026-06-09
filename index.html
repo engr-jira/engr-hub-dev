@@ -3910,7 +3910,7 @@ function renderEosList(){
   const pageList=sliceForPage(list,'eos');
   document.getElementById('eos-count').textContent=pageCountText('eos',list.length);
   const tbody=document.getElementById('eos-tbody');
-  if(!pageList.length){tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;padding:30px;color:var(--text3)">등록된 라이선스가 없습니다</td></tr>`;renderPager('eos-pager','eos',list.length,'renderEosList');return;}
+  if(!pageList.length){tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text3)">등록된 라이선스가 없습니다</td></tr>`;renderPager('eos-pager','eos',list.length,'renderEosList');return;}
   tbody.innerHTML=pageList.map(it=>{
     const hasEnd=!!it.expireDate;
     const days=hasEnd?daysUntil(it.expireDate):null;
@@ -3933,7 +3933,7 @@ function renderEosList(){
       <td style="color:var(--text2)">${escapeHtml(it.siteId||'-')}</td>
       <td style="text-align:right" data-sort="${parseInt(String(it.quantity).replace(/[^0-9]/g,''))||0}">${escapeHtml(String(it.quantity||'-'))}</td>
       <td style="font-family:'Consolas',monospace;font-size:11px">${escapeHtml(it.serial||'-')}</td>
-      <td style="font-size:11px;color:var(--text2);white-space:nowrap" data-sort="${it.startDate||''}">${escapeHtml(period)}</td>
+      <td style="font-size:11px;color:var(--text2);white-space:nowrap" data-sort="${escapeHtml(it.startDate||'')}">${escapeHtml(period)}</td>
       <td data-sort="${hasEnd?days:99999}"><span class="eos-day-badge" style="background:${badgeBg};color:${badgeColor}">${badgeText}</span></td>
       <td style="white-space:nowrap">
         <button onclick="event.stopPropagation();openEosEditModal('${it.id}')" style="background:none;border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:11px;padding:3px 8px;font-family:inherit;margin-right:4px">✎ 수정</button>

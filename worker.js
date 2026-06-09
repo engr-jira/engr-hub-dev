@@ -314,8 +314,8 @@ async function loadPrivateNotes(env, user) {
     const legacyKey = `private:${account.displayName}:notes`;
     const legacyRaw = await env.ENGR_KV.get(legacyKey);
     if (legacyRaw) {
-      const items = JSON.parse(legacyRaw);
-      await env.ENGR_KV.put(key, JSON.stringify(items.slice(0, 300)));
+      const items = JSON.parse(legacyRaw).slice(0, 300);   // L-1: 저장본과 동일하게 슬라이스해 반환(첫 GET 초과노출 방지)
+      await env.ENGR_KV.put(key, JSON.stringify(items));
       return { key, items, migratedFrom: legacyKey };
     }
   }
@@ -1346,8 +1346,8 @@ function extractBracket(s) { const m = /^\s*\[([^\]]+)\]/.exec(s || ''); return 
 function classifyBracket(summary, custList) {
   const b = extractBracket(summary);
   if (!b) return { kind: 'none', bracket: '' };
+  for (const c of custList) { if (c.name === b || (c.aliases || []).includes(b)) return { kind: 'customer', bracket: b, customer: c.name }; }  // M-5: 등록 고객사/별칭을 vendorcase 정규식보다 먼저 매칭(영문코드형 고객사 오탐 방지)
   if (/^\d{6,}$/.test(b) || /^[A-Z]{2,3}\d+$/i.test(b) || /^hands[\s-]?on$/i.test(b)) return { kind: 'vendorcase', bracket: b };
-  for (const c of custList) { if (c.name === b || (c.aliases || []).includes(b)) return { kind: 'customer', bracket: b, customer: c.name }; }
   if (/[가-힣]/.test(b)) return { kind: 'customer', bracket: b, customer: b };   // 한글 브래킷 = 고객사명으로 간주(마스터 미등록도)
   return { kind: 'internal', bracket: b };
 }
@@ -1369,6 +1369,7 @@ async function getAuditReadD1(env) {
   try { const r = await env.DB.prepare("SELECT value FROM app_settings WHERE key='audit_read_d1'").first(); return r?.value === 'on'; } catch (_) { return false; }
 }
 function jqlEsc(s) { return String(s).replace(/[\r\n]+/g, ' ').replace(/["\\]/g, '\\$&'); }
+function okDate(s) { s = String(s == null ? '' : s).trim(); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : ''; }  // M-7: 날짜 형식 검증(아니면 빈값) — XSS 근원 차단 + 정렬 NaN 방지
 function nextDayStr(d) { const dt = new Date(d + 'T00:00:00Z'); dt.setUTCDate(dt.getUTCDate() + 1); return dt.toISOString().slice(0, 10); }
 const TEAM_FIELDS = ['summary', 'status', 'assignee', 'reporter', 'labels', 'issuetype', 'created', 'updated', 'duedate', 'customfield_10134'];
 function mapJiraIssue(it, custList) {
@@ -1562,7 +1563,7 @@ export default {
           const safeMode = normalizeAIMode(mode);
           const result = await callAI(env, prompt, safeMode);
           const outcome = result._cached ? 'cached' : 'success';
-          await auditLog(env, user, 'AI_CALL', { reqId, mode: safeMode, promptLen: prompt.length, outcome, model: result._model, ...detail });
+          await auditLog(env, user, 'AI_CALL', { ...detail, reqId, mode: safeMode, promptLen: prompt.length, outcome, model: result._model });  // M-9: 클라 detail을 앞에 두어 서버 계산값이 항상 우선(감사 위조 방지)
           await updateAIUsage(env, user, outcome, result._model);
           return corsResponse(result);
         } catch (e) {
@@ -1827,6 +1828,11 @@ export default {
           admins[targetId] = (newRole === 'super') ? 'super' : 'admin';
         }
 
+        // H-4: getAdmins가 config:users의 role을 우선 사용하므로, config:users도 동기화해야 강등/승급이 실제 적용됨
+        if (users[targetId]) {
+          const syncRole = action === 'remove' ? 'user' : ((newRole === 'super') ? 'super' : 'admin');
+          await saveUserAccount(env, { id: targetId, displayName: users[targetId].displayName, role: syncRole, active: users[targetId].active !== false });
+        }
         await env.ENGR_KV.put('config:admins', JSON.stringify(admins));
         await auditLog(env, user, 'ADMIN_CHANGE', { action, target: targetId, role: newRole });
         return corsResponse({ ok: true, admins });
@@ -1979,7 +1985,8 @@ export default {
         let links = raw ? JSON.parse(raw) : [];
         const target = links.find(l => l.id === id);
         if (!await canModifyItem(env, user, target)) return corsResponse({ ok: false, message: '\uC791\uC131\uC790 \uB610\uB294 \uAD00\uB9AC\uC790\uB9CC \uC218\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
-        links = links.map(l => l.id === id ? { ...l, ...body, id, updatedBy: user, updatedAt: new Date().toISOString() } : l);
+        const lf = {}; ['title', 'url', 'category', 'desc'].forEach(k => { if (body[k] !== undefined) lf[k] = body[k]; });  // M-3: 허용 필드만(createdBy/createdAt/comments 보존)
+        links = links.map(l => l.id === id ? { ...l, ...lf, id, updatedBy: user, updatedAt: new Date().toISOString() } : l);
         await env.ENGR_KV.put('config:links', JSON.stringify(links));
         await auditLog(env, user, 'LINK_UPDATE', { id, title: body.title });
         return corsResponse({ ok: true });
@@ -2246,7 +2253,8 @@ export default {
         let items = raw ? JSON.parse(raw) : [];
         const target = items.find(it => it.id === id);
         if (!await canModifyItem(env, user, target)) return corsResponse({ ok: false, message: '\uC791\uC131\uC790 \uB610\uB294 \uAD00\uB9AC\uC790\uB9CC \uC218\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
-        items = items.map(it => it.id === id ? { ...it, ...body, id, updatedBy: user, updatedAt: new Date().toISOString() } : it);
+        const kf = {}; ['product', 'category', 'title', 'content', 'link'].forEach(k => { if (body[k] !== undefined) kf[k] = body[k]; });  // M-4: 허용 필드만(createdBy/createdAt/comments 보존)
+        items = items.map(it => it.id === id ? { ...it, ...kf, id, updatedBy: user, updatedAt: new Date().toISOString() } : it);
         await env.ENGR_KV.put('config:knowledge', JSON.stringify(items));
         await auditLog(env, user, 'KNOWLEDGE_UPDATE', { id, title: body.title || target?.title });
         return corsResponse({ ok: true });
@@ -2285,8 +2293,8 @@ export default {
           siteId: body.siteId || '',
           quantity: body.quantity || '',
           serial: body.serial || '',
-          startDate: body.startDate || '',
-          expireDate: body.expireDate || '',   // End Date (지원/만료 종료일 — D-day 기준)
+          startDate: okDate(body.startDate),
+          expireDate: okDate(body.expireDate),   // End Date (지원/만료 종료일 — D-day 기준)
           memo: body.memo || '',
           createdBy: user,
           createdAt: new Date().toISOString(),
@@ -2302,6 +2310,7 @@ export default {
         const body = await request.json().catch(() => ({}));
         const items = Array.isArray(body.items) ? body.items : [];
         if (!items.length) return corsResponse({ ok: false, message: '등록할 항목이 없습니다.' }, 400);
+        if (items.length > 200) return corsResponse({ ok: false, message: '한 번에 최대 200건까지 등록할 수 있습니다.' }, 400);  // M-8: KV 비대화 방지
         const raw = await env.ENGR_KV.get('config:eos');
         let store = raw ? JSON.parse(raw) : [];
         const created = [];
@@ -2310,8 +2319,8 @@ export default {
           const it = {
             id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
             customer: b.customer || '', productDesc: b.productDesc || '', siteId: b.siteId || '',
-            quantity: b.quantity || '', serial: b.serial || '', startDate: b.startDate || '',
-            expireDate: b.expireDate || '', memo: b.memo || '', createdBy: user, createdAt: new Date().toISOString(),
+            quantity: b.quantity || '', serial: b.serial || '', startDate: okDate(b.startDate),
+            expireDate: okDate(b.expireDate), memo: b.memo || '', createdBy: user, createdAt: new Date().toISOString(),
           };
           store.push(it); created.push(it);
         }
@@ -2346,7 +2355,10 @@ export default {
         let items = raw ? JSON.parse(raw) : [];
         const target = items.find(it => it.id === id);
         if (!await canModifyItem(env, user, target)) return corsResponse({ ok: false, message: '\uC791\uC131\uC790 \uB610\uB294 \uAD00\uB9AC\uC790\uB9CC \uC218\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
-        items = items.map(it => it.id === id ? { ...it, ...body, id, updatedBy: user, updatedAt: new Date().toISOString() } : it);
+        const ef = {}; ['customer', 'productDesc', 'siteId', 'quantity', 'serial', 'memo'].forEach(k => { if (body[k] !== undefined) ef[k] = body[k]; });  // M-3/M-7: 허용필드+날짜검증
+        if (body.startDate !== undefined) ef.startDate = okDate(body.startDate);
+        if (body.expireDate !== undefined) ef.expireDate = okDate(body.expireDate);
+        items = items.map(it => it.id === id ? { ...it, ...ef, id, updatedBy: user, updatedAt: new Date().toISOString() } : it);
         await env.ENGR_KV.put('config:eos', JSON.stringify(items));
         await auditLog(env, user, 'EOS_UPDATE', { id, customer: target?.customer, product: body.productDesc || target?.productDesc, expire: body.expireDate || target?.expireDate });
         return corsResponse({ ok: true });
@@ -2396,7 +2408,7 @@ export default {
         try { await env.DB.prepare("UPDATE compat_matrix SET status='confirmed', verified_by=?, verified_at=? WHERE id=?").bind(user, new Date().toISOString(), id).run(); await auditLog(env, user, 'MATRIX_CONFIRM', { matrixType: 'compat', id }); return corsResponse({ ok: true }); }
         catch (e) { return corsResponse({ ok: false, message: e.message }, 500); }
       }
-      if (path.startsWith('/compat/') && request.method === 'PUT') {
+      if (/^\/compat\/\d+$/.test(path) && request.method === 'PUT') {  // L-12: /compat/{id}/confirm 흡수 방지(정확 매칭)
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const id = parseInt(path.split('/')[2]) || 0;
         if (!(id > 0)) return corsResponse({ ok: false, message: '잘못된 id 입니다.' }, 400);
@@ -2408,7 +2420,7 @@ export default {
           return corsResponse({ ok: true });
         } catch (e) { return corsResponse({ ok: false, message: e.message }, 500); }
       }
-      if (path.startsWith('/compat/') && request.method === 'DELETE') {
+      if (/^\/compat\/\d+$/.test(path) && request.method === 'DELETE') {  // L-12: /compat/{id}/confirm 흡수 방지(정확 매칭)
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const id = parseInt(path.split('/')[2]) || 0;
         if (!(id > 0)) return corsResponse({ ok: false, message: '잘못된 id 입니다.' }, 400);
@@ -2447,7 +2459,7 @@ export default {
         const body = await request.json().catch(() => ({}));
         let jql, meta;
         if (isDaily) {
-          const day = /^\d{4}-\d{2}-\d{2}$/.test(body.day || '') ? body.day : new Date().toISOString().slice(0, 10);
+          const day = /^\d{4}-\d{2}-\d{2}$/.test(body.day || '') ? body.day : new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);  // M-6: 기본 '오늘'을 KST 기준으로(cron과 일치)
           jql = `project = ENGR AND updated >= "${day}" AND updated < "${nextDayStr(day)}" ORDER BY updated DESC`;
           meta = { monType: 'daily', day };
         } else {
