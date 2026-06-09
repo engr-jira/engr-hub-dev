@@ -1379,14 +1379,19 @@ function mapJiraIssue(it, custList) {
   return { key: it.key, summary: f.summary || '', status: f.status?.name || '', assignee: f.assignee?.displayName || '-', labels: f.labels || [], type: f.issuetype?.subtask ? 'subtask' : 'task', created: f.created || '', updated: f.updated || '', duedate: f.duedate || '', cls: classifyBracket(f.summary, custList) };
 }
 async function buildDailySnapshot(env, day) {
-  const jql = `project = ENGR AND updated >= "${day}" AND updated < "${nextDayStr(day)}" ORDER BY updated DESC`;
-  const issues = await jiraSearchJql(env, jql, TEAM_FIELDS, 12);
-  const custList = await getCustomersD1(env);
-  const items = issues.map(it => mapJiraIssue(it, custList));
-  const payload = { day, count: items.length, items };
-  const built_at = new Date().toISOString();
-  try { await env.DB.prepare("INSERT INTO team_daily_snapshot (day,payload_json,built_at) VALUES (?,?,?) ON CONFLICT(day) DO UPDATE SET payload_json=excluded.payload_json, built_at=excluded.built_at").bind(day, JSON.stringify(payload), built_at).run(); } catch (_) {}
-  return { ...payload, built_at };
+  try {
+    const jql = `project = ENGR AND updated >= "${day}" AND updated < "${nextDayStr(day)}" ORDER BY updated DESC`;
+    const issues = await jiraSearchJql(env, jql, TEAM_FIELDS, 12);
+    const custList = await getCustomersD1(env);
+    const items = issues.map(it => mapJiraIssue(it, custList));
+    const payload = { day, count: items.length, items };
+    const built_at = new Date().toISOString();
+    try { await env.DB.prepare("INSERT INTO team_daily_snapshot (day,payload_json,built_at) VALUES (?,?,?) ON CONFLICT(day) DO UPDATE SET payload_json=excluded.payload_json, built_at=excluded.built_at").bind(day, JSON.stringify(payload), built_at).run(); } catch (_) {}
+    return { ...payload, built_at };
+  } catch (e) {  // L-21: cron 스냅샷 실패가 조용히 묻히지 않게 감사 기록(관측성)
+    try { await auditLog(env, 'system', 'MON_SNAPSHOT_FAIL', { monType: 'snapshot', day, error: String((e && e.message) || e).slice(0, 200) }); } catch (_) {}
+    return { day, count: 0, items: [], error: String((e && e.message) || e) };
+  }
 }
 
 //
@@ -1546,7 +1551,9 @@ export default {
       if (path === '/ai/generate' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const body = await request.json().catch(() => ({}));
-        const { contents, mode = 'technical_analysis', detail = {} } = body;
+        const { contents, mode = 'technical_analysis' } = body;
+        let detail = (body.detail && typeof body.detail === 'object' && !Array.isArray(body.detail)) ? body.detail : {};
+        try { if (JSON.stringify(detail).length > 1000) detail = { _truncated: true }; } catch (_) { detail = {}; }  // L-31: detail 크기 캡(감사로그/D1 비대화 방지)
         const prompt = contents?.[0]?.parts?.[0]?.text;
         if (!prompt) return corsResponse({ ok: false, message: '\uD504\uB86C\uD504\uD2B8\uAC00 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.' }, 400);
 
@@ -2379,6 +2386,7 @@ export default {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const b = await request.json().catch(() => ({}));
         const next = { ...await getFeatureFlags(env), ...(b.flags || {}) };
+        next.settings = true; next.dash = true;  // L-6: 보호 토글(설정·대시보드)은 서버에서 강제 ON — 클라 가드 의존 제거
         try { await env.DB.prepare("INSERT INTO app_settings (key,value) VALUES ('feature_flags',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(JSON.stringify(next)).run(); }
         catch (e) { return corsResponse({ ok: false, message: '\uC800\uC7A5 \uC2E4\uD328: ' + e.message }, 500); }
         await auditLog(env, user, 'FEATURE_TOGGLE', { featFlags: next });
