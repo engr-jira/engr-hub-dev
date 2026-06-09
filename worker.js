@@ -1343,13 +1343,15 @@ async function jiraSearchJql(env, jql, fields, maxPages = 8) {
 }
 // 브래킷 분류(§B): customer / vendorcase / unclassified / internal / none
 function extractBracket(s) { const m = /^\s*\[([^\]]+)\]/.exec(s || ''); return m ? m[1].trim() : ''; }
+const INTERNAL_TAGS = ['hands-on', 'handson', 'hands on', 'none', 'null', 'n/a', 'na', 'test', '테스트', '내부', '검토', '긴급', 'urgent', 'poc'];
 function classifyBracket(summary, custList) {
   const b = extractBracket(summary);
   if (!b) return { kind: 'none', bracket: '' };
   for (const c of custList) { if (c.name === b || (c.aliases || []).includes(b)) return { kind: 'customer', bracket: b, customer: c.name }; }  // M-5: 등록 고객사/별칭을 vendorcase 정규식보다 먼저 매칭(영문코드형 고객사 오탐 방지)
   if (/^\d{6,}$/.test(b) || /^[A-Z]{2,3}\d+$/i.test(b) || /^hands[\s-]?on$/i.test(b)) return { kind: 'vendorcase', bracket: b };
-  if (/[가-힣]/.test(b)) return { kind: 'customer', bracket: b, customer: b };   // 한글 브래킷 = 고객사명으로 간주(마스터 미등록도)
-  return { kind: 'internal', bracket: b };
+  if (INTERNAL_TAGS.includes(b.toLowerCase())) return { kind: 'internal', bracket: b };   // 내부 태그(테스트/검토/긴급 등)
+  if (/[가-힣]/.test(b)) return { kind: 'customer', bracket: b, customer: b };   // 한글 브래킷 = 고객사명으로 간주(MJ 요청)
+  return { kind: 'unclassified', bracket: b };   // H-3: 미등록·비벤더·비한글·비내부 → ⚑ 검토 필요(프론트 배너 활성화)
 }
 async function getCustomersD1(env) {
   try { const r = await env.DB.prepare('SELECT name, aliases FROM customers WHERE active=1').all(); return (r.results || []).map(c => ({ name: c.name, aliases: (() => { try { return JSON.parse(c.aliases || '[]'); } catch { return []; } })() })); }
@@ -1426,6 +1428,7 @@ export default {
           const cfg = await env.ENGR_KV.get('config:session_min');
           if (cfg) sessionMin = parseInt(cfg) || 120;
         } catch (_) {}
+        const mustChangePin = !(await getUserPinHash(env, sessionUser));  // H-1: 세션 복원 시에도 개인 PIN 미설정이면 강제 변경 유지
         return corsResponse({
           ok: true,
           name: sessionUser,
@@ -1435,6 +1438,7 @@ export default {
           isSuperAdmin: role === 'super',
           role,
           sessionMin,
+          mustChangePin,
         });
       }
 
@@ -1464,7 +1468,8 @@ export default {
         } catch (_) {}
 
         const sessionToken = await createSession(env, userId, sessionMin);
-        await auditLog(env, userId, 'LOGIN', { role });
+        const mustChangePin = !(await getUserPinHash(env, userId));  // H-1: 개인 PIN 미설정(공유 PIN 폴백 로그인) → 최초 1회 강제 변경
+        await auditLog(env, userId, 'LOGIN', { role, viaSharedPin: mustChangePin });
         return corsResponse({
           ok: true,
           name: userId,
@@ -1472,7 +1477,7 @@ export default {
           displayName: account.displayName || userId,
           isAdmin: role === 'admin' || role === 'super',
           isSuperAdmin: role === 'super',
-          role, sessionMin, sessionToken,
+          role, sessionMin, sessionToken, mustChangePin,
         });
       }
 

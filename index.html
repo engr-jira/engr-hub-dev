@@ -2836,6 +2836,7 @@ async function login(opts){
     CURRENT_USER=d.userId||d.name||name.toLowerCase();
     CURRENT_DISPLAY=d.displayName||CURRENT_USER;
     IS_ADMIN=d.isAdmin;IS_SUPER=d.isSuperAdmin;USER_ROLE=d.role||'user';SESSION_MIN=d.sessionMin||120;
+    MUST_CHANGE_PIN=!!d.mustChangePin;
     SESSION_DEADLINE=Date.now()+SESSION_MIN*60000;
     localStorage.setItem('engr_user',CURRENT_USER);localStorage.setItem('engr_display',CURRENT_DISPLAY);localStorage.removeItem('engr_pin');
     localStorage.setItem('engr_role',USER_ROLE);
@@ -2856,6 +2857,7 @@ async function login(opts){
       ['engr_remember','engr_saved_user','engr_saved_pin'].forEach(k=>localStorage.removeItem(k));
     }
     enterApp();
+    if(MUST_CHANGE_PIN)setTimeout(forcePinChange,200);
   }catch(e){toast('서버 연결 실패',true);btn.disabled=false;btn.textContent='접속하기 →';}
 }
 function enterApp(){
@@ -3725,7 +3727,7 @@ function openGenModal(title,bodyHTML,footHTML){
   document.getElementById('gen-modal').classList.add('show');
   setTimeout(enhanceDateButtons,0);
 }
-function closeGenModal(){document.getElementById('gen-modal').classList.remove('show');}
+function closeGenModal(){if(window.__pinLock)return;document.getElementById('gen-modal').classList.remove('show');}
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     e.preventDefault();
@@ -4970,6 +4972,19 @@ async function cleanupOldAuditLogs(){
   }catch(e){toast('정리 오류: '+e.message,true);setAdminActionStatus('감사 로그 정리 실패: '+e.message,'err');}
   finally{if(btn){btn.disabled=false;btn.textContent=old||'🧹 감사 로그 90일 초과 정리';}}
 }
+let MUST_CHANGE_PIN=false;
+function forcePinChange(){   // H-1: 공유 PIN 폴백 로그인 시 개인 PIN 설정 강제(닫기 불가)
+  window.__pinLock=true;
+  openGenModal('🔐 개인 PIN 설정 필요',`
+  <div style="background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12.5px;color:var(--warn)">보안을 위해 공유 PIN 대신 <b>개인 PIN</b>을 설정해야 계속 사용할 수 있습니다.</div>
+  <div class="modal-form">
+    <div class="full"><label>현재 PIN(공유/기존)</label><input id="pin-old" type="password" autocomplete="current-password"></div>
+    <div class="full"><label>새 개인 PIN</label><input id="pin-new" type="password" autocomplete="new-password" placeholder="6자 이상"></div>
+    <div class="full"><label>새 PIN 확인</label><input id="pin-new2" type="password" autocomplete="new-password"></div>
+  </div>`,
+  `<button class="btn btn-ghost" onclick="window.__pinLock=false;forceLogout()" style="width:auto;padding:8px 18px">로그아웃</button>
+   <button class="btn btn-indigo" onclick="changeMyPin()" style="width:auto;padding:8px 18px">개인 PIN 설정하고 계속</button>`);
+}
 function openChangePinModal(){
   openGenModal('내 PIN 변경',`
   <div class="modal-form">
@@ -4988,6 +5003,7 @@ async function changeMyPin(){
   if(newPin!==newPin2){toast('새 PIN 확인이 일치하지 않습니다',true);return;}
   try{
     await hubApi('/auth/change-pin',{method:'POST',body:JSON.stringify({oldPin,newPin})});
+    if(window.__pinLock){window.__pinLock=false;MUST_CHANGE_PIN=false;}  // H-1: 강제 게이트 해제
     closeGenModal();toast('PIN이 변경됐습니다');
   }catch(e){toast('PIN 변경 실패: '+e.message,true);}
 }
@@ -6431,6 +6447,7 @@ async function restoreSession(){
     IS_ADMIN=!!d.isAdmin;
     IS_SUPER=!!d.isSuperAdmin;
     SESSION_MIN=d.sessionMin||SESSION_MIN;
+    MUST_CHANGE_PIN=!!d.mustChangePin;
     localStorage.setItem('engr_user',CURRENT_USER);
     localStorage.setItem('engr_display',CURRENT_DISPLAY);
     localStorage.setItem('engr_role',USER_ROLE);
@@ -6438,6 +6455,7 @@ async function restoreSession(){
     localStorage.setItem('engr_is_super',IS_SUPER?'1':'0');
     localStorage.setItem('engr_session_min',String(SESSION_MIN));
     enterApp();
+    if(MUST_CHANGE_PIN)setTimeout(forcePinChange,200);
     return true;
   }catch(e){
     clearLocalSession();
