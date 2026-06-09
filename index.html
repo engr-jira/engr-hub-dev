@@ -578,7 +578,7 @@ input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer
 .detail-link-row{display:flex;justify-content:flex-end;gap:6px;margin-top:7px}
 .detail-link-row .btn{width:auto!important;height:30px!important;min-height:30px;padding:0 11px!important;border-radius:8px!important;font-size:10.5px!important}
 .case-ai-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;margin-top:8px!important;margin-bottom:7px!important}
-.topbar-right .search-box,.btn-group #similar-btn,button[onclick="runPattern()"],button[onclick="runCaseAI('similar')"]{display:none!important}
+.topbar-right .search-box{display:none!important}
 .sb-bottom .health-card{display:none!important}
 .top-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 /* 큰 시계 — 날짜+시간 한 줄 */
@@ -1969,7 +1969,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     </div>
 
     <div class="page" id="page-cases">
-      <div style="background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--cyan);margin-bottom:16px">📦 제목에서 케이스 번호(7자리 이상 순수 숫자)를 자동 파싱합니다.</div>
+      <div style="background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--cyan);margin-bottom:16px">📦 제목 맨 앞이 <code style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:5px">[숫자 8자리]</code> 형식인 항목만 케이스로 분류합니다. 일반 이슈 속 케이스 번호는 연결 케이스로 표시됩니다.</div>
       <div class="filter-row">
         <input id="case-q" placeholder="케이스 번호 / 제목 / 고객사 / 담당자 검색..." oninput="PAGE_STATE.cases=1;renderCases()">
         <select id="case-stat" onchange="PAGE_STATE.cases=1;renderCases()">
@@ -2221,7 +2221,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     </div>
 
     <div class="page" id="page-links">
-      <div style="background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--cyan);margin-bottom:16px">🔗 자주 접근하는 업무용 링크 모음. 누구나 등록·수정·삭제할 수 있어요. <span onclick="showStorageInfo('links')" title="데이터 저장 안내" style="cursor:pointer;opacity:.6;font-size:13px">ℹ</span></div>
+      <div style="background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--cyan);margin-bottom:16px">🔗 자주 접근하는 업무용 링크 모음. 누구나 등록할 수 있고, 수정·삭제는 등록자 또는 관리자만 가능합니다. <span onclick="showStorageInfo('links')" title="데이터 저장 안내" style="cursor:pointer;opacity:.6;font-size:13px">ℹ</span></div>
       <div class="action-row">
         <button class="btn btn-indigo" id="links-add-btn" onclick="openLinkModal()" style="width:auto;padding:9px 18px">+ 링크 등록</button>
       </div>
@@ -4099,8 +4099,9 @@ function renderLinks(){
     const cat=escapeHtml(l.category||l.cat||'기타');
     const title=escapeHtml(l.title||'');
     const url=escapeHtml(l.url||'');
-    const meta=`by ${escapeHtml(l.createdBy||'-')}${l.createdAt?' · '+fd(l.createdAt):''}${commentCount?' · 댓글 '+commentCount:''}`;
-    return `<div class="link-card" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')"><span class="link-cat">${cat}</span><div class="link-info"><div class="link-title">${title}</div><div class="link-meta">${meta}</div></div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${url}</div><div class="link-actions" style="flex-shrink:0;display:flex;gap:4px;opacity:0;transition:opacity .15s"><button onclick="event.stopPropagation();openLinkDetail('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">댓글 ${commentCount}</button><button onclick="event.stopPropagation();openLinkEditModal('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">✎</button><button onclick="event.stopPropagation();deleteLink('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button></div></div>`;
+    const meta=`by ${escapeHtml(l.createdBy||'-')}${l.createdAt?' · '+fd(l.createdAt):''}`;
+    const canEdit=(l.createdBy===CURRENT_USER||IS_ADMIN||IS_SUPER);
+    return `<div class="link-card" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')"><span class="link-cat">${cat}</span><div class="link-info"><div class="link-title">${title}</div><div class="link-meta">${meta}</div></div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${url}</div><div class="link-actions" style="flex-shrink:0;display:flex;gap:4px;opacity:0;transition:opacity .15s"><button onclick="event.stopPropagation();openLinkDetail('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">댓글 ${commentCount}</button>${canEdit?`<button onclick="event.stopPropagation();openLinkEditModal('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">✎</button><button onclick="event.stopPropagation();deleteLink('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button>`:''}</div></div>`;
   }).join('');
   renderPager('links-pager','links',list.length,'renderLinks');
 }
@@ -6260,7 +6261,7 @@ function getFilteredIssues(){
   const ass=document.getElementById('f-ass')?.value||'';
   const date=document.getElementById('f-date')?.value||'';
   if(q)arr=arr.filter(i=>[i.key,i.title,i.customer,i.assignee,i.reporter,...(i.labels||[]),...(i.caseNums||[]),...casesForIssue(i).map(c=>c.caseNum)].join(' ').toLowerCase().includes(q));
-  if(st)arr=arr.filter(i=>st==='완료'?isDoneStatus(i.status):st==='진행 중'?isOpenStatus(i.status)&&String(i.status).includes('진행'):st==='미해결'?isOpenStatus(i.status):i.status===st);
+  if(st)arr=arr.filter(i=>st==='완료'?isDoneStatus(i.status):st==='진행 중'?isOpenStatus(i.status)&&/진행|처리|progress/i.test(i.status):st==='미해결'?isOpenStatus(i.status):i.status===st);
   if(pri)arr=arr.filter(i=>i.pri===pri);
   if(lab)arr=arr.filter(i=>(i.labels||[]).includes(lab));
   if(ass)arr=arr.filter(i=>i.assignee===ass);
@@ -6277,7 +6278,7 @@ function getFilteredCases(){
   const sla=document.getElementById('case-sla')?.value||'';
   const date=document.getElementById('case-date')?.value||'';
   if(q)arr=arr.filter(i=>[i.key,i.caseNum,i.title,caseCustomerName(i),i.customer,i.assignee,i.parentKey,i.parentTitle,...(i.labels||[])].join(' ').toLowerCase().includes(q));
-  if(st)arr=arr.filter(i=>st==='완료'?isDoneStatus(i.status):st==='진행 중'?isOpenStatus(i.status)&&String(i.status).includes('진행'):st==='미해결'?isOpenStatus(i.status):i.status===st);
+  if(st)arr=arr.filter(i=>st==='완료'?isDoneStatus(i.status):st==='진행 중'?isOpenStatus(i.status)&&/진행|처리|progress/i.test(i.status):st==='미해결'?isOpenStatus(i.status):i.status===st);
   if(ass)arr=arr.filter(i=>i.assignee===ass);
   if(sla)arr=arr.filter(i=>isOpenStatus(i.status)&&age(i.date)>=parseInt(sla,10));
   if(date)arr=arr.filter(i=>dateFilterMatches(i.date,date));
@@ -6862,7 +6863,7 @@ function injectV155Style(){
     .detail-link-row{display:flex;justify-content:flex-end;gap:6px;margin-top:7px}
     .detail-link-row .btn{width:auto!important;height:30px!important;min-height:30px;padding:0 11px!important;border-radius:8px!important;font-size:10.5px!important}
     .case-ai-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;margin-top:8px!important;margin-bottom:7px!important}
-    .topbar-right .search-box,.btn-group #similar-btn,button[onclick="runPattern()"],button[onclick="runCaseAI('similar')"]{display:none!important}
+    .topbar-right .search-box{display:none!important}
     .sb-bottom .health-card{display:none!important}
     .top-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
     .top-status-card{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:7px 10px;min-height:34px}
@@ -7487,7 +7488,7 @@ function showPage(name,btn){
 }
 /* ── §1 호환성·EOS 매트릭스 ─────────────────────────── */
 let COMPAT_ROWS=[];
-const CMB='font-size:11px;padding:3px 7px;margin:0 1px;background:#1e293b;border:1px solid var(--border);border-radius:6px;color:var(--text,#e2e8f0);cursor:pointer';
+const CMB='font-size:11px;padding:3px 7px;margin:0 1px;background:var(--card2,#1e293b);border:1px solid var(--border);border-radius:6px;color:var(--text,#e2e8f0);cursor:pointer';
 function compatDday(d){ if(!d)return null; const t=new Date(d+'T00:00:00'); if(isNaN(t))return null; const today=new Date(); today.setHours(0,0,0,0); return Math.round((t-today)/86400000); }
 function compatDdayHtml(d){ const n=compatDday(d); if(n===null)return ''; const col=n<0?'var(--danger)':n<=90?'var(--warn)':'var(--text3)'; const lab=n<0?`D+${-n}`:`D-${n}`; return ` <span style="color:${col};font-weight:600;font-size:11px">${lab}</span>`; }
 async function loadCompat(){
@@ -7516,7 +7517,7 @@ function renderCompat(){
     <td>${r.eos_date?escapeHtml(r.eos_date)+compatDdayHtml(r.eos_date):'-'}</td>
     <td>${r.eol_date?escapeHtml(r.eol_date):'-'}</td>
     <td style="max-width:240px">${escapeHtml(r.note||'')}${r.source?`<br><span class="muted" style="font-size:11px">출처: ${escapeHtml(r.source)}</span>`:''}</td>
-    <td>${r.status==='confirmed'?'<span style="color:#34d399;white-space:nowrap">✓ 확정</span>':'<span class="badge-warn">초안</span>'}</td>
+    <td>${r.status==='confirmed'?'<span style="color:#34d399;white-space:nowrap">✓ 확정</span>':'<span style="background:rgba(251,191,36,.15);color:#fbbf24;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap">초안</span>'}</td>
     ${admin?`<td style="white-space:nowrap">${r.status!=='confirmed'?`<button style="${CMB}" onclick="confirmCompat(${r.id})">확정</button>`:''}<button style="${CMB}" onclick="openCompatModal(${r.id})">수정</button><button style="${CMB};color:var(--danger)" onclick="deleteCompat(${r.id})">삭제</button></td>`:''}
   </tr>`).join('');
   wrap.innerHTML=`<table class="data-tbl srt">${head}${body}</table>`;
@@ -8826,7 +8827,7 @@ async function tryCopy(text){
 function openCopyModal(text,name){ document.getElementById('modal-title').textContent=name; const ta=document.getElementById('modal-text'); ta.value=text; document.getElementById('modal-bg').classList.add('show'); setTimeout(()=>{ ta.focus(); ta.select(); },60); }
 
 /* ---------- helpers ---------- */
-function escapeHtml(s){ return String(s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 let toastTimer;
 function toast(msg){ const t=document.getElementById('md-toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1900); }
 
