@@ -2631,7 +2631,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
             검증된 기본 KB, 기존 업무 링크, Jira 이슈/댓글에 남아있는 Broadcom KB article을 모아 접근 가능한 문서만 업무 링크에 자동 등록합니다.<br>
             유료 검색 API를 기본으로 사용하지 않습니다. 기존 링크와 중복되는 항목은 건너뜁니다.
           </p>
-          <button id="kb-seed-btn" class="btn btn-green" onclick="importRecentKBLinks()">📥 무료 KB article 수집</button>
+          <button id="kb-seed-btn" class="btn btn-green" onclick="importRecentKBLinks()" style="width:auto;padding:9px 16px">📥 무료 KB article 수집</button>
           <div style="border-top:1px solid var(--border);margin:14px 0 6px;padding-top:12px">
             <div style="font-size:12.5px;font-weight:700;margin-bottom:4px">🔎 최신 데이터 자동 수집 → 등록</div>
             <div style="font-size:11px;color:var(--text3);line-height:1.6;margin-bottom:10px">AI로 최신 정보를 수집해 해당 메뉴에 <b>초안</b>으로 자동 등록합니다(검토 후 확정). 항목별로 추가 예정.</div>
@@ -7937,6 +7937,17 @@ function buildFlow(toks){
     _f.push(t);
   }
   toks=_f; const labelInfo=_li;
+  // "op; Goto X"가 같은 X로 2회 이상 반복(분기 대입: 요일명 등) → 한 노드로 축약
+  const _g=[];
+  for(let i=0;i<toks.length;){
+    if(toks[i].t==='op' && toks[i+1] && toks[i+1].t==='goto'){
+      const target=toks[i+1].label, items=[toks[i]]; let j=i+2;
+      while(toks[j] && toks[j].t==='op' && toks[j+1] && toks[j+1].t==='goto' && toks[j+1].label===target){ items.push(toks[j]); j+=2; }
+      if(items.length>=2){ _g.push({t:'gotorun',items,goto:target}); i=j; continue; }
+    }
+    _g.push(toks[i]); i++;
+  }
+  toks=_g;
   let nid=0; const lines=[], edges=[], warns=[], decs=[];
   const enc=s=>{ let r=String(s||'').replace(/[\r\n]+/g,' ').replace(/\$\{(\w+)\}/g,'$1').replace(/\s+/g,' ').trim(); if(r.length>56)r=r.slice(0,56)+'…'; return r.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/[\[\](){}#|]/g,c=>'&#'+c.charCodeAt(0)+';')||'·'; };
   const node=(shape,text)=>{const i='f'+(nid++);let s;if(shape==='dec'){s=i+'{"'+enc(text)+'"}';decs.push(i);}else if(shape==='term')s=i+'(["'+enc(text)+'"])';else if(shape==='block')s=i+'[["'+enc(text)+'"]]';else if(shape==='label')s=i+'>"'+enc(text)+'"]';else s=i+'["'+enc(text)+'"]';lines.push('  '+s);return i;};
@@ -7950,6 +7961,7 @@ function buildFlow(toks){
     if(n>=MAX){trunc=true;break;}
     if(tk.t==='block'){ const b=node('block',(tk.kind==='function'?'🔧 ':'📦 ')+tk.name); connect(b); pending=[{id:b}]; n++; }
     else if(tk.t==='op'){ const o=node('proc',opLabel(tk)); connect(o); if(tk.warn)warns.push(o); pending=[{id:o}]; n++; }
+    else if(tk.t==='gotorun'){ const lbl=(tk.items[0].icon||'▫️')+' 분기 '+tk.items.length+'개: '+tk.items.map(o=>o.detail||'').slice(0,5).join(', ')+(tk.items.length>5?' …':''); const nd=node('proc',lbl); connect(nd); edge(nd, ensureLabel(tk.goto)); pending=[]; n++; }
     else if(tk.t==='if'){ const d=node('dec','❓ '+(tk.note||tk.cond)); connect(d); ifStack.push({dec:d,trueEnds:[],elseStarted:false}); pending=[{id:d,label:'예'}]; n++; }
     else if(tk.t==='elseif'){ const fr=ifStack[ifStack.length-1]; if(fr){ fr.trueEnds.push(...pending); const d=node('dec','❓ '+(tk.note||tk.cond)); edge(fr.dec,d,'아니오'); fr.dec=d; pending=[{id:d,label:'예'}]; n++; } }
     else if(tk.t==='else'){ const fr=ifStack[ifStack.length-1]; if(fr){ fr.trueEnds.push(...pending); fr.elseStarted=true; pending=[{id:fr.dec,label:'아니오'}]; } }
