@@ -87,7 +87,7 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
 
 ## 4. 기능/연동 현황
 
-- **AI**: worker `callAI` → 1순위 Gemini(`GEMINI_API_KEY`/`GEMINI_KEY`, `gemini-2.5-flash`, **thinking 비활성+maxOutputTokens 8192**, 잘림 방지), 실패 시 Cloudflare Workers AI Llama(`@cf/meta/llama-3.3-70b...`). 응답 캐시 `ai:v2:<mode>:<hash>` 7일.
+- **AI**: worker `callAI` → 1순위 Gemini(`GEMINI_API_KEY`/`GEMINI_KEY`, `gemini-2.5-flash`, **thinking 비활성+maxOutputTokens 8192**, 잘림 방지), 실패 시 Cloudflare Workers AI Llama(`@cf/meta/llama-3.3-70b...`). 응답 캐시 `ai:v3:<mode>:<hash>` 7일(v2는 text가 배열로 저장된 오염 캐시 — v3로 무효화). `callAI`는 응답 text가 비-string이면 `JSON.stringify`로 강제.
 - **VT**: `/vt/lookup`(value+type 자동인식: hash/ip/domain/url), `/vt/file`(파일 업로드 ≤32MB), `/vt/analysis`(폴링). 키 `VT_KEY`/`VT_API_KEY`.
 - **Jira**: 워커 프록시. 커스텀필드 — 고객사 `customfield_10134`(array), 구분 `_10178`, 범주 `_10036.value`, 평가 `_10244.value`, 시작일 `_10015`, 기한 `duedate`. 미기입(meta) 점검 시 `[Hands-on]` 제외. 고객사 None/비-고객사 태그는 `isRealCust`/`NON_CUST_TAGS`로 필터.
 - **로그 분석**: 업로드 ≤20MB, 붙여넣기/글자수/Ctrl+Enter, 결과는 AI 모달(📋 복사).
