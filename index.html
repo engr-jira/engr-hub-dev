@@ -7528,6 +7528,7 @@ function renderCompat(){
     ${admin?`<td style="white-space:nowrap">${r.status!=='confirmed'?`<button style="${CMB}" onclick="confirmCompat(${r.id})">확정</button>`:''}<button style="${CMB}" onclick="openCompatModal(${r.id})">수정</button><button style="${CMB};color:var(--danger)" onclick="deleteCompat(${r.id})">삭제</button></td>`:''}
   </tr>`).join('');
   wrap.innerHTML=`<table class="data-tbl srt">${head}${body}</table>`;
+  const _st=wrap.querySelector('table.srt'); if(_st)applySrtState(_st);
 }
 function openCompatModal(id){
   const m=document.getElementById('compat-modal'); if(!m)return;
@@ -7731,6 +7732,7 @@ function renderHistoryResults(){
     <td style="white-space:nowrap">${escapeHtml((i.updated||'').slice(0,10))}</td>
   </tr>`).join('');
   res.innerHTML=`<table class="ch-tbl srt"><tr><th>키</th><th>제목</th><th>상태</th><th>담당</th><th>라벨</th><th>유형</th><th>생성</th><th>수정</th></tr>${rows}</table>`;
+  const _st=res.querySelector('table.srt'); if(_st)applySrtState(_st);
 }
 function copyHistoryTable(){
   if(!HISTORY_ITEMS.length){toast('복사할 결과가 없습니다');return;}
@@ -7961,6 +7963,14 @@ async function auditMigReadSource(d1){
   catch(e){ toast('전환 실패: '+e.message); }
 }
 /* ── 공용: 표 컬럼 정렬 (table.srt 헤더 클릭) ── */
+const SRT_STATE={};
+function applySrtState(table){
+  try{ const idEl=table&&table.closest('[id]'); const k=idEl&&idEl.id; const s=k&&SRT_STATE[k]; if(!s)return;
+    const headRow=[...table.rows].find(r=>r.querySelector('th')); if(!headRow)return;
+    const th=headRow.children[s.col]; if(!th||th.querySelector('input,select,button')||th.classList.contains('nosort'))return;
+    th.setAttribute('data-srt', s.dir==='asc'?'desc':'asc'); hubSortTable(table,s.col,th);
+  }catch(_){}
+}
 function hubSortTable(table, colIdx, th){
   const allRows=[...table.rows];
   let headIdx=allRows.findIndex(r=>r.querySelector('th')); if(headIdx<0)headIdx=0;
@@ -7984,6 +7994,7 @@ function hubSortTable(table, colIdx, th){
   const parent=dataRows[0].parentNode;
   dataRows.forEach(r=>parent.appendChild(r));
   const ar=document.createElement('span'); ar.className='srt-ar'; ar.textContent=dir==='asc'?'▲':'▼'; th.appendChild(ar);
+  try{ const idEl=table.closest('[id]'); if(idEl&&idEl.id)SRT_STATE[idEl.id]={col:colIdx,dir}; }catch(_){}
 }
 document.addEventListener('click',function(e){
   const th=e.target.closest('th'); if(!th)return;
