@@ -421,7 +421,7 @@ async function auditLog(env, user, type, detail = {}) {
     const rev = String(9999999999999 - now).padStart(13, '0');
     const id = `${rev}:${type}:${rand}`;
     const tsIso = new Date(now).toISOString();
-    const item = JSON.stringify({ ts: tsIso, tsNum: now, user, type, ...detail });
+    const item = JSON.stringify({ ...detail, ts: tsIso, tsNum: now, user, type });
     const ttl = { expirationTtl: 60 * 60 * 24 * 90 };
     // §H 1단계: KV(기존, 소스 유지) + D1(audit_log, 가산) 이중쓰기. 둘 다 best-effort, 동일 id로 멱등.
     const kvP = env.ENGR_KV.put(`auditLatest:${id}`, item, ttl);
@@ -1368,7 +1368,7 @@ async function getFeatureFlags(env) {
 async function getAuditReadD1(env) {
   try { const r = await env.DB.prepare("SELECT value FROM app_settings WHERE key='audit_read_d1'").first(); return r?.value === 'on'; } catch (_) { return false; }
 }
-function jqlEsc(s) { return String(s).replace(/["\\]/g, '\\$&'); }
+function jqlEsc(s) { return String(s).replace(/[\r\n]+/g, ' ').replace(/["\\]/g, '\\$&'); }
 function nextDayStr(d) { const dt = new Date(d + 'T00:00:00Z'); dt.setUTCDate(dt.getUTCDate() + 1); return dt.toISOString().slice(0, 10); }
 const TEAM_FIELDS = ['summary', 'status', 'assignee', 'reporter', 'labels', 'issuetype', 'created', 'updated', 'duedate', 'customfield_10134'];
 function mapJiraIssue(it, custList) {
@@ -1943,7 +1943,7 @@ export default {
           id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
           title: body.title || '',
           url: body.url || '',
-          category: body.category || '\u6E72\uACE0?',
+          category: body.category || '\uAE30\uD0C0',
           desc: body.desc || '',
           comments: [],
           createdBy: user,
@@ -2392,12 +2392,14 @@ export default {
       if (path.startsWith('/compat/') && path.endsWith('/confirm') && request.method === 'POST') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const id = parseInt(path.split('/')[2]) || 0;
+        if (!id) return corsResponse({ ok: false, message: '잘못된 id 입니다.' }, 400);
         try { await env.DB.prepare("UPDATE compat_matrix SET status='confirmed', verified_by=?, verified_at=? WHERE id=?").bind(user, new Date().toISOString(), id).run(); await auditLog(env, user, 'MATRIX_CONFIRM', { matrixType: 'compat', id }); return corsResponse({ ok: true }); }
         catch (e) { return corsResponse({ ok: false, message: e.message }, 500); }
       }
       if (path.startsWith('/compat/') && request.method === 'PUT') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const id = parseInt(path.split('/')[2]) || 0;
+        if (!id) return corsResponse({ ok: false, message: '잘못된 id 입니다.' }, 400);
         const b = await request.json().catch(() => ({}));
         try {
           await env.DB.prepare('UPDATE compat_matrix SET product=?,product_version=?,os=?,os_version=?,supported=?,eos_date=?,eol_date=?,note=?,source=?,updated_at=? WHERE id=?')
@@ -2409,6 +2411,7 @@ export default {
       if (path.startsWith('/compat/') && request.method === 'DELETE') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const id = parseInt(path.split('/')[2]) || 0;
+        if (!id) return corsResponse({ ok: false, message: '잘못된 id 입니다.' }, 400);
         try { await env.DB.prepare('DELETE FROM compat_matrix WHERE id=?').bind(id).run(); await auditLog(env, user, 'MATRIX_DELETE', { matrixType: 'compat', id }); return corsResponse({ ok: true }); }
         catch (e) { return corsResponse({ ok: false, message: e.message }, 500); }
       }
@@ -2431,7 +2434,7 @@ export default {
         let issues; try { issues = await jiraSearchJql(env, jql, TEAM_FIELDS, 10); } catch (e) { return corsResponse({ ok: false, message: 'Jira \uC870\uD68C \uC2E4\uD328: ' + e.message }, 502); }
         const custList = await getCustomersD1(env);
         let items = issues.map(it => mapJiraIssue(it, custList));
-        if (body.customer) items = items.filter(x => x.cls.customer === body.customer || x.cls.bracket === body.customer);   // \uBE0C\uB798\uD0B7 \uC815\uBC00 \uD544\uD130
+        // \uACE0\uAC1D\uC0AC \uD544\uD130\uB294 JQL(summary ~ "\uACE0\uAC1D\uC0AC")\uC774 \uC774\uBBF8 \uCC98\uB9AC. \uBE0C\uB798\uD0B7 \uC815\uBC00 \uC7AC\uD544\uD130\uB294 \uC815\uB2F9 \uC774\uC288\uB97C \uC870\uC6A9\uD788 \uB204\uB77D\uC2DC\uCF1C \uC81C\uAC70(\uBD84\uB958\uB294 cls \uBC30\uC9C0\uB85C\uB9CC \uD45C\uC2DC).
         if (body.assignee) items = items.filter(x => x.assignee === body.assignee);   // \uB2F4\uB2F9\uC790 \uD6C4\uCC98\uB9AC(\u00A72\uC5D0\uC11C accountId \uB9E4\uD551 \uC608\uC815)
         await auditLog(env, user, 'HIST_VIEW', { histType: 'history', count: items.length });
         return corsResponse({ ok: true, jql, count: items.length, items });
