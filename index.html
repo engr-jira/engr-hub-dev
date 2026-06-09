@@ -2077,7 +2077,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <div style="font-size:12.5px;font-weight:700;margin-bottom:8px">📚 벤더 KB — DLP / SEP System Requirements</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <select id="vendor-kb-product" onchange="vendorKbVersions()" style="background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text,#e2e8f0);font-size:12.5px"><option value="DLP">Symantec DLP</option><option value="SEP">Symantec SEP</option></select>
-          <input id="vendor-kb-version" list="vendor-kb-vlist" onchange="vendorKbUpdateButtons()" oninput="vendorKbUpdateButtons()" autocomplete="off" placeholder="버전 선택/입력" title="프리셋 선택 또는 EOS 안 된 임의 버전 직접 입력(AI 매트릭스 조회 가능)" style="background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text,#e2e8f0);font-size:12.5px;width:172px"><datalist id="vendor-kb-vlist"></datalist>
+          <select id="vendor-kb-version" onchange="vendorKbUpdateButtons()" style="background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text,#e2e8f0);font-size:12.5px"></select>
           <button class="btn btn-indigo" id="vkb-sysreq" onclick="openVendorKb('sysreq')">📄 System Requirements</button>
           <button class="btn" id="vkb-new" onclick="openVendorKb('whatsnew')" style="display:none">✨ What's New</button>
           <button class="btn" id="vkb-notes" onclick="openVendorKb('notes')" style="display:none">📝 릴리스 노트</button>
@@ -7620,10 +7620,8 @@ const VENDOR_KB={
 };
 function vendorKbVersions(){
   const prodEl=document.getElementById('vendor-kb-product'); if(!prodEl)return;
-  const prod=prodEl.value, list=document.getElementById('vendor-kb-vlist'), inp=document.getElementById('vendor-kb-version');
-  const arr=VENDOR_KB[prod]||[];
-  if(list)list.innerHTML=arr.map(x=>`<option value="${escapeHtml(x.v)}"></option>`).join('');
-  if(inp)inp.value=arr[0]?arr[0].v:'';
+  const prod=prodEl.value, sel=document.getElementById('vendor-kb-version');
+  if(sel)sel.innerHTML=(VENDOR_KB[prod]||[]).map(x=>`<option value="${escapeHtml(x.v)}">${escapeHtml(x.v)}</option>`).join('');
   vendorKbUpdateButtons();
 }
 function vendorKbEntry(){ const p=document.getElementById('vendor-kb-product')?.value, v=document.getElementById('vendor-kb-version')?.value; return (VENDOR_KB[p]||[]).find(x=>x.v===v); }
