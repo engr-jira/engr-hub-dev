@@ -1460,7 +1460,7 @@ export default {
         }
 
         let pinOk = await validateUserPin(env, userId, pin);
-        if (!pinOk && account.displayName) pinOk = await validateUserPin(env, account.displayName, pin);
+        // M-2: displayName 폴백 제거 — PIN은 항상 정규화 id로 저장되어 폴백은 dead이고, 교차계정 PIN 매칭 위험만 유발(레거시는 TEAM_PIN→H-1로 graceful)
         if (!pinOk) return corsResponse({ ok: false, message: 'PIN\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.' }, 401);
         // \uC8FC\uC758: \uB85C\uADF8\uC778 \uC2DC PIN \uC790\uB3D9 \uB36E\uC5B4\uC4F0\uAE30 \uC81C\uAC70. PIN\uC740 \uC624\uC9C1 /auth/change-pin(\uBA85\uC2DC\uC801 'PIN \uBCC0\uACBD')\uC73C\uB85C\uB9CC \uBCC0\uACBD\uB428.
 
@@ -1915,6 +1915,7 @@ export default {
         const resetPin = getDefaultResetPin(env);
         if (!resetPin) return corsResponse({ ok: false, message: 'DEFAULT_RESET_PIN is not configured.' }, 500);
         await setUserPin(env, target, resetPin);
+        await revokeUserSessions(env, target);  // L-3: PIN 리셋 시 대상의 기존 세션 무효화(재인증 강제)
         await auditLog(env, user, 'PIN_RESET', { target });
         return corsResponse({ ok: true, user: target });
       }
