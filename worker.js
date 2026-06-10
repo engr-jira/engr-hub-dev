@@ -1345,13 +1345,20 @@ async function jiraSearchJql(env, jql, fields, maxPages = 8) {
 function extractBracket(s) { const m = /^\s*\[([^\]]+)\]/.exec(s || ''); return m ? m[1].trim() : ''; }
 const INTERNAL_TAGS = ['hands-on', 'handson', 'hands on', 'none', 'null', 'n/a', 'na', 'test', '테스트', '내부', '검토', '긴급', 'urgent', 'poc'];
 function classifyBracket(summary, custList) {
-  const b = extractBracket(summary);
-  if (!b) return { kind: 'none', bracket: '' };
-  for (const c of custList) { if (c.name === b || (c.aliases || []).includes(b)) return { kind: 'customer', bracket: b, customer: c.name }; }  // M-5: 등록 고객사/별칭을 vendorcase 정규식보다 먼저 매칭(영문코드형 고객사 오탐 방지)
-  if (/^\d{6,}$/.test(b) || /^[A-Z]{2,3}\d+$/i.test(b) || /^hands[\s-]?on$/i.test(b)) return { kind: 'vendorcase', bracket: b };
-  if (INTERNAL_TAGS.includes(b.toLowerCase())) return { kind: 'internal', bracket: b };   // 내부 태그(테스트/검토/긴급 등)
-  if (/[가-힣]/.test(b)) return { kind: 'customer', bracket: b, customer: b };   // 한글 브래킷 = 고객사명으로 간주(MJ 요청)
-  return { kind: 'unclassified', bracket: b };   // H-3: 미등록·비벤더·비한글·비내부 → ⚑ 검토 필요(프론트 배너 활성화)
+  // L-16: 프론트 extractCustomer와 동일하게 제목 내 '모든' 브래킷을 스캔(선두 숫자 케이스번호 등 건너뜀)
+  const brackets = (String(summary || '').match(/\[([^\]]+)\]/g) || []).map(m => m.slice(1, -1).trim()).filter(Boolean);
+  if (!brackets.length) return { kind: 'none', bracket: '' };
+  for (const b of brackets) { for (const c of custList) { if (c.name === b || (c.aliases || []).includes(b)) return { kind: 'customer', bracket: b, customer: c.name }; } }  // M-5: 등록 고객사/별칭 우선
+  // 고객사 후보 = 숫자(케이스번호)·내부태그 아닌 첫 브래킷 (프론트와 일치)
+  const cand = brackets.find(b => !/^\d+$/.test(b) && !INTERNAL_TAGS.includes(b.toLowerCase()));
+  if (cand) {
+    if (/^[A-Z]{2,3}\d+$/i.test(cand) || /^hands[\s-]?on$/i.test(cand)) return { kind: 'vendorcase', bracket: cand };
+    if (/[가-힣]/.test(cand)) return { kind: 'customer', bracket: cand, customer: cand };   // 한글 = 고객사(MJ 요청)
+    return { kind: 'unclassified', bracket: cand };   // H-3: 미등록·비한글 모호 → ⚑ 검토 필요
+  }
+  const first = brackets[0];   // 전부 숫자/내부태그
+  if (INTERNAL_TAGS.includes(first.toLowerCase())) return { kind: 'internal', bracket: first };
+  return { kind: 'vendorcase', bracket: first };   // 숫자 케이스번호 등
 }
 async function getCustomersD1(env) {
   try { const r = await env.DB.prepare('SELECT name, aliases FROM customers WHERE active=1').all(); return (r.results || []).map(c => ({ name: c.name, aliases: (() => { try { return JSON.parse(c.aliases || '[]'); } catch { return []; } })() })); }
