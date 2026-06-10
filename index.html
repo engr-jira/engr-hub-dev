@@ -7676,7 +7676,7 @@ async function vendorAIMatrix(){
     const txt=await callAI(pr,'cmpx',{feature:'compat'});
     const mt=txt.match(/\[[\s\S]*\]/); if(!mt)throw new Error('AI 응답에서 JSON 배열을 찾지 못함');
     let arr=JSON.parse(mt[0]); if(!Array.isArray(arr)||!arr.length)throw new Error('생성된 후보 없음');
-    COMPAT_AI_CANDS=arr.slice(0,14).map(o=>({product:brand,product_version:o.product_version||ver,os:o.os||'',os_version:o.os_version||'',supported:o.supported||'',eos_date:o.eos_date||'',eol_date:o.eol_date||'',note:o.note||'',source:o.source||src}));
+    COMPAT_AI_CANDS=arr.slice(0,14).map(o=>({product:brand,product_version:o.product_version||ver,os:o.os||'',os_version:o.os_version||'',supported:o.supported||'',eos_date:(e&&e.eos)||o.eos_date||'',eol_date:o.eol_date||'',note:o.note||'',source:o.source||src}));  // 큐레이팅된 버전 EOS를 행마다 주입(AI 빈값 보완)
     showCompatAICandidates();
   }catch(err){ toast('AI 매트릭스 실패: '+err.message); }
 }
