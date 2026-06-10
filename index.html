@@ -3852,6 +3852,7 @@ function updateEosWarnBadge(){
     return d<=warnDay;
   });
   const badge=document.getElementById('eos-warn-badge');
+  if(!badge)return;
   if(warns.length>0){badge.style.display='inline-block';badge.textContent=warns.length;}
   else badge.style.display='none';
 }
@@ -3862,7 +3863,7 @@ function renderEosBanner(){
   const urgent=EOS_ITEMS.filter(it=>{
     if(!it.expireDate)return false;
     const d=daysUntil(it.expireDate);
-    return d>=0&&d<=warnDay;
+    return d<=warnDay;
   }).sort((a,b)=>daysUntil(a.expireDate)-daysUntil(b.expireDate));
   if(!urgent.length){wrap.innerHTML='';return;}
   const top=urgent[0];
@@ -3873,7 +3874,7 @@ function renderEosBanner(){
     <div class="eos-banner-text">
       <div class="eos-banner-title">라이선스 만료 임박 ${urgent.length}건</div>
       <div class="eos-banner-detail">
-        가장 임박: <strong style="color:#fca5a5">${escapeHtml(top.customer)}</strong> · ${escapeHtml(top.productDesc||top.product||'')} (${tDays}일 후 ${top.expireDate})
+        가장 임박: <strong style="color:#fca5a5">${escapeHtml(top.customer||'-')}</strong> · ${escapeHtml(top.productDesc||top.product||'')} (${tDays}일 후 ${top.expireDate})
       </div>
     </div>
     <button class="eos-banner-btn" onclick="showPage('eos',document.getElementById('nav-eos'))">자세히 →</button>
@@ -4127,7 +4128,7 @@ function renderLinks(){
     const url=escapeHtml(l.url||'');
     const meta=`by ${escapeHtml(l.createdBy||'-')}${l.createdAt?' · '+fd(l.createdAt):''}`;
     const canEdit=(l.createdBy===CURRENT_USER||IS_ADMIN||IS_SUPER);
-    return `<div class="link-card" style="position:relative" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')">${canEdit?`<input type="checkbox" class="lnk-pick" data-id="${l.id}" onclick="event.stopPropagation()" style="position:absolute;top:7px;left:7px;z-index:3;width:15px;height:15px;cursor:pointer">`:''}<span class="link-cat">${cat}</span><div class="link-info"><div class="link-title">${title}</div><div class="link-meta">${meta}</div></div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${url}</div><div class="link-actions" style="flex-shrink:0;display:flex;gap:4px;opacity:0;transition:opacity .15s"><button onclick="event.stopPropagation();openLinkDetail('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">댓글 ${commentCount}</button>${canEdit?`<button onclick="event.stopPropagation();openLinkEditModal('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">✎</button><button onclick="event.stopPropagation();deleteLink('${l.id}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button>`:''}</div></div>`;
+    return `<div class="link-card" style="position:relative" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')">${canEdit?`<input type="checkbox" class="lnk-pick" data-id="${escapeAttr(l.id)}" onclick="event.stopPropagation()" style="position:absolute;top:7px;left:7px;z-index:3;width:15px;height:15px;cursor:pointer">`:''}<span class="link-cat">${cat}</span><div class="link-info"><div class="link-title">${title}</div><div class="link-meta">${meta}</div></div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${url}</div><div class="link-actions" style="flex-shrink:0;display:flex;gap:4px;opacity:0;transition:opacity .15s"><button onclick="event.stopPropagation();openLinkDetail('${escapeAttr(l.id)}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">댓글 ${commentCount}</button>${canEdit?`<button onclick="event.stopPropagation();openLinkEditModal('${escapeAttr(l.id)}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">✎</button><button onclick="event.stopPropagation();deleteLink('${escapeAttr(l.id)}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button>`:''}</div></div>`;
   }).join('');
   renderPager('links-pager','links',list.length,'renderLinks');
 }
@@ -4845,7 +4846,7 @@ function renderUserAccounts(users=[]){
       <span style="font-size:11px;color:var(--text3)">${escapeHtml(u.id)}</span>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-      <button class="btn btn-ghost" onclick="fillUserForm('${escapeHtml(u.id)}','${escapeHtml(u.displayName||'')}','${escapeHtml(u.role||'user')}')" style="width:auto;padding:4px 12px;font-size:11px">수정</button>
+      <button class="btn btn-ghost" onclick="fillUserForm(${jsAttr(u.id)},${jsAttr(u.displayName||'')},${jsAttr(u.role||'user')})" style="width:auto;padding:4px 12px;font-size:11px">수정</button>
       ${u.id!==SUPER_ADMIN&&u.active!==false?`<button class="btn btn-red" onclick="deleteUserAccount('${escapeHtml(u.id)}')" style="width:auto;padding:4px 12px;font-size:11px">로그인 차단</button>`:''}
       ${u.id!==SUPER_ADMIN?`<button class="btn btn-red" onclick="purgeUserAccount('${escapeHtml(u.id)}')" style="width:auto;padding:4px 12px;font-size:11px;opacity:.7">계정 삭제</button>`:''}
     </div>
@@ -5978,11 +5979,11 @@ function renderCaseRight(loading=false){
   <div class="rpanel">
     <div class="rp-title">${escapeHtml(cleanTitle(c.title))}</div>
     <div class="rp-meta">
-      <div class="rp-row"><span>케이스</span><span style="color:var(--cyan);font-weight:700">${c.caseNum}</span></div>
-      <div class="rp-row"><span>Jira 이슈키</span><span style="color:var(--accent3)">${c.key}</span></div>
+      <div class="rp-row"><span>케이스</span><span style="color:var(--cyan);font-weight:700">${escapeHtml(c.caseNum)}</span></div>
+      <div class="rp-row"><span>Jira 이슈키</span><span style="color:var(--accent3)">${escapeHtml(c.key)}</span></div>
       <div class="rp-row"><span>고객사</span><span>${escapeHtml(caseCustomerName(c)||'-')}</span></div>
       <div class="rp-row"><span>담당자</span><span>${escapeHtml(c.assignee)}</span></div>
-      <div class="rp-row"><span>상태</span><span style="color:${sc}">${c.status}</span></div>
+      <div class="rp-row"><span>상태</span><span style="color:${sc}">${escapeHtml(c.status)}</span></div>
       <div class="rp-row"><span>경과일</span><span style="color:${days>=7?'#f87171':days>=3?'#fbbf24':'#22d3a5'};font-weight:700">${days}일</span></div>
     </div>
     ${loading?'<div class="loading" style="margin-bottom:12px">첨부파일/댓글 상세 조회 중...</div>':''}
@@ -6864,7 +6865,7 @@ function renderVTHistory(){
 }
 async function loadSharedVTHistory(force=false){
   if(VT_HISTORY_SHARED_LOADED&&!force)return;
-  const wrap=document.getElementById('vt-history-wrap'); if(wrap)wrap.innerHTML='<div class="empty">최근 조회 이력 불러오는 중...</div>';
+  const wrap=document.getElementById('vt-history-wrap'); if(wrap)wrap.innerHTML='<div class="empty">최근 파일(해시) 조회 이력 불러오는 중...</div>';
   try{const res=await api('/vt/history'); VT_HISTORY=res.history||[]; VT_HISTORY_SHARED_LOADED=true;}catch(e){VT_HISTORY=VT_HISTORY||[];}
   renderVTHistory();
 }
@@ -8881,7 +8882,7 @@ function renderCases(){
   const add=document.createElement('div'); add.className='case-add';
   add.innerHTML='<input class="c-title" type="text" placeholder="케이스/제목"><input class="c-cust" type="text" placeholder="고객사" list="customer-list"><span class="c-date-cap">오픈일</span><input class="c-date" type="date" title="케이스 오픈일"><button title="추가">+</button>';
   const t=add.querySelector('.c-title'), cu=add.querySelector('.c-cust'), dt=add.querySelector('.c-date');
-  const addFn=()=>{ const v=t.value.trim(); if(!v) return; cases.push({id:'c'+Date.now(),title:v,customer:cu.value.trim(),status:'대기',updated:dt.value||''}); t.value='';cu.value='';dt.value=''; saveNow('cases',cases); renderCases(); };
+  const addFn=()=>{ const v=t.value.trim(); if(!v) return; cases.push({id:'c'+Date.now()+Math.random().toString(36).slice(2,7),title:v,customer:cu.value.trim(),status:'대기',updated:dt.value||''}); t.value='';cu.value='';dt.value=''; saveNow('cases',cases); renderCases(); };
   add.querySelector('button').addEventListener('click',addFn);
   t.addEventListener('keydown',e=>{ if(e.key==='Enter') addFn(); });
   root.appendChild(add);

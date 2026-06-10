@@ -238,7 +238,7 @@ function isValidVtHash(hash = '') {
 function vtDetectType(v = '') {
   const s = String(v).trim();
   if (isValidVtHash(s)) return 'hash';
-  if (/^(\d{1,3}\.){3}\d{1,3}$/.test(s) || /^[0-9a-f:]+:[0-9a-f:]+$/i.test(s)) return 'ip';
+  if (/^(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}$/.test(s) || /^[0-9a-f:]+:[0-9a-f:]+$/i.test(s)) return 'ip';  // L-23: IPv4 옥텟 0-255 검증
   if (/^https?:\/\//i.test(s) || s.includes('/')) return 'url';
   if (/^([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i.test(s)) return 'domain';
   return '';
@@ -1371,6 +1371,7 @@ async function getAuditReadD1(env) {
   try { const r = await env.DB.prepare("SELECT value FROM app_settings WHERE key='audit_read_d1'").first(); return r?.value === 'on'; } catch (_) { return false; }
 }
 function jqlEsc(s) { return String(s).replace(/[\r\n]+/g, ' ').replace(/["\\]/g, '\\$&'); }
+function jqlTextEsc(s) { return jqlEsc(String(s).replace(/[*?~^:"]/g, ' ')); }  // L-14: text ~ 우변(Lucene) 메타문자 제거 → 비균형 와일드카드 Jira 400 방지
 function okDate(s) { s = String(s == null ? '' : s).trim(); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : ''; }  // M-7: 날짜 형식 검증(아니면 빈값) — XSS 근원 차단 + 정렬 NaN 방지
 function nextDayStr(d) { const dt = new Date(d + 'T00:00:00Z'); dt.setUTCDate(dt.getUTCDate() + 1); return dt.toISOString().slice(0, 10); }
 const TEAM_FIELDS = ['summary', 'status', 'assignee', 'reporter', 'labels', 'issuetype', 'created', 'updated', 'duedate', 'customfield_10134'];
@@ -1614,7 +1615,7 @@ export default {
           const vtRes = await fetch(vtUrl, { headers: H });
           const data = await vtRes.json();
           if (vtRes.ok && data?.data?.attributes) {
-            if (!body.noAudit) await auditLog(env, user, 'VT_LOOKUP', { vtType: type, value: raw.slice(0, 40), mal: data.data.attributes.last_analysis_stats?.malicious || 0 });
+            if (!body.noAudit) await auditLog(env, user, 'VT_LOOKUP', { vtType: type, value: raw.slice(0, 60), mal: data.data.attributes.last_analysis_stats?.malicious || 0 });
             if (type === 'hash') await saveVtHistory(env, user, raw.toLowerCase(), data.data.attributes);
           }
           return corsResponse({ ...data, _type: type, _value: raw }, vtRes.status);
@@ -1989,9 +1990,9 @@ export default {
         }
       }
       //
-      if (path.startsWith('/links/') && request.method === 'PUT') {
+      if (/^\/links\/[^/]+$/.test(path) && request.method === 'PUT') {  // L-8: /links/{id}/comments \uD761\uC218 \uBC29\uC9C0(\uC815\uD655 \uB9E4\uCE6D)
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const id = path.split('/')[2];
+        const id = decodeURIComponent(path.split('/')[2]);
         const body = await request.json().catch(() => ({}));
         const raw = await env.ENGR_KV.get('config:links');
         let links = raw ? JSON.parse(raw) : [];
@@ -2005,9 +2006,9 @@ export default {
       }
 
       //
-      if (path.startsWith('/links/') && request.method === 'DELETE') {
+      if (/^\/links\/[^/]+$/.test(path) && request.method === 'DELETE') {  // L-8: /links/{id}/comments \uD761\uC218 \uBC29\uC9C0(\uC815\uD655 \uB9E4\uCE6D)
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const id = path.split('/')[2];
+        const id = decodeURIComponent(path.split('/')[2]);
         const raw = await env.ENGR_KV.get('config:links');
         let links = raw ? JSON.parse(raw) : [];
         const delLink = links.find(l => l.id === id);
@@ -2103,11 +2104,16 @@ export default {
         const list = subs[user] || [];
         if (!list.length) return corsResponse({ ok: false, message: '\uC774 \uAE30\uAE30\uC5D0\uC11C \uBA3C\uC800 \uC54C\uB9BC\uC744 \uCF1C\uC8FC\uC138\uC694.' }, 400);
         const payload = { title: '\uD83D\uDD14 \uD14C\uC2A4\uD2B8 \uC54C\uB9BC', body: '\uC54C\uB9BC\uC774 \uC815\uC0C1 \uB3D9\uC791\uD569\uB2C8\uB2E4.', page: 'mydesk', ts: Date.now(), tag: 'test' };
-        let sent = 0, gone = 0;
+        let sent = 0, gone = 0, changed = false;
         for (const s of list) {
-          try { await enqueuePending(env, s.endpoint, payload); } catch (_) {}
-          try { const st = await sendWebPush(env, s); if (st >= 200 && st < 300) sent++; else if (st === 404 || st === 410) gone++; } catch (_) {}
+          try {
+            const st = await sendWebPush(env, s);
+            if (st >= 200 && st < 300) { sent++; try { await enqueuePending(env, s.endpoint, payload); } catch (_) {} }  // L-28: 성공 시에만 pending
+            else if (st === 404 || st === 410) { gone++; subs[user] = (subs[user] || []).filter(x => x.endpoint !== s.endpoint); changed = true; }  // L-27: 만료 endpoint 제거
+          } catch (_) {}
         }
+        if (subs[user] && !subs[user].length) { delete subs[user]; changed = true; }
+        if (changed) await savePushSubs(env, subs);
         return corsResponse({ ok: true, sent, gone });
       }
       if (path === '/push/send' && request.method === 'POST') {
@@ -2259,7 +2265,7 @@ export default {
       //
       if (path.startsWith('/knowledge/') && request.method === 'PUT') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const id = path.split('/')[2];
+        const id = decodeURIComponent(path.split('/')[2]);  // L-10: \uB313\uAE00 \uB77C\uC6B0\uD2B8\uC640 \uB514\uCF54\uB529 \uD1B5\uC77C
         const body = await request.json().catch(() => ({}));
         const raw = await env.ENGR_KV.get('config:knowledge');
         let items = raw ? JSON.parse(raw) : [];
@@ -2274,7 +2280,7 @@ export default {
       //
       if (path.startsWith('/knowledge/') && request.method === 'DELETE') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const id = path.split('/')[2];
+        const id = decodeURIComponent(path.split('/')[2]);  // L-10: \uB313\uAE00 \uB77C\uC6B0\uD2B8\uC640 \uB514\uCF54\uB529 \uD1B5\uC77C
         const raw = await env.ENGR_KV.get('config:knowledge');
         let items = raw ? JSON.parse(raw) : [];
         const target = items.find(it => it.id === id);
@@ -2405,6 +2411,7 @@ export default {
       }
       if (path === '/compat' && request.method === 'POST') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
+        if (!(await getFeatureFlags(env)).compat) return corsResponse({ ok: false, message: '\uBE44\uD65C\uC131\uD654\uB41C \uAE30\uB2A5\uC785\uB2C8\uB2E4.' }, 403);  // L-11
         const b = await request.json().catch(() => ({}));
         const now = new Date().toISOString();
         try {
@@ -2416,12 +2423,14 @@ export default {
       }
       if (path.startsWith('/compat/') && path.endsWith('/confirm') && request.method === 'POST') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
+        if (!(await getFeatureFlags(env)).compat) return corsResponse({ ok: false, message: '\uBE44\uD65C\uC131\uD654\uB41C \uAE30\uB2A5\uC785\uB2C8\uB2E4.' }, 403);  // L-11
         const id = parseInt(path.split('/')[2]) || 0;
         if (!(id > 0)) return corsResponse({ ok: false, message: '잘못된 id 입니다.' }, 400);
         try { await env.DB.prepare("UPDATE compat_matrix SET status='confirmed', verified_by=?, verified_at=? WHERE id=?").bind(user, new Date().toISOString(), id).run(); await auditLog(env, user, 'MATRIX_CONFIRM', { matrixType: 'compat', id }); return corsResponse({ ok: true }); }
         catch (e) { return corsResponse({ ok: false, message: e.message }, 500); }
       }
       if (/^\/compat\/\d+$/.test(path) && request.method === 'PUT') {  // L-12: /compat/{id}/confirm 흡수 방지(정확 매칭)
+        if (!(await getFeatureFlags(env)).compat) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);  // L-11
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const id = parseInt(path.split('/')[2]) || 0;
         if (!(id > 0)) return corsResponse({ ok: false, message: '잘못된 id 입니다.' }, 400);
@@ -2434,6 +2443,7 @@ export default {
         } catch (e) { return corsResponse({ ok: false, message: e.message }, 500); }
       }
       if (/^\/compat\/\d+$/.test(path) && request.method === 'DELETE') {  // L-12: /compat/{id}/confirm 흡수 방지(정확 매칭)
+        if (!(await getFeatureFlags(env)).compat) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);  // L-11
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const id = parseInt(path.split('/')[2]) || 0;
         if (!(id > 0)) return corsResponse({ ok: false, message: '잘못된 id 입니다.' }, 400);
@@ -2450,7 +2460,7 @@ export default {
         const parts = ['project = ENGR'];
         if (/^\d{4}-\d{2}-\d{2}$/.test(body.from || '')) parts.push(`${df} >= "${body.from}"`);
         if (/^\d{4}-\d{2}-\d{2}$/.test(body.to || '')) parts.push(`${df} <= "${body.to} 23:59"`);
-        if (body.customer) parts.push(`text ~ "${jqlEsc(body.customer)}"`);   // summary~만이면 점검 등 요약 외 위치 누락 → text(요약+설명+댓글+텍스트필드)로 포함
+        if (body.customer) parts.push(`text ~ "${jqlTextEsc(body.customer)}"`);  // L-14   // summary~만이면 점검 등 요약 외 위치 누락 → text(요약+설명+댓글+텍스트필드)로 포함
         if (body.product) parts.push(`labels = "${jqlEsc(body.product)}"`);
         if (body.status) parts.push(`status = "${jqlEsc(body.status)}"`);
         if (body.type === 'subtask') parts.push('issuetype = "\uD558\uC704 \uC791\uC5C5"');
