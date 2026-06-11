@@ -2087,6 +2087,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           <button class="btn" id="vkb-new" onclick="openVendorKb('whatsnew')" style="display:none">✨ What's New</button>
           <button class="btn" id="vkb-notes" onclick="openVendorKb('notes')" style="display:none">📝 릴리스 노트</button>
           <button class="btn compat-admin" style="display:none" onclick="vendorAIMatrix()">🤖 OS 매트릭스 AI 채우기</button>
+          <button class="btn btn-indigo compat-admin" style="display:none" onclick="vendorCuratedMatrix()">📋 검증 데이터 불러오기</button>
         </div>
         <div style="font-size:10.5px;color:var(--text3);margin-top:7px">버전 선택 → 공식 System Requirements 페이지(Broadcom)를 새 탭으로 엽니다. AI 채우기는 추정 매트릭스를 표에 <b>초안</b>으로 넣어줍니다(공식 링크로 검증·확정).</div>
       </div>
@@ -2103,10 +2104,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
       <div id="compat-ai-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto">
         <div style="background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:22px;width:min(840px,96vw)">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <h3 style="margin:0;font-size:16px">🤖 AI 호환성 후보 <span style="font-size:11px;color:var(--text3);font-weight:400">· 검토 후 초안 저장</span></h3>
+            <h3 id="compat-ai-title" style="margin:0;font-size:16px">🤖 AI 호환성 후보 <span style="font-size:11px;color:var(--text3);font-weight:400">· 검토 후 초안 저장</span></h3>
             <button class="btn" onclick="closeCompatAICandidates()">닫기</button>
           </div>
-          <div style="font-size:11px;color:var(--warn);margin-bottom:10px">⚠ AI 추정값입니다. 저장 시 모두 <b>초안</b>으로 들어가며, 표에서 검토·수정 후 <b>확정</b>하세요.</div>
+          <div id="compat-ai-warn" style="font-size:11px;color:var(--warn);margin-bottom:10px">⚠ AI 추정값입니다. 저장 시 모두 <b>초안</b>으로 들어가며, 표에서 검토·수정 후 <b>확정</b>하세요.</div>
           <div style="max-height:52vh;overflow:auto"><table class="data-tbl" style="width:100%"><tr><th style="width:30px"></th><th>제품</th><th>버전</th><th>OS</th><th>지원</th><th>비고</th></tr><tbody id="compat-ai-rows"></tbody></table></div>
           <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
             <button class="btn" onclick="closeCompatAICandidates()">취소</button>
@@ -7698,8 +7699,38 @@ async function compatAICandidate(){
     showCompatAICandidates();
   }catch(e){ toast('AI 후보 실패: '+e.message); }
 }
-function showCompatAICandidates(){
+const CURATED_COMPAT={
+  DLP:{
+    '26.1':{src:'https://techdocs.broadcom.com/us/en/symantec-security-software/information-security/data-loss-prevention/26-1/dlp-system-requirements/supported_platforms/endpoint-computer-requirements-for-the-symantec-dlp-agent.html',rows:[
+      {os:'Windows (DLP Agent)',os_version:'Windows 11 23H2 / 24H2 / 25H2 (Pro·Enterprise)',supported:'지원',note:'엔드포인트 에이전트. ARM64(23H2/24H2/25H2). VC++ 2015–2022 재배포 필요'},
+      {os:'Windows Server (DLP Agent)',os_version:'2019 / 2022 / 2025 (Desktop Experience, Credential Guard)',supported:'지원',note:'엔드포인트 에이전트'},
+      {os:'macOS (DLP Agent)',os_version:'Sonoma 14.0–14.7.6 / Sequoia 15.0–15.6 / Tahoe 26–26.4',supported:'지원',note:'엔드포인트 에이전트. Sonoma(14.x) deprecated'},
+      {os:'Linux (DLP Agent)',os_version:'RHEL 8.6–8.10 / RHEL 9.0–9.7 / Ubuntu 24.04 LTS',supported:'지원',note:'엔드포인트 에이전트'}
+    ]},
+    '25.1':{src:'https://techdocs.broadcom.com/us/en/symantec-security-software/information-security/data-loss-prevention/25-1/dlp-system-requirements/supported_platforms/endpoint-computer-requirements-for-the-symantec-dlp-agent.html',rows:[
+      {os:'Windows (DLP Agent)',os_version:'Windows 10 20H1–22H2 / Windows 11 23H2–25H2',supported:'지원',note:'엔드포인트 에이전트. Windows 10 deprecated. ARM64(23H2/24H2). VC++ 재배포 필요'},
+      {os:'Windows Server (DLP Agent)',os_version:'2019 / 2022 / 2025 (Desktop Experience, Credential Guard)',supported:'지원',note:'엔드포인트 에이전트'},
+      {os:'macOS (DLP Agent)',os_version:'Ventura 13.0.1–13.6.7 / Sonoma 14.0–14.7.6 / Sequoia 15.0–15.6 / Tahoe 26–26.4',supported:'지원',note:'엔드포인트 에이전트. Ventura(13.x) deprecated'},
+      {os:'Linux (DLP Agent)',os_version:'RHEL 8.4–8.8 / Ubuntu 22.04 LTS',supported:'지원',note:'엔드포인트 에이전트'}
+    ]}
+  },
+  SEP:{}
+};
+function vendorCuratedMatrix(){
+  const prod=document.getElementById('vendor-kb-product')?.value;
+  const ver=(document.getElementById('vendor-kb-version')?.value||'').trim();
+  const e=vendorKbEntry();
+  const cur=(CURATED_COMPAT[prod]||{})[ver];
+  if(!cur){ toast(`${prod} ${ver} 검증 데이터가 아직 없습니다 (공식 문서 큐레이션 예정)`); return; }
+  const brand='Symantec '+prod;
+  COMPAT_AI_CANDS=cur.rows.map(o=>({product:brand,product_version:ver,os:o.os||'',os_version:o.os_version||'',supported:o.supported||'지원',eos_date:(e&&e.eos)||'',eol_date:'',note:o.note||'',source:cur.src}));
+  showCompatAICandidates(true);
+}
+function showCompatAICandidates(verified){
   const m=document.getElementById('compat-ai-modal'), body=document.getElementById('compat-ai-rows'); if(!m||!body)return;
+  const _tt=document.getElementById('compat-ai-title'), _wn=document.getElementById('compat-ai-warn');
+  if(_tt)_tt.innerHTML=verified?'📋 검증 호환성 데이터 <span style="font-size:11px;color:var(--text3);font-weight:400">· 공식 문서 기준 · 검토 후 저장</span>':'🤖 AI 호환성 후보 <span style="font-size:11px;color:var(--text3);font-weight:400">· 검토 후 초안 저장</span>';
+  if(_wn)_wn.innerHTML=verified?'✅ Broadcom 공식 System Requirements 기준으로 큐레이션된 데이터입니다. 저장 시 <b>초안</b>으로 들어가며 확인 후 <b>확정</b>하세요.':'⚠ AI 추정값입니다. 저장 시 모두 <b>초안</b>으로 들어가며, 표에서 검토·수정 후 <b>확정</b>하세요.';
   body.innerHTML=COMPAT_AI_CANDS.map((r,i)=>`<tr>
     <td><input type="checkbox" class="cai-pick" data-i="${i}" checked></td>
     <td>${escapeHtml(r.product||'')}</td>
