@@ -2444,7 +2444,7 @@ export default {
           const _next = [];
           for (const _pg of _htmls) {
             if (!_pg.html) continue;
-            _texts.push('[' + _pg.u.split('/').pop().slice(0, 50) + '] ' + _strip(_pg.html).slice(0, 3500));
+            _texts.push('[' + _pg.u.split('/').pop().slice(0, 50) + '] ' + _strip(_pg.html).slice(0, 18000));
             for (const _m of _pg.html.matchAll(/href="([^"#?]+)"/g)) {
               if (!_KW.test(_m[1])) continue;
               let _abs; try { _abs = new URL(_m[1], _pg.u).href.replace(/\/$/, ''); } catch (_) { continue; }
@@ -2458,7 +2458,20 @@ export default {
         const _subs = _texts;
         const _DATA = /(endpoint-systems|for-servers|deprecated-platform|compatibility-with)/;
         _texts.sort((a, b) => (_DATA.test(a) ? 0 : 1) - (_DATA.test(b) ? 0 : 1));
-        const pageText = _texts.join(' ').slice(0, 24000);
+        let pageText;
+        if (_texts.length <= 2 && _texts[0].length > 24000) {
+          const _full = _texts.join(' ');
+          const _kw = /(windows\s*(client|server|10|11|8\.1)|\bmac(os)?\b|\blinux\b|ubuntu|red hat|\brhel\b|oracle linux|debian|suse|rocky|amazon linux|operating system|client system requirement|supported (operating|platform))/gi;
+          const _w = []; const _tk = new Set(); let _mm;
+          while ((_mm = _kw.exec(_full)) && _w.length < 16) {
+            const _s = Math.max(0, _mm.index - 150); const _k = Math.floor(_s / 1400);
+            if (_tk.has(_k)) continue; _tk.add(_k); _w.push(_full.slice(_s, _s + 1700));
+          }
+          pageText = (_w.length ? _w.join(' … ') : _full).slice(0, 24000);
+        } else {
+          const _per = _texts.length <= 2 ? 22000 : 3500;
+          pageText = _texts.map(t => t.slice(0, _per)).join(' ').slice(0, 24000);
+        }
         const prod = (b.product || '').trim(), ver = (b.version || '').trim();
         const pr = `아래는 Broadcom 공식 페이지 여러 개의 텍스트다(각 [파일명]으로 구분). "Symantec ${prod} ${ver}"의 지원 OS를 JSON 배열로만 답하라(설명/코드블록 금지). 규칙: (1)텍스트에 실제로 적힌 버전만, 창작/추정 절대 금지, 없으면 []. (2)엔드포인트(클라이언트, 'endpoint-systems' 페이지)와 서버('for-servers' 페이지)를 반드시 별도 행으로. (3)os 예: "Windows(엔드포인트)","Windows Server","macOS(엔드포인트)","Linux(엔드포인트)","Linux(서버)". (4)os_version엔 해당 OS의 정확한 버전/범위를 페이지 그대로(예 "RHEL 8.4–8.8","Sonoma 14.0–14.7.6"). 서로 다른 페이지의 버전을 한 행에 섞지 마라. (5)deprecated/ARM64/VC++ 주석은 note에 한국어로 간결히. 각 원소: {"os":"","os_version":"","supported":"지원","note":""}. [텍스트] ${pageText}`;
         try {
