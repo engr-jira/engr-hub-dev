@@ -2432,17 +2432,24 @@ export default {
       if (path === '/compat/extract' && request.method === 'POST') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 사용할 수 있습니다.' }, 403);
         const b = await request.json().catch(() => ({}));
-        const url = (b.url || '').trim();
-        if (!/^https:\/\/techdocs\.broadcom\.com\//.test(url)) return corsResponse({ ok: false, message: '허용된 Broadcom 공식 문서 URL이 아닙니다.' }, 400);
-        let pageText = '';
-        try {
-          const rr = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ENGRHUB/1.0)' }, cf: { cacheTtl: 3600 } });
-          if (!rr.ok) return corsResponse({ ok: false, message: `공식 페이지 응답 ${rr.status}` }, 502);
-          const html = await rr.text();
-          pageText = html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/\s+/g, ' ').trim().slice(0, 16000);
-        } catch (e) { return corsResponse({ ok: false, message: '공식 페이지 fetch 실패: ' + e.message }, 502); }
+        const seed = (b.url || '').trim();
+        if (!/^https:\/\/(techdocs|knowledge)\.broadcom\.com\//.test(seed)) return corsResponse({ ok: false, message: '허용된 Broadcom 공식 문서 URL이 아닙니다.' }, 400);
+        const _strip = h => h.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/\s+/g, ' ').trim();
+        const _ft = async u => { try { const r = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ENGRHUB/1.0)' }, cf: { cacheTtl: 3600 } }); if (!r.ok) return ''; return await r.text(); } catch (_) { return ''; } };
+        const seedHtml = await _ft(seed);
+        if (!seedHtml) return corsResponse({ ok: false, message: '공식 시드 페이지 fetch 실패' }, 502);
+        const _KW = /(endpoint|agent|operating-system|os-requirement|supported[_-]?(operating|platform)|deprecated-platform|client-system|mac-?os|linux|windows)/i;
+        const _seen = new Set([seed]); const _subs = [];
+        for (const _m of seedHtml.matchAll(/href="([^"#?]+)"/g)) {
+          if (!_KW.test(_m[1])) continue;
+          let _abs; try { _abs = new URL(_m[1], seed).href.replace(/\/$/, ''); } catch (_) { continue; }
+          if (!/^https:\/\/(techdocs|knowledge)\.broadcom\.com\//.test(_abs) || _seen.has(_abs)) continue;
+          _seen.add(_abs); _subs.push(_abs); if (_subs.length >= 6) break;
+        }
+        const _subTexts = await Promise.all(_subs.map(async u => '[' + u.split('/').pop() + '] ' + _strip(await _ft(u)).slice(0, 5000)));
+        const pageText = ('[SEED] ' + _strip(seedHtml).slice(0, 4000) + ' ' + _subTexts.join(' ')).slice(0, 22000);
         const prod = (b.product || '').trim(), ver = (b.version || '').trim();
-        const pr = `아래는 Broadcom 공식 System Requirements 페이지에서 추출한 텍스트다. 여기서 "Symantec ${prod} ${ver}"의 지원 엔드포인트(에이전트) OS 매트릭스를 JSON 배열로만 답하라(설명/코드블록 금지). 페이지 텍스트에 실제로 적힌 내용만 사용하고 절대 창작/추정하지 마라. 텍스트에 OS 버전 표가 없으면 빈 배열 []만 반환하라. Windows / Windows Server / macOS / Linux 를 OS 패밀리별 1행으로 묶어라. 각 원소: {"os":"","os_version":"문서의 정확한 버전 원문","supported":"지원","note":"deprecated/ARM64/VC++ 등 공식 주석을 한국어로 간결히"}. [페이지 텍스트] ${pageText}`;
+        const pr = `아래는 Broadcom 공식 System Requirements 페이지(시드 + 하위페이지들)에서 추출한 텍스트다. "Symantec ${prod} ${ver}"의 지원 엔드포인트/클라이언트(에이전트) OS 매트릭스를 JSON 배열로만 답하라(설명/코드블록 금지). 페이지 텍스트에 실제로 적힌 내용만 사용하고 절대 창작/추정하지 마라. 텍스트에 OS 정보가 없으면 빈 배열 []만 반환하라. Windows / Windows Server / macOS / Linux 를 OS 패밀리별 1행으로 묶어라. 각 원소: {"os":"","os_version":"문서의 정확한 버전 원문(빌드/범위 포함)","supported":"지원","note":"deprecated/ARM64/VC++ 등 공식 주석을 한국어로 간결히"}. [텍스트] ${pageText}`;
         try {
           const d = await callAI(env, pr, 'technical_analysis');
           const text = (d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts || []).map(p => p.text || '').join('');
@@ -2451,7 +2458,7 @@ export default {
           try { rows = mt ? JSON.parse(mt[0]) : []; } catch (_) { rows = []; }
           if (!Array.isArray(rows)) rows = [];
           await auditLog(env, user, 'AI_CALL', { compatType: 'extract', target: `${prod} ${ver}`, count: rows.length });
-          return corsResponse({ ok: true, rows, source: url });
+          return corsResponse({ ok: true, rows, source: seed, crawled: _subs.length });
         } catch (e) { return corsResponse({ ok: false, message: '추출 실패: ' + e.message }, 500); }
       }
       if (path.startsWith('/compat/') && path.endsWith('/confirm') && request.method === 'POST') {
