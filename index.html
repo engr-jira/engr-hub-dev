@@ -2064,6 +2064,11 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
       #page-compat .data-tbl th,#page-compat .data-tbl td{padding:7px 9px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
       #page-compat .data-tbl th{background:var(--bg2);font-size:11.5px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border2)}
       #page-compat .data-tbl tr:hover td{background:rgba(255,255,255,.02)}
+      #page-compat .data-tbl td.c-osv{max-width:150px}
+      #page-compat .data-tbl td.c-note{max-width:480px}
+      #page-compat .data-tbl .cmp-src{display:block;margin-top:3px;font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+      #page-compat .data-tbl .cmp-src a{color:var(--accent);text-decoration:none}
+      #page-compat .data-tbl .cmp-src a:hover{text-decoration:underline}
       #page-compat .cm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
       #page-compat .cm-grid label,#compat-modal .cm-note{display:flex;flex-direction:column;font-size:11px;color:var(--text3);gap:4px}
       #compat-modal input,#compat-modal textarea{background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text,#e2e8f0);font-size:13px;font-family:inherit}
@@ -7584,11 +7589,11 @@ function renderCompat(){
   const head=`<tr>${admin?`<th class="nosort" style="width:26px"><input type="checkbox" onclick="bulkSelectAll(this,'.cmp-pick')" title="전체 선택"></th>`:''}<th>제품</th><th>버전</th><th>OS</th><th>OS버전</th><th>지원</th><th>EOS</th><th>EOL</th><th>비고</th><th>상태</th>${admin?'<th>작업</th>':''}</tr>`;
   const body=rows.map(r=>`<tr>
     ${admin?`<td><input type="checkbox" class="cmp-pick" data-id="${r.id}"></td>`:''}<td><strong>${escapeHtml(r.product||'-')}</strong></td><td>${escapeHtml(r.product_version||'')}</td>
-    <td>${escapeHtml(r.os||'')}</td><td>${escapeHtml(r.os_version||'')}</td>
+    <td>${escapeHtml(r.os||'')}</td><td class="c-osv">${escapeHtml(r.os_version||'')}</td>
     <td>${supBadge(r.supported)}</td>
     <td style="white-space:nowrap">${r.eos_date?escapeHtml(r.eos_date)+compatDdayHtml(r.eos_date):'-'}</td>
     <td>${r.eol_date?escapeHtml(r.eol_date):'-'}</td>
-    <td style="max-width:240px">${escapeHtml(r.note||'')}${r.source?`<br><span class="muted" style="font-size:11px">출처: ${escapeHtml(r.source)}</span>`:''}</td>
+    <td class="c-note">${escapeHtml(r.note||'')}${r.source?`<span class="cmp-src">출처: ${/^https?:\/\//.test(r.source)?`<a href="${escapeHtml(r.source)}" target="_blank" rel="noopener">${escapeHtml(r.source)}</a>`:escapeHtml(r.source)}</span>`:''}</td>
     <td>${r.status==='confirmed'?'<span style="color:#34d399;white-space:nowrap">✓ 확정</span>':'<span style="background:rgba(251,191,36,.15);color:#fbbf24;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap">초안</span>'}</td>
     ${admin?`<td style="white-space:nowrap">${r.status!=='confirmed'?`<button style="${CMB}" onclick="confirmCompat(${r.id})">확정</button>`:''}<button style="${CMB}" onclick="openCompatModal(${r.id})">수정</button><button style="${CMB};color:var(--danger)" onclick="deleteCompat(${r.id})">삭제</button></td>`:''}
   </tr>`).join('');
