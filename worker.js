@@ -2524,9 +2524,10 @@ export default {
 
   // \u2500\u2500 Cron Scheduled Handler \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   async scheduled(event, env, ctx) {
-    // §3 일일 팀 업무 스냅샷 (08:30 KST = 23:30 UTC). KST 당일 updated 이슈 저장.
+    // §3 일일 팀 업무 스냅샷 (08:30 KST = 23:30 UTC). KST 전일(완료된 하루) updated 이슈 저장.
     try {
-      const kstDay = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+      const _kst = new Date(Date.now() + 9 * 3600e3); _kst.setUTCDate(_kst.getUTCDate() - 1);  // 08:30 KST 실행 → 전일을 스냅샷(당일은 00:00~08:30분만이라 거의 공백)
+      const kstDay = _kst.toISOString().slice(0, 10);
       ctx.waitUntil(buildDailySnapshot(env, kstDay));
     } catch (_) {}
   },

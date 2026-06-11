@@ -3308,7 +3308,7 @@ function renderDash_legacy_v1(){
   <div class="chart-card"><h4>고객사별 분포 TOP 8</h4>
   ${Object.entries(cusCnt).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>`
   <div class="bar-row"><div class="bar-lbl" title="${escapeHtml(k)}">${escapeHtml(k)}</div>
-  <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxC*100)}%;background:linear-gradient(90deg,#4f46e5,#818cf8)"><span class="bar-n">${v}</span></div></div></div>`).join('')||noData}
+  <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxC*100)}%;background:linear-gradient(90deg,#4f46e5,#6366f1)"><span class="bar-n">${v}</span></div></div></div>`).join('')||noData}
   </div>
   <div class="chart-card"><h4>레이블별 분포</h4>
   ${Object.entries(labCnt).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v])=>`
@@ -4304,7 +4304,7 @@ function renderLogFiles(){
   </div>`).join('');
 }
 function removeLogFile(idx){LOG_FILES.splice(idx,1);renderLogFiles();}
-function clearLogInput(){document.getElementById('log-input').value='';const s=document.getElementById('log-symptom');if(s)s.value='';LOG_FILES=[];renderLogFiles();updateLogCharCount();}
+function clearLogInput(){document.getElementById('log-input').value='';const s=document.getElementById('log-symptom');if(s)s.value='';const r=document.getElementById('log-result');if(r)r.innerHTML='';LOG_FILES=[];renderLogFiles();updateLogCharCount();}
 function updateLogCharCount(){const t=document.getElementById('log-input');const el=document.getElementById('log-charcount');if(!t||!el)return;const n=t.value.length;el.textContent=n>=10000?`${(n/1000).toFixed(1)}천자`:`${n.toLocaleString()}자`;el.style.color=n>20000?'var(--warn,#fbbf24)':'var(--text3)';}
 async function pasteLogFromClipboard(){
   const t=document.getElementById('log-input');if(!t)return;
