@@ -2097,6 +2097,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <button class="btn" onclick="copyCompatTable()">표 복사</button>
         <button class="btn compat-admin" style="display:none" onclick="compatAICandidate()">AI 후보</button>
         <button class="btn btn-indigo compat-admin" style="display:none" onclick="openCompatModal()">+ 행 추가</button>
+        <button class="btn compat-admin" style="display:none;color:#34d399" onclick="confirmAllDrafts()">✅ 일괄 확정</button>
         <button class="btn compat-admin" style="display:none;color:var(--danger)" onclick="bulkDeleteItems('.cmp-pick', id=>hubApi('/compat/'+id,{method:'DELETE'}), loadCompat, '매트릭스')">🗑 선택 삭제</button>
       </div>
       <div id="compat-summary" class="muted" style="font-size:11.5px;margin-bottom:8px"></div>
@@ -7620,6 +7621,14 @@ async function saveCompat(){
 }
 async function confirmCompat(id){ if(!confirm('이 행을 확정 처리할까요? (공식 기준으로 노출)'))return; try{ await hubApi(`/compat/${id}/confirm`,{method:'POST'}); toast('확정했습니다'); loadCompat(); }catch(e){ toast('실패: '+e.message); } }
 async function deleteCompat(id){ if(!confirm('이 행을 삭제할까요?'))return; try{ await hubApi(`/compat/${id}`,{method:'DELETE'}); toast('삭제했습니다'); loadCompat(); }catch(e){ toast('실패: '+e.message); } }
+async function confirmAllDrafts(){
+  const drafts=(COMPAT_ROWS||[]).filter(r=>r.status!=='confirmed');
+  if(!drafts.length){toast('확정할 초안이 없습니다');return;}
+  if(!confirm(`초안 ${drafts.length}건을 모두 확정할까요? (공식 기준으로 노출)`))return;
+  let ok=0,fail=0;
+  for(const r of drafts){ try{ await hubApi(`/compat/${r.id}/confirm`,{method:'POST'}); ok++; }catch(_){ fail++; } }
+  toast(`${ok}건 확정${fail?(' · '+fail+'건 실패'):''}`); loadCompat();
+}
 /* ── §1 벤더 KB (DLP/SEP) System Requirements 바로가기 ── */
 const _SEPSYS='https://techdocs.broadcom.com/us/en/symantec-security-software/endpoint-security-and-management/endpoint-protection/all/release-notes/system-requirements-for-v53308029-d69e1453.html';
 const _SEPNEW='https://techdocs.broadcom.com/us/en/symantec-security-software/endpoint-security-and-management/endpoint-protection/all/release-notes/what-s-new-for-all-releases-of-14-x-v117739871-d43e160.html';
@@ -7675,16 +7684,20 @@ async function vendorAIMatrix(){
   const prod=document.getElementById('vendor-kb-product')?.value, e=vendorKbEntry();
   const ver=(document.getElementById('vendor-kb-version')?.value||'').trim();
   if(!ver){toast('버전을 선택/입력하세요');return;}
-  const brand='Symantec '+prod, src=(e&&e.sysreq)||'';
-  toast('AI 생성 중... (수 초)');
-  const pr=`너는 보안제품 호환성 DB 보조자다. "${brand} ${ver}"의 지원 OS 매트릭스를 JSON 배열로만 답하라(설명·코드블록 금지). ★중요: 지원상태(지원/미지원/조건부)가 동일한 OS는 한 행으로 묶어라 — os 필드에 "Windows 10 / 11, Windows Server 2016~2022"처럼 나열. 상태가 다른 OS만 별도 행. 동일 버전을 OS마다 반복하지 말 것. 총 2~4행으로 최소화. 각 원소: {"product":"${brand}","product_version":"${ver}","os":"","os_version":"","supported":"지원|미지원|조건부","eos_date":"","eol_date":"","note":"서버/엔드포인트 구분 등","source":"${src}"}. product에는 버전을 넣지 마라. 모르는 값은 빈 문자열.`;
+  const brand='Symantec '+prod;
+  // 공식 엔드포인트 페이지 URL: 큐레이션 src 우선, 없으면 DLP 패턴 도출 → 워커가 fetch해 그 내용에서만 AI 추출(환각 차단)
+  const _cur=(typeof CURATED_COMPAT!=='undefined'?CURATED_COMPAT:{})[prod]||{}, _curV=_cur[ver];
+  const _vd=ver.replace(/\s+/g,'').replace(/\./g,'-');
+  const url=(_curV&&_curV.src)||(prod==='DLP'?`https://techdocs.broadcom.com/us/en/symantec-security-software/information-security/data-loss-prevention/${_vd}/dlp-system-requirements/supported_platforms/endpoint-computer-requirements-for-the-symantec-dlp-agent.html`:((e&&e.sysreq)||''));
+  if(!url){toast('이 제품/버전의 공식 URL을 찾지 못했습니다');return;}
+  toast('공식 문서에서 추출 중... (수 초)');
   try{
-    const txt=await callAI(pr,'cmpx',{feature:'compat'});
-    const mt=txt.match(/\[[\s\S]*\]/); if(!mt)throw new Error('AI 응답에서 JSON 배열을 찾지 못함');
-    let arr=JSON.parse(mt[0]); if(!Array.isArray(arr)||!arr.length)throw new Error('생성된 후보 없음');
-    COMPAT_AI_CANDS=arr.slice(0,14).map(o=>({product:brand,product_version:o.product_version||ver,os:o.os||'',os_version:o.os_version||'',supported:o.supported||'',eos_date:(e&&e.eos)||o.eos_date||'',eol_date:o.eol_date||'',note:o.note||'',source:o.source||src}));  // 큐레이팅된 버전 EOS를 행마다 주입(AI 빈값 보완)
-    showCompatAICandidates();
-  }catch(err){ toast('AI 매트릭스 실패: '+err.message); }
+    const d=await hubApi('/compat/extract',{method:'POST',body:JSON.stringify({url,product:prod,version:ver})});
+    const arr=d.rows||[];
+    if(!arr.length){toast('공식 페이지에서 OS 표를 못 찾았습니다(단일 표가 아닐 수 있음). 「검증 데이터 불러오기」를 이용하세요.');return;}
+    COMPAT_AI_CANDS=arr.slice(0,14).map(o=>({product:brand,product_version:o.product_version||ver,os:o.os||'',os_version:o.os_version||'',supported:o.supported||'지원',eos_date:(e&&e.eos)||o.eos_date||'',eol_date:o.eol_date||'',note:o.note||'',source:o.source||url}));
+    showCompatAICandidates('official');
+  }catch(err){ toast('공식 추출 실패: '+err.message); }
 }
 let COMPAT_AI_CANDS=[];
 async function compatAICandidate(){
@@ -7726,11 +7739,12 @@ function vendorCuratedMatrix(){
   COMPAT_AI_CANDS=cur.rows.map(o=>({product:brand,product_version:ver,os:o.os||'',os_version:o.os_version||'',supported:o.supported||'지원',eos_date:(e&&e.eos)||'',eol_date:'',note:o.note||'',source:cur.src}));
   showCompatAICandidates(true);
 }
-function showCompatAICandidates(verified){
+function showCompatAICandidates(mode){
   const m=document.getElementById('compat-ai-modal'), body=document.getElementById('compat-ai-rows'); if(!m||!body)return;
   const _tt=document.getElementById('compat-ai-title'), _wn=document.getElementById('compat-ai-warn');
-  if(_tt)_tt.innerHTML=verified?'📋 검증 호환성 데이터 <span style="font-size:11px;color:var(--text3);font-weight:400">· 공식 문서 기준 · 검토 후 저장</span>':'🤖 AI 호환성 후보 <span style="font-size:11px;color:var(--text3);font-weight:400">· 검토 후 초안 저장</span>';
-  if(_wn)_wn.innerHTML=verified?'✅ Broadcom 공식 System Requirements 기준으로 큐레이션된 데이터입니다. 저장 시 <b>초안</b>으로 들어가며 확인 후 <b>확정</b>하세요.':'⚠ AI 추정값입니다. 저장 시 모두 <b>초안</b>으로 들어가며, 표에서 검토·수정 후 <b>확정</b>하세요.';
+  const _v=(mode===true||mode==='verified'), _off=(mode==='official');
+  if(_tt)_tt.innerHTML=_v?'📋 검증 호환성 데이터 <span style="font-size:11px;color:var(--text3);font-weight:400">· 공식 문서 기준 · 검토 후 저장</span>':_off?'🌐 공식 문서 기반 추출 <span style="font-size:11px;color:var(--text3);font-weight:400">· Broadcom 페이지에서 추출 · 검토 후 저장</span>':'🤖 AI 호환성 후보 <span style="font-size:11px;color:var(--text3);font-weight:400">· 검토 후 초안 저장</span>';
+  if(_wn)_wn.innerHTML=_v?'✅ Broadcom 공식 System Requirements 기준으로 큐레이션된 데이터입니다. 저장 시 <b>초안</b>으로 들어가며 확인 후 <b>확정</b>하세요.':_off?'🌐 Broadcom 공식 페이지에서 AI가 추출한 데이터입니다(창작 아님). 저장 전 원문과 대조해 확인하세요.':'⚠ AI 추정값입니다. 저장 시 모두 <b>초안</b>으로 들어가며, 표에서 검토·수정 후 <b>확정</b>하세요.';
   body.innerHTML=COMPAT_AI_CANDS.map((r,i)=>`<tr>
     <td><input type="checkbox" class="cai-pick" data-i="${i}" checked></td>
     <td>${escapeHtml(r.product||'')}</td>
