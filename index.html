@@ -7562,7 +7562,7 @@ function showPage(name,btn){
 let COMPAT_ROWS=[];
 const CMB='font-size:11px;padding:3px 7px;margin:0 1px;background:var(--card2,#1e293b);border:1px solid var(--border);border-radius:6px;color:var(--text,#e2e8f0);cursor:pointer';
 function compatDday(d){ if(!d)return null; const t=new Date(d+'T00:00:00'); if(isNaN(t))return null; const today=new Date(); today.setHours(0,0,0,0); return Math.round((t-today)/86400000); }
-function compatDdayHtml(d){ const n=compatDday(d); if(n===null)return ''; const col=n<0?'var(--danger)':n<=90?'var(--warn)':'var(--text3)'; const lab=n<0?`D+${-n}`:`D-${n}`; return ` <span style="color:${col};font-weight:600;font-size:11px">${lab}</span>`; }
+function compatDdayHtml(d){ const n=compatDday(d); if(n===null)return ''; const col=n<0?'var(--danger)':n<=90?'var(--warn)':'var(--text3)'; const lab=n<0?`D+${-n}`:`D-${n}`; return `<br><span style="color:${col};font-weight:600;font-size:11px;white-space:nowrap">${lab}</span>`; }
 async function loadCompat(){
   document.querySelectorAll('.compat-admin').forEach(b=>b.style.display=(IS_ADMIN||IS_SUPER)?'':'none');
   if(typeof vendorKbVersions==='function')vendorKbVersions();
