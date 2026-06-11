@@ -7586,7 +7586,7 @@ function renderCompat(){
     ${admin?`<td><input type="checkbox" class="cmp-pick" data-id="${r.id}"></td>`:''}<td><strong>${escapeHtml(r.product||'-')}</strong></td><td>${escapeHtml(r.product_version||'')}</td>
     <td>${escapeHtml(r.os||'')}</td><td>${escapeHtml(r.os_version||'')}</td>
     <td>${supBadge(r.supported)}</td>
-    <td>${r.eos_date?escapeHtml(r.eos_date)+compatDdayHtml(r.eos_date):'-'}</td>
+    <td style="white-space:nowrap">${r.eos_date?escapeHtml(r.eos_date)+compatDdayHtml(r.eos_date):'-'}</td>
     <td>${r.eol_date?escapeHtml(r.eol_date):'-'}</td>
     <td style="max-width:240px">${escapeHtml(r.note||'')}${r.source?`<br><span class="muted" style="font-size:11px">출처: ${escapeHtml(r.source)}</span>`:''}</td>
     <td>${r.status==='confirmed'?'<span style="color:#34d399;white-space:nowrap">✓ 확정</span>':'<span style="background:rgba(251,191,36,.15);color:#fbbf24;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap">초안</span>'}</td>
