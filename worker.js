@@ -2436,18 +2436,27 @@ export default {
         if (!/^https:\/\/(techdocs|knowledge)\.broadcom\.com\//.test(seed)) return corsResponse({ ok: false, message: '허용된 Broadcom 공식 문서 URL이 아닙니다.' }, 400);
         const _strip = h => h.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/\s+/g, ' ').trim();
         const _ft = async u => { try { const r = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ENGRHUB/1.0)' }, cf: { cacheTtl: 3600 } }); if (!r.ok) return ''; return await r.text(); } catch (_) { return ''; } };
-        const seedHtml = await _ft(seed);
-        if (!seedHtml) return corsResponse({ ok: false, message: '공식 시드 페이지 fetch 실패' }, 502);
         const _KW = /(endpoint|agent|operating-system|os-requirement|supported[_-]?(operating|platform)|deprecated-platform|client-system|mac-?os|linux|windows)/i;
-        const _seen = new Set([seed]); const _subs = [];
-        for (const _m of seedHtml.matchAll(/href="([^"#?]+)"/g)) {
-          if (!_KW.test(_m[1])) continue;
-          let _abs; try { _abs = new URL(_m[1], seed).href.replace(/\/$/, ''); } catch (_) { continue; }
-          if (!/^https:\/\/(techdocs|knowledge)\.broadcom\.com\//.test(_abs) || _seen.has(_abs)) continue;
-          _seen.add(_abs); _subs.push(_abs); if (_subs.length >= 6) break;
+        const _seen = new Set([seed]); let _frontier = [seed]; const _texts = []; const _BUDGET = 14;
+        for (let _d = 0; _d < 3 && _frontier.length && _texts.length < _BUDGET; _d++) {
+          const _batch = _frontier.slice(0, _BUDGET - _texts.length);
+          const _htmls = await Promise.all(_batch.map(async u => ({ u, html: await _ft(u) })));
+          const _next = [];
+          for (const _pg of _htmls) {
+            if (!_pg.html) continue;
+            _texts.push('[' + _pg.u.split('/').pop().slice(0, 50) + '] ' + _strip(_pg.html).slice(0, 3500));
+            for (const _m of _pg.html.matchAll(/href="([^"#?]+)"/g)) {
+              if (!_KW.test(_m[1])) continue;
+              let _abs; try { _abs = new URL(_m[1], _pg.u).href.replace(/\/$/, ''); } catch (_) { continue; }
+              if (!/^https:\/\/(techdocs|knowledge)\.broadcom\.com\//.test(_abs) || _seen.has(_abs)) continue;
+              _seen.add(_abs); _next.push(_abs);
+            }
+          }
+          _frontier = _next;
         }
-        const _subTexts = await Promise.all(_subs.map(async u => '[' + u.split('/').pop() + '] ' + _strip(await _ft(u)).slice(0, 5000)));
-        const pageText = ('[SEED] ' + _strip(seedHtml).slice(0, 4000) + ' ' + _subTexts.join(' ')).slice(0, 22000);
+        if (!_texts.length) return corsResponse({ ok: false, message: '공식 시드 페이지 fetch 실패' }, 502);
+        const _subs = _texts;
+        const pageText = _texts.join(' ').slice(0, 24000);
         const prod = (b.product || '').trim(), ver = (b.version || '').trim();
         const pr = `아래는 Broadcom 공식 System Requirements 페이지(시드 + 하위페이지들)에서 추출한 텍스트다. "Symantec ${prod} ${ver}"의 지원 엔드포인트/클라이언트(에이전트) OS 매트릭스를 JSON 배열로만 답하라(설명/코드블록 금지). 페이지 텍스트에 실제로 적힌 내용만 사용하고 절대 창작/추정하지 마라. 텍스트에 OS 정보가 없으면 빈 배열 []만 반환하라. Windows / Windows Server / macOS / Linux 를 OS 패밀리별 1행으로 묶어라. 각 원소: {"os":"","os_version":"문서의 정확한 버전 원문(빌드/범위 포함)","supported":"지원","note":"deprecated/ARM64/VC++ 등 공식 주석을 한국어로 간결히"}. [텍스트] ${pageText}`;
         try {
