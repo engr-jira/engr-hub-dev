@@ -4866,7 +4866,7 @@ async function loadSettings(){
 }
 // ── 기능 사용 현황(컷 판단용) : audit_log 집계 렌더 ──
 const USAGE_FEATURE_MAP={AI_CALL:'로그/이슈 AI분석',AI_DEBUG:'AI 디버그',VT_LOOKUP:'VirusTotal 조회',VT_UPLOAD:'VirusTotal 파일',MON_VIEW:'팀 업무 모니터',HIST_VIEW:'고객사 이력',MATRIX_ADD:'호환성 매트릭스',MATRIX_UPDATE:'호환성 매트릭스',MATRIX_DELETE:'호환성 매트릭스',MATRIX_CONFIRM:'호환성 매트릭스',LINK_ADD:'업무 링크',LINK_UPDATE:'업무 링크',LINK_DELETE:'업무 링크',KNOWLEDGE_ADD:'팀 노하우',KNOWLEDGE_UPDATE:'팀 노하우',KNOWLEDGE_DELETE:'팀 노하우',EOS_ADD:'라이선스',EOS_ADD_BULK:'라이선스',EOS_UPDATE:'라이선스',EOS_DELETE:'라이선스',PUSH_SEND:'푸시 발송',PUSH_SETTINGS_CHANGE:'푸시 설정',LOGIN:'로그인',PIN_CHANGE:'PIN 변경',PIN_RESET:'PIN 초기화'};
-const USAGE_PAGE_LABEL={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',nsis:'NSIS 분석기',monitor:'팀 업무 모니터'};
+const USAGE_PAGE_LABEL={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',nsis:'NSIS 분석기',monitor:'팀 업무 모니터'};
 async function loadUsageStats(){
   const wrap=document.getElementById('usage-stats-wrap'); if(!wrap)return;
   const days=parseInt((document.getElementById('usage-days')||{}).value||'90',10)||90;
@@ -5102,7 +5102,7 @@ function resetAllHubData(){
     if(btn){btn.disabled=true;btn.textContent='초기화 중...';}
     try{
       const d=await hubApi('/admin/storage/reset',{method:'POST',body:JSON.stringify({pin:resolvedPin})});
-      LINKS=[];KNOWLEDGE=[];EOS_ITEMS=[];PRIVATE_ITEMS=[];VT_HISTORY=[];
+      LINKS=[];KNOWLEDGE=[];EOS_ITEMS=[];VT_HISTORY=[];
       localStorage.removeItem('vt_history');
       toast(`초기화 완료: ${d.deleted||0}개 삭제${d.truncated?' · 일부 데이터가 남아 다시 실행 필요':''}`);
       setAdminActionStatus(`전체 데이터 초기화 완료: ${d.deleted||0}개 삭제${d.truncated?' · 일부 데이터가 남아 다시 실행 필요':''}`);
@@ -7207,7 +7207,6 @@ function renderCurrent(){
   else if(id==='eos')renderEosList();
   else if(id==='links')renderLinks();
   else if(id==='knowledge')renderKnowledge();
-  else if(id==='private'){if(!PRIVATE_LOADED)loadPrivateItems();else renderPrivateItems();}
   else if(id==='audit')loadAudit();
   else if(id==='settings')loadSettings();
   else if(id==='vt')loadSharedVTHistory();
@@ -7598,13 +7597,12 @@ function showPage(name,btn){
   if(name==='dashboard')name='dash';
   if(name==='monitor' && !(typeof MONITOR_ALLOWED!=='undefined'&&MONITOR_ALLOWED&&(typeof FEATURE_FLAGS==='undefined'||FEATURE_FLAGS.monitor!==false)))name='dash';  // 비허용자 모니터 진입 차단
   if(name==='admin')name='settings';
-  injectPrivateHubDom();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const page=document.getElementById('page-'+name); if(page)page.classList.add('active');
   document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
   const nav=btn||document.getElementById('nav-'+name); if(nav)nav.classList.add('active');
-  const titleMap={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',nsis:'NSIS 분석기',monitor:'팀 업무 모니터'};
-  const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',eos:'고객사 라이선스 만료 관리',log:'로그 업로드 및 증상 기반 AI 분석',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',private:'로그인 사용자 전용 일정, 팁, 할일, 개인 참고',audit:'사용자 작업 이력',settings:'초기 데이터 및 저장소 관리',compat:'제품·OS 호환성 / EOS·EOL 매트릭스',nsis:'설치 스크립트 구조·보안 분석',monitor:'일/주 단위 팀 업무 갱신 현황'};
+  const titleMap={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',nsis:'NSIS 분석기',monitor:'팀 업무 모니터'};
+  const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',eos:'고객사 라이선스 만료 관리',log:'로그 업로드 및 증상 기반 AI 분석',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',audit:'사용자 작업 이력',settings:'초기 데이터 및 저장소 관리',compat:'제품·OS 호환성 / EOS·EOL 매트릭스',nsis:'설치 스크립트 구조·보안 분석',monitor:'일/주 단위 팀 업무 갱신 현황'};
   const title=document.getElementById('page-title'); if(title)title.textContent=titleMap[name]||'HUB';
   const desc=document.getElementById('page-desc'); if(desc)desc.textContent=descMap[name]||'';
   expandActiveNavGroup(name);
@@ -8258,98 +8256,6 @@ function hubApi(path,options={}){
   }).then(async r=>{const d=await r.json().catch(()=>({ok:false,message:'응답 파싱 실패'}));if(!r.ok||d.ok===false)throw new Error(d.message||`HTTP ${r.status}`);return d;});
 }
 function api(path,options={}){return hubApi(path,options);}
-let PRIVATE_ITEMS=[], PRIVATE_LOADED=false;
-function injectPrivateHubDom(){
-  // 개인 메모(nav-private) 메뉴 제거: My Desk의 메모 카드로 대체됨 (page-private DOM은 미사용으로 남김)
-  if(!document.getElementById('page-private')){
-    const main=document.querySelector('main');
-    if(main)main.insertAdjacentHTML('beforeend',`
-      <div class="page" id="page-private">
-        <div class="private-layout">
-          <div class="private-editor">
-            <div class="private-head"><strong>새 개인 기록</strong><span>나에게만 표시됩니다</span></div>
-            <div class="filter-row">
-              <select id="private-type"><option value="todo">할일</option><option value="schedule">일정</option><option value="tip">팁</option><option value="memo">메모</option></select>
-              <select id="private-priority"><option value="normal">보통</option><option value="high">중요</option><option value="low">낮음</option></select>
-              <input id="private-due" type="date">
-            </div>
-            <input id="private-title" placeholder="제목">
-            <textarea id="private-content" placeholder="내용, 참고 링크, 처리 메모를 적어두세요"></textarea>
-            <button class="btn btn-indigo" onclick="savePrivateItem()">저장</button>
-          </div>
-          <div>
-            <div class="filter-row">
-              <input id="private-q" placeholder="개인 기록 검색..." oninput="renderPrivateItems()">
-              <select id="private-filter" onchange="renderPrivateItems()"><option value="">전체 유형</option><option value="todo">할일</option><option value="schedule">일정</option><option value="tip">팁</option><option value="memo">메모</option></select>
-              <select id="private-status" onchange="renderPrivateItems()"><option value="">전체 상태</option><option value="open">진행</option><option value="done">완료</option></select>
-            </div>
-            <div id="private-list" class="issue-list"></div>
-          </div>
-        </div>
-      </div>`);
-  }
-}
-function privateTypeLabel(t){return {todo:'할일',schedule:'일정',tip:'팁',memo:'메모'}[t]||'메모';}
-function privatePriorityColor(p){return p==='high'?'#f87171':p==='low'?'#94a3b8':'#fcd34d';}
-async function loadPrivateItems(){
-  injectPrivateHubDom();
-  if(!CURRENT_USER)return;
-  try{const d=await hubApi('/private-notes');PRIVATE_ITEMS=d.items||[];PRIVATE_LOADED=true;}catch(e){PRIVATE_ITEMS=[];PRIVATE_LOADED=true;console.warn('private notes unavailable:',e.message);}
-  renderPrivateItems();
-}
-function renderPrivateItems(){
-  injectPrivateHubDom();
-  const wrap=document.getElementById('private-list');if(!wrap)return;
-  const q=(document.getElementById('private-q')?.value||'').toLowerCase();
-  const type=document.getElementById('private-filter')?.value||'';
-  const status=document.getElementById('private-status')?.value||'';
-  let list=[...PRIVATE_ITEMS];
-  if(type)list=list.filter(x=>x.type===type);
-  if(status)list=list.filter(x=>(x.status||'open')===status);
-  if(q)list=list.filter(x=>[x.title,x.content,x.type,x.dueDate].join(' ').toLowerCase().includes(q));
-  list.sort((a,b)=>(a.status==='done')-(b.status==='done') || String(a.dueDate||'9999').localeCompare(String(b.dueDate||'9999')) || String(b.updatedAt||'').localeCompare(String(a.updatedAt||'')));
-  wrap.innerHTML=list.map(x=>{
-    const col=privatePriorityColor(x.priority);
-    const done=x.status==='done';
-    return `<div class="issue-card ${done?'private-done':''}">
-      <div class="issue-main">
-        <span class="key">${privateTypeLabel(x.type)}</span>
-        <span class="st" style="background:${col}22;color:${col}">${x.priority==='high'?'중요':x.priority==='low'?'낮음':'보통'}</span>
-        <span class="title">${escapeHtml(x.title||'(제목 없음)')}</span>
-        <span class="date">${x.dueDate?escapeHtml(x.dueDate):fd(x.updatedAt)}</span>
-      </div>
-      ${x.content?`<div class="issue-sub" style="line-height:1.5;color:var(--text2)">${escapeHtml(x.content).replace(/\n/g,'<br>')}</div>`:''}
-      <div class="private-actions">
-        <button onclick="togglePrivateItem('${escapeAttr(x.id)}','${done?'open':'done'}')">${done?'진행으로':'완료'}</button>
-        <button onclick="editPrivateItem('${escapeAttr(x.id)}')">수정</button>
-        <button onclick="deletePrivateItem('${escapeAttr(x.id)}')">삭제</button>
-      </div>
-    </div>`;
-  }).join('')||'<div class="empty">개인 기록이 없습니다.</div>';
-}
-async function savePrivateItem(){
-  const title=document.getElementById('private-title').value.trim();
-  const content=document.getElementById('private-content').value.trim();
-  if(!title&&!content){toast('제목이나 내용을 입력하세요',true);return;}
-  const body={type:document.getElementById('private-type').value,priority:document.getElementById('private-priority').value,dueDate:document.getElementById('private-due').value,title,content,status:'open'};
-  try{const d=await hubApi('/private-notes',{method:'POST',body:JSON.stringify(body)});PRIVATE_ITEMS.unshift(d.item);['private-title','private-content','private-due'].forEach(id=>document.getElementById(id).value='');renderPrivateItems();toast('개인 기록 저장 완료');}catch(e){toast('저장 실패: '+e.message,true);}
-}
-function editPrivateItem(id){
-  const it=PRIVATE_ITEMS.find(x=>x.id===id);if(!it)return;
-  document.getElementById('private-type').value=it.type||'memo';
-  document.getElementById('private-priority').value=it.priority||'normal';
-  document.getElementById('private-due').value=it.dueDate||'';
-  document.getElementById('private-title').value=it.title||'';
-  document.getElementById('private-content').value=it.content||'';
-  deletePrivateItem(id,false);
-}
-async function togglePrivateItem(id,status){
-  try{await hubApi('/private-notes/'+encodeURIComponent(id),{method:'PUT',body:JSON.stringify({status})});const it=PRIVATE_ITEMS.find(x=>x.id===id);if(it)it.status=status;renderPrivateItems();}catch(e){toast('상태 변경 실패: '+e.message,true);}
-}
-async function deletePrivateItem(id,ask=true){
-  if(ask&&!confirm('이 개인 기록을 삭제할까요?'))return;
-  try{await hubApi('/private-notes/'+encodeURIComponent(id),{method:'DELETE'});PRIVATE_ITEMS=PRIVATE_ITEMS.filter(x=>x.id!==id);renderPrivateItems();if(ask)toast('삭제됐습니다');}catch(e){toast('삭제 실패: '+e.message,true);}
-}
 const updateSyncMetaV154=updateSyncMeta;
 updateSyncMeta=function(meta=SYNC_META){
   updateSyncMetaV154(meta);
@@ -8365,7 +8271,6 @@ function enterApp(){
   document.body.classList.add('app-entered');
   document.body.classList.toggle('is-admin', !!(IS_ADMIN||IS_SUPER));
   document.body.classList.toggle('is-super', !!IS_SUPER);
-  injectPrivateHubDom();
   document.getElementById('cfg').style.display='none';
   document.getElementById('app').style.display='flex';
   if(IS_ADMIN||IS_SUPER){const audit=document.getElementById('nav-audit');if(audit)audit.style.display='flex';}
@@ -8458,7 +8363,6 @@ function expandActiveNavGroup(name){
   if(g)g.classList.remove('collapsed');
 }
 function ensureMobileMoreMenu(){
-  injectPrivateHubDom();
   const nav=document.querySelector('.sb-nav');
   if(!nav)return;
   [...MOBILE_PRIMARY_NAV,...MOBILE_MORE_NAV].forEach(id=>{

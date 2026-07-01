@@ -304,23 +304,6 @@ async function deleteCollectionComment(env, key, id, commentId, user, auditType)
   await auditLog(env, user, auditType, { id, commentId });
   return { status: 200, body: { ok: true, deleted: 1 } };
 }
-async function loadPrivateNotes(env, user) {
-  const key = `private:${user}:notes`;
-  const raw = await env.ENGR_KV.get(key);
-  if (raw) return { key, items: JSON.parse(raw) };
-
-  const account = await getUserAccount(env, user);
-  if (account?.displayName && account.displayName !== user) {
-    const legacyKey = `private:${account.displayName}:notes`;
-    const legacyRaw = await env.ENGR_KV.get(legacyKey);
-    if (legacyRaw) {
-      const items = JSON.parse(legacyRaw).slice(0, 300);   // L-1: 저장본과 동일하게 슬라이스해 반환(첫 GET 초과노출 방지)
-      await env.ENGR_KV.put(key, JSON.stringify(items));
-      return { key, items, migratedFrom: legacyKey };
-    }
-  }
-  return { key, items: [] };
-}
 async function getUserPinHash(env, name) {
   if (!name) return '';
   try { return await env.ENGR_KV.get(`userpin:${name}`) || ''; } catch (_) { return ''; }
@@ -1738,7 +1721,7 @@ export default {
       if (path === '/usage/pageview' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ ok: false }, 401);
         const body = await request.json().catch(() => ({}));
-        const ALLOWED = ['dash', 'issues', 'cases', 'customers', 'eos', 'log', 'vt', 'links', 'knowledge', 'private', 'audit', 'settings', 'mydesk', 'compat', 'nsis', 'monitor'];
+        const ALLOWED = ['dash', 'issues', 'cases', 'customers', 'eos', 'log', 'vt', 'links', 'knowledge', 'audit', 'settings', 'mydesk', 'compat', 'nsis', 'monitor'];
         const pv = ALLOWED.includes(body.page) ? body.page : null;
         if (!pv) return corsResponse({ ok: false }, 400);
         ctx.waitUntil(auditLog(env, user, 'PAGE_VIEW', { page: pv }));
@@ -2215,51 +2198,6 @@ export default {
         await env.ENGR_KV.put('push:settings', JSON.stringify({ events, include, exclude }));
         await auditLog(env, user, 'PUSH_SETTINGS_CHANGE', { keys: Object.keys(body) });
         return corsResponse({ ok: true });
-      }
-      if (path === '/private-notes' && request.method === 'GET') {
-        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const notes = await loadPrivateNotes(env, user);
-        return corsResponse({ ok: true, items: notes.items });
-      }
-      if (path === '/private-notes' && request.method === 'POST') {
-        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const body = await request.json().catch(() => ({}));
-        const notes = await loadPrivateNotes(env, user);
-        let items = notes.items;
-        const item = {
-          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-          type: body.type || 'todo',
-          title: body.title || '',
-          content: body.content || '',
-          dueDate: body.dueDate || '',
-          status: body.status || 'open',
-          priority: body.priority || 'normal',
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        items.unshift(item);
-        await env.ENGR_KV.put(notes.key, JSON.stringify(items.slice(0, 300)));
-        return corsResponse({ ok: true, item });
-      }
-      if (path.startsWith('/private-notes/') && request.method === 'PUT') {
-        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const id = path.split('/')[2];
-        const body = await request.json().catch(() => ({}));
-        const notes = await loadPrivateNotes(env, user);
-        let items = notes.items;
-        items = items.map(it => it.id === id ? { ...it, ...body, id, updatedAt: new Date().toISOString() } : it);
-        await env.ENGR_KV.put(notes.key, JSON.stringify(items.slice(0, 300)));
-        return corsResponse({ ok: true });
-      }
-      if (path.startsWith('/private-notes/') && request.method === 'DELETE') {
-        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const id = path.split('/')[2];
-        const notes = await loadPrivateNotes(env, user);
-        let items = notes.items;
-        const before = items.length;
-        items = items.filter(it => it.id !== id);
-        await env.ENGR_KV.put(notes.key, JSON.stringify(items));
-        return corsResponse({ ok: true, deleted: before - items.length });
       }
       //
       if (path === '/knowledge' && request.method === 'POST') {
