@@ -2531,6 +2531,25 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         </div>
       </details>
 
+      <details class="admin-section np" id="usage-stats-section">
+        <summary><span>📊 기능 사용 현황</span><small>기능별 호출수 · 최근 사용 · 사용자수 (컷 판단용)</small></summary>
+        <div class="admin-card">
+          <h3>📊 기능 사용 현황</h3>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+            <label style="font-size:11px;color:var(--text3);font-weight:700">집계 기간</label>
+            <select id="usage-days" class="admin-input" style="max-width:140px" onchange="loadUsageStats()">
+              <option value="30">최근 30일</option>
+              <option value="90" selected>최근 90일</option>
+              <option value="180">최근 180일</option>
+            </select>
+            <button class="btn" style="width:auto;padding:6px 12px;font-size:11px" onclick="loadUsageStats()">새로고침</button>
+          </div>
+          <div id="usage-coverage" style="font-size:10.5px;color:var(--text3);margin-bottom:8px"></div>
+          <div id="usage-stats-wrap"><div class="loading">로딩...</div></div>
+          <div style="font-size:11px;color:var(--text3);line-height:1.7;margin-top:10px">🔴 최근 기간 호출 0 = 컷 후보 · 🟡 1인만 사용 = 개인도구화 후보. <b>NSIS·대시보드·고객사·개인메모</b> 등 열람형은 페이지 방문 비콘(PAGE_VIEW)으로 집계됩니다(비콘은 감사로그 기본 뷰에서 제외). 사용자수는 근사 하한(≥).</div>
+        </div>
+      </details>
+
       <details class="admin-section np" id="audit-mig-section" style="display:none">
         <summary><span>🗄️ 감사로그 D1 이전</span><small>§H KV→D1 마이그레이션 (슈퍼)</small></summary>
         <div class="admin-card">
@@ -4842,7 +4861,35 @@ async function loadSettings(){
     if(pinReset)pinReset.innerHTML='<option value="">팀원 선택</option>'+TEAM_NAMES.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(userLabel(n))}</option>`).join('');
     window.__userMap=userMap; window.__teamNames=TEAM_NAMES;
     if(typeof loadPushSettings==='function')loadPushSettings();
+    if(typeof loadUsageStats==='function')loadUsageStats();
   }catch(e){wrap.innerHTML=`<div style="color:var(--danger);font-size:12px">로드 실패: ${e.message}</div>`;}
+}
+// ── 기능 사용 현황(컷 판단용) : audit_log 집계 렌더 ──
+const USAGE_FEATURE_MAP={AI_CALL:'로그/이슈 AI분석',AI_DEBUG:'AI 디버그',VT_LOOKUP:'VirusTotal 조회',VT_UPLOAD:'VirusTotal 파일',MON_VIEW:'팀 업무 모니터',HIST_VIEW:'고객사 이력',MATRIX_ADD:'호환성 매트릭스',MATRIX_UPDATE:'호환성 매트릭스',MATRIX_DELETE:'호환성 매트릭스',MATRIX_CONFIRM:'호환성 매트릭스',LINK_ADD:'업무 링크',LINK_UPDATE:'업무 링크',LINK_DELETE:'업무 링크',KNOWLEDGE_ADD:'팀 노하우',KNOWLEDGE_UPDATE:'팀 노하우',KNOWLEDGE_DELETE:'팀 노하우',EOS_ADD:'라이선스',EOS_ADD_BULK:'라이선스',EOS_UPDATE:'라이선스',EOS_DELETE:'라이선스',PUSH_SEND:'푸시 발송',PUSH_SETTINGS_CHANGE:'푸시 설정',LOGIN:'로그인',PIN_CHANGE:'PIN 변경',PIN_RESET:'PIN 초기화'};
+const USAGE_PAGE_LABEL={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',private:'개인 메모',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',nsis:'NSIS 분석기',monitor:'팀 업무 모니터'};
+async function loadUsageStats(){
+  const wrap=document.getElementById('usage-stats-wrap'); if(!wrap)return;
+  const days=parseInt((document.getElementById('usage-days')||{}).value||'90',10)||90;
+  wrap.innerHTML='<div class="loading">로딩...</div>';
+  try{
+    const r=await fetch(`${WORKERS}/admin/usage/features?days=${days}`,{headers:authHeaders()});
+    const d=await r.json();
+    if(!d||!d.ok){wrap.innerHTML=`<div style="color:var(--danger);font-size:12px">집계 실패: ${escapeHtml((d&&d.message)||'응답 오류')}</div>`;return;}
+    const feat={};
+    const add=(name,cnt,last,users)=>{ if(!feat[name])feat[name]={count:0,last:0,users:0}; feat[name].count+=cnt||0; feat[name].last=Math.max(feat[name].last,last||0); feat[name].users=Math.max(feat[name].users,users||0); };
+    (d.byType||[]).forEach(t=>{ const nm=USAGE_FEATURE_MAP[t.type]; if(nm)add(nm,t.count,t.last,t.users); });
+    (d.byPage||[]).forEach(p=>{ const nm=USAGE_PAGE_LABEL[p.page]||('페이지:'+p.page); add(nm,p.count,p.last,p.users); });
+    Object.values(USAGE_PAGE_LABEL).forEach(nm=>{ if(!feat[nm])feat[nm]={count:0,last:0,users:0}; });
+    const now=Date.now();
+    const rows=Object.entries(feat).map(([name,v])=>({name,...v})).sort((a,b)=>a.count-b.count||b.last-a.last);
+    const fmtLast=ts=>{ if(!ts)return '—'; const dd=Math.floor((now-ts)/86400000); return dd<=0?'오늘':(dd+'일 전'); };
+    const badge=v=>{ if(v.count===0)return '<span style="color:#f87171;font-weight:700">🔴 컷후보</span>'; if(v.users<=1)return '<span style="color:#fbbf24;font-weight:700">🟡 1인</span>'; return ''; };
+    wrap.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr style="color:var(--text3);text-align:left;border-bottom:1px solid var(--border)"><th style="padding:6px 4px">기능</th><th style="padding:6px 4px;text-align:right">호출수</th><th style="padding:6px 4px;text-align:right">사용자</th><th style="padding:6px 4px;text-align:right">최근</th><th style="padding:6px 4px">판정</th></tr></thead>
+      <tbody>${rows.map(v=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 4px;color:var(--text)">${escapeHtml(v.name)}</td><td style="padding:6px 4px;text-align:right;color:var(--text)">${v.count}</td><td style="padding:6px 4px;text-align:right;color:var(--text3)">${v.users?('≥'+v.users):'—'}</td><td style="padding:6px 4px;text-align:right;color:var(--text3)">${fmtLast(v.last)}</td><td style="padding:6px 4px">${badge(v)}</td></tr>`).join('')}</tbody></table>`;
+    const cov=document.getElementById('usage-coverage');
+    if(cov){ const cs=d.coverageStart?new Date(d.coverageStart):null; cov.textContent=cs?`※ 집계 데이터 보유 시작: ${cs.toISOString().slice(0,10)} — 그 이전 기간은 0으로 표시될 수 있음`:'※ 아직 집계 데이터 없음(비콘 배포 후 누적)'; }
+  }catch(e){wrap.innerHTML=`<div style="color:var(--danger);font-size:12px">로드 실패: ${escapeHtml(e.message)}</div>`;}
 }
 function renderUserAccounts(users=[]){
   const wrap=document.getElementById('user-list-wrap');if(!wrap)return;
@@ -7537,6 +7584,14 @@ function renderCases(){
   renderCompactPager('case-pager',PAGE_STATE.cases,pages,'setCasePage');
   renderCaseRight(false);
 }
+// ── 페이지 방문 비콘 : 세션당 페이지 1회만 전송(열람형 기능 사용 측정용) ──
+const __pvSent={};
+function beaconPageView(page){
+  if(!CURRENT_USER||!page)return;
+  if(__pvSent[page])return;
+  __pvSent[page]=1;
+  try{ fetch(`${WORKERS}/usage/pageview`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({page})}).catch(()=>{}); }catch(_){}
+}
 function showPage(name,btn){
   injectV154Style();injectV155Style();renderSidebarCompact();
   renderTopbarStatus();
@@ -7564,6 +7619,7 @@ function showPage(name,btn){
   renderCurrent();
   ensureRelativeDateOptions();
   setTimeout(enhanceDateButtons,0);
+  try{ beaconPageView(name); }catch(_){}
 }
 /* ── §1 호환성·EOS 매트릭스 ─────────────────────────── */
 let COMPAT_ROWS=[];

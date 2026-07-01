@@ -1685,7 +1685,7 @@ export default {
           try {
             const q = filter
               ? env.DB.prepare('SELECT ts,ts_num,user,type,detail_json FROM audit_log WHERE type=? ORDER BY ts_num DESC LIMIT ?').bind(filter, limit)
-              : env.DB.prepare('SELECT ts,ts_num,user,type,detail_json FROM audit_log ORDER BY ts_num DESC LIMIT ?').bind(limit);
+              : env.DB.prepare("SELECT ts,ts_num,user,type,detail_json FROM audit_log WHERE type != 'PAGE_VIEW' ORDER BY ts_num DESC LIMIT ?").bind(limit);
             const r = await q.all();
             const rows = r.results || [];
             if (rows.length) {
@@ -1710,10 +1710,39 @@ export default {
           if (!val) continue;
           try {
             const item = JSON.parse(val);
+            if (!filter && item.type === 'PAGE_VIEW') continue;
             if (!filter || item.type === filter) logs.push(item);
           } catch (_) {}
         }
         return corsResponse(logs);
+      }
+
+      // ── 기능 사용 현황 집계(관리자) : D1 audit_log GROUP BY. 컷 판단용. 읽기전용 ──
+      if (path === '/admin/usage/features' && request.method === 'GET') {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 접근할 수 있습니다.' }, 403);
+        const days = Math.max(1, Math.min(365, parseInt(url.searchParams.get('days') || '90', 10) || 90));
+        const since = Date.now() - days * 86400000;
+        try {
+          const byTypeQ = await env.DB.prepare("SELECT type, COUNT(*) AS cnt, MAX(ts_num) AS last, COUNT(DISTINCT user) AS uu FROM audit_log WHERE ts_num >= ? GROUP BY type").bind(since).all();
+          const byPageQ = await env.DB.prepare("SELECT json_extract(detail_json,'$.page') AS page, COUNT(*) AS cnt, MAX(ts_num) AS last, COUNT(DISTINCT user) AS uu FROM audit_log WHERE type='PAGE_VIEW' AND ts_num >= ? GROUP BY page").bind(since).all();
+          let coverageStart = null; try { const c = await env.DB.prepare("SELECT MIN(ts_num) AS first FROM audit_log").first(); coverageStart = (c && c.first) ? c.first : null; } catch (_) {}
+          return corsResponse({
+            ok: true, days, since, coverageStart,
+            byType: (byTypeQ.results || []).map(r => ({ type: r.type, count: r.cnt, last: r.last, users: r.uu })),
+            byPage: (byPageQ.results || []).filter(r => r.page).map(r => ({ page: r.page, count: r.cnt, last: r.last, users: r.uu }))
+          });
+        } catch (e) { return corsResponse({ ok: false, message: '집계 실패: ' + (e && e.message || e) }, 500); }
+      }
+
+      // ── 페이지 방문 비콘(로그인 사용자) : 열람형 기능 사용 측정. 세션당 페이지 1회(클라 스로틀). 감사 기본뷰에선 제외됨 ──
+      if (path === '/usage/pageview' && request.method === 'POST') {
+        if (!hasSession) return corsResponse({ ok: false }, 401);
+        const body = await request.json().catch(() => ({}));
+        const ALLOWED = ['dash', 'issues', 'cases', 'customers', 'eos', 'log', 'vt', 'links', 'knowledge', 'private', 'audit', 'settings', 'mydesk', 'compat', 'nsis', 'monitor'];
+        const pv = ALLOWED.includes(body.page) ? body.page : null;
+        if (!pv) return corsResponse({ ok: false }, 400);
+        ctx.waitUntil(auditLog(env, user, 'PAGE_VIEW', { page: pv }));
+        return corsResponse({ ok: true });
       }
 
       // ── §H 감사로그 KV→D1 마이그레이션 (슈퍼) ──
