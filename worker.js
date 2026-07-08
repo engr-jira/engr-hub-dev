@@ -2539,6 +2539,80 @@ export default {
         return corsResponse({ ok: true, snapshot: snap });
       }
 
+      // \u2500\u2500 \uC2A4\uCF00\uC904 \uBD84\uC11D \uC5D4\uC9C4(B\uC548) \uACB0\uACFC \uC800\uC7A5/\uC870\uD68C : Claude \uC5D0\uC774\uC804\uD2B8\uAC00 \uC4F0\uACE0 \uD300\uC6D0\uC740 \uBDF0\uB9CC \u2500\u2500
+      if (path === '/analysis' && request.method === 'PUT') {
+        const tok = request.headers.get('x-analysis-token') || '';
+        if (!env.ANALYSIS_WRITE_TOKEN || tok !== env.ANALYSIS_WRITE_TOKEN) return corsResponse({ ok: false, message: '\uC778\uC99D \uC2E4\uD328' }, 401);
+        const body = await request.json().catch(() => null);
+        if (!body || !body.built_at || !body.day) return corsResponse({ ok: false, message: 'built_at/day \uD544\uC694' }, 400);
+        try {
+          await env.DB.prepare("CREATE TABLE IF NOT EXISTS analysis_snapshot (kind TEXT NOT NULL, built_at INTEGER NOT NULL, day TEXT NOT NULL, payload_json TEXT NOT NULL, PRIMARY KEY (kind, built_at))").run();
+          await env.DB.prepare("CREATE TABLE IF NOT EXISTS issue_analysis (issue_key TEXT NOT NULL, built_at INTEGER NOT NULL, day TEXT NOT NULL, payload_json TEXT NOT NULL, PRIMARY KEY (issue_key, built_at))").run();
+          const builtAt = Number(body.built_at); const day = String(body.day).slice(0, 10);
+          let issueN = 0;
+          if (body.team) {
+            await env.DB.prepare("INSERT OR REPLACE INTO analysis_snapshot (kind, built_at, day, payload_json) VALUES ('team', ?, ?, ?)").bind(builtAt, day, JSON.stringify(body.team)).run();
+          }
+          for (const it of (Array.isArray(body.issues) ? body.issues : [])) {
+            if (!it || !/^[A-Z][A-Z0-9]*-\d+$/.test(it.key || '') || !it.payload) continue;
+            await env.DB.prepare("INSERT OR REPLACE INTO issue_analysis (issue_key, built_at, day, payload_json) VALUES (?, ?, ?, ?)").bind(it.key, builtAt, day, JSON.stringify(it.payload)).run();
+            issueN++;
+          }
+          const cutoff = Date.now() - 180 * 86400000;   // \uBCF4\uC874 180\uC77C
+          try { await env.DB.prepare('DELETE FROM issue_analysis WHERE built_at < ?').bind(cutoff).run(); await env.DB.prepare('DELETE FROM analysis_snapshot WHERE built_at < ?').bind(cutoff).run(); } catch (_) {}
+          try {
+            await env.DB.prepare("CREATE TABLE IF NOT EXISTS analysis_request (issue_key TEXT PRIMARY KEY, requested_at INTEGER, requested_by TEXT)").run();
+            for (const it of (Array.isArray(body.issues) ? body.issues : [])) { if (it && it.key) await env.DB.prepare('DELETE FROM analysis_request WHERE issue_key = ?').bind(it.key).run(); }
+          } catch (_) {}
+          await auditLog(env, 'analysis-agent', 'ANALYSIS_RUN', { issues: issueN, hasTeam: !!body.team, day });
+          return corsResponse({ ok: true, issues: issueN, team: !!body.team });
+        } catch (e) {
+          await auditLog(env, 'analysis-agent', 'ANALYSIS_FAIL', { message: String(e && e.message || e).slice(0, 200) });
+          return corsResponse({ ok: false, message: '\uC800\uC7A5 \uC2E4\uD328: ' + (e && e.message || e) }, 500);
+        }
+      }
+      if (path === '/analysis/latest' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        let team = null, builtAt = null, keys = [];
+        try {
+          const t = await env.DB.prepare("SELECT built_at, day, payload_json FROM analysis_snapshot WHERE kind='team' ORDER BY built_at DESC LIMIT 1").first();
+          if (t) { team = JSON.parse(t.payload_json); builtAt = t.built_at; }
+          const last = await env.DB.prepare('SELECT MAX(built_at) AS b FROM issue_analysis').first();
+          if (last && last.b) {
+            const r = await env.DB.prepare('SELECT issue_key FROM issue_analysis WHERE built_at = ?').bind(last.b).all();
+            keys = (r.results || []).map(x => x.issue_key);
+            if (!builtAt) builtAt = last.b;
+          }
+        } catch (_) {}
+        return corsResponse({ ok: true, built_at: builtAt, team, issueKeys: keys });
+      }
+      if (path.startsWith('/analysis/issue/') && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        const key = decodeURIComponent(path.split('/')[3] || '');
+        if (!/^[A-Z][A-Z0-9]*-\d+$/.test(key)) return corsResponse({ ok: false, message: '\uC798\uBABB\uB41C \uC774\uC288 \uD0A4' }, 400);
+        let row = null;
+        try { const r = await env.DB.prepare('SELECT built_at, day, payload_json FROM issue_analysis WHERE issue_key = ? ORDER BY built_at DESC LIMIT 1').bind(key).first(); if (r) row = { built_at: r.built_at, day: r.day, ...JSON.parse(r.payload_json) }; } catch (_) {}
+        return corsResponse({ ok: true, key, analysis: row });
+      }
+      if (path.startsWith('/analysis/request/') && request.method === 'POST') {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 가능합니다.' }, 403);
+        const key = decodeURIComponent(path.split('/')[3] || '');
+        if (!/^[A-Z][A-Z0-9]*-\d+$/.test(key)) return corsResponse({ ok: false, message: '잘못된 이슈 키' }, 400);
+        try {
+          await env.DB.prepare("CREATE TABLE IF NOT EXISTS analysis_request (issue_key TEXT PRIMARY KEY, requested_at INTEGER, requested_by TEXT)").run();
+          await env.DB.prepare('INSERT OR REPLACE INTO analysis_request (issue_key, requested_at, requested_by) VALUES (?, ?, ?)').bind(key, Date.now(), user).run();
+          await auditLog(env, user, 'ANALYSIS_REQ', { reqKey: key });
+          return corsResponse({ ok: true });
+        } catch (e) { return corsResponse({ ok: false, message: '요청 실패: ' + (e && e.message || e) }, 500); }
+      }
+      if (path === '/analysis/requests' && request.method === 'GET') {
+        const tok = request.headers.get('x-analysis-token') || '';
+        if (!env.ANALYSIS_WRITE_TOKEN || tok !== env.ANALYSIS_WRITE_TOKEN) return corsResponse({ ok: false, message: '인증 실패' }, 401);
+        let keys = [];
+        try { const r = await env.DB.prepare('SELECT issue_key FROM analysis_request ORDER BY requested_at ASC').all(); keys = (r.results || []).map(x => x.issue_key); } catch (_) {}
+        return corsResponse({ ok: true, keys });
+      }
+
       return corsResponse({ ok: false, message: '\uC5C6\uB294 \uACBD\uB85C\uC785\uB2C8\uB2E4.' }, 404);
     } catch (err) {
       return corsResponse({ ok: false, message: err.message || '\uC11C\uBC84 \uC624\uB958' }, 500);

@@ -1921,6 +1921,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
       <div class="sec-title">운영 포커스</div>
       <div id="ops-focus" class="ops-focus-grid"></div>
       <div id="meta-incomplete-wrap"></div>
+      <div class="sec-title" id="ai-brief-title" style="display:none">🤖 AI 브리핑</div>
+      <div id="ai-brief-wrap" style="display:none"></div>
       <div class="chart-grid" id="chart-section"></div>
       <div class="sec-title">팀원 랭킹</div>
       <div class="chart-grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
@@ -3523,6 +3525,7 @@ function renderRightPanel(){
         전체화면
       </button>
     </div>
+    <div id="ai-analysis-sec" style="margin-bottom:10px"></div>
     <div class="btn-group detail-actions">
       <button class="btn btn-indigo" id="summary-btn" onclick="runAI('summary')">요약</button>
       <button class="btn btn-purple" id="analyze-btn" onclick="runAI('technical_analysis')">기술 분석</button>
@@ -3536,6 +3539,7 @@ function renderRightPanel(){
       </a>
     </div>
   </div>`;
+  try{ renderIssueAnalysis(i.key); }catch(_){}
 }
 
 async function runAI(mode){
@@ -7591,6 +7595,49 @@ function beaconPageView(page){
   __pvSent[page]=1;
   try{ fetch(`${WORKERS}/usage/pageview`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({page})}).catch(()=>{}); }catch(_){}
 }
+// ── 스케줄 AI 분석(B안) 뷰 : 생성은 스케줄 에이전트, 팀원은 조회만 ──
+let ANALYSIS_KEYS=new Set(), ANALYSIS_BUILT=null;
+function fmtBuiltAt(ts){ if(!ts)return ''; const d=new Date(ts); const p=n=>String(n).padStart(2,'0'); return `${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
+async function loadAnalysisLatest(){
+  try{
+    const d=await hubApi('/analysis/latest');
+    ANALYSIS_BUILT=d.built_at||null;
+    ANALYSIS_KEYS=new Set(d.issueKeys||[]);
+    renderAIBriefing(d);
+  }catch(_){/* 데이터 없음/미로그인 = 조용히 */}
+}
+function renderAIBriefing(d){
+  const wrap=document.getElementById('ai-brief-wrap'), title=document.getElementById('ai-brief-title');
+  if(!wrap||!title)return;
+  if(!d||(!d.team&&!(d.issueKeys||[]).length)){wrap.style.display='none';title.style.display='none';return;}
+  title.style.display=''; wrap.style.display='';
+  const t=d.team||{};
+  const secs=[];
+  if(t.monthly)secs.push(`<div class="chart-card"><h4>월간 동향</h4><div style="font-size:12.5px;line-height:1.7;color:var(--text2);white-space:pre-wrap">${escapeHtml(String(t.monthly))}</div></div>`);
+  if(t.patterns)secs.push(`<div class="chart-card"><h4>고객사 패턴</h4><div style="font-size:12.5px;line-height:1.7;color:var(--text2);white-space:pre-wrap">${escapeHtml(String(t.patterns))}</div></div>`);
+  if(t.focus)secs.push(`<div class="chart-card"><h4>오늘의 포커스</h4><div style="font-size:12.5px;line-height:1.7;color:var(--text2);white-space:pre-wrap">${escapeHtml(String(t.focus))}</div></div>`);
+  wrap.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:8px">🕐 ${fmtBuiltAt(d.built_at)} 기준 · 스케줄 분석(일 2회 07:00/15:30) · 이슈 분석 ${(d.issueKeys||[]).length}건</div><div class="chart-grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">${secs.join('')||'<div class="chart-card"><div style="font-size:12px;color:var(--text3)">팀 리포트가 아직 없습니다</div></div>'}</div>`;
+}
+async function renderIssueAnalysis(key){
+  const sec=document.getElementById('ai-analysis-sec'); if(!sec||!key)return;
+  const btn=(window.__HUB_IS_ADMIN)?`<button class="btn btn-ghost" style="width:auto;padding:3px 10px;font-size:10.5px" onclick="requestReanalysis('${key}')">🔄 재분석 요청</button>`:'';
+  sec.innerHTML=`<div style="font-size:10px;color:var(--text3);font-weight:700;margin:4px 0 6px">🤖 AI 분석 (스케줄)</div><div class="sync-meta">불러오는 중...</div>`;
+  try{
+    const d=await hubApi('/analysis/issue/'+encodeURIComponent(key));
+    const a=d.analysis;
+    if(!a){sec.innerHTML=`<div style="font-size:10px;color:var(--text3);font-weight:700;margin:4px 0 6px">🤖 AI 분석 (스케줄)</div><div style="font-size:11.5px;color:var(--text3);background:rgba(255,255,255,.03);border:1px dashed var(--border);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>이 이슈는 최근 분석 대상에 포함되지 않았습니다. 다음 주기(07:00/15:30)에 미완료·정체 이슈가 분석됩니다.</span>${btn}</div>`;return;}
+    const rows=[];
+    if(a.summary)rows.push(`<div style="margin-bottom:8px"><b style="color:var(--text)">요약</b><div style="white-space:pre-wrap">${escapeHtml(String(a.summary))}</div></div>`);
+    if(a.stall_reason)rows.push(`<div style="margin-bottom:8px"><b style="color:#fbbf24">정체 사유</b><div style="white-space:pre-wrap">${escapeHtml(String(a.stall_reason))}</div></div>`);
+    if(Array.isArray(a.next_actions)&&a.next_actions.length)rows.push(`<div style="margin-bottom:8px"><b style="color:#34d399">다음 액션</b><ol style="margin:4px 0 0 18px;padding:0">${a.next_actions.map(x=>`<li style="margin-bottom:3px">${escapeHtml(String(x))}</li>`).join('')}</ol></div>`);
+    if(a.due_risk)rows.push(`<div><b style="color:#f87171">기한 리스크</b><div style="white-space:pre-wrap">${escapeHtml(String(a.due_risk))}</div></div>`);
+    sec.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 6px"><span style="font-size:10px;color:var(--text3);font-weight:700">🤖 AI 분석 · ${fmtBuiltAt(a.built_at)} 기준</span>${btn}</div><div style="font-size:12px;line-height:1.65;color:var(--text2);background:rgba(129,140,248,.06);border:1px solid rgba(129,140,248,.22);border-radius:10px;padding:12px 14px">${rows.join('')||'<span style="color:var(--text3)">내용 없음</span>'}</div>`;
+  }catch(e){sec.innerHTML=`<div style="font-size:11px;color:var(--text3)">AI 분석 조회 실패: ${escapeHtml(e.message)}</div>`;}
+}
+async function requestReanalysis(key){
+  try{ await hubApi('/analysis/request/'+encodeURIComponent(key),{method:'POST'}); toast(`${key} 재분석 요청 등록 — 다음 실행 시 우선 분석됩니다`); }
+  catch(e){ toast('요청 실패: '+e.message,true); }
+}
 function showPage(name,btn){
   injectV154Style();injectV155Style();renderSidebarCompact();
   renderTopbarStatus();
@@ -8455,6 +8502,7 @@ enterApp=function(){
   normalizeAdminSettingsUI();
   try{ if(typeof initPushOnLogin==='function')setTimeout(initPushOnLogin,400); }catch(_){}
   try{ if(typeof loadFeatureFlags==='function')setTimeout(loadFeatureFlags,300); }catch(_){}
+  try{ if(typeof loadAnalysisLatest==='function')setTimeout(loadAnalysisLatest,600); }catch(_){}
   return result;
 };
 
