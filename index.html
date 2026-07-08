@@ -7620,7 +7620,8 @@ function renderAIBriefing(d){
 }
 async function renderIssueAnalysis(key){
   const sec=document.getElementById('ai-analysis-sec'); if(!sec||!key)return;
-  const btn=(window.__HUB_IS_ADMIN)?`<button class="btn btn-ghost" style="width:auto;padding:3px 10px;font-size:10.5px" onclick="requestReanalysis('${key}')">🔄 재분석 요청</button>`:'';
+  const isAdm=(typeof IS_ADMIN!=='undefined'&&IS_ADMIN)||(typeof IS_SUPER!=='undefined'&&IS_SUPER)||!!window.__HUB_IS_ADMIN;
+  const btn=isAdm?`<button class="btn btn-ghost" style="width:auto;padding:3px 10px;font-size:10.5px" onclick="requestReanalysis('${key}')">🔄 재분석 요청</button>`:'';
   sec.innerHTML=`<div style="font-size:10px;color:var(--text3);font-weight:700;margin:4px 0 6px">🤖 AI 분석 (스케줄)</div><div class="sync-meta">불러오는 중...</div>`;
   try{
     const d=await hubApi('/analysis/issue/'+encodeURIComponent(key));
