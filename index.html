@@ -3456,7 +3456,6 @@ function issueRowHTML(i,clickable,selected){
 function renderRightPanel(){
   if(!SEL)return;
   const i=SEL,sc=SC[i.status]||'#94a3b8',pc=PC[i.pri]||'#94a3b8';
-  const __adm=(typeof IS_ADMIN!=='undefined'&&IS_ADMIN)||(typeof IS_SUPER!=='undefined'&&IS_SUPER);
   document.getElementById('right-panel').innerHTML=`
   <div class="rpanel">
     <div class="rp-title">${escapeHtml(cleanTitle(i.title))}</div>
@@ -3511,13 +3510,6 @@ function renderRightPanel(){
       </button>
     </div>
     <div id="ai-analysis-sec" style="margin-bottom:10px"></div>
-    ${__adm?`<div class="btn-group detail-actions">
-      <button class="btn btn-indigo" id="summary-btn" onclick="runAI('summary')">요약</button>
-      <button class="btn btn-purple" id="analyze-btn" onclick="runAI('technical_analysis')">기술 분석</button>
-      <button class="btn btn-green" id="reply-btn" onclick="runAI('reply_draft')">회신 초안</button>
-      <button class="btn btn-ghost" id="handover-btn" onclick="runAI('handover')">인수인계</button>
-      <button class="btn btn-cyan" id="similar-btn" onclick="runAI('similar_issues')">유사 이슈</button>
-    </div>`:''}
     <div class="detail-link-row">
       <a href="https://escare-engr.atlassian.net/browse/${i.key}" target="_blank" style="text-decoration:none">
         <button class="btn btn-ghost">Jira →</button>
@@ -6016,7 +6008,6 @@ function renderCases_legacy_v2(){
 function renderCaseRight(loading=false){
   if(!CASE_SEL)return;
   const c=CASE_SEL,sc=SC[c.status]||'#94a3b8';
-  const __adm=(typeof IS_ADMIN!=='undefined'&&IS_ADMIN)||(typeof IS_SUPER!=='undefined'&&IS_SUPER);
   const days=daysSince(c.date);
   const refIssues=(typeof getGeneralIssues==='function'?getGeneralIssues():[]).filter(i=>typeof issueCaseMatches==='function'&&issueCaseMatches(i,c));
   document.getElementById('case-right').innerHTML=`
@@ -6036,12 +6027,6 @@ function renderCaseRight(loading=false){
     ${c.comments&&c.comments.length?`<div class="rp-comments" style="margin-bottom:12px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px">💬 코멘트 (${c.comments.length})</div>${c.comments.map(cm=>`<div class="rp-comment-item"><div class="rp-comment-author">${escapeHtml(cm.author)} · ${fdt(cm.created)}</div><div class="rp-comment-body">${adfToHtml(cm.body)}</div></div>`).join('')}</div>`:''}
     ${refIssues.length?`<div style="margin-bottom:12px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px">🔗 이 케이스를 참조한 일반 이슈 (${refIssues.length})</div>${refIssues.slice(0,8).map(i=>`<div class="rp-attach-item" style="cursor:pointer" onclick="v154GoIssueExact('${escapeAttr(i.key)}')">${escapeHtml(i.key)} · ${escapeHtml(cleanTitle(i.title||i.summary||''))} <span style="color:var(--text3);margin-left:auto">${escapeHtml(i.status||'')}</span></div>`).join('')}</div>`:''}
     <div id="ai-analysis-sec-case" style="margin-bottom:10px"></div>
-    ${__adm?`<div class="case-ai-grid">
-      <button class="btn btn-cyan" onclick="runCaseAI('summary')">요약</button>
-      <button class="btn btn-purple" onclick="runCaseAI('tech')">기술 분석</button>
-      <button class="btn btn-green" onclick="runCaseAI('reply')">회신</button>
-      <button class="btn btn-indigo" onclick="runCaseAI('similar')">유사 이슈</button>
-    </div>`:''}
     <div class="detail-link-row">
       <a href="https://escare-engr.atlassian.net/browse/${c.key}" target="_blank" style="text-decoration:none"><button class="btn btn-ghost">Jira →</button></a>
     </div>
@@ -7616,10 +7601,13 @@ async function renderIssueAnalysis(key,secId){
     const a=d.analysis;
     if(!a){sec.innerHTML=`<div style="font-size:10px;color:var(--text3);font-weight:700;margin:4px 0 6px">🤖 AI 분석 (스케줄)</div><div style="font-size:11.5px;color:var(--text3);background:rgba(255,255,255,.03);border:1px dashed var(--border);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>이 이슈는 최근 분석 대상에 포함되지 않았습니다. 다음 주기(07:00/15:30)에 미완료·정체 이슈가 분석됩니다.</span>${btn}</div>`;return;}
     const rows=[];
-    if(a.summary)rows.push(`<div style="margin-bottom:8px"><b style="color:var(--text)">요약</b><div style="white-space:pre-wrap">${escapeHtml(String(a.summary))}</div></div>`);
-    if(a.stall_reason)rows.push(`<div style="margin-bottom:8px"><b style="color:#fbbf24">정체 사유</b><div style="white-space:pre-wrap">${escapeHtml(String(a.stall_reason))}</div></div>`);
-    if(Array.isArray(a.next_actions)&&a.next_actions.length)rows.push(`<div style="margin-bottom:8px"><b style="color:#34d399">다음 액션</b><ol style="margin:4px 0 0 18px;padding:0">${a.next_actions.map(x=>`<li style="margin-bottom:3px">${escapeHtml(String(x))}</li>`).join('')}</ol></div>`);
-    if(a.due_risk)rows.push(`<div><b style="color:#f87171">기한 리스크</b><div style="white-space:pre-wrap">${escapeHtml(String(a.due_risk))}</div></div>`);
+    if(a.summary)rows.push(`<div style="margin-bottom:8px"><b style="color:var(--text)">📋 내용 요약</b><div style="white-space:pre-wrap">${escapeHtml(String(a.summary))}</div></div>`);
+    if(a.tech_analysis)rows.push(`<div style="margin-bottom:8px"><b style="color:#a78bfa">🧪 기술 분석</b><div style="white-space:pre-wrap">${escapeHtml(String(a.tech_analysis))}</div></div>`);
+    if(a.stall_reason)rows.push(`<div style="margin-bottom:8px"><b style="color:#fbbf24">⏸ 정체 사유</b><div style="white-space:pre-wrap">${escapeHtml(String(a.stall_reason))}</div></div>`);
+    const dirArr=Array.isArray(a.direction)?a.direction:(a.direction?[a.direction]:(Array.isArray(a.next_actions)?a.next_actions:[]));
+    if(dirArr.length)rows.push(`<div style="margin-bottom:8px"><b style="color:#34d399">🧭 추천 진행 방향</b><ol style="margin:4px 0 0 18px;padding:0">${dirArr.map(x=>`<li style="margin-bottom:3px">${escapeHtml(String(x))}</li>`).join('')}</ol></div>`);
+    if(a.reply_draft){const rid=(secId||'ai-analysis-sec')+'-reply';rows.push(`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="color:#22d3ee">✉️ 고객사 회신 멘트</b><button class="btn btn-ghost" style="width:auto;padding:2px 9px;font-size:10px" onclick="copyText(document.getElementById('${rid}').innerText)">📋 복사</button></div><div id="${rid}" style="white-space:pre-wrap;background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.2);border-radius:8px;padding:9px 11px;margin-top:5px">${escapeHtml(String(a.reply_draft))}</div></div>`);}
+    if(a.due_risk)rows.push(`<div><b style="color:#f87171">⏰ 기한 리스크</b><div style="white-space:pre-wrap">${escapeHtml(String(a.due_risk))}</div></div>`);
     sec.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 6px"><span style="font-size:10px;color:var(--text3);font-weight:700">🤖 AI 분석 · ${fmtBuiltAt(a.built_at)} 기준</span>${btn}</div><div style="font-size:12px;line-height:1.65;color:var(--text2);background:rgba(129,140,248,.06);border:1px solid rgba(129,140,248,.22);border-radius:10px;padding:12px 14px">${rows.join('')||'<span style="color:var(--text3)">내용 없음</span>'}</div>`;
   }catch(e){sec.innerHTML=`<div style="font-size:11px;color:var(--text3)">AI 분석 조회 실패: ${escapeHtml(e.message)}</div>`;}
 }
