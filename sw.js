@@ -1,6 +1,6 @@
 // ESCARE 보안기술팀 — Service Worker (Web Push 전용)
 // 의도적으로 fetch 핸들러 없음 → 어떤 요청도 캐시/가로채지 않음(구버전 코드 노출 방지).
-const WORKER = 'https://engr-hub-proxy-dev.mj-park.workers.dev';
+const WORKER = 'https://engr-hub-proxy-dev.engr-jira.workers.dev';
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));

@@ -76,7 +76,7 @@ cp -r dev/vendor prod/                            # Mermaid 번들
 cp dev/.nojekyll dev/.gitattributes dev/manifest.webmanifest dev/icon.svg prod/
 cp dev/manual.html dev/manual-user.html dev/mydesk.html prod/   # 매뉴얼/스탠드얼론(운영서 쓰면)
 # ⚠ wrangler.jsonc 는 복사 금지(B4). design-preview.html 은 dev 산출물 — 선택.
-sed -i 's/engr-hub-proxy-dev\.mj-park\.workers\.dev/engr-hub-proxy.mj-park.workers.dev/g' prod/index.html prod/sw.js
+sed -i 's/engr-hub-proxy-dev\.engr-jira\.workers\.dev/engr-hub-proxy.engr-jira.workers.dev/g' prod/index.html prod/sw.js
 grep -c 'engr-hub-proxy-dev' prod/index.html prod/sw.js   # 둘 다 0 이어야 함 (B2/B3)
 node -c prod/worker.js                                     # 구문 검사
 ```

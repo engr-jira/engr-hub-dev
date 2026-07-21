@@ -16,8 +16,8 @@ ESCARE 보안기술팀 내부 통합 허브. 단일 `index.html`(약 7,800줄) +
 **저장소 2개 (dev → prod 동일 코드, 워커 URL만 다름)**
 | | 프론트(GitHub Pages) | 워커(Cloudflare) | 로컬 경로 |
 |---|---|---|---|
-| dev | `engr-jira.github.io/engr-hub-dev` (repo `engr-hub-dev`) | `engr-hub-proxy-dev.mj-park.workers.dev` | `C:\Users\passi\Downloads\engr-hub-dev` |
-| prod | `engr-jira.github.io/engr-hub` (repo `engr-hub`, origin `engr-jira/engr-hub.git`) | `engr-hub-proxy.mj-park.workers.dev` | `C:\Users\passi\Downloads\engr-hub-prod` |
+| dev | `engr-jira.github.io/engr-hub-dev` (repo `engr-hub-dev`) | `engr-hub-proxy-dev.engr-jira.workers.dev` | `C:\Users\passi\Downloads\engr-hub-dev` |
+| prod | `engr-jira.github.io/engr-hub` (repo `engr-hub`, origin `engr-jira/engr-hub.git`) | `engr-hub-proxy.engr-jira.workers.dev` | `C:\Users\passi\Downloads\engr-hub-prod` |
 
 **프론트 배포** = `git push origin main` (GitHub Pages 자동 빌드, **반영까지 1~2분** 소요).
 **워커 배포** = `npx wrangler deploy --config <경로>/wrangler.jsonc`
@@ -29,7 +29,7 @@ ESCARE 보안기술팀 내부 통합 허브. 단일 `index.html`(약 7,800줄) +
 cp dev/worker.js  prod/worker.js              # 워커는 그대로 복사
 cp dev/index.html prod/index.html
 cp dev/sw.js      prod/sw.js                   # ⚠️ sw.js도 워커 URL 하드코딩 → 반드시 복사+스왑
-sed -i 's/engr-hub-proxy-dev\.mj-park\.workers\.dev/engr-hub-proxy.mj-park.workers.dev/g' prod/index.html prod/sw.js
+sed -i 's/engr-hub-proxy-dev\.engr-jira\.workers\.dev/engr-hub-proxy.engr-jira.workers.dev/g' prod/index.html prod/sw.js
 # 확인: grep -oc 'engr-hub-proxy-dev' prod/index.html prod/sw.js  → 둘 다 0 이어야 함
 git -C <repo> add -A && git -C <repo> commit -m "..." && git -C <repo> push origin main
 ```
