@@ -118,7 +118,7 @@ async function getUsers(env) {
         users[id] = {
           id,
           displayName: item.displayName || item.name || id,
-          role: ['super', 'admin', 'user'].includes(item.role) ? item.role : 'user',
+          role: ['super', 'admin', 'user', 'sales'].includes(item.role) ? item.role : 'user',
           active: item.active !== false,
         };
       }
@@ -154,7 +154,7 @@ async function saveUserAccount(env, account) {
   users[id] = {
     id,
     displayName: String(account.displayName || account.name || id).trim(),
-    role: ['super', 'admin', 'user'].includes(account.role) ? account.role : 'user',
+    role: ['super', 'admin', 'user', 'sales'].includes(account.role) ? account.role : 'user',
     active: account.active !== false,
   };
   users[SUPER_ADMIN] = users[SUPER_ADMIN] || { id: SUPER_ADMIN, displayName: 'mj.park', role: 'super', active: true };
@@ -356,6 +356,26 @@ async function isSuper(env, user) {
 async function isAdmin(env, user) {
   const admins = await getAdmins(env);
   return !!admins[user];
+}
+
+// ── 영업(sales) 역할 게이트 : 기본 차단 + 명시 허용(화이트리스트) ──
+// 블랙리스트가 아니라 화이트리스트여야 하는 이유: 이후 새 라우트를 추가해도
+// 영업 계정에 자동으로 열리지 않는다(안전한 기본값).
+const SALES_ALLOW = [
+  { m: ['GET', 'POST'], re: /^\/auth\// },
+  { m: ['GET'], re: /^\/config\/public$/ },
+  { m: ['POST'], re: /^\/usage\/pageview$/ },
+  { m: ['GET', 'POST'], re: /^\/push\// },
+  { m: ['GET'], re: /^\/features$/ },
+  { m: ['GET', 'PUT', 'DELETE'], re: /^\/mydesk$/ },      // 개인 영역
+  { m: ['GET', 'POST', 'PUT', 'DELETE'], re: /^\/eos(\/|$)/ },  // 라이선스: 영업·기술 공동 편집(MJ 확정)
+  { m: ['GET', 'POST', 'PUT', 'DELETE'], re: /^\/sales(\/|$)/ }, // 영업 전용 API (STEP 6에서 신설)
+];
+async function isSalesRole(env, user) {
+  try { const acc = await getUserAccount(env, user); return acc && acc.role === 'sales'; } catch (_) { return false; }
+}
+function salesPathAllowed(path, method) {
+  return SALES_ALLOW.some(r => r.re.test(path) && r.m.includes(method));
 }
 
 //
@@ -1397,6 +1417,15 @@ export default {
     const hasSession = !!sessionUser && (!headerUser || headerUser === sessionUser);
     const user = sessionUser || headerUser;
 
+    // ── 영업 역할 화이트리스트 강제 (라우팅 이전) ──
+    // 클라이언트에서 메뉴를 숨기는 것만으로는 API가 그대로 열리므로 서버에서 차단한다.
+    if (hasSession && await isSalesRole(env, user)) {
+      if (!salesPathAllowed(path, request.method)) {
+        ctx.waitUntil(auditLog(env, user, 'SALES_DENY', { denyPath: path, denyMethod: request.method }));
+        return corsResponse({ ok: false, message: '접근 권한이 없습니다.' }, 403);
+      }
+    }
+
     try {
       //
       if (path === '/debug') {
@@ -1526,6 +1555,16 @@ export default {
         const jiraPath = path.replace('/jira/', '');
         if (jiraPath === 'search' || jiraPath === 'search/jql') {
           return await handleJiraSearch(env, user);
+        }
+        // ── 프록시 봉인: 프론트가 실제로 쓰는 GET issue/{KEY} 만 허용 ──
+        // (이전엔 전 메서드·임의 경로가 mj.park 인증으로 통과 → Jira 임의 읽기/쓰기 가능했음)
+        if (request.method !== 'GET') {
+          ctx.waitUntil(auditLog(env, user, 'JIRA_PROXY_DENY', { jiraPath, denyMethod: request.method }));
+          return corsResponse({ ok: false, message: '허용되지 않은 메서드입니다.' }, 405);
+        }
+        if (!/^issue\/[A-Z][A-Z0-9]*-\d+$/.test(jiraPath)) {
+          ctx.waitUntil(auditLog(env, user, 'JIRA_PROXY_DENY', { jiraPath, denyMethod: 'GET' }));
+          return corsResponse({ ok: false, message: '허용되지 않은 경로입니다.' }, 403);
         }
         const jiraAuth = 'Basic ' + btoa('mj.park@escare.co.kr:' + env.JIRA_TOKEN);
         const jiraUrl = `https://escare-engr.atlassian.net/rest/api/3/${jiraPath}${url.search}`;
