@@ -2873,23 +2873,6 @@ async function login(opts){
     if(MUST_CHANGE_PIN)setTimeout(forcePinChange,200);
   }catch(e){toast('서버 연결 실패',true);btn.disabled=false;btn.textContent='접속하기 →';}
 }
-function enterApp(){
-  document.body.classList.add('app-entered');
-  document.body.classList.toggle('is-admin', !!(IS_ADMIN||IS_SUPER));
-  document.body.classList.toggle('is-super', !!IS_SUPER);
-  document.getElementById('user-label').textContent=CURRENT_DISPLAY||CURRENT_USER;
-  document.getElementById('cfg').style.display='none';
-  document.getElementById('app').style.display='flex';
-  document.getElementById('ai-dot').innerHTML='<span class="dot dot-green"></span><span style="color:var(--success)">준비됨</span>';
-  if(IS_ADMIN||IS_SUPER){document.getElementById('nav-audit').style.display='flex';}
-  if(IS_SUPER)document.getElementById('nav-settings').style.display='flex';
-  {const md=document.getElementById('nav-mydesk');if(md)md.style.display='flex';}
-  updateNavGroups();
-  // 링크 등록은 전체 팀원 가능
-  startSessionTimer();
-  syncJira();loadAIUsage({reason:'login'});loadSyncMeta();renderVTHistory();bindFileUpload();
-  loadEOS();loadLinks();loadEosWarnDays();
-}
 function startSessionTimer(){
   if(SESSION_TIMER)clearInterval(SESSION_TIMER);
   let _warned5=false,_warned1=false;
@@ -3000,35 +2983,6 @@ const pageTitles={
   audit:['감사 로그','접속 및 사용 이력'],
   settings:['관리자 설정','시스템 설정 및 권한 관리']
 };
-function showPage(id,btn){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.getElementById('page-'+id).classList.add('active');
-  document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  const t=pageTitles[id];
-  document.getElementById('page-title').textContent=t[0];
-  document.getElementById('page-desc').textContent=t[1];
-  if(id==='issues')renderIssues();
-  if(id==='cases')renderCases();
-  if(id==='customers')renderCustomers();
-  if(id==='eos')renderEosList();
-  if(id==='links'){loadLinks().then(renderLinks);}
-  if(id==='knowledge'){loadKnowledge().then(renderKnowledge);}
-  if(id==='audit')loadAudit();
-  if(id==='settings')loadSettings();
-  if(id==='dash')renderDash();
-}
-function resetFilters(){
-  ['f-q','f-stat','f-pri','f-lab','f-ass'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el)el.value='';
-  });
-  PAGE=1;renderIssues();
-}
-function resetCaseFilters(){
-  ['case-q','case-stat','case-ass','case-sla'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  PAGE_STATE.cases=1;renderCases();
-}
 function resetCustomerFilters(){['cust-q','cust-prod','cust-ass'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});PAGE_STATE.customers=1;renderCustomers();}
 function resetEosFilters(){
   ['eos-q'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -3039,94 +2993,8 @@ function resetKnowledgeFilters(){
   ['know-q','know-prod','know-cat'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   PAGE_STATE.knowledge=1;renderKnowledge();
 }
-function renderFilterTags(){
-  const tags=[];
-  const q=document.getElementById('f-q')?.value;
-  const st=document.getElementById('f-stat')?.value;
-  const pr=document.getElementById('f-pri')?.value;
-  const lb=document.getElementById('f-lab')?.value;
-  const ass=document.getElementById('f-ass')?.value;
-  if(q)tags.push({label:`검색: "${q}"`,clear:()=>{document.getElementById('f-q').value='';PAGE=1;renderIssues();}});
-  if(st)tags.push({label:`상태: ${st}`,clear:()=>{document.getElementById('f-stat').value='';PAGE=1;renderIssues();}});
-  if(pr)tags.push({label:`우선순위: ${pr}`,clear:()=>{document.getElementById('f-pri').value='';PAGE=1;renderIssues();}});
-  if(lb)tags.push({label:`레이블: ${lb}`,clear:()=>{document.getElementById('f-lab').value='';PAGE=1;renderIssues();}});
-  if(ass)tags.push({label:`담당자: ${ass}`,clear:()=>{document.getElementById('f-ass').value='';PAGE=1;renderIssues();}});
-  const wrap=document.getElementById('active-filter-tags');
-  if(!wrap)return;
-  if(!tags.length){
-    wrap.innerHTML='';
-    window._filterClears=[];
-    return;
-  }
-  wrap.innerHTML=tags.map((t,i)=>`<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:var(--accent3);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:600">${escapeHtml(t.label)}<span onclick="window._filterClears[${i}]()" style="cursor:pointer;color:var(--accent2);font-size:14px;line-height:1">×</span></span>`).join('');
-  window._filterClears=tags.map(t=>t.clear);
-}
 
 // ── JIRA ──────────────────────────────────────────
-async function syncJira(){
-  document.getElementById('jira-dot').innerHTML='<span class="dot" style="background:var(--warn)"></span>동기화중...';
-  try{
-    const r=await fetch(`${WORKERS}/jira/search/jql`,{headers:authHeaders()});
-    if(!r.ok)throw new Error('응답 오류: '+r.status);
-    const d=await r.json();
-    if(!d.issues)throw new Error('이슈 데이터 없음');
-    ISSUES=d.issues.map(i=>({
-      key:i.key,title:i.fields.summary,status:i.fields.status.name,
-      pri:i.fields.priority?i.fields.priority.name:'Medium',
-      assignee:i.fields.assignee?i.fields.assignee.displayName:'-',
-      reporter:i.fields.reporter?i.fields.reporter.displayName:'-',
-      labels:i.fields.labels||[],
-      date:i.fields.created?i.fields.created.slice(0,10):'',
-      updated:i.fields.updated?i.fields.updated.slice(0,10):'',
-      desc:'',
-      descPlain:'',
-      comments:[],
-      attachments:[],
-      type:i.fields.issuetype?i.fields.issuetype.name:'작업',
-      customer:((i.fields.customfield_10134||[]).filter(isRealCust)[0])||extractCustomer(i.fields.summary),
-      customers:(i.fields.customfield_10134||[]).filter(isRealCust),
-      division:i.fields.customfield_10178||[],
-      category:i.fields.customfield_10036?i.fields.customfield_10036.value:'',
-      rating:i.fields.customfield_10244?i.fields.customfield_10244.value:'',
-      startDate:i.fields.customfield_10015||'',
-      due:i.fields.duedate||'',
-      caseNums:extractCaseNums(i.fields.summary),
-      _detailLoaded:false
-    }));
-    document.getElementById('jira-dot').innerHTML='<span class="dot dot-green"></span><span style="color:var(--success)">연결됨</span>';
-    document.getElementById('issue-count').textContent=ISSUES.length+'건';
-    updateSyncMeta(d.sync||{rangeMonths:d.rangeMonths,count:ISSUES.length,syncedAt:new Date().toISOString(),syncedBy:CURRENT_USER});
-    refreshFilters();
-    renderDash();
-    toast('Jira 동기화 완료! '+ISSUES.length+'건');
-  }catch(e){
-    document.getElementById('jira-dot').innerHTML='<span class="dot" style="background:var(--danger)"></span><span style="color:var(--danger)">오류</span>';
-    toast('Jira 연결 실패: '+e.message,true);
-  }
-}
-async function fetchIssueDetail(key){
-  const fields=['summary','status','priority','assignee','reporter','created','updated','description','labels','issuetype','attachment','comment'].join(',');
-  const r=await fetch(`${WORKERS}/jira/issue/${encodeURIComponent(key)}?fields=${encodeURIComponent(fields)}`,{headers:authHeaders()});
-  if(!r.ok)throw new Error('상세 조회 오류: '+r.status);
-  const i=await r.json();
-  return {
-    key:i.key,title:i.fields.summary,status:i.fields.status.name,
-    pri:i.fields.priority?i.fields.priority.name:'Medium',
-    assignee:i.fields.assignee?i.fields.assignee.displayName:'-',
-    reporter:i.fields.reporter?i.fields.reporter.displayName:'-',
-    labels:i.fields.labels||[],
-    date:i.fields.created?i.fields.created.slice(0,10):'',
-    updated:i.fields.updated?i.fields.updated.slice(0,10):'',
-    desc:extractADF(i.fields.description),
-    descPlain:extractADFPlain(i.fields.description),
-    comments:extractCommentsArr(i.fields.comment),
-    attachments:extractAttachments(i.fields.attachment),
-    type:i.fields.issuetype?i.fields.issuetype.name:'작업',
-    customer:extractCustomer(i.fields.summary),
-    caseNums:extractCaseNums(i.fields.summary),
-    _detailLoaded:true
-  };
-}
 async function ensureIssueDetail(issue){
   if(!issue || issue._detailLoaded || issue._detailLoading)return issue;
   issue._detailLoading=true;
@@ -3233,17 +3101,7 @@ function extractCustomer(title){
   }
   return '';
 }
-function extractCaseNums(title){return title.match(/\b\d{7,}\b/g)||[];}
-function cleanTitle(title){return title.replace(/\[\s*\]/g,'').replace(/\s+/g,' ').trim();}
 
-function refreshFilters(){
-  const labels=new Set(),assignees=new Set();
-  ISSUES.forEach(i=>{i.labels.forEach(l=>labels.add(l));if(i.assignee&&i.assignee!=='-')assignees.add(i.assignee);});
-  const labSel=document.getElementById('f-lab');
-  const assSel=document.getElementById('f-ass');
-  if(labSel){const cur=labSel.value;labSel.innerHTML='<option value="">전체 레이블</option>'+Array.from(labels).sort().map(l=>`<option ${cur===l?'selected':''}>${escapeHtml(l)}</option>`).join('');}
-  if(assSel){const cur=assSel.value;assSel.innerHTML='<option value="">전체 담당자</option>'+Array.from(assignees).sort().map(l=>`<option ${cur===l?'selected':''}>${escapeHtml(l)}</option>`).join('');}
-}
 
 function adfToHtml(text){
   if(!text)return '';
@@ -3259,36 +3117,6 @@ function adfToHtml(text){
 
 // ── DASHBOARD ─────────────────────────────────────
 
-function renderOpsFocus(){
-  const wrap=document.getElementById('ops-focus');if(!wrap)return;
-  const open=ISSUES.filter(i=>i.status!=='완료');
-  const overdue=open.filter(i=>daysSince(i.date)>=7);
-  const high=open.filter(i=>['Highest','High'].includes(i.pri));
-  const nearEos=(EOS_ITEMS||[]).filter(x=>daysUntil(x.date)>=0&&daysUntil(x.date)<=30);
-  const stale=ISSUES.filter(i=>i.updated&&i.status!=='완료'&&daysSince(i.updated)>=14);
-  const topCustomer=Object.entries(open.reduce((a,i)=>{const k=i.customer||'미분류';a[k]=(a[k]||0)+1;return a;},{})).sort((a,b)=>b[1]-a[1])[0];
-  wrap.innerHTML=`
-    <div class="ops-focus-card ${overdue.length?'danger':''}">
-      <h4>🚨 장기 진행 이슈</h4>
-      <div class="big">${overdue.length}</div>
-      <div class="small">접수 후 7일 이상 미완료<br>${overdue.slice(0,2).map(i=>escapeHtml(i.key)).join(', ')||'현재 없음'}</div>
-    </div>
-    <div class="ops-focus-card ${high.length?'warn':''}">
-      <h4>⚡ 높은 우선순위</h4>
-      <div class="big">${high.length}</div>
-      <div class="small">Highest/High 미완료 기준<br>${high.slice(0,2).map(i=>escapeHtml(i.key)).join(', ')||'현재 없음'}</div>
-    </div>
-    <div class="ops-focus-card ${nearEos.length?'warn':''}">
-      <h4>⏰ 30일 내 만료</h4>
-      <div class="big">${nearEos.length}</div>
-      <div class="small">라이선스 임박<br>${nearEos.slice(0,2).map(x=>escapeHtml((x.customer||'-')+' '+(x.productDesc||x.product||''))).join(', ')||'현재 없음'}</div>
-    </div>
-    <div class="ops-focus-card">
-      <h4>📌 집중 고객사</h4>
-      <div class="big">${topCustomer?topCustomer[1]:0}</div>
-      <div class="small">${topCustomer?escapeHtml(topCustomer[0]):'미완료 이슈 없음'}<br>오래된 미수정 이슈 ${stale.length}건</div>
-    </div>`;
-}
 
 // renderDash — v1.5.5 최종 정의는 파일 하단에 있음 (중복 제거됨)
 function renderDash_legacy_v1(){
@@ -3396,22 +3224,6 @@ function renderDash_legacy_v1(){
 }
 
 // ── ISSUES ────────────────────────────────────────
-function filteredIssues(){
-  const q=(document.getElementById('f-q')||{}).value?.toLowerCase()||'';
-  const st=(document.getElementById('f-stat')||{}).value||'';
-  const pr=(document.getElementById('f-pri')||{}).value||'';
-  const lb=(document.getElementById('f-lab')||{}).value||'';
-  const ass=(document.getElementById('f-ass')||{}).value||'';
-  return ISSUES.filter(i=>{
-    const txt=[i.key,i.title,i.customer,i.assignee,(i.descPlain||''),(i.labels||[]).join(' ')].join(' ').toLowerCase();
-    if(q&&!txt.includes(q))return false;
-    if(st&&i.status!==st)return false;
-    if(pr&&i.pri!==pr)return false;
-    if(lb&&!i.labels.includes(lb))return false;
-    if(ass&&i.assignee!==ass)return false;
-    return true;
-  });
-}
 function renderIssues_legacy_v1(){
   renderFilterTags();
   const fi=filteredIssues();
@@ -3434,24 +3246,6 @@ function renderIssues_legacy_v1(){
   for(let p=pStart;p<=pEnd;p++)html+=`<button style="${p===PAGE?as:bs}" onclick="PAGE=${p};renderIssues()">${p}</button>`;
   html+=`<button style="${bs}" ${PAGE===totalPages?'disabled':''} onclick="PAGE++;renderIssues()">›</button><button style="${bs}" ${PAGE===totalPages?'disabled':''} onclick="PAGE=${totalPages};renderIssues()">»</button>`;
   nav.innerHTML=html;
-}
-function issueRowHTML(i,clickable,selected){
-  const sc=SC[i.status]||'#94a3b8',pc=PC[i.pri]||'#94a3b8';
-  return `<div class="irow${selected?' selected':''}" style="--lc:${sc}">
-  <div class="irow-top">
-    <span class="ikey">${i.key}</span>
-    <span class="badge" style="background:${sc}22;color:${sc}">${i.status}</span>
-    <span class="badge" style="background:${pc}22;color:${pc}">${i.pri}</span>
-    <span class="ititle">${escapeHtml(cleanTitle(i.title))}</span>
-    <span class="imeta">${fd(i.date)}</span>
-  </div>
-  <div class="irow-bot">
-    ${i.labels.map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join('')}
-    ${i.customer?`<span class="badge" style="background:rgba(99,102,241,.15);color:var(--accent3)">${escapeHtml(i.customer)}</span>`:''}
-    ${i.assignee&&i.assignee!=='-'?`<span class="imeta">@${escapeHtml(i.assignee)}</span>`:''}
-    ${i.attachments&&i.attachments.length?`<span class="imeta">📎${i.attachments.length}</span>`:''}
-    ${i.comments&&i.comments.length?`<span class="imeta">💬${i.comments.length}</span>`:''}
-  </div></div>`;
 }
 function renderRightPanel(){
   if(!SEL)return;
@@ -3744,9 +3538,6 @@ document.addEventListener('keydown',e=>{
 });
 
 // ── CASE ──────────────────────────────────────────
-function getCases(){
-  return ISSUES.filter(i=>i.caseNums&&i.caseNums.length>0).flatMap(i=>i.caseNums.map(cn=>({...i,caseNum:cn})));
-}
 function renderCases_legacy_v1(){
   const q=(document.getElementById('case-q')||{}).value?.toLowerCase()||'';
   const cStat=document.getElementById('case-stat')?.value||'';
@@ -3769,69 +3560,6 @@ function renderCases_legacy_v1(){
   wrap.innerHTML=pageCases.map((c,idx)=>{const days=daysSince(c.date);const slaBg=days>=7?'rgba(248,113,113,.2)':days>=5?'rgba(251,191,36,.2)':days>=3?'rgba(251,191,36,.12)':'rgba(34,211,165,.15)';const slaColor=days>=7?'#f87171':days>=5?'#fbbf24':days>=3?'#fbbf24':'#22d3a5';const sc=SC[c.status]||'#94a3b8';let t=c.title.replace(new RegExp('\[?\s*'+c.caseNum+'\s*\]?'),'').replace(/\[\s*\]/g,'').replace(/\s+/g,' ').trim();return `<div class="case-card${CASE_SEL&&CASE_SEL.caseNum===c.caseNum&&CASE_SEL.key===c.key?' selected':''}" style="--lc:${sc}" data-idx="${idx}"><div class="irow-top"><span class="case-num">📦 ${c.caseNum}</span><span class="badge" style="background:${sc}22;color:${sc}">${c.status}</span><span class="sla-badge" style="background:${slaBg};color:${slaColor}">${days}일 경과</span><span class="ititle">${escapeHtml(t)}</span><span class="imeta">${escapeHtml(c.customer||'-')}</span></div><div class="irow-bot">${c.labels.map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join('')}<span class="imeta">@${escapeHtml(c.assignee)}</span><span class="imeta">${fd(c.date)}</span></div></div>`;}).join('');
   wrap.querySelectorAll('.case-card').forEach((el,idx)=>{el.onclick=()=>{CASE_SEL=pageCases[idx];renderCases();renderCaseRight();};});
   renderPager('case-pager','cases',cases.length,'renderCases');
-}
-function renderCaseRight(){
-  if(!CASE_SEL)return;
-  const c=CASE_SEL,sc=SC[c.status]||'#94a3b8';
-  const days=daysSince(c.date);
-  const refIssues=(typeof getGeneralIssues==='function'?getGeneralIssues():[]).filter(i=>typeof issueCaseMatches==='function'&&issueCaseMatches(i,c));
-  document.getElementById('case-right').innerHTML=`
-  <div class="rpanel">
-    <div class="rp-title">${escapeHtml(cleanTitle(c.title))}</div>
-    <div class="rp-meta">
-      <div class="rp-row"><span>케이스</span><span style="color:var(--cyan);font-weight:700">${c.caseNum}</span></div>
-      <div class="rp-row"><span>이슈키</span><span style="color:var(--accent3)">${c.key}</span></div>
-      <div class="rp-row"><span>고객사</span><span>${escapeHtml(caseCustomerName(c)||'-')}</span></div>
-      <div class="rp-row"><span>담당자</span><span>${escapeHtml(c.assignee)}</span></div>
-      <div class="rp-row"><span>상태</span><span style="color:${sc}">${c.status}</span></div>
-      <div class="rp-row"><span>경과일</span><span style="color:${days>=7?'#f87171':days>=3?'#fbbf24':'#22d3a5'};font-weight:700">${days}일</span></div>
-    </div>
-    ${c.desc?`<div class="rp-desc">${adfToHtml(c.desc)}</div>`:''}
-    ${c.attachments&&c.attachments.length?`
-    <div style="margin-bottom:12px">
-      <div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px">📎 첨부파일 (${c.attachments.length})</div>
-      ${c.attachments.map(a=>`<div class="rp-attach-item">📄 ${escapeHtml(a.name)} <span style="color:var(--text3);margin-left:auto">${(a.size/1024).toFixed(1)}KB</span></div>`).join('')}
-    </div>`:''}
-    ${c.comments&&c.comments.length?`
-    <div class="rp-comments" style="margin-bottom:12px">
-      <div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px">💬 코멘트 (${c.comments.length})</div>
-      ${c.comments.map(cm=>`<div class="rp-comment-item">
-        <div class="rp-comment-author">${escapeHtml(cm.author)} · ${fdt(cm.created)}</div>
-        <div class="rp-comment-body">${adfToHtml(cm.body)}</div>
-      </div>`).join('')}
-    </div>`:''}
-    <button class="btn btn-cyan" id="case-ai-btn" onclick="runCaseAI()" style="margin-bottom:8px">🤖 다음 액션 가이드</button>
-    <a href="https://escare-engr.atlassian.net/browse/${c.key}" target="_blank" style="text-decoration:none">
-      <button class="btn btn-ghost">Jira에서 보기 →</button>
-    </a>
-  </div>`;
-}
-async function runCaseAI(){
-  if(!CASE_SEL)return;
-  const c=CASE_SEL;
-  const btn=document.getElementById('case-ai-btn');
-  btn.disabled=true;btn.textContent='분석 중...';
-  openAIModal('📦','케이스 다음 액션',c.caseNum,'<div class="loading">AI 분석 중...</div>');
-  const days=daysSince(c.date);
-  const commentText=c.comments.map(x=>`[${x.author}] ${x.bodyPlain||x.body}`).join('\n');
-  try{
-    const text=await callAI(`벤더 기술지원 케이스 분석 및 다음 액션 가이드.
-케이스 번호: ${c.caseNum}
-이슈: ${c.key} | ${c.title}
-고객사: ${c.customer||'-'} | 담당자: ${c.assignee}
-현재 상태: ${c.status} | 접수일: ${c.date} | 경과: ${days}일
-이슈 본문: ${c.descPlain||'(없음)'}
-코멘트: ${commentText||'(없음)'}
-
-답변 형식:
-**📋 현재 상황 요약**
-**⚡ 즉시 취해야 할 액션** (경과 ${days}일 기준)
-**📌 벤더에 확인/요청할 사항**
-**⚠ 에스컬레이션 기준**`,'case',{caseNum:c.caseNum,issue:c.key});
-    setAIModalBody(text);
-    document.getElementById('ai-modal-meta').textContent=`${c.caseNum} · ${c.key}`;
-  }catch(e){setAIModalBody(`<div style="color:var(--danger);padding:20px">오류: ${e.message}</div>`,true);}
-  btn.disabled=false;btn.textContent='🤖 다음 액션 가이드';
 }
 
 // ── EOS / LICENSE ─────────────────────────────────
@@ -3885,27 +3613,6 @@ function renderEosBanner(){
       </div>
     </div>
     <button class="eos-banner-btn" onclick="showPage('eos',document.getElementById('nav-eos'))">자세히 →</button>
-  </div>`;
-}
-function renderOverdueBanner(){
-  // 경과일 7일 이상 미완료 이슈 배너
-  const OVERDUE_DAYS=7;
-  const overdue=ISSUES.filter(i=>i.status!=='완료'&&daysSince(i.date)>=OVERDUE_DAYS);
-  const wrap=document.getElementById('overdue-banner-wrap');
-  if(!wrap)return;
-  if(!overdue.length){wrap.innerHTML='';return;}
-  // 담당자별 집계
-  const byAss={};
-  overdue.forEach(i=>{byAss[i.assignee]=(byAss[i.assignee]||0)+1;});
-  const topAss=Object.entries(byAss).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([n,c])=>`${escapeHtml(n)} ${c}건`).join(', ');
-  wrap.innerHTML=`
-  <div style="background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(248,113,113,.08));border:1px solid rgba(251,191,36,.3);border-radius:12px;padding:12px 18px;margin-bottom:14px;display:flex;align-items:center;gap:12px">
-    <span style="font-size:22px">🚨</span>
-    <div style="flex:1">
-      <div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:2px">${OVERDUE_DAYS}일 이상 미완료 이슈 ${overdue.length}건</div>
-      <div style="font-size:11px;color:var(--text2)">주요 담당자: ${topAss}</div>
-    </div>
-    <button onclick="document.getElementById('f-stat').value='진행 중';showPage('issues',document.getElementById('nav-issues'));renderIssues();" style="background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);color:var(--warn);padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700">이슈 보기 →</button>
   </div>`;
 }
 function renderEosList(){
@@ -4655,27 +4362,6 @@ async function vtAIAnalysis(arg,malArg,totalArg){
     document.getElementById('ai-modal-meta').textContent=`${mal}/${total} 탐지`;
   }catch(e){setAIModalBody(`<div style="color:var(--danger);padding:20px">오류: ${e.message}</div>`,true);}
 }
-function renderVTHistory(){
-  const wrap=document.getElementById('vt-history-wrap');
-  if(!wrap)return;
-  if(!VT_HISTORY.length){wrap.innerHTML='';return;}
-  const pageHistory=sliceForPage(VT_HISTORY,'vt');
-  wrap.innerHTML=`<div class="filter-row"><span class="filter-count" style="margin-left:0">최근 조회 이력 ${pageCountText('vt',VT_HISTORY.length)}</span><select class="page-size-select" onchange="changePageSize(\'vt\',this.value);renderVTHistory()"><option>10</option><option>20</option><option>30</option><option>50</option><option>100</option><option>200</option></select></div>
-  ${pageHistory.map(h=>{
-    const c=h.mal>=5?'#f87171':h.mal>=1?'#fbbf24':'#22d3a5';
-    const bg=h.mal>=5?'rgba(248,113,113,.15)':h.mal>=1?'rgba(251,191,36,.15)':'rgba(34,211,165,.15)';
-    return `<div class="vt-hist-row" onclick="document.getElementById('vt-input').value='${h.hash}';vtLookup()">
-      <div>
-        <div class="vt-hist-name">${escapeHtml(h.name||'-')}${h.size?` <span style="color:var(--text3);font-weight:400">${(h.size/1024).toFixed(1)}KB</span>`:''}${h.type?` <span style="color:var(--text3);font-weight:400">· ${escapeHtml(h.type)}</span>`:''}</div>
-        <div class="vt-hist-hash">${h.hash.slice(0,40)}...</div>
-      </div>
-      <span class="badge" style="background:${bg};color:${c}">${h.mal}/${h.total}</span>
-      <span style="color:var(--text3);font-size:10px">${fdt(h.ts)}</span>
-      <span style="color:var(--text3);font-size:14px;cursor:pointer" onclick="event.stopPropagation();copyText('${h.hash}')" title="해시 복사">📋</span>
-    </div>`;
-  }).join('')}<div id="vt-pager" class="pager"></div>`;
-  renderPager('vt-pager','vt',VT_HISTORY.length,'renderVTHistory');
-}
 
 // ── MONTHLY/PATTERN ───────────────────────────────
 async function runMonthly(){
@@ -5126,24 +4812,8 @@ async function removeAdmin(name){
 
 
 // ── 고객사 프로필 ─────────────────────────────────
-function buildCustomers(){
-  const map={};
-  ISSUES.forEach(i=>{
-    const c=i.customer||'(고객사 미분류)';
-    if(!map[c])map[c]={name:c,issues:[],products:new Set(),assignees:new Set()};
-    map[c].issues.push(i);
-    i.labels.forEach(l=>map[c].products.add(l));
-    if(i.assignee&&i.assignee!=="-")map[c].assignees.add(i.assignee);
-  });
-  return Object.values(map).sort((a,b)=>b.issues.length-a.issues.length);
-}
 let CUST_SEL=null;
 // renderCustomers: duplicate removed, using definition below
-function selectCustomer(idx,name){
-  CUST_SEL=buildCustomers().find(c=>c.name===name)||buildCustomers()[idx];
-  renderCustomers();
-  renderCustomerRight();
-}
 function renderCustomers(){
   const q=(document.getElementById("cust-q")||{}).value?.toLowerCase()||"";
   const prod=(document.getElementById("cust-prod")||{}).value||"";
@@ -5186,35 +4856,6 @@ function renderCustomers(){
   renderPager('cust-pager','customers',custs.length,'renderCustomers');
 }
 
-function renderCustomerRight(){
-  if(!CUST_SEL)return;
-  const c=CUST_SEL;
-  const done=c.issues.filter(i=>i.status==="완료");
-  const open=c.issues.filter(i=>i.status!=="완료");
-  const recent=[...c.issues].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
-  const eosForCust=EOS_ITEMS.filter(e=>e.customer===c.name);
-  const rate=c.issues.length?Math.round(done.length/c.issues.length*100):0;
-  document.getElementById("cust-right").innerHTML=`
-  <div class="rpanel">
-    <div style="font-size:16px;font-weight:800;color:#f0f4ff;margin-bottom:14px">${escapeHtml(c.name)}</div>
-    <div class="rp-meta">
-      <div class="rp-row"><span>제품</span><span style="flex-wrap:wrap;display:flex;gap:4px">${[...c.products].map(p=>`<span class="badge" style="background:${(LC_MAP[p]||"#94a3b8")}22;color:${(LC_MAP[p]||"#94a3b8")}">${escapeHtml(p)}</span>`).join("")||"-"}</span></div>
-      <div class="rp-row"><span>담당자</span><span>${escapeHtml([...c.assignees].join(", ")||"-")}</span></div>
-      <div class="rp-row"><span>전체 이슈</span><span>${c.issues.length}건 (완료 ${done.length} / 진행 ${open.length})</span></div>
-      <div class="rp-row"><span>완료율</span><span style="color:${rate>=80?"#2de6b8":rate>=50?"#fcd34d":"#fc8181"};font-weight:700">${rate}%</span></div>
-    </div>
-    ${eosForCust.length?`<div style="margin-bottom:12px">
-      <div style="font-size:10px;color:#fcd34d;font-weight:700;margin-bottom:6px">🔑 라이선스 (${eosForCust.length})</div>
-      ${eosForCust.map(e=>{const d2=daysUntil(e.expireDate);const col=d2<0?"#fc8181":d2<=30?"#fcd34d":"#2de6b8";return`<div style="display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.04);border-radius:8px;font-size:11px;margin-bottom:4px"><span style="color:#c5cee8">${escapeHtml(e.productDesc||e.product||"")}</span><span style="color:${col};font-weight:700">${d2<0?"만료":"D-"+d2}</span></div>`;}).join("")}
-    </div>`:""}
-    <div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:8px;text-transform:uppercase">최근 이슈 (최대 8건)</div>
-    ${recent.map(i=>{const cs={"완료":"#2de6b8","진행 중":"#818cf8","미해결":"#fc8181"};const col=cs[i.status]||"#94a3b8";return`<div style="padding:8px 10px;background:rgba(255,255,255,.04);border-left:3px solid ${col};border-radius:0 8px 8px 0;margin-bottom:5px;cursor:pointer" onclick="showPage('issues',document.getElementById('nav-issues'));document.getElementById('f-q').value='${escapeHtml(i.key)}';PAGE=1;renderIssues();">
-      <div style="font-size:11px;font-weight:700;color:${col}">${i.key} <span style="color:var(--text3);font-weight:400">${fd(i.date)}</span></div>
-      <div style="font-size:12px;color:#c5cee8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(cleanTitle(i.title))}</div>
-    </div>`;}).join("")}
-    <button class="btn btn-ghost" style="margin-top:10px;font-size:12px" onclick="showPage('issues',document.getElementById('nav-issues'));document.getElementById('f-q').value='';PAGE=1;renderIssues();">이슈 관리에서 전체 보기 →</button>
-  </div>`;
-}
 
 // ── 팀 노하우 ─────────────────────────────────────
 let KNOWLEDGE=[];
@@ -5621,27 +5262,7 @@ function aiModelLabel(m){
 let ISSUE_PRESET=null;
 let CASE_PRESET=null;
 
-function isDoneStatus(status){return String(status||'').trim()==='완료';}
-function isOpenStatus(status){return !isDoneStatus(status);}
-function getCasePrefixNum(title){const m=String(title||'').match(/^\s*\[(\d{8})\]/);return m?m[1]:'';}
-function isCaseIssue(i){return !!getCasePrefixNum(i&&i.title);}
-function getGeneralIssues(){return ISSUES.filter(i=>!isCaseIssue(i));}
-function getCaseIssueBase(){return ISSUES.filter(isCaseIssue);}
 function jsAttr(v){return escapeHtml(JSON.stringify(String(v??'')));}
-function extractCaseNums(text){
-  const m=String(text||'').match(/\b\d{8}\b/g)||[];
-  return [...new Set(m)];
-}
-function getIssueCaseRefs(issue){
-  const title=String(issue?.title||'');
-  const prefix=getCasePrefixNum(title);
-  const direct=extractCaseNums([title,(issue?.descPlain||''),(issue?.comments||[]).map(c=>c.bodyPlain||c.body||'').join(' ')].join(' ')).filter(n=>n!==prefix);
-  const caseMap=new Map(getCases().map(c=>[c.caseNum,c]));
-  return [...new Set(direct)].map(num=>{
-    const c=caseMap.get(num);
-    return {num,status:c?c.status:'미동기화',key:c?c.key:'',done:c?isDoneStatus(c.status):false};
-  });
-}
 function withinRecentDays(date,days){
   if(!days)return true;
   if(!date)return false;
@@ -5694,85 +5315,8 @@ function applyV151Dom(){
 }
 applyV151Dom();
 
-async function syncJira(){
-  const dot=document.getElementById('jira-dot');
-  if(dot)dot.innerHTML='<span class="dot" style="background:var(--warn)"></span>동기화중...';
-  try{
-    const r=await fetch(`${WORKERS}/jira/search/jql`,{headers:authHeaders()});
-    if(!r.ok)throw new Error('응답 오류: '+r.status);
-    const d=await r.json();
-    if(!d.issues)throw new Error('이슈 데이터 없음');
-    ISSUES=d.issues.map(i=>{
-      const title=i.fields.summary||'';
-      const caseNum=getCasePrefixNum(title);
-      return {
-        key:i.key,title,status:i.fields.status.name,
-        pri:i.fields.priority?i.fields.priority.name:'Medium',
-        assignee:i.fields.assignee?i.fields.assignee.displayName:'-',
-        reporter:i.fields.reporter?i.fields.reporter.displayName:'-',
-        labels:i.fields.labels||[],
-        date:i.fields.created?i.fields.created.slice(0,10):'',
-        updated:i.fields.updated?i.fields.updated.slice(0,10):'',
-        desc:'',descPlain:'',comments:[],attachments:[],
-        type:i.fields.issuetype?i.fields.issuetype.name:'작업',
-        customer:extractCustomer(title),
-        caseNum,
-        caseNums:caseNum?[caseNum]:extractCaseNums(title),
-        _detailLoaded:false
-      };
-    });
-    if(dot)dot.innerHTML='<span class="dot dot-green"></span><span style="color:var(--success)">연결됨</span>';
-    const gi=getGeneralIssues().length, ci=getCaseIssueBase().length;
-    const ic=document.getElementById('issue-count');
-    if(ic)ic.textContent=`${gi}건 / 케이스 ${ci}건`;
-    updateSyncMeta(d.sync||{rangeMonths:d.rangeMonths,count:ISSUES.length,syncedAt:new Date().toISOString(),syncedBy:CURRENT_USER});
-    refreshFilters();
-    renderDash();
-    toast(`Jira 동기화 완료! 일반 이슈 ${gi}건 · 케이스 ${ci}건`);
-  }catch(e){
-    if(dot)dot.innerHTML='<span class="dot" style="background:var(--danger)"></span><span style="color:var(--danger)">오류</span>';
-    toast('Jira 연결 실패: '+e.message,true);
-  }
-}
 
-async function fetchIssueDetail(key){
-  const fields=['summary','status','priority','assignee','reporter','created','updated','description','labels','issuetype','attachment','comment'].join(',');
-  const r=await fetch(`${WORKERS}/jira/issue/${encodeURIComponent(key)}?fields=${encodeURIComponent(fields)}`,{headers:authHeaders()});
-  if(!r.ok)throw new Error('상세 조회 오류: '+r.status);
-  const i=await r.json();
-  const title=i.fields.summary||'';
-  const descPlain=extractADFPlain(i.fields.description);
-  const comments=extractCommentsArr(i.fields.comment);
-  const caseNum=getCasePrefixNum(title);
-  return {
-    key:i.key,title,status:i.fields.status.name,
-    pri:i.fields.priority?i.fields.priority.name:'Medium',
-    assignee:i.fields.assignee?i.fields.assignee.displayName:'-',
-    reporter:i.fields.reporter?i.fields.reporter.displayName:'-',
-    labels:i.fields.labels||[],
-    date:i.fields.created?i.fields.created.slice(0,10):'',
-    updated:i.fields.updated?i.fields.updated.slice(0,10):'',
-    desc:extractADF(i.fields.description),
-    descPlain,
-    comments,
-    attachments:extractAttachments(i.fields.attachment),
-    type:i.fields.issuetype?i.fields.issuetype.name:'작업',
-    customer:extractCustomer(title),
-    caseNum,
-    caseNums:caseNum?[caseNum]:extractCaseNums([title,descPlain,comments.map(c=>c.bodyPlain||'').join(' ')].join(' ')),
-    _detailLoaded:true
-  };
-}
 
-function refreshFilters(){
-  const labels=new Set(),assignees=new Set();
-  getGeneralIssues().forEach(i=>{(i.labels||[]).forEach(l=>labels.add(l));if(i.assignee&&i.assignee!=='-')assignees.add(i.assignee);});
-  const labSel=document.getElementById('f-lab');
-  if(labSel){const cur=labSel.value;labSel.innerHTML='<option value="">전체 레이블</option>'+[...labels].sort().map(l=>`<option ${l===cur?'selected':''}>${escapeHtml(l)}</option>`).join('');}
-  const assSel=document.getElementById('f-ass');
-  if(assSel){const cur=assSel.value;assSel.innerHTML='<option value="">전체 담당자</option>'+[...assignees].sort().map(a=>`<option ${a===cur?'selected':''}>${escapeHtml(a)}</option>`).join('');}
-  applyV151Dom();
-}
 
 function resetFilters(){
   ['f-q','f-stat','f-pri','f-lab','f-ass','f-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -5854,29 +5398,6 @@ function resetMyDesk(){
 function resetCaseFilters(){
   ['case-q','case-stat','case-ass','case-sla','case-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   CASE_PRESET=null;PAGE_STATE.cases=1;renderCases();
-}
-function setIssueNavigationFilter(opts={}){
-  showPage('issues',document.getElementById('nav-issues'));
-  ['f-q','f-stat','f-pri','f-lab','f-ass','f-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  ISSUE_PRESET=opts.preset||null;
-  if(opts.q)document.getElementById('f-q').value=opts.q;
-  if(opts.status)document.getElementById('f-stat').value=opts.status;
-  if(opts.priority)document.getElementById('f-pri').value=opts.priority;
-  if(opts.label)document.getElementById('f-lab').value=opts.label;
-  if(opts.assignee)document.getElementById('f-ass').value=opts.assignee;
-  if(opts.days&&document.getElementById('f-date'))document.getElementById('f-date').value=String(opts.days);
-  PAGE=1;renderIssues();
-}
-function setCaseNavigationFilter(opts={}){
-  showPage('cases',document.getElementById('nav-cases'));
-  ['case-q','case-stat','case-ass','case-sla','case-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  CASE_PRESET=opts.preset||null;
-  if(opts.q)document.getElementById('case-q').value=opts.q;
-  if(opts.status)document.getElementById('case-stat').value=opts.status;
-  if(opts.assignee)document.getElementById('case-ass').value=opts.assignee;
-  if(opts.sla)document.getElementById('case-sla').value=String(opts.sla);
-  if(opts.days&&document.getElementById('case-date'))document.getElementById('case-date').value=String(opts.days);
-  PAGE_STATE.cases=1;renderCases();
 }
 function renderFilterTags(){
   const tags=[];
@@ -6082,30 +5603,6 @@ function renderOpsFocus(){
   wrap.innerHTML=`<div class="chart-card"><div class="chart-title">운영 포커스</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">${sec('7일 이상 미완료 일반 이슈',overdue,'대상 없음',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fcd34d">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#f87171">${daysSince(i.date)}일</span></div>`)}${sec('High 이상 미완료 일반 이슈',highOpen,'대상 없음',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'high',label:'High 이상 미완료 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fca5a5">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#fca5a5">${i.pri}</span></div>`)}${sec('메타 미완성 (고객사·레이블·범주·기한)',metaInc,'모두 입력됨 ✓',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'incomplete',label:'메타 미완성 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fbbf24">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,38)} <span style="float:right;color:#fbbf24">${metaMissingFields(i).join('·')}</span></div>`)}${sec('60일 내 라이선스 만료',nearEos,'대상 없음',x=>`<div onclick="showPage('eos',document.getElementById('nav-eos'));document.getElementById('eos-q').value=${jsAttr(x.customer)};PAGE_STATE.eos=1;renderEosList();" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fcd34d">${escapeHtml(x.customer)}</b> ${escapeHtml(x.productDesc||x.product||'')} <span style="float:right;color:#fcd34d">D-${daysUntil(x.expireDate)}</span></div>`)}</div></div>`;
 }
 
-function buildCustomers(){
-  const map={};
-  ISSUES.forEach(i=>{
-    const c=i.customer||'(고객사 미분류)';
-    if(!map[c])map[c]={name:c,issues:[],general:[],cases:[],products:new Set(),assignees:new Set()};
-    map[c].issues.push(i);
-    (isCaseIssue(i)?map[c].cases:map[c].general).push(i);
-    (i.labels||[]).forEach(l=>map[c].products.add(l));
-    if(i.assignee&&i.assignee!=="-")map[c].assignees.add(i.assignee);
-  });
-  return Object.values(map).sort((a,b)=>(b.general.length+b.cases.length)-(a.general.length+a.cases.length));
-}
-function renderCustomerRight(){
-  if(!CUST_SEL)return;
-  const c=CUST_SEL;
-  const done=c.general.filter(i=>isDoneStatus(i.status));
-  const open=c.general.filter(i=>isOpenStatus(i.status));
-  const caseDone=c.cases.filter(i=>isDoneStatus(i.status));
-  const caseOpen=c.cases.filter(i=>isOpenStatus(i.status));
-  const recent=[...c.general].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
-  const eosForCust=EOS_ITEMS.filter(e=>e.customer===c.name);
-  const rate=c.general.length?Math.round(done.length/c.general.length*100):0;
-  document.getElementById("cust-right").innerHTML=`<div class="rpanel"><div style="font-size:16px;font-weight:800;color:#f0f4ff;margin-bottom:14px">${escapeHtml(c.name)}</div><div class="rp-meta"><div class="rp-row"><span>제품</span><span style="flex-wrap:wrap;display:flex;gap:4px">${[...c.products].map(p=>`<span class="badge" style="background:${(LC_MAP[p]||"#94a3b8")}22;color:${(LC_MAP[p]||"#94a3b8")}">${escapeHtml(p)}</span>`).join("")||"-"}</span></div><div class="rp-row"><span>담당자</span><span>${escapeHtml([...c.assignees].join(", ")||"-")}</span></div><div class="rp-row"><span>일반 이슈</span><span>${c.general.length}건 (완료 ${done.length} / 미완료 ${open.length})</span></div><div class="rp-row"><span>케이스</span><span>${c.cases.length}건 (완료 ${caseDone.length} / 미완료 ${caseOpen.length})</span></div><div class="rp-row"><span>일반 이슈 완료율</span><span style="color:${rate>=80?"#2de6b8":rate>=50?"#fcd34d":"#fc8181"};font-weight:700">${rate}%</span></div></div><div class="jump-row"><button class="btn btn-ghost" onclick="setIssueNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사: '+c.name)}}})">일반 이슈 보기</button><button class="btn btn-ghost" onclick="setCaseNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사 케이스: '+c.name)}}})">케이스 보기</button></div>${eosForCust.length?`<div style="margin:12px 0"><div style="font-size:10px;color:#fcd34d;font-weight:700;margin-bottom:6px">🔑 라이선스 (${eosForCust.length})</div>${eosForCust.map(e=>{const d2=daysUntil(e.expireDate);const col=d2<0?"#fc8181":d2<=30?"#fcd34d":"#2de6b8";return`<div style="display:flex;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,.04);border-radius:8px;font-size:11px;margin-bottom:4px"><span style="color:#c5cee8">${escapeHtml(e.productDesc||e.product||"")}</span><span style="color:${col};font-weight:700">${d2<0?"만료":"D-"+d2}</span></div>`;}).join("")}</div>`:""}<div style="font-size:10px;color:var(--text3);font-weight:700;margin:12px 0 8px;text-transform:uppercase">최근 일반 이슈 (최대 8건)</div>${recent.map(i=>{const col=SC[i.status]||"#94a3b8";return`<div style="padding:8px 10px;background:rgba(255,255,255,.04);border-left:3px solid ${col};border-radius:0 8px 8px 0;margin-bottom:5px;cursor:pointer" onclick="setIssueNavigationFilter({q:${jsAttr(i.key)}})"><div style="font-size:11px;font-weight:700;color:${col}">${i.key} <span style="color:var(--text3);font-weight:400">${fd(i.date)}</span></div><div style="font-size:12px;color:#c5cee8;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(cleanTitle(i.title))}</div></div>`;}).join("")||'<div style="font-size:11px;color:var(--text3);padding:8px">최근 일반 이슈 없음</div>'}</div>`;
-}
 
 /* ── v1.5.5: case/customer/status/dashboard/sidebar stability patch ───────────── */
 function applyV153Dom(){
@@ -6151,30 +5648,6 @@ function applyV153Dom(){
   }catch(e){console.warn('applyV153Dom failed',e);}
 }
 
-function renderSidebarCompact(){
-  const box=document.querySelector('.sb-bottom');
-  if(!box || box.dataset.v153==='1')return;
-  box.dataset.v153='1';
-  box.innerHTML=`
-    <div class="usage-card">
-      <div class="u-head"><div class="u-title">◎ AI 사용량</div><button class="pill-btn" onclick="refreshAIUsage()">↻ 갱신</button></div>
-      <div class="u-grid">
-        <span class="u-muted">내 오늘</span><span class="u-val" id="ai-my-today">-</span>
-        <span class="u-muted">내 월간</span><span class="u-val" id="ai-my-month">-</span>
-        <span class="u-muted u-hide-compact">팀 오늘</span><span class="u-val u-hide-compact" id="ai-team-today">-</span>
-        <span class="u-muted u-hide-compact">성공/실패</span><span class="u-val u-hide-compact"><b class="u-ok" id="ai-ok">-</b> / <b class="u-bad" id="ai-fail">-</b></span>
-      </div>
-      <div class="u-foot" id="ai-updated">필요 시 갱신</div>
-    </div>
-    <div class="health-card">
-      <div class="h-head"><div class="h-title">연결/동기화</div><span id="issue-count" style="font-size:10px;color:var(--text3)">-</span></div>
-      <div class="h-row"><span>접속자</span><span class="h-state">${escapeHtml(CURRENT_DISPLAY||CURRENT_USER||'-')}</span></div>
-      <div class="h-row"><span>Jira</span><span class="h-state" id="jira-dot"><span class="dot" style="background:var(--warn)"></span>대기</span></div>
-      <div class="h-row"><span>AI</span><span class="h-state ok" id="ai-status">준비됨</span></div>
-      <button class="btn btn-ghost sync-mini" onclick="syncJira()">↻ Jira 새로고침</button>
-      <div class="u-foot u-hide-compact" id="sync-meta" style="font-size:9px;color:var(--text3);margin-top:5px">-</div>
-    </div>`;
-}
 
 function getCasePrefixNum(title){
   const m=String(title||'').match(/^\s*\[(\d{8})\]/);
@@ -6257,21 +5730,6 @@ function normalizeCustomerFallback(){
     if(!i.parentTitle && i.parentKey && byKey.has(i.parentKey))i.parentTitle=byKey.get(i.parentKey).title||'';
   });
 }
-function casesForIssue(issue){
-  if(!issue)return [];
-  const nums=new Set(issue.caseNums||[]);
-  return getCaseIssueBase().filter(c=>c.parentKey===issue.key || (c.caseNum&&nums.has(c.caseNum)));
-}
-function caseChipsForIssue(issue){
-  const cases=casesForIssue(issue);
-  if(!cases.length)return '';
-  const done=cases.filter(c=>isDoneStatus(c.status));
-  const open=cases.filter(c=>isOpenStatus(c.status));
-  const chips=[];
-  if(open.length)chips.push(`<span class="case-chip open">케이스 진행 ${open.map(c=>c.caseNum||c.key).join(', ')}</span>`);
-  if(done.length)chips.push(`<span class="case-chip done">케이스 완료 ${done.map(c=>c.caseNum||c.key).join(', ')}</span>`);
-  return chips.join('');
-}
 
 async function syncJira(){
   applyV153Dom();renderSidebarCompact();
@@ -6322,35 +5780,7 @@ async function fetchIssueDetail(key){
   });
 }
 
-function filterByPreset(list,preset){
-  if(!preset)return list;
-  let out=list;
-  if(preset.kind==='status')out=out.filter(i=>preset.status==='done'?isDoneStatus(i.status):preset.status==='open'?isOpenStatus(i.status):true);
-  if(preset.kind==='my')out=out.filter(isMyIssue);
-  if(preset.kind==='myopen')out=out.filter(i=>isMyIssue(i)&&isOpenStatus(i.status));
-  if(preset.kind==='stale'||preset.kind==='overdue')out=out.filter(i=>isOpenStatus(i.status)&&age(i.date)>=7);
-  if(preset.kind==='high')out=out.filter(i=>isOpenStatus(i.status)&&String(i.pri||'').toLowerCase().includes('high'));
-  if(preset.kind==='customer')out=out.filter(i=>(i.customer||'')===preset.customer);
-  if(preset.kind==='priority')out=out.filter(i=>String(i.pri||'').toLowerCase().includes('high'));
-  return out;
-}
 
-function issueRowHTML(i){
-  const col=SC[i.status]||'#94a3b8';
-  const priCol=i.pri==='High'?'#fc8181':i.pri==='Medium'?'#fcd34d':'#a5b4fc';
-  const labels=(i.labels||[]).slice(0,3).map(l=>`<span class="badge" style="background:${(LC_MAP[l]||'#818cf8')}22;color:${(LC_MAP[l]||'#818cf8')}">${escapeHtml(l)}</span>`).join('');
-  return `<div class="issue-card ${SEL&&SEL.key===i.key?'sel':''}" onclick="selectIssue(ISSUES.find(x=>x.key===${jsAttr(i.key)}))">
-    <div class="issue-main">
-      <span class="key">${escapeHtml(i.key)}</span>
-      <span class="st" style="background:${col}22;color:${col}">${escapeHtml(i.status)}</span>
-      <span class="pri" style="background:${priCol}22;color:${priCol}">${escapeHtml(i.pri)}</span>
-      <span class="title">${escapeHtml(cleanTitle(i.title))}</span>
-      ${caseChipsForIssue(i)}
-      <span class="date">${fd(i.date)}</span>
-    </div>
-    <div class="issue-sub">${labels}<span>@${escapeHtml(i.assignee||'-')}</span>${i.attachments&&i.attachments.length?`<span>📎 ${i.attachments.length}</span>`:''}${i.comments&&i.comments.length?`<span>💬 ${i.comments.length}</span>`:''}</div>
-  </div>`;
-}
 
 function getFilteredIssues(){
   let arr=getGeneralIssues();
@@ -6448,13 +5878,6 @@ function monthTrendRows(g,c){
   return Object.entries(m).sort((a,b)=>a[0].localeCompare(b[0])).slice(-6).map(([mon,v])=>`<div class="dash-list-row"><span class="title">${escapeHtml(mon)}</span><span>이슈 <b>${v.g}</b> · 케이스 <b>${v.c}</b></span></div>`).join('')||'<div style="font-size:12px;color:var(--text3)">데이터 없음</div>';
 }
 
-function buildCustomerData(){
-  const map={};
-  const ensure=(name)=>map[name]||(map[name]={name,products:new Set(),assignees:new Set(),general:[],cases:[]});
-  getGeneralIssues().forEach(i=>{const c=i.customer||'미분류';const obj=ensure(c);obj.general.push(i);(i.labels||[]).forEach(l=>obj.products.add(l));if(i.assignee&&i.assignee!=='-')obj.assignees.add(i.assignee);});
-  getCaseIssueBase().forEach(i=>{const c=caseCustomerName(i)||'미분류';const obj=ensure(c);obj.cases.push(i);(i.labels||[]).forEach(l=>obj.products.add(l));if(i.assignee&&i.assignee!=='-')obj.assignees.add(i.assignee);});
-  return Object.values(map).sort((a,b)=>(b.general.length+b.cases.length)-(a.general.length+a.cases.length));
-}
 
 // ── INIT ──────────────────────────────────────────
 async function restoreSession(){
@@ -6783,41 +6206,6 @@ function v154ActiveCaseFilterText(){
 function v154FilterNoteHtml(list){return list?.length?`<div class="mini-filter-note">${list.map(x=>`<span class="tag">${escapeHtml(x)}</span>`).join('')}</div>`:'';}
 function v154GetIssueByKey(key){return ISSUES.find(x=>x.key===key)||null;}
 function v154GetCaseByKey(key){return getCases().find(x=>x.key===key)||ISSUES.find(x=>x.key===key)||null;}
-function v154GoIssueExact(key){
-  const q=document.getElementById('f-q'); if(q)q.value=key;
-  ['f-stat','f-pri','f-lab','f-ass','f-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  PAGE=1; showPage('issues');
-  setTimeout(()=>{const item=v154GetIssueByKey(key); if(item)selectIssue(item);},20);
-}
-function v154GoCaseExact(key){
-  const q=document.getElementById('case-q'); if(q)q.value=key;
-  ['case-stat','case-ass','case-sla','case-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  PAGE_STATE.cases=1; showPage('cases');
-  setTimeout(()=>{const item=v154GetCaseByKey(key); if(item)selectCase(item);},20);
-}
-function setIssueNavigationFilter(opts={}){
-  ISSUE_PRESET=opts.preset||null;
-  ['f-q','f-stat','f-pri','f-lab','f-ass','f-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  if(opts.exactKey){document.getElementById('f-q').value=opts.exactKey;}
-  else if(opts.q){document.getElementById('f-q').value=opts.q;}
-  if(opts.status)document.getElementById('f-stat').value=opts.status;
-  if(opts.priority)document.getElementById('f-pri').value=opts.priority;
-  if(opts.label)document.getElementById('f-lab').value=opts.label;
-  if(opts.assignee)document.getElementById('f-ass').value=opts.assignee;
-  if(opts.dateDays&&document.getElementById('f-date'))document.getElementById('f-date').value=String(opts.dateDays);
-  PAGE=1;showPage('issues');
-}
-function setCaseNavigationFilter(opts={}){
-  CASE_PRESET=opts.preset||null;
-  ['case-q','case-stat','case-ass','case-sla','case-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  if(opts.exactKey){document.getElementById('case-q').value=opts.exactKey;}
-  else if(opts.q){document.getElementById('case-q').value=opts.q;}
-  if(opts.status)document.getElementById('case-stat').value=opts.status;
-  if(opts.assignee)document.getElementById('case-ass').value=opts.assignee;
-  if(opts.sla)document.getElementById('case-sla').value=String(opts.sla);
-  if(opts.dateDays&&document.getElementById('case-date'))document.getElementById('case-date').value=String(opts.dateDays);
-  PAGE_STATE.cases=1;showPage('cases');
-}
 function renderIssues_legacy_v3(){
   const wrap=document.getElementById('issue-list-wrap'); if(!wrap)return;
   const arr=getFilteredIssues(); const size=parseInt(document.getElementById('f-pg')?.value||'10');
@@ -6862,26 +6250,6 @@ function renderCases_legacy_v3(){
   document.getElementById('case-pager').innerHTML=Array.from({length:max},(_,idx)=>`<button class="${PAGE_STATE.cases===idx+1?'active':''}" onclick="PAGE_STATE.cases=${idx+1};renderCases()">${idx+1}</button>`).join('');
   renderCaseRight(false);
   if(CASE_SEL&&!CASE_SEL._detailLoaded){const base=ISSUES.find(x=>x.key===CASE_SEL.key)||CASE_SEL;ensureIssueDetail(base).then(()=>{CASE_SEL=Object.assign(CASE_SEL,base);renderCaseRight(false);});}
-}
-function renderCustomerRight(c){
-  const right=document.getElementById('customer-detail'); if(!right)return;
-  if(!c){right.innerHTML='<div class="empty">고객사를 선택하세요.</div>';return;}
-  const issueRows=ISSUES.filter(i=>!isCaseIssue(i)&&i.customer===c.customer).sort((a,b)=>new Date(b.updated||b.created)-new Date(a.updated||a.created)).slice(0,8);
-  const caseRows=getCases().filter(i=>i.customer===c.customer).sort((a,b)=>new Date(b.updated||b.created)-new Date(a.updated||a.created)).slice(0,8);
-  const openCases=caseRows.filter(x=>!isDoneStatus(x.status)).length;
-  const issueHtml=issueRows.length?issueRows.map(i=>`<div class="customer-work-row" onclick="v154GoIssueExact('${escapeAttr(i.key)}')"><div><div class="k">${escapeHtml(i.key)}</div><div class="t">${escapeHtml(i.summary||'')}</div></div><div class="m">${escapeHtml(i.status||'')} · ${fmtDate(i.updated||i.created)}</div></div>`).join(''):'<div class="empty">일반 이슈 없음</div>';
-  const caseHtml=caseRows.length?caseRows.map(i=>`<div class="customer-work-row" onclick="v154GoCaseExact('${escapeAttr(i.key)}')"><div><div class="k">${escapeHtml(i.caseNum||getCaseNum(i.summary)||i.key)}</div><div class="t">${escapeHtml(i.title||i.summary||'')}</div></div><div class="m">${escapeHtml(i.status||'')} · ${fmtDate(i.updated||i.created)}</div></div>`).join(''):'<div class="empty">케이스 없음</div>';
-  right.innerHTML=`<div class="customer-detail-card">
-    <h2>${escapeHtml(c.customer)}</h2>
-    <div class="cust-summary-grid">
-      <div><span>제품</span><strong>${Array.from(c.products||[]).join(', ')||'-'}</strong></div><div><span>담당자</span><strong>${escapeHtml(c.owner||'-')}</strong></div>
-      <div><span>일반 이슈</span><strong>${c.issueTotal}건 / 미완료 ${c.issueOpen}</strong></div><div><span>케이스</span><strong>${caseRows.length}건 / 진행 ${openCases}</strong></div>
-      <div><span>일반 이슈 완료율</span><strong>${c.issueTotal?Math.round((c.issueDone/c.issueTotal)*100):0}%</strong></div>
-    </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:12px 0"><button onclick="setIssueNavigationFilter({q:'${escapeAttr(c.customer)}'})">일반 이슈 보기</button><button onclick="setCaseNavigationFilter({q:'${escapeAttr(c.customer)}'})">케이스 보기</button></div>
-    <h3 style="font-size:13px;margin:16px 0 8px;color:var(--text2)">최근 일반 이슈</h3>${issueHtml}
-    <h3 style="font-size:13px;margin:16px 0 8px;color:var(--text2)">최근 케이스</h3>${caseHtml}
-  </div>`;
 }
 function renderVTHistory(){
   const wrap=document.getElementById('vt-history-wrap'); if(!wrap)return;
