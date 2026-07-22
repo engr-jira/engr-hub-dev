@@ -55,7 +55,7 @@ function normalizeCustomerFallback(){
 async function syncJira(){
   applyV153Dom();renderSidebarCompact();
   const dot=document.getElementById('jira-dot');
-  if(dot)dot.innerHTML='<span class="dot" style="background:var(--warn)"></span><span class="warn">동기화중...</span>';
+  if(dot)dot.innerHTML='<span class="dot u-bg-warn"></span><span class="warn">동기화중...</span>';
   try{
     const r=await fetch(`${WORKERS}/jira/search/jql`,{headers:authHeaders()});
     if(!r.ok)throw new Error('응답 오류: '+r.status);
@@ -171,7 +171,7 @@ function renderDash_legacy_v2(){
   const myRate=my.length?Math.round(myDone.length/my.length*100):0;
   const k=document.getElementById('kpis');
   if(k)k.innerHTML=`
-    ${stale.length?`<div class="dash-alert" style="grid-column:1/-1"><div><b style="color:#fcd34d">🚨 7일 이상 미완료 일반 이슈 ${stale.length}건</b><div style="font-size:11px;color:var(--text2);margin-top:4px">케이스 제외 · 주요 담당자: ${Object.entries(stale.reduce((m,i)=>(m[i.assignee]=(m[i.assignee]||0)+1,m),{})).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([a,n])=>`${escapeHtml(a)} ${n}건`).join(', ')||'-'}</div></div><button class="btn btn-warn" onclick="setIssueNavigationFilter({preset:{kind:'stale',label:'7일 이상 미완료 일반 이슈'}})">이슈 보기 →</button></div>`:''}
+    ${stale.length?`<div class="dash-alert" style="grid-column:1/-1"><div><b class="u-c-fcd34d">🚨 7일 이상 미완료 일반 이슈 ${stale.length}건</b><div style="font-size:11px;color:var(--text2);margin-top:4px">케이스 제외 · 주요 담당자: ${Object.entries(stale.reduce((m,i)=>(m[i.assignee]=(m[i.assignee]||0)+1,m),{})).sort((a,b)=>b[1]-a[1]).slice(0,4).map(([a,n])=>`${escapeHtml(a)} ${n}건`).join(', ')||'-'}</div></div><button class="btn btn-warn" onclick="setIssueNavigationFilter({preset:{kind:'stale',label:'7일 이상 미완료 일반 이슈'}})">이슈 보기 →</button></div>`:''}
     <div class="kpi-grid">
       <div class="kpi" onclick="setIssueNavigationFilter({})"><div class="num">${g.length}</div><div class="label">일반 이슈</div><div class="sub">케이스 제외</div></div>
       <div class="kpi" onclick="setIssueNavigationFilter({preset:{kind:'status',status:'done',label:'완료 일반 이슈'}})"><div class="num">${done.length}</div><div class="label">완료</div><div class="sub">${g.length?Math.round(done.length/g.length*100):0}% 완료율</div></div>
@@ -182,21 +182,21 @@ function renderDash_legacy_v2(){
     </div>`;
   const focus=document.getElementById('focus');
   if(focus)focus.innerHTML=`<div class="dash-section"><div class="sec-title">운영 포커스</div><div class="mini-grid">
-    <div class="mini-card"><div style="font-size:12px;color:#a5b4fc;font-weight:800;margin-bottom:8px">처리 건수 TOP</div>${topAssigneeRows(g)}</div>
-    <div class="mini-card"><div style="font-size:12px;color:#a5b4fc;font-weight:800;margin-bottom:8px">케이스 진행 TOP</div>${topAssigneeRows(cOpen)}</div>
-    <div class="mini-card"><div style="font-size:12px;color:#a5b4fc;font-weight:800;margin-bottom:8px">월별 추이 (최근 6개월)</div>${monthTrendRows(g,c)}</div>
+    <div class="mini-card"><div class="u-fs12px-ca5b4fc-fw800-mb8px">처리 건수 TOP</div>${topAssigneeRows(g)}</div>
+    <div class="mini-card"><div class="u-fs12px-ca5b4fc-fw800-mb8px">케이스 진행 TOP</div>${topAssigneeRows(cOpen)}</div>
+    <div class="mini-card"><div class="u-fs12px-ca5b4fc-fw800-mb8px">월별 추이 (최근 6개월)</div>${monthTrendRows(g,c)}</div>
   </div></div>`;
   const recent=document.getElementById('recent');
   if(recent)recent.innerHTML=`<div class="dash-section"><div class="sec-title">최근 일반 이슈 (10건)</div>${g.sort((a,b)=>issueDateValue(b)-issueDateValue(a)).slice(0,10).map(i=>`<div class="issue-card" onclick="setIssueNavigationFilter({q:${jsAttr(i.key)}})"><div class="issue-main"><span class="key">${escapeHtml(i.key)}</span><span class="st" style="background:${(SC[i.status]||'#94a3b8')}22;color:${SC[i.status]||'#94a3b8'}">${escapeHtml(i.status)}</span><span class="title">${escapeHtml(cleanTitle(i.title))}</span>${caseChipsForIssue(i)}<span class="date">${fd(i.date)}</span></div><div class="issue-sub"><span>@${escapeHtml(i.assignee||'-')}</span><span>${escapeHtml(i.customer||'-')}</span></div></div>`).join('')||'<div class="empty">최근 일반 이슈 없음</div>'}</div>`;
 }
 function topAssigneeRows(list){
   const rows=Object.entries(list.reduce((m,i)=>(m[i.assignee||'-']=(m[i.assignee||'-']||0)+1,m),{})).sort((a,b)=>b[1]-a[1]).slice(0,6);
-  return rows.map(([a,n])=>`<div class="dash-list-row"><span class="title">${escapeHtml(a)}</span><b>${n}건</b></div>`).join('')||'<div style="font-size:12px;color:var(--text3)">데이터 없음</div>';
+  return rows.map(([a,n])=>`<div class="dash-list-row"><span class="title">${escapeHtml(a)}</span><b>${n}건</b></div>`).join('')||'<div class="u-fs12px-ctext3">데이터 없음</div>';
 }
 function monthTrendRows(g,c){
   const m={};
   [...g.map(x=>({...x,_kind:'이슈'})),...c.map(x=>({...x,_kind:'케이스'}))].forEach(i=>{const k=String(i.date||'').slice(0,7)||'미상';m[k]=m[k]||{g:0,c:0};if(i._kind==='이슈')m[k].g++;else m[k].c++;});
-  return Object.entries(m).sort((a,b)=>a[0].localeCompare(b[0])).slice(-6).map(([mon,v])=>`<div class="dash-list-row"><span class="title">${escapeHtml(mon)}</span><span>이슈 <b>${v.g}</b> · 케이스 <b>${v.c}</b></span></div>`).join('')||'<div style="font-size:12px;color:var(--text3)">데이터 없음</div>';
+  return Object.entries(m).sort((a,b)=>a[0].localeCompare(b[0])).slice(-6).map(([mon,v])=>`<div class="dash-list-row"><span class="title">${escapeHtml(mon)}</span><span>이슈 <b>${v.g}</b> · 케이스 <b>${v.c}</b></span></div>`).join('')||'<div class="u-fs12px-ctext3">데이터 없음</div>';
 }
 
 
@@ -282,7 +282,7 @@ async function pwaInstall(){
       메뉴에서 <b>"홈 화면에 추가"</b> 를 선택하세요.<br><br>
       홈 화면에 <b>ESCARE</b> 아이콘이 생기고, 주소 입력 없이 앱처럼 열립니다.<br><br>
       <span style="color:var(--text3);font-size:12px">※ 반드시 <b>Safari</b>에서 열어야 추가됩니다(다른 브라우저는 제한).</span>
-    </div>`,`<button class="btn btn-indigo" onclick="closeGenModal()" style="width:auto;padding:8px 18px">확인</button>`);
+    </div>`,`<button class="btn btn-indigo u-btn-inline" onclick="closeGenModal()">확인</button>`);
     return;
   }
   toast('이미 설치되었거나, 브라우저 메뉴의 "홈 화면에 추가"를 이용해 주세요.',true);
@@ -382,7 +382,7 @@ window.initPushOnLogin=initPushOnLogin;
 async function loadPushSettings(){
   const evWrap=document.getElementById('push-events-wrap'); if(!evWrap)return;
   let data;
-  try{ data=await hubApi('/push/settings'); }catch(e){ evWrap.innerHTML='<div style="color:var(--danger);font-size:12px">로드 실패: '+escapeHtml(e.message)+'</div>'; return; }
+  try{ data=await hubApi('/push/settings'); }catch(e){ evWrap.innerHTML='<div class="u-err-12">로드 실패: '+escapeHtml(e.message)+'</div>'; return; }
   const st=document.getElementById('push-config-status');
   if(st)st.innerHTML = data.configured ? '✅ 서버 알림(VAPID) 설정 완료' : '⚠️ 서버에 VAPID 키가 없어 알림이 동작하지 않습니다.';
   const ev=(data.settings&&data.settings.events)||{};
@@ -399,7 +399,7 @@ async function loadPushSettings(){
   const nameOf=id=>{ const u=um[id]||{}; return u.displayName?`${u.displayName} (${id})`:id; };
   const renderPeople=(wrapId,selSet,cls)=>{
     const w=document.getElementById(wrapId); if(!w)return;
-    w.innerHTML=team.length?team.map(id=>`<label class="push-person"><input type="checkbox" class="${cls}" value="${escapeHtml(id)}" ${selSet.has(id)?'checked':''}>${escapeHtml(nameOf(id))}</label>`).join(''):'<span style="font-size:11px;color:var(--text3)">팀원 목록이 없습니다.</span>';
+    w.innerHTML=team.length?team.map(id=>`<label class="push-person"><input type="checkbox" class="${cls}" value="${escapeHtml(id)}" ${selSet.has(id)?'checked':''}>${escapeHtml(nameOf(id))}</label>`).join(''):'<span class="u-muted-11">팀원 목록이 없습니다.</span>';
   };
   renderPeople('push-include-wrap',incSel,'push-inc');
   renderPeople('push-exclude-wrap',excSel,'push-exc');
@@ -409,7 +409,7 @@ async function loadPushSettings(){
     const list=data.subscribers||[];
     const dev=list.reduce((n,s)=>n+(Number(s.devices)||0),0);
     sub.innerHTML=list.length
-      ?('🔔 <b>구독된 기기</b> — '+list.length+'명 / '+dev+'대: '+list.map(s=>`${escapeHtml(nameOf(s.id))} <span style="color:var(--text3)">(${s.devices}대)</span>`).join(', ')+'<div style="font-size:10.5px;color:var(--text3);margin-top:6px">※ 알림을 켠 뒤 끄지 않은 기기 목록입니다(앱에서 끈 사람은 즉시 제외). 브라우저 권한을 끄거나 만료·삭제된 기기는 다음 알림 발송 시 자동 정리됩니다.</div>')
+      ?('🔔 <b>구독된 기기</b> — '+list.length+'명 / '+dev+'대: '+list.map(s=>`${escapeHtml(nameOf(s.id))} <span class="u-muted">(${s.devices}대)</span>`).join(', ')+'<div style="font-size:10.5px;color:var(--text3);margin-top:6px">※ 알림을 켠 뒤 끄지 않은 기기 목록입니다(앱에서 끈 사람은 즉시 제외). 브라우저 권한을 끄거나 만료·삭제된 기기는 다음 알림 발송 시 자동 정리됩니다.</div>')
       :'아직 알림을 켠 사용자가 없습니다.';
   }
 }

@@ -21,7 +21,7 @@ function renderIssues_legacy_v3(){
     const caseHtml=cases.length?`<div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">${cases.map(c=>`<span class="case-chip ${c.done?'done':'open'}" onclick="event.stopPropagation();v154GoCaseExact('${escapeAttr(c.key||i.key)}')">${escapeHtml(c.num)} · ${c.done?'완료':'진행'}</span>`).join('')}</div>`:'';
     return `<div class="issue-item ${SEL&&SEL.key===i.key?'sel':''}" onclick="selectIssue(ISSUES.find(x=>x.key==='${escapeAttr(i.key)}'))">
       <div class="issue-title"><span class="issue-key">${escapeHtml(i.key)}</span>${escapeHtml(i.summary||'')}</div>
-      <div class="issue-meta"><span>${escapeHtml(i.customer||'고객사 없음')}</span><span>${escapeHtml(i.assignee||'미지정')}</span><span>${fmtDate(i.created)}</span><span>${age}일</span>${done?'<span style="color:var(--ok)">완료</span>':'<span style="color:var(--warn)">진행/미완료</span>'}</div>
+      <div class="issue-meta"><span>${escapeHtml(i.customer||'고객사 없음')}</span><span>${escapeHtml(i.assignee||'미지정')}</span><span>${fmtDate(i.created)}</span><span>${age}일</span>${done?'<span style="color:var(--ok)">완료</span>':'<span class="u-c-warn">진행/미완료</span>'}</div>
       ${caseHtml}
     </div>`;
   }).join('') || `<div class="empty">조건에 맞는 일반 이슈가 없습니다.</div>`;
@@ -81,7 +81,7 @@ async function lookupVT(){
     resBox.innerHTML=`<div class="vt-card"><h3>${danger>0?'⚠️ 탐지됨':'✅ 미탐지'}</h3><div class="vt-stats"><div><span>악성</span><b>${stats.malicious||0}</b></div><div><span>의심</span><b>${stats.suspicious||0}</b></div><div><span>정상</span><b>${stats.harmless||0}</b></div><div><span>전체</span><b>${total}</b></div></div><p style="margin-top:12px;color:var(--text2);font-size:12px">${escapeHtml(attrs.meaningful_name||attrs.type_description||'파일 정보 없음')}</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><a class="btn" target="_blank" rel="noopener" href="https://www.virustotal.com/gui/file/${encodeURIComponent(hash)}">VirusTotal에서 보기</a><a class="btn" target="_blank" rel="noopener" href="https://symsubmit.symantec.com/">제조사 신고</a></div></div>`;
     await loadSharedVTHistory(true);
   }catch(e){
-    resBox.innerHTML=`<div class="alert error">조회 실패: ${escapeHtml(e.message||String(e))}</div><div style="margin-top:10px"><a class="btn" target="_blank" rel="noopener" href="https://symsubmit.symantec.com/">제조사 신고</a></div>`;
+    resBox.innerHTML=`<div class="alert error">조회 실패: ${escapeHtml(e.message||String(e))}</div><div class="u-mt-10px"><a class="btn" target="_blank" rel="noopener" href="https://symsubmit.symantec.com/">제조사 신고</a></div>`;
   }
 }
 /* ── v1.5.5 hotfix: AI usage card polish + Jira render routing ───────────── */
@@ -234,7 +234,7 @@ function renderSidebarCompact(){
   if(!box)return;
   box.dataset.v153='1';
   const gi=getGeneralIssues().length, ci=getCaseIssueBase().length;
-  const jiraState=ISSUES&&ISSUES.length?'<span class="dot dot-green"></span>연결됨':'<span class="dot" style="background:var(--warn)"></span>대기';
+  const jiraState=ISSUES&&ISSUES.length?'<span class="dot dot-green"></span>연결됨':'<span class="dot u-bg-warn"></span>대기';
   box.innerHTML=`
     <div class="usage-card ai-usage-v155">
       <div class="u-head"><div class="u-title"><span class="u-dot"></span>AI 사용량 <span id="ai-usage-state" style="font-size:9px;color:var(--text3);font-weight:700">대기</span></div><button id="ai-usage-refresh" class="pill-btn" onclick="refreshAIUsage()">갱신</button></div>
@@ -252,7 +252,7 @@ function renderSidebarCompact(){
       <div class="u-foot" id="ai-usage-updated">필요 시 갱신</div>
     </div>
     <div class="health-card">
-      <div class="h-head"><div class="h-title">연결/동기화</div><span id="issue-count" style="font-size:10px;color:var(--text3)">${gi||ci?`일반 ${gi} / 케이스 ${ci}`:'-'}</span></div>
+      <div class="h-head"><div class="h-title">연결/동기화</div><span class="u-muted-10" id="issue-count">${gi||ci?`일반 ${gi} / 케이스 ${ci}`:'-'}</span></div>
       <div class="h-row"><span>접속자</span><span class="h-state">${escapeHtml(CURRENT_DISPLAY||CURRENT_USER||'-')}</span></div>
       <div class="h-row"><span>Jira</span><span class="h-state ${ISSUES&&ISSUES.length?'ok':''}" id="jira-dot">${jiraState}</span></div>
       <div class="h-row"><span>AI</span><span class="h-state ok" id="ai-status">준비됨</span></div>
@@ -305,7 +305,7 @@ function renderMetaIncomplete(){
   const wrap=document.getElementById('meta-incomplete-wrap');
   if(!wrap)return;
   const inc=getGeneralIssues().filter(i=>isOpenStatus(i.status)&&isMetaIncomplete(i));
-  if(!inc.length){wrap.innerHTML=`<div class="chart-card" style="margin-bottom:16px"><div class="chart-title">📋 주요 항목 미기입 점검</div><div style="font-size:12px;color:var(--success);padding:8px 2px">✓ 미완료 일반 이슈의 핵심 항목(고객사·레이블·범주·기한)이 모두 입력되어 있습니다.</div></div>`;return;}
+  if(!inc.length){wrap.innerHTML=`<div class="chart-card u-mb-16px"><div class="chart-title">📋 주요 항목 미기입 점검</div><div style="font-size:12px;color:var(--success);padding:8px 2px">✓ 미완료 일반 이슈의 핵심 항목(고객사·레이블·범주·기한)이 모두 입력되어 있습니다.</div></div>`;return;}
   // 담당자별 집계
   const byAss={};
   inc.forEach(i=>{const a=i.assignee||'(미지정)';if(!byAss[a])byAss[a]={count:0,fields:{}};byAss[a].count++;metaMissingFields(i).forEach(f=>{byAss[a].fields[f]=(byAss[a].fields[f]||0)+1;});});
@@ -317,12 +317,12 @@ function renderMetaIncomplete(){
       <span style="flex:1;text-align:right">${fieldChips}</span>
     </div>`;
   }).join('');
-  wrap.innerHTML=`<div class="chart-card" style="margin-bottom:16px">
+  wrap.innerHTML=`<div class="chart-card u-mb-16px">
     <div class="chart-title" style="display:flex;align-items:center;justify-content:space-between">
       <span>📋 주요 항목 미기입 점검 — 담당자별 (${inc.length}건)</span>
-      <button onclick="setIssueNavigationFilter({preset:{kind:'incomplete',label:'메타 미완성 일반 이슈'}})" class="btn btn-ghost" style="width:auto;padding:4px 12px;font-size:11px">전체 보기 →</button>
+      <button onclick="setIssueNavigationFilter({preset:{kind:'incomplete',label:'메타 미완성 일반 이슈'}})" class="btn btn-ghost u-btn-xxs">전체 보기 →</button>
     </div>
-    <div style="font-size:11px;color:var(--text3);margin-bottom:6px">미완료 일반 이슈 중 고객사·레이블·범주·기한이 빠진 건. 담당자 클릭 시 해당 미기입 이슈로 이동합니다.</div>
+    <div class="u-fs11px-ctext3-mb6px">미완료 일반 이슈 중 고객사·레이블·범주·기한이 빠진 건. 담당자 클릭 시 해당 미기입 이슈로 이동합니다.</div>
     ${rows}
   </div>`;
 }
@@ -332,7 +332,7 @@ function focusCardHtml(title,items,empty,mapper){
 function completionRateRows(list){
   const grouped=Object.entries(list.reduce((m,i)=>{const a=i.assignee||'-';m[a]=m[a]||{t:0,d:0};m[a].t++;if(isDoneStatus(i.status))m[a].d++;return m;},{}))
     .filter(([,v])=>v.t>=5).sort((a,b)=>(b[1].d/b[1].t)-(a[1].d/a[1].t)).slice(0,6);
-  return grouped.map(([a,v])=>`<div class="dash-list-row"><span class="title">${escapeHtml(a)}</span><b>${Math.round(v.d/v.t*100)}%</b></div>`).join('')||'<div style="font-size:12px;color:var(--text3)">데이터 없음</div>';
+  return grouped.map(([a,v])=>`<div class="dash-list-row"><span class="title">${escapeHtml(a)}</span><b>${Math.round(v.d/v.t*100)}%</b></div>`).join('')||'<div class="u-fs12px-ctext3">데이터 없음</div>';
 }
 function trendSvg(g,c){
   const keys=[];
@@ -443,7 +443,7 @@ function selectCustomer(idx,name){
 }
 function renderCustomerRight(){
   const right=document.getElementById('cust-right'); if(!right)return;
-  if(!CUST_SEL){right.innerHTML='<div class="rpanel"><div class="rp-empty"><p style="font-size:13px;color:var(--text3)">고객사를 선택하면<br>상세 현황이 표시됩니다</p></div></div>';return;}
+  if(!CUST_SEL){right.innerHTML='<div class="rpanel"><div class="rp-empty"><p class="u-muted-13">고객사를 선택하면<br>상세 현황이 표시됩니다</p></div></div>';return;}
   const c=CUST_SEL;
   const general=c.general||c.issues?.filter(i=>!isCaseIssue(i))||[];
   const cases=c.cases||c.issues?.filter(isCaseIssue)||[];
@@ -471,8 +471,8 @@ function renderCustomerRight(){
     </div>
     <div class="jump-row"><button class="btn btn-ghost" onclick="setIssueNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사: '+c.name)}}})">일반 이슈 보기</button><button class="btn btn-ghost" onclick="setCaseNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사 케이스: '+c.name)}}})">케이스 보기</button></div>
     <div style="font-size:10px;color:var(--text3);font-weight:700;margin:12px 0 8px;text-transform:uppercase">최근 일반 이슈</div>${recent.map(i=>row(i,'issue')).join('')||'<div class="empty">최근 일반 이슈 없음</div>'}
-    <div style="font-size:10px;color:var(--text3);font-weight:700;margin:14px 0 8px;text-transform:uppercase">최근 케이스</div>${recentCases.map(i=>row(i,'case')).join('')||'<div class="empty">최근 케이스 없음</div>'}
-    <div style="font-size:10px;color:var(--text3);font-weight:700;margin:14px 0 8px;text-transform:uppercase">🔑 라이선스</div>${eosForCust.length?eosForCust.map(e=>`<div class="customer-work-row" onclick="showPage('eos',document.getElementById('nav-eos'))"><div><div class="k">${escapeHtml(e.productDesc||e.product||'-')}</div><div class="t">${escapeHtml(e.serial||e.siteId||'')}</div></div><div class="m">${e.expireDate?'~ '+escapeHtml(e.expireDate):'-'}</div></div>`).join(''):'<div class="empty">등록된 라이선스 없음</div>'}
+    <div class="u-fs10px-ctext3-fw700-m14px08-ttupperc">최근 케이스</div>${recentCases.map(i=>row(i,'case')).join('')||'<div class="empty">최근 케이스 없음</div>'}
+    <div class="u-fs10px-ctext3-fw700-m14px08-ttupperc">🔑 라이선스</div>${eosForCust.length?eosForCust.map(e=>`<div class="customer-work-row" onclick="showPage('eos',document.getElementById('nav-eos'))"><div><div class="k">${escapeHtml(e.productDesc||e.product||'-')}</div><div class="t">${escapeHtml(e.serial||e.siteId||'')}</div></div><div class="m">${e.expireDate?'~ '+escapeHtml(e.expireDate):'-'}</div></div>`).join(''):'<div class="empty">등록된 라이선스 없음</div>'}
   </div>`;
 }
 function issueCaseMatches(issue,caseIssue){

@@ -28,7 +28,7 @@ function renderFeatureFlagsAdmin(){
   const w=document.getElementById('feature-flags-wrap'); if(!w)return;
   w.innerHTML=getMenuToggleList().map(({key,label})=>{
     const locked=!!FEATURE_PROTECTED[key], on=FEATURE_FLAGS[key]!==false;
-    const tail=locked?'<span style="font-size:10px;color:var(--text3)">잠금</span>':(FEATURE_WARN[key]?`<span title="${FEATURE_WARN[key]}" style="color:var(--warn)">⚠</span>`:'');
+    const tail=locked?'<span class="u-muted-10">잠금</span>':(FEATURE_WARN[key]?`<span class="u-c-warn" title="${FEATURE_WARN[key]}">⚠</span>`:'');
     return `<label style="display:flex;align-items:center;gap:9px;padding:7px 0;font-size:13px;cursor:${locked?'not-allowed':'pointer'};border-bottom:1px solid var(--border);opacity:${locked?'.6':'1'}"><input type="checkbox" data-ff="${key}" ${(on||locked)?'checked':''} ${locked?'disabled':''} style="width:16px;height:16px"> <span>${escapeHtml(label)}</span> <code style="font-size:10px;color:var(--text3);margin-left:auto">${key}</code>${tail}</label>`;
   }).join('');
 }
@@ -60,7 +60,7 @@ async function runCustomerHistory(){
     HISTORY_ITEMS=d.items||[];
     if(st)st.textContent=`${d.count}건`+(d.jql?` · ${d.jql}`:'');
     renderHistoryResults();
-  }catch(e){ if(st)st.textContent=''; if(res)res.innerHTML=`<div style="color:var(--danger);padding:16px">조회 실패: ${escapeHtml(e.message)}</div>`; }
+  }catch(e){ if(st)st.textContent=''; if(res)res.innerHTML=`<div class="u-cdanger-p16px">조회 실패: ${escapeHtml(e.message)}</div>`; }
 }
 function histClsBadge(cls){
   if(!cls)return '';
@@ -77,10 +77,10 @@ function renderHistoryResults(){
     <td><a href="https://escare-engr.atlassian.net/browse/${escapeAttr(i.key)}" target="_blank" rel="noopener" style="color:#60a5fa;white-space:nowrap">${escapeHtml(i.key)}</a></td>
     <td style="max-width:340px">${escapeHtml(i.summary||'')}${histClsBadge(i.cls)}</td>
     <td>${escapeHtml(i.status||'')}</td><td>${escapeHtml(i.assignee||'-')}</td>
-    <td style="font-size:11px">${(i.labels||[]).map(l=>escapeHtml(l)).join(', ')}</td>
-    <td style="white-space:nowrap">${i.type==='subtask'?'하위':'작업'}</td>
-    <td style="white-space:nowrap">${escapeHtml((i.created||'').slice(0,10))}</td>
-    <td style="white-space:nowrap">${escapeHtml((i.updated||'').slice(0,10))}</td>
+    <td class="u-fs-11px">${(i.labels||[]).map(l=>escapeHtml(l)).join(', ')}</td>
+    <td class="u-ws-nowrap">${i.type==='subtask'?'하위':'작업'}</td>
+    <td class="u-ws-nowrap">${escapeHtml((i.created||'').slice(0,10))}</td>
+    <td class="u-ws-nowrap">${escapeHtml((i.updated||'').slice(0,10))}</td>
   </tr>`).join('');
   res.innerHTML=`<table class="ch-tbl srt"><tr><th>키</th><th>제목</th><th>상태</th><th>담당</th><th>라벨</th><th>유형</th><th>생성</th><th>수정</th></tr>${rows}</table>`;
   const _st=res.querySelector('table.srt'); if(_st)applySrtState(_st);
@@ -107,7 +107,7 @@ async function loadMonitor(kind){
     else { const d=await hubApi('/team/weekly',{method:'POST',body:JSON.stringify({days:7})}); items=d.items||[]; caption=`최근 ${d.days}일 갱신 ${d.count}건`; }
     if(st)st.textContent='';
     renderMonitor(items, caption);
-  }catch(e){ if(st)st.textContent=''; if(body)body.innerHTML=`<div style="color:var(--danger);padding:10px">조회 실패: ${escapeHtml(e.message)}</div>`; }
+  }catch(e){ if(st)st.textContent=''; if(body)body.innerHTML=`<div class="u-cdanger-p10px">조회 실패: ${escapeHtml(e.message)}</div>`; }
 }
 function renderMonitor(items, caption){
   const body=document.getElementById('monitor-body'); if(!body)return;
@@ -115,8 +115,8 @@ function renderMonitor(items, caption){
   const order=Object.keys(byA).sort((a,b)=>byA[b].length-byA[a].length);
   const unclassified=(items||[]).filter(i=>i.cls&&i.cls.kind==='unclassified');
   const flag=unclassified.length?`<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--warn)">⚑ 미분류 브래킷 ${unclassified.length}건 — 검토 필요(자동 추가 안 함): ${unclassified.slice(0,10).map(i=>escapeHtml(i.cls.bracket||'')).join(', ')}${unclassified.length>10?' …':''}</div>`:'';
-  const cards=order.map(a=>`<div class="chart-card soft" style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-bottom:6px"><span>${escapeHtml(a)}</span><span style="color:var(--text3)">${byA[a].length}건</span></div>${byA[a].map(i=>`<div style="font-size:11.5px;padding:3px 0;border-bottom:1px solid var(--border)"><a href="https://escare-engr.atlassian.net/browse/${escapeAttr(i.key)}" target="_blank" rel="noopener" style="color:#60a5fa">${escapeHtml(i.key)}</a> <span style="color:var(--text3)">${escapeHtml(i.status||'')}</span> ${escapeHtml(i.summary||'')}${histClsBadge(i.cls)}</div>`).join('')}</div>`).join('');
-  body.innerHTML=`<div class="muted" style="font-size:11.5px;margin-bottom:8px">${escapeHtml(caption)} · 담당 ${order.length}명</div>${flag}${cards||'<div class="muted">결과 없음</div>'}`;
+  const cards=order.map(a=>`<div class="chart-card soft u-mb-8px"><div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-bottom:6px"><span>${escapeHtml(a)}</span><span class="u-muted">${byA[a].length}건</span></div>${byA[a].map(i=>`<div style="font-size:11.5px;padding:3px 0;border-bottom:1px solid var(--border)"><a href="https://escare-engr.atlassian.net/browse/${escapeAttr(i.key)}" target="_blank" rel="noopener" style="color:#60a5fa">${escapeHtml(i.key)}</a> <span class="u-muted">${escapeHtml(i.status||'')}</span> ${escapeHtml(i.summary||'')}${histClsBadge(i.cls)}</div>`).join('')}</div>`).join('');
+  body.innerHTML=`<div class="muted u-fs115px-mb8px">${escapeHtml(caption)} · 담당 ${order.length}명</div>${flag}${cards||'<div class="muted">결과 없음</div>'}`;
 }
 /* ── §4 NSIS 설치 스크립트 분석기 ───────────────────── */
 let NSIS_PARSED=null, MERMAID_LOADED=false;
@@ -167,12 +167,12 @@ function runNsisParse(){
 function renderNsisSummary(p){
   const el=document.getElementById('nsis-summary'); if(!el)return;
   const chip=(label,n,col)=>`<span style="display:inline-block;background:${col}22;color:${col};border-radius:6px;padding:3px 9px;font-size:12px;margin:2px">${label} ${n}</span>`;
-  const list=(title,arr,max=60)=>arr.length?`<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;color:var(--text2,#cbd5e1)">${title} (${arr.length})</summary><div style="font-size:11.5px;color:var(--text3);font-family:monospace;white-space:pre-wrap;margin-top:6px;max-height:220px;overflow:auto">${arr.slice(0,max).map(x=>escapeHtml(String(x))).join('\n')}${arr.length>max?'\n… +'+(arr.length-max):''}</div></details>`:'';
+  const list=(title,arr,max=60)=>arr.length?`<details class="u-mt-8px"><summary style="cursor:pointer;font-size:12px;color:var(--text2,#cbd5e1)">${title} (${arr.length})</summary><div style="font-size:11.5px;color:var(--text3);font-family:monospace;white-space:pre-wrap;margin-top:6px;max-height:220px;overflow:auto">${arr.slice(0,max).map(x=>escapeHtml(String(x))).join('\n')}${arr.length>max?'\n… +'+(arr.length-max):''}</div></details>`:'';
   const ind=p.indicators, iocs=[...ind.urls,...ind.ips,...ind.hashes];
   const risky=(p.downloads.length||p.execs.length)?`<div style="margin-top:8px;font-size:11.5px;color:var(--warn)">⚠️ 외부 다운로드/임의 실행 항목이 있습니다 — AI 보안 분석 권장</div>`:'';
   el.innerHTML=`<div style="margin-bottom:6px">${chip('📦 섹션',p.sections.length,'#60a5fa')}${chip('🔧 함수',p.functions.length,'#a78bfa')}${chip('📄 File',p.files.length,'#34d399')}${chip('▶️ Exec',p.execs.length,'#f59e0b')}${chip('🗝️ Reg',p.regs.length,'#f472b6')}${chip('⬇️ 다운로드',p.downloads.length,'#fb7185')}${chip('🔗 URL',ind.urls.length,'#22d3ee')}${chip('🌐 IP',ind.ips.length,'#22d3ee')}${chip('#️⃣ Hash',ind.hashes.length,'#22d3ee')}</div>${risky}
     ${list('섹션/함수',p.sections.concat(p.functions))}${list('▶️ 실행(Exec) — 전체',p.execs)}${list('🗝️ 레지스트리 — 전체',p.regs)}${list('🗑️ 삭제(Delete/RMDir)',p.deletes)}${list('🔗 바로가기',p.shortcuts)}${list('⬇️ 다운로드',p.downloads)}${list('📄 파일(File) — 전체',p.files)}${list('!define',p.defines)}
-    ${iocs.length?`<div style="margin-top:10px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">위협 인텔(VT) 조회 — 클릭 시 VirusTotal 페이지로 전달:</div>${iocs.slice(0,24).map(v=>`<button onclick="nsisToVT(${jsAttr(v)})" style="${CMB};margin:2px">${escapeHtml(v.length>42?v.slice(0,42)+'…':v)}</button>`).join('')}</div>`:''}`;
+    ${iocs.length?`<div class="u-mt-10px"><div style="font-size:11px;color:var(--text3);margin-bottom:4px">위협 인텔(VT) 조회 — 클릭 시 VirusTotal 페이지로 전달:</div>${iocs.slice(0,24).map(v=>`<button onclick="nsisToVT(${jsAttr(v)})" style="${CMB};margin:2px">${escapeHtml(v.length>42?v.slice(0,42)+'…':v)}</button>`).join('')}</div>`:''}`;
 }
 function nsisToVT(v){
   showPage('vt');
@@ -301,28 +301,28 @@ async function renderNsisDiagram(){
     const mer=await ensureMermaid();
     const r=await mer.render('nsisFlow'+(window.__nsisN=(window.__nsisN||0)+1), nsisFlowMermaid(src));
     wrap.innerHTML=`<div style="background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;overflow:auto">${r.svg}</div>`;
-  }catch(e){ wrap.innerHTML=`<div style="color:var(--danger);padding:10px">다이어그램 실패: ${escapeHtml(e.message)}</div>`; }
+  }catch(e){ wrap.innerHTML=`<div class="u-cdanger-p10px">다이어그램 실패: ${escapeHtml(e.message)}</div>`; }
 }
 async function analyzeNsisAI(){
   const src=document.getElementById('nsis-input')?.value?.trim();
   if(!src){toast('NSIS 스크립트를 입력하세요');return;}
-  const out=document.getElementById('nsis-ai'); if(out)out.innerHTML='<div class="muted" style="padding:10px">AI 보안 분석 중...</div>';
+  const out=document.getElementById('nsis-ai'); if(out)out.innerHTML='<div class="muted u-p-10px">AI 보안 분석 중...</div>';
   const p=NSIS_PARSED||parseNsis(src);
   const prompt=`다음은 NSIS(Nullsoft) 설치 스크립트다. 보안 엔지니어 관점에서 분석하라.\n1) 설치 동작 요약 — 무엇을 설치/실행/기록하는가\n2) 보안상 주의점 — 외부 다운로드, 임의 실행(ExecWait/nsExec), 레지스트리/권한 변경, 의심 URL·IP\n3) 위험도(낮음/보통/높음)와 근거\n한국어로 간결히. 추정과 확인된 사실을 구분하라.\n\n[추출 요약] 섹션 ${p.sections.length} · File ${p.files.length} · Exec ${p.execs.length} · Reg ${p.regs.length} · 다운로드 ${p.downloads.length} · URL ${p.indicators.urls.length} · IP ${p.indicators.ips.length} · Hash ${p.indicators.hashes.length}\n\n[스크립트]\n${src.slice(0,16000)}`;
   try{
     const txt=await callAI(prompt,'nsisx',{feature:'nsis'});
-    if(out)out.innerHTML=`<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;white-space:pre-wrap;font-size:13px;line-height:1.65">${escapeHtml(txt)}</div><div class="muted" style="font-size:10.5px;margin-top:4px">AI 추정 — 확정 판단은 검토 필요 · ${escapeHtml(aiModelLabel(LAST_AI_MODEL))}</div>`;
-  }catch(e){ if(out)out.innerHTML=`<div style="color:var(--danger);padding:10px">AI 분석 실패: ${escapeHtml(e.message)}</div>`; }
+    if(out)out.innerHTML=`<div class="u-bgcard-bor1pxsol-br10px-p14px-wsprewra-f">${escapeHtml(txt)}</div><div class="muted u-fs105px-mt4px">AI 추정 — 확정 판단은 검토 필요 · ${escapeHtml(aiModelLabel(LAST_AI_MODEL))}</div>`;
+  }catch(e){ if(out)out.innerHTML=`<div class="u-cdanger-p10px">AI 분석 실패: ${escapeHtml(e.message)}</div>`; }
 }
 async function analyzeNsisImprove(){
   const src=document.getElementById('nsis-input')?.value?.trim();
   if(!src){toast('NSIS 스크립트를 입력하세요');return;}
-  const out=document.getElementById('nsis-ai'); if(out)out.innerHTML='<div class="muted" style="padding:10px">AI 개선안 도출 중...</div>';
+  const out=document.getElementById('nsis-ai'); if(out)out.innerHTML='<div class="muted u-p-10px">AI 개선안 도출 중...</div>';
   const prompt=`다음은 NSIS(Nullsoft) 설치 스크립트다. 설치 엔지니어 관점에서 이 스크립트의 개선안을 제시하라.\n1) 버그·오류 가능성 — 잔존 프로세스/파일, 64/32비트 분기, 권한, 재부팅 처리\n2) 견고성·멱등성 — 재설치/업그레이드 안전, 실패 시 롤백, IfErrors/에러 처리\n3) 보안 하드닝 — 불필요한 임의 실행 축소, 외부 다운로드 무결성 검증, 레지스트리 최소 권한\n4) 모범사례·현대화 — LogicLib 활용, 상세 로그(ShowInstDetails), 언인스톨러 정합성\n각 항목을 구체적으로(어느 부분을 어떻게 고치는지, 가능하면 코드 스니펫). 한국어. 확정과 추정을 구분.\n\n[스크립트]\n${src.slice(0,16000)}`;
   try{
     const txt=await callAI(prompt,'nsisx',{feature:'nsis_improve'});
-    if(out)out.innerHTML=`<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;white-space:pre-wrap;font-size:13px;line-height:1.65"><div style="font-weight:700;color:var(--accent);margin-bottom:8px">💡 스크립트 개선안</div>${escapeHtml(txt)}</div><div class="muted" style="font-size:10.5px;margin-top:4px">AI 추정 — 적용 전 검토 필요 · ${escapeHtml(aiModelLabel(LAST_AI_MODEL))}</div>`;
-  }catch(e){ if(out)out.innerHTML=`<div style="color:var(--danger);padding:10px">개선안 도출 실패: ${escapeHtml(e.message)}</div>`; }
+    if(out)out.innerHTML=`<div class="u-bgcard-bor1pxsol-br10px-p14px-wsprewra-f"><div style="font-weight:700;color:var(--accent);margin-bottom:8px">💡 스크립트 개선안</div>${escapeHtml(txt)}</div><div class="muted u-fs105px-mt4px">AI 추정 — 적용 전 검토 필요 · ${escapeHtml(aiModelLabel(LAST_AI_MODEL))}</div>`;
+  }catch(e){ if(out)out.innerHTML=`<div class="u-cdanger-p10px">개선안 도출 실패: ${escapeHtml(e.message)}</div>`; }
 }
 /* ── §H 감사로그 마이그레이션 (슈퍼) ─────────────── */
 async function loadAuditMigStatus(){

@@ -1777,7 +1777,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     <div class="ai-modal-body" id="ai-modal-body"></div>
     <div class="ai-modal-foot">
       <span id="ai-modal-meta">-</span>
-      <span style="color:var(--text3)">ESC 키로 닫기</span>
+      <span class="u-muted">ESC 키로 닫기</span>
     </div>
   </div>
 </div>
@@ -1883,10 +1883,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
       </div>
       <div class="sb-status">
         <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:7px">연결 상태</div>
-        <div class="sb-status-row"><span>접속자</span><span id="user-label" style="color:var(--accent3);font-weight:700">-</span></div>
+        <div class="sb-status-row"><span>접속자</span><span class="u-caccent-fw700" id="user-label">-</span></div>
         <div class="sb-status-row"><span>Jira</span><span id="jira-dot"><span class="dot dot-gray"></span>대기중</span></div>
         <div class="sb-status-row"><span>AI</span><span id="ai-dot"><span class="dot dot-gray"></span>대기중</span></div>
-        <div class="sb-status-row"><span>이슈</span><span id="issue-count" style="color:var(--text2)">-</span></div>
+        <div class="sb-status-row"><span>이슈</span><span class="u-c-text2" id="issue-count">-</span></div>
         <div class="sync-meta" id="jira-sync-meta">동기화 범위 확인 중...</div>
       </div>
       <div class="session-timer" id="session-timer"></div>
@@ -1911,7 +1911,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
       <div id="ai-brief-wrap" style="display:none"></div>
       <div class="chart-grid" id="chart-section"></div>
       <div class="sec-title">팀원 랭킹</div>
-      <div class="chart-grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+      <div class="chart-grid u-gridtemplatecolumns-repeatautofi">
         <div class="chart-card"><h4>처리 건수 TOP</h4><div id="rank-handled"></div></div>
         <div class="chart-card"><h4>완료율 (5건 이상)</h4><div id="rank-rate"></div></div>
         <div class="chart-card"><h4>월별 추이 (최근 6개월)</h4><svg class="line-chart" id="trend-chart" viewBox="0 0 400 140"></svg></div>
@@ -1921,7 +1921,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     </div>
 
     <div class="page" id="page-monitor">
-      <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--text2,#cbd5e1);margin-bottom:16px">📊 팀 업무 모니터 — 일/주 단위 ENGR 이슈 갱신 현황(담당자별) + 미분류⚑ 검토. <strong>mj.park 전용.</strong></div>
+      <div class="u-bgrgba99-bor1pxsol-br12px-p12px16-fs12px">📊 팀 업무 모니터 — 일/주 단위 ENGR 이슈 갱신 현황(담당자별) + 미분류⚑ 검토. <strong>mj.park 전용.</strong></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
         <button class="btn btn-indigo" onclick="loadMonitor('daily')">오늘</button>
         <button class="btn" onclick="loadMonitor('weekly')">최근 7일</button>
@@ -1953,12 +1953,12 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           <div id="issue-list-wrap" class="issue-list"></div>
           <div id="page-nav" style="display:flex;justify-content:center;align-items:center;gap:6px;margin-top:14px;padding:10px;background:var(--card);border:1px solid var(--border);border-radius:10px"></div>
         </div>
-        <div id="right-panel"><div class="rpanel"><div class="rp-empty"><p style="font-size:13px;color:var(--text3)">이슈를 선택하세요</p></div></div></div>
+        <div id="right-panel"><div class="rpanel"><div class="rp-empty"><p class="u-muted-13">이슈를 선택하세요</p></div></div></div>
       </div>
     </div>
 
     <div class="page" id="page-cases">
-      <div style="background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--cyan);margin-bottom:16px">📦 제목 맨 앞이 <code style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:5px">[숫자 8자리]</code> 형식인 항목만 케이스로 분류합니다. 일반 이슈 속 케이스 번호는 연결 케이스로 표시됩니다.</div>
+      <div class="u-bgrgba34-bor1pxsol-br12px-p12px16-fs12px">📦 제목 맨 앞이 <code style="background:rgba(255,255,255,.08);padding:1px 5px;border-radius:5px">[숫자 8자리]</code> 형식인 항목만 케이스로 분류합니다. 일반 이슈 속 케이스 번호는 연결 케이스로 표시됩니다.</div>
       <div class="filter-row">
         <input id="case-q" placeholder="케이스 번호 / 제목 / 고객사 / 담당자 검색..." oninput="PAGE_STATE.cases=1;renderCases()">
         <select id="case-stat" onchange="PAGE_STATE.cases=1;renderCases()">
@@ -1982,7 +1982,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           <div id="case-list" class="issue-list"></div>
           <div id="case-pager" class="pager"></div>
         </div>
-        <div id="case-right"><div class="rpanel"><div class="rp-empty"><p style="font-size:13px;color:var(--text3)">케이스를 선택하세요</p></div></div></div>
+        <div id="case-right"><div class="rpanel"><div class="rp-empty"><p class="u-muted-13">케이스를 선택하세요</p></div></div></div>
       </div>
     </div>
 
@@ -2007,7 +2007,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           <div id="cust-pager" class="pager"></div>
         </div>
         <div id="cust-right">
-          <div class="rpanel"><div class="rp-empty"><p style="font-size:13px;color:var(--text3)">고객사를 선택하면<br>상세 현황이 표시됩니다</p></div></div>
+          <div class="rpanel"><div class="rp-empty"><p class="u-muted-13">고객사를 선택하면<br>상세 현황이 표시됩니다</p></div></div>
         </div>
       </div>
       <div id="cust-history-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto">
@@ -2023,7 +2023,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         </style>
         <div style="background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:22px;width:min(980px,96vw)">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-            <h3 style="margin:0;font-size:16px">📜 고객사 업무 이력 조회 <span style="font-size:11px;color:var(--text3);font-weight:400">· Jira 직접 조회(캐시 기간 무관)</span></h3>
+            <h3 class="u-m0-fs16px">📜 고객사 업무 이력 조회 <span class="u-muted-11-400">· Jira 직접 조회(캐시 기간 무관)</span></h3>
             <button class="btn" onclick="closeCustomerHistory()">닫기</button>
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:8px;margin-bottom:10px">
@@ -2039,7 +2039,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
             <button class="btn btn-indigo" onclick="runCustomerHistory()">조회</button>
             <button class="btn" onclick="copyHistoryTable()">표 복사</button>
-            <span id="ch-status-text" class="muted" style="font-size:11px;word-break:break-all"></span>
+            <span id="ch-status-text" class="muted u-fs11px-worbreaka"></span>
           </div>
           <div id="ch-results" style="max-height:56vh;overflow:auto"></div>
         </div>
@@ -2064,13 +2064,107 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
       table.srt th{cursor:pointer;user-select:none;white-space:nowrap}
       table.srt th:hover{color:var(--text,#e2e8f0)}
       .srt-ar{opacity:.7;font-size:9px;margin-left:2px}
-      </style>
-      <div style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--text2,#cbd5e1);margin-bottom:16px">🧩 제품·OS 호환성 / EOS·EOL 매트릭스. <strong style="color:#34d399">✓ 확정</strong> 항목이 공식 기준이며, <span class="badge-warn">초안</span>은 검토 중입니다. EOS 임박(90일 이내)은 색으로 강조됩니다.</div>
+      
+/* ── 유틸리티 클래스 (STEP 4: 반복 인라인 style 추출) ──
+   ⚠️ JS가 .style.X= 로 조작하는 요소(#ai-usage-fill·#f-incomplete-btn·#saved·#log-char)와
+      display 속성은 인라인 유지 — 클래스로 옮기면 표시/숨김 제어가 깨진다. */
+.u-btn-inline{width:auto;padding:8px 18px}
+.u-muted{color:var(--text3)}
+.u-fs-11px{font-size:11px}
+.u-mb-8px{margin-bottom:8px}
+.u-muted-11{font-size:11px;color:var(--text3)}
+.u-mb-12px{margin-bottom:12px}
+.u-cdanger-p20px{color:var(--danger);padding:20px}
+.u-ws-nowrap{white-space:nowrap}
+.u-err-12{color:var(--danger);font-size:12px}
+.u-muted-11-400{font-size:11px;color:var(--text3);font-weight:400}
+.u-mt-10px{margin-top:10px}
+.u-mt-14px{margin-top:14px}
+.u-sec-label{font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px}
+.u-td-none{text-decoration:none}
+.u-empty{text-align:center;padding:40px;color:var(--text3);font-size:13px}
+.u-muted-13{font-size:13px;color:var(--text3)}
+.u-curpointe-op6-fs13px{cursor:pointer;opacity:.6;font-size:13px}
+.u-muted-10{font-size:10px;color:var(--text3)}
+.u-mt-12px{margin-top:12px}
+.u-btn-xs{width:auto;padding:6px 12px;font-size:11px}
+.u-ctext3-mlauto{color:var(--text3);margin-left:auto}
+.u-gc-span2{grid-column:span 2}
+.u-btn-xxs{width:auto;padding:4px 12px;font-size:11px}
+.u-c-fcd34d{color:#fcd34d}
+.u-curpointe-fs11px-ctext2-p6px0-bor1pxsol{cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+.u-fs12px-ctext3{font-size:12px;color:var(--text3)}
+.u-ws-prewrap{white-space:pre-wrap}
+.u-cdanger-p10px{color:var(--danger);padding:10px}
+.u-c-text2{color:var(--text2)}
+.u-wauto-p9px18p{width:auto;padding:9px 18px}
+.u-fs11px-ctext3-fw700{font-size:11px;color:var(--text3);font-weight:700}
+.u-mw-240px{max-width:240px}
+.u-c-warn{color:var(--warn)}
+.u-c-accent3{color:var(--accent3)}
+.u-fs12px-ctext2-mb12px-lh17{font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7}
+.u-mb-10px{margin-bottom:10px}
+.u-mb-16px{margin-bottom:16px}
+.u-cdanger-p16px{color:var(--danger);padding:16px}
+.u-c-f87171{color:#f87171}
+.u-c-fbbf24{color:#fbbf24}
+.u-p-6px4px{padding:6px 4px}
+.u-p6px4px-taright{padding:6px 4px;text-align:right}
+.u-c-success{color:var(--success)}
+.u-fs12px-ca5b4fc-fw800-mb8px{font-size:12px;color:#a5b4fc;font-weight:800;margin-bottom:8px}
+.u-fs125px-lh17-ctext2-wsprewra{font-size:12.5px;line-height:1.7;color:var(--text2);white-space:pre-wrap}
+.u-w-0{width:0%}
+.u-caccent-fw700{color:var(--accent3);font-weight:700}
+.u-gridtemplatecolumns-repeatautofi{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.u-bgrgba99-bor1pxsol-br12px-p12px16-fs12px{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--text2,#cbd5e1);margin-bottom:16px}
+.u-bgrgba34-bor1pxsol-br12px-p12px16-fs12px{background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--cyan);margin-bottom:16px}
+.u-m0-fs16px{margin:0;font-size:16px}
+.u-fs11px-worbreaka{font-size:11px;word-break:break-all}
+.u-c-34d399{color:#34d399}
+.u-bgvarbg0-bor1pxsol-br7px-p6px9px-cvartex{background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text,#e2e8f0);font-size:12.5px}
+.u-fs115px-mb8px{font-size:11.5px;margin-bottom:8px}
+.u-fs11px-ctext3-mb8px{font-size:11px;color:var(--text3);margin-bottom:8px}
+.u-w-26px{width:26px}
+.u-bgcard-bor1pxsol-br14px-p20px-mb16px{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+.u-wauto-p5px12p-fs11px{width:auto;padding:5px 12px;font-size:11px}
+.u-bgrgba24-bor1pxsol-br12px-p12px16-fs12px{background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:#fca5a5;margin-bottom:16px}
+.u-mt-8px{margin-top:8px}
+.u-mt-16px{margin-top:16px}
+.u-wauto-p8px14p-cdanger{width:auto;padding:8px 14px;color:var(--danger)}
+.u-bgteal-box0003px{background:var(--teal);box-shadow:0 0 0 3px rgba(99,189,172,.15)}
+.u-bgblue-box0003px{background:var(--blue);box-shadow:0 0 0 3px rgba(122,166,219,.15)}
+.u-bgamber-box0003px{background:var(--amber);box-shadow:0 0 0 3px rgba(230,184,95,.15)}
+.u-ctext3-fs11px{color:var(--text3);font-size:11px}
+.u-caccent-fs9px{color:var(--accent3);font-size:9px}
+.u-cfbbf24-fw700{color:#fbbf24;font-weight:700}
+.u-c-fca5a5{color:#fca5a5}
+.u-cur-pointer{cursor:pointer}
+.u-ta-right{text-align:right}
+.u-ttnone-ctext3-fw400{text-transform:none;color:var(--text3);font-weight:400}
+.u-bgcard2-bor1pxsol-br6px-ctext3-curpointe{background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit}
+.u-fs12px-ctext2{font-size:12px;color:var(--text2)}
+.u-gc-span4{grid-column:span 4}
+.u-wauto-p8px16p-fs11px{width:auto;padding:8px 16px;font-size:11px}
+.u-p6px4px-taright-ctext3{padding:6px 4px;text-align:right;color:var(--text3)}
+.u-flex-1{flex:1}
+.u-fs11px-ctext3-mb6px{font-size:11px;color:var(--text3);margin-bottom:6px}
+.u-bgrgba19-cc4ceff{background:rgba(196,206,255,.12);color:#c4ceff}
+.u-fs-22px{font-size:22px}
+.u-flex1-minw0{flex:1;min-width:0}
+.u-bg-warn{background:var(--warn)}
+.u-fs10px-ctext3-fw700-m14px08-ttupperc{font-size:10px;color:var(--text3);font-weight:700;margin:14px 0 8px;text-transform:uppercase}
+.u-fs10px-ctext3-fw700-m4px06p{font-size:10px;color:var(--text3);font-weight:700;margin:4px 0 6px}
+.u-p-20px{padding:20px}
+.u-p-10px{padding:10px}
+.u-bgcard-bor1pxsol-br10px-p14px-wsprewra-f{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;white-space:pre-wrap;font-size:13px;line-height:1.65}
+.u-fs105px-mt4px{font-size:10.5px;margin-top:4px}
+</style>
+      <div class="u-bgrgba99-bor1pxsol-br12px-p12px16-fs12px">🧩 제품·OS 호환성 / EOS·EOL 매트릭스. <strong class="u-c-34d399">✓ 확정</strong> 항목이 공식 기준이며, <span class="badge-warn">초안</span>은 검토 중입니다. EOS 임박(90일 이내)은 색으로 강조됩니다.</div>
       <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px">
         <div style="font-size:12.5px;font-weight:700;margin-bottom:8px">📚 벤더 KB — DLP / SEP System Requirements</div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-          <select id="vendor-kb-product" onchange="vendorKbVersions()" style="background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text,#e2e8f0);font-size:12.5px"><option value="DLP">Symantec DLP</option><option value="SEP">Symantec SEP</option></select>
-          <select id="vendor-kb-version" onchange="vendorKbUpdateButtons()" style="background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:6px 9px;color:var(--text,#e2e8f0);font-size:12.5px"></select>
+          <select class="u-bgvarbg0-bor1pxsol-br7px-p6px9px-cvartex" id="vendor-kb-product" onchange="vendorKbVersions()"><option value="DLP">Symantec DLP</option><option value="SEP">Symantec SEP</option></select>
+          <select class="u-bgvarbg0-bor1pxsol-br7px-p6px9px-cvartex" id="vendor-kb-version" onchange="vendorKbUpdateButtons()"></select>
           <button class="btn btn-indigo" id="vkb-sysreq" onclick="openVendorKb('sysreq')">📄 System Requirements</button>
           <button class="btn" id="vkb-new" onclick="openVendorKb('whatsnew')" style="display:none">✨ What's New</button>
           <button class="btn" id="vkb-notes" onclick="openVendorKb('notes')" style="display:none">📝 릴리스 노트</button>
@@ -2088,13 +2182,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <button class="btn compat-admin" style="display:none;color:#34d399" onclick="confirmAllDrafts()">✅ 일괄 확정</button>
         <button class="btn compat-admin" style="display:none;color:var(--danger)" onclick="bulkDeleteItems('.cmp-pick', id=>hubApi('/compat/'+id,{method:'DELETE'}), loadCompat, '매트릭스')">🗑 선택 삭제</button>
       </div>
-      <div id="compat-summary" class="muted" style="font-size:11.5px;margin-bottom:8px"></div>
-      <div id="collect-status" style="font-size:11px;color:var(--text3);margin-bottom:8px"></div>
+      <div id="compat-summary" class="muted u-fs115px-mb8px"></div>
+      <div class="u-fs11px-ctext3-mb8px" id="collect-status"></div>
       <div id="compat-table-wrap"></div>
       <div id="compat-ai-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto">
         <div style="background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:22px;width:min(840px,96vw)">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <h3 id="compat-ai-title" style="margin:0;font-size:16px">🤖 AI 호환성 후보 <span style="font-size:11px;color:var(--text3);font-weight:400">· 검토 후 초안 저장</span></h3>
+            <h3 class="u-m0-fs16px" id="compat-ai-title">🤖 AI 호환성 후보 <span class="u-muted-11-400">· 검토 후 초안 저장</span></h3>
             <button class="btn" onclick="closeCompatAICandidates()">닫기</button>
           </div>
           <div id="compat-ai-warn" style="font-size:11px;color:var(--warn);margin-bottom:10px">⚠ AI 추정값입니다. 저장 시 모두 <b>초안</b>으로 들어가며, 표에서 검토·수정 후 <b>확정</b>하세요.</div>
@@ -2119,7 +2213,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
             <label>EOS 날짜<input id="cm-eos_date" type="date"></label>
             <label>EOL 날짜<input id="cm-eol_date" type="date"></label>
           </div>
-          <label class="cm-note" style="margin-top:10px">비고<textarea id="cm-note" rows="3"></textarea></label>
+          <label class="cm-note u-mt-10px">비고<textarea id="cm-note" rows="3"></textarea></label>
           <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:18px">
             <button class="btn" onclick="closeCompatModal()">취소</button>
             <button class="btn btn-indigo" onclick="saveCompat()">저장</button>
@@ -2140,13 +2234,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <button class="btn" onclick="nsisClear()">지우기</button>
       </div>
       <div id="nsis-summary"></div>
-      <div id="nsis-diagram" style="margin-top:14px"></div>
-      <div id="nsis-ai" style="margin-top:14px"></div>
+      <div class="u-mt-14px" id="nsis-diagram"></div>
+      <div class="u-mt-14px" id="nsis-ai"></div>
     </div>
     <div class="page" id="page-eos">
-      <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--warn);margin-bottom:16px">🔑 고객사 라이선스 관리. 만료일(End Date) 임박 항목은 로그인 시 강조됩니다. <span onclick="showStorageInfo('eos')" title="데이터 저장 안내" style="cursor:pointer;opacity:.6;font-size:13px">ℹ</span></div>
+      <div style="background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--warn);margin-bottom:16px">🔑 고객사 라이선스 관리. 만료일(End Date) 임박 항목은 로그인 시 강조됩니다. <span class="u-curpointe-op6-fs13px" onclick="showStorageInfo('eos')" title="데이터 저장 안내">ℹ</span></div>
       <div class="action-row">
-        <button class="btn btn-indigo" onclick="openEosModal()" style="width:auto;padding:9px 18px">+ 신규 등록</button>
+        <button class="btn btn-indigo u-wauto-p9px18p" onclick="openEosModal()">+ 신규 등록</button>
         <button class="btn" onclick="bulkDeleteItems('.eos-pick', id=>hubApi('/eos/'+id,{method:'DELETE'}), ()=>loadEOS().then(()=>renderEosList()).catch(()=>{}), '라이선스')" style="width:auto;padding:9px 16px;color:var(--danger)">🗑 선택 삭제</button>
       </div>
       <div class="filter-row">
@@ -2156,7 +2250,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <span class="filter-count" id="eos-count">0건</span>
       </div>
       <table class="eos-table srt">
-        <thead><tr><th class="nosort" style="width:26px"><input type="checkbox" onclick="bulkSelectAll(this,'.eos-pick')" title="전체 선택"></th><th>고객사</th><th>Product Description</th><th>Site ID</th><th>수량</th><th>Serial</th><th>기간 (시작~종료)</th><th>D-Day</th><th></th></tr></thead>
+        <thead><tr><th class="nosort u-w-26px"><input type="checkbox" onclick="bulkSelectAll(this,'.eos-pick')" title="전체 선택"></th><th>고객사</th><th>Product Description</th><th>Site ID</th><th>수량</th><th>Serial</th><th>기간 (시작~종료)</th><th>D-Day</th><th></th></tr></thead>
         <tbody id="eos-tbody">
           <tr><td colspan="9" style="text-align:center;padding:40px">
             <div style="color:var(--text3);font-size:13px;margin-bottom:12px">📋 등록된 라이선스가 없습니다</div>
@@ -2174,23 +2268,23 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
 
     <div class="page" id="page-log">
       <div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--purple);margin-bottom:16px">🔬 로그를 붙여넣거나 파일을 올리면 <b>에러·경고·특이사항을 시간순으로 발췌</b>하고, <b>Google·KB·Broadcom 검색 링크</b>를 제품명과 함께 찾아줍니다. 링크 옆 <b>➕등록</b>으로 업무 링크에 저장, 발췌 로그는 📋로 복사하세요. (파일 ≤20MB)</div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">
+      <div class="u-bgcard-bor1pxsol-br14px-p20px-mb16px">
         <div class="file-drop" id="log-drop" onclick="document.getElementById('log-file').click()">
           <div style="font-size:12px;color:var(--text2);margin-bottom:6px">📁 파일을 드래그하거나 클릭</div>
-          <div style="font-size:10px;color:var(--text3)">.log / .txt / .zip / .csv · 최대 20MB · 여러 개/ZIP 가능</div>
+          <div class="u-muted-10">.log / .txt / .zip / .csv · 최대 20MB · 여러 개/ZIP 가능</div>
           <input type="file" id="log-file" accept=".log,.txt,.zip,.csv" multiple style="display:none">
           <div id="log-file-list" class="file-list"></div>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 6px">
-          <label style="font-size:11px;color:var(--text3);font-weight:700">증상 / 재현 조건 <span style="color:var(--purple)">— 제품명을 꼭 포함</span></label>
-          <button onclick="clearLogInput()" class="btn btn-ghost" style="width:auto;padding:5px 12px;font-size:11px">지우기</button>
+          <label class="u-fs11px-ctext3-fw700">증상 / 재현 조건 <span style="color:var(--purple)">— 제품명을 꼭 포함</span></label>
+          <button onclick="clearLogInput()" class="btn btn-ghost u-wauto-p5px12p-fs11px">지우기</button>
         </div>
         <textarea id="log-symptom" class="admin-textarea log-symptom" placeholder="제품명 + 증상을 적어주세요 (정확한 검색을 위해 제품명 필수).&#10;예) Symantec SEP — 특정 클라이언트 정책 업데이트 실패, 콘솔에 Download Protection Content Failures, 재부팅 후 반복&#10;예) Windows Server 2019 — 이벤트뷰어에 LSASS 오류 후 재부팅" style="min-height:84px"></textarea>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <label style="font-size:11px;color:var(--text3);font-weight:700">로그 붙여넣기 / 직접 입력</label>
+          <label class="u-fs11px-ctext3-fw700">로그 붙여넣기 / 직접 입력</label>
           <div style="display:flex;align-items:center;gap:8px">
             <span id="log-charcount" style="font-size:10.5px;color:var(--text3)">0자</span>
-            <button onclick="pasteLogFromClipboard()" class="btn btn-ghost" style="width:auto;padding:5px 12px;font-size:11px" title="클립보드에서 붙여넣기">📋 붙여넣기</button>
+            <button onclick="pasteLogFromClipboard()" class="btn btn-ghost u-wauto-p5px12p-fs11px" title="클립보드에서 붙여넣기">📋 붙여넣기</button>
           </div>
         </div>
         <textarea id="log-input" class="log-textarea" placeholder="여기에 로그를 붙여넣으세요 (Ctrl+V) 또는 위에서 파일을 업로드하세요.  분석은 Ctrl+Enter" oninput="updateLogCharCount()" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();analyzeLogs();}"></textarea>
@@ -2202,32 +2296,32 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     </div>
 
     <div class="page" id="page-vt">
-      <div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:#fca5a5;margin-bottom:16px">🛡 VirusTotal 통합 조회 — <b>파일해시 · IP · 도메인 · URL</b>을 자동 인식해 조회하고, 실제 파일을 업로드해 검사할 수 있습니다. <span onclick="showStorageInfo('vt')" title="데이터 저장 안내" style="cursor:pointer;opacity:.6;font-size:13px">ℹ</span></div>
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px">
+      <div class="u-bgrgba24-bor1pxsol-br12px-p12px16-fs12px">🛡 VirusTotal 통합 조회 — <b>파일해시 · IP · 도메인 · URL</b>을 자동 인식해 조회하고, 실제 파일을 업로드해 검사할 수 있습니다. <span class="u-curpointe-op6-fs13px" onclick="showStorageInfo('vt')" title="데이터 저장 안내">ℹ</span></div>
+      <div class="u-bgcard-bor1pxsol-br14px-p20px-mb16px">
         <div style="display:flex;gap:10px;align-items:flex-start">
           <textarea id="vt-input" rows="3" placeholder="해시 · IP · 도메인 · URL을 한 줄에 하나씩(또는 공백·쉼표로 구분) — 유형 자동 인식, 최대 100개&#10;예) 44d88612fea8a8f36de82e1278abb02f   8.8.8.8   example.com   https://site.com/path" style="flex:1;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-size:13px;outline:none;font-family:'Consolas','Courier New',monospace;resize:vertical;line-height:1.6" oninput="vtUpdateCount()" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();vtLookup();}"></textarea>
           <button class="btn btn-red" onclick="vtLookup()" id="vt-btn" style="width:auto;padding:12px 20px;white-space:nowrap">🔍 조회</button>
         </div>
-        <div style="display:flex;justify-content:space-between;margin-top:8px"><span id="vt-count" style="font-size:11px;color:var(--text3)">입력 0</span><span style="font-size:11px;color:var(--text3)">Ctrl+Enter로 조회 · 여러 개는 순차 조회됩니다</span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px"><span class="u-muted-11" id="vt-count">입력 0</span><span class="u-muted-11">Ctrl+Enter로 조회 · 여러 개는 순차 조회됩니다</span></div>
         <div id="vt-file-drop" class="vt-file-drop" onclick="document.getElementById('vt-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="vtFileDrop(event)">
           <span style="font-size:18px">📎</span>
           <span><b>실제 파일 검사</b> — 파일을 끌어다 놓거나 클릭해 선택 (최대 32MB, VirusTotal에 업로드되어 분석됩니다)</span>
           <input type="file" id="vt-file-input" style="display:none" onchange="vtFileScan(this.files[0])">
         </div>
-        <div id="vt-file-status" style="margin-top:8px"></div>
+        <div class="u-mt-8px" id="vt-file-status"></div>
       </div>
       <div id="vt-result"></div>
-      <div id="vt-history-wrap" style="margin-top:16px"></div>
+      <div class="u-mt-16px" id="vt-history-wrap"></div>
     </div>
 
     <div class="page" id="page-links">
-      <div style="background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--cyan);margin-bottom:16px">🔗 자주 접근하는 업무용 링크 모음. 누구나 등록할 수 있고, 수정·삭제는 등록자 또는 관리자만 가능합니다. <span onclick="showStorageInfo('links')" title="데이터 저장 안내" style="cursor:pointer;opacity:.6;font-size:13px">ℹ</span></div>
+      <div class="u-bgrgba34-bor1pxsol-br12px-p12px16-fs12px">🔗 자주 접근하는 업무용 링크 모음. 누구나 등록할 수 있고, 수정·삭제는 등록자 또는 관리자만 가능합니다. <span class="u-curpointe-op6-fs13px" onclick="showStorageInfo('links')" title="데이터 저장 안내">ℹ</span></div>
       <div class="action-row">
-        <button class="btn btn-indigo" id="links-add-btn" onclick="openLinkModal()" style="width:auto;padding:9px 18px">+ 링크 등록</button>
+        <button class="btn btn-indigo u-wauto-p9px18p" id="links-add-btn" onclick="openLinkModal()">+ 링크 등록</button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
           <button id="kb-seed-btn" class="btn btn-green admin-only" onclick="importRecentKBLinks()" style="width:auto;padding:8px 14px">📥 KB article 수집</button>
           <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2,#cbd5e1);cursor:pointer"><input type="checkbox" onclick="bulkSelectAll(this,'.lnk-pick')"> 전체 선택</label>
-          <button class="btn" onclick="bulkDeleteItems('.lnk-pick', id=>hubApi('/links/'+id,{method:'DELETE'}), ()=>loadLinks().then(()=>renderLinks()).catch(()=>{}), '링크')" style="width:auto;padding:8px 14px;color:var(--danger)">🗑 선택 삭제</button>
+          <button class="btn u-wauto-p8px14p-cdanger" onclick="bulkDeleteItems('.lnk-pick', id=>hubApi('/links/'+id,{method:'DELETE'}), ()=>loadLinks().then(()=>renderLinks()).catch(()=>{}), '링크')">🗑 선택 삭제</button>
         </div>
       </div>
       <div class="filter-row">
@@ -2248,10 +2342,10 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         💡 팀 노하우 게시판 — Known Issue, 워크어라운드, KB 링크를 팀원 누구나 공유할 수 있습니다.
       </div>
       <div class="action-row">
-        <button class="btn btn-indigo" onclick="openKnowledgeModal()" style="width:auto;padding:9px 18px">+ 노하우 등록</button>
+        <button class="btn btn-indigo u-wauto-p9px18p" onclick="openKnowledgeModal()">+ 노하우 등록</button>
         <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
           <label style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text2,#cbd5e1);cursor:pointer"><input type="checkbox" onclick="bulkSelectAll(this,'.kno-pick')"> 전체 선택</label>
-          <button class="btn" onclick="bulkDeleteItems('.kno-pick', id=>hubApi('/knowledge/'+id,{method:'DELETE'}), ()=>loadKnowledge().then(()=>renderKnowledge()).catch(()=>{}), '노하우')" style="width:auto;padding:8px 14px;color:var(--danger)">🗑 선택 삭제</button>
+          <button class="btn u-wauto-p8px14p-cdanger" onclick="bulkDeleteItems('.kno-pick', id=>hubApi('/knowledge/'+id,{method:'DELETE'}), ()=>loadKnowledge().then(()=>renderKnowledge()).catch(()=>{}), '노하우')">🗑 선택 삭제</button>
         </div>
       </div>
       <div class="filter-row">
@@ -2280,7 +2374,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     </div>
 
     <div class="page" id="page-audit">
-      <div style="background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:#fca5a5;margin-bottom:16px">🔒 관리자 전용 감사 로그 <span onclick="showStorageInfo('audit')" title="데이터 저장 안내" style="cursor:pointer;opacity:.6;font-size:13px">ℹ</span></div>
+      <div class="u-bgrgba24-bor1pxsol-br12px-p12px16-fs12px">🔒 관리자 전용 감사 로그 <span class="u-curpointe-op6-fs13px" onclick="showStorageInfo('audit')" title="데이터 저장 안내">ℹ</span></div>
       <div class="filter-row">
         <input id="audit-q" placeholder="사용자 / 대상 / 상세 검색..." oninput="loadAudit()" style="min-width:260px">
         <select id="audit-filter" onchange="loadAudit()">
@@ -2347,7 +2441,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     <div class="col" id="col-2">
       <div class="panel" data-card="team" id="md-team-report-panel">
         <div class="panel-head">
-          <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot" style="background:var(--teal);box-shadow:0 0 0 3px rgba(99,189,172,.15)"></span>팀 일보고</h2>
+          <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot u-bgteal-box0003px"></span>팀 일보고</h2>
           <span class="meta" id="team-count">0 / 0</span>
         </div>
         <div class="team-row" id="team-row"></div>
@@ -2370,7 +2464,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
     <div class="col" id="col-3">
       <div class="panel" data-card="weekly">
         <div class="panel-head">
-          <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot" style="background:var(--blue);box-shadow:0 0 0 3px rgba(122,166,219,.15)"></span>주간 미팅</h2>
+          <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot u-bgblue-box0003px"></span>주간 미팅</h2>
           <span class="dday meta" id="wk-dday">&mdash;</span>
         </div>
         <div class="wk-row">
@@ -2383,7 +2477,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
 
       <div class="panel" data-card="todos">
         <div class="panel-head">
-          <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot" style="background:var(--teal);box-shadow:0 0 0 3px rgba(99,189,172,.15)"></span>할 일</h2>
+          <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot u-bgteal-box0003px"></span>할 일</h2>
           <div class="meta" id="todo-count">0건</div>
         </div>
         <div class="todo-input">
@@ -2402,7 +2496,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
 
       <div class="panel" data-card="tools">
         <div class="panel-head">
-          <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot" style="background:var(--amber);box-shadow:0 0 0 3px rgba(230,184,95,.15)"></span>빠른 업무 도구</h2>
+          <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot u-bgamber-box0003px"></span>빠른 업무 도구</h2>
           <div class="meta">클릭 &rarr; 채팅에 전송/복사</div>
         </div>
         <div class="tools" id="tools"></div>
@@ -2419,7 +2513,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
 
       <div class="panel" data-card="shortcuts">
         <div class="panel-head">
-          <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot" style="background:var(--blue);box-shadow:0 0 0 3px rgba(122,166,219,.15)"></span>바로가기 · 원격</h2>
+          <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot u-bgblue-box0003px"></span>바로가기 · 원격</h2>
           <span class="meta">링크 / RDP</span>
         </div>
         <div class="sc-section">
@@ -2436,7 +2530,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
 
       <div class="panel" data-card="cases">
         <div class="panel-head">
-          <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot" style="background:var(--amber);box-shadow:0 0 0 3px rgba(230,184,95,.15)"></span>벤더 케이스 메모</h2>
+          <h2><span class="grip" title="드래그하여 이동">&#x283F;</span><span class="dot u-bgamber-box0003px"></span>벤더 케이스 메모</h2>
           <span class="meta" id="cases-count">0건</span>
         </div>
         <div id="cases-list"></div>
@@ -2482,24 +2576,24 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           <h3>🔧 시스템 설정</h3>
           <div class="admin-row">
             <label>데이터 조회 기간</label>
-            <select id="cfg-range" class="admin-input" style="max-width:240px">
+            <select id="cfg-range" class="admin-input u-mw-240px">
               <option value="1">1개월</option><option value="2">2개월</option><option value="3" selected>3개월</option>
               <option value="4">4개월</option><option value="5">5개월</option><option value="6">6개월</option><option value="12">1년</option>
             </select>
           </div>
           <div class="admin-row">
             <label>세션 타임아웃</label>
-            <select id="cfg-session" class="admin-input" style="max-width:240px">
+            <select id="cfg-session" class="admin-input u-mw-240px">
               <option value="30">30분</option><option value="60">1시간</option><option value="120" selected>2시간</option>
               <option value="240">4시간</option><option value="480">8시간</option>
             </select>
           </div>
           <div class="admin-row">
             <label>라이선스 경고 일수</label>
-            <input id="cfg-eos-warn" class="admin-input" style="max-width:240px" placeholder="60,30,7">
-            <span style="font-size:10px;color:var(--text3)">콤마로 구분</span>
+            <input id="cfg-eos-warn" class="admin-input u-mw-240px" placeholder="60,30,7">
+            <span class="u-muted-10">콤마로 구분</span>
           </div>
-          <div style="margin-top:14px">
+          <div class="u-mt-14px">
             <label style="font-size:11px;color:var(--text3);font-weight:700;display:block;margin-bottom:6px">AI 시스템 지침</label>
             <textarea id="cfg-ai-system" class="admin-textarea" placeholder="당신은 ESCARE 보안기술팀의..."></textarea>
           </div>
@@ -2515,7 +2609,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           <h3>🧩 기능 표시</h3>
           <div style="font-size:11.5px;color:var(--text2,#cbd5e1);line-height:1.7;margin-bottom:10px">끄면 모든 사용자의 사이드바에서 숨겨집니다(표시 제어). <b>호환성 매트릭스·고객사 이력·팀 모니터</b>는 서버에서도 차단되며, <b>NSIS</b>는 프론트 전용이라 표시 제어만 합니다. 대시보드·관리자 설정은 락아웃 방지로 잠금.</div>
           <div id="feature-flags-wrap" class="push-people"><div class="loading">로딩...</div></div>
-          <div class="storage-actions safe-actions" style="margin-top:12px">
+          <div class="storage-actions safe-actions u-mt-12px">
             <button class="btn btn-indigo" onclick="saveFeatureFlags()">💾 저장</button>
           </div>
         </div>
@@ -2526,13 +2620,13 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <div class="admin-card">
           <h3>📊 기능 사용 현황</h3>
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
-            <label style="font-size:11px;color:var(--text3);font-weight:700">집계 기간</label>
+            <label class="u-fs11px-ctext3-fw700">집계 기간</label>
             <select id="usage-days" class="admin-input" style="max-width:140px" onchange="loadUsageStats()">
               <option value="30">최근 30일</option>
               <option value="90" selected>최근 90일</option>
               <option value="180">최근 180일</option>
             </select>
-            <button class="btn" style="width:auto;padding:6px 12px;font-size:11px" onclick="loadUsageStats()">새로고침</button>
+            <button class="btn u-btn-xs" onclick="loadUsageStats()">새로고침</button>
           </div>
           <div id="usage-coverage" style="font-size:10.5px;color:var(--text3);margin-bottom:8px"></div>
           <div id="usage-stats-wrap"><div class="loading">로딩...</div></div>
@@ -2574,7 +2668,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <div class="admin-card soft">
           <h3>📋 구독 현황 / 테스트</h3>
           <div id="push-subscribers" style="font-size:12px;color:var(--text2);line-height:1.8">-</div>
-          <div class="storage-actions safe-actions" style="margin-top:12px">
+          <div class="storage-actions safe-actions u-mt-12px">
             <button class="btn btn-ghost" onclick="sendPushTest()">🔔 내게 테스트 알림</button>
             <button class="btn btn-indigo" onclick="savePushSettings()">💾 알림 설정 저장</button>
           </div>
@@ -2587,7 +2681,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           <div style="margin:10px 0 6px;font-weight:800;font-size:12px;color:var(--accent2)">받을 사람</div>
           <div id="push-send-people" class="push-people"></div>
           <label style="display:flex;align-items:center;gap:7px;margin-top:10px;font-size:12px;color:var(--text2);cursor:pointer"><input type="checkbox" id="push-send-muted" style="width:15px;height:15px;accent-color:var(--accent3)"> 알림 끈 사람에게도 보내기 (중요 공지)</label>
-          <div class="storage-actions safe-actions" style="margin-top:12px">
+          <div class="storage-actions safe-actions u-mt-12px">
             <button class="btn btn-ghost" type="button" onclick="document.querySelectorAll('.push-send-r').forEach(c=>c.checked=true)">전체 선택</button>
             <button class="btn btn-indigo" type="button" onclick="sendDirectPush()">📨 알림 보내기</button>
           </div>
@@ -2598,7 +2692,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <summary><span>사용자 / 권한 관리</span><small>사용자 계정 · 관리자 권한</small></summary>
         <div class="admin-card">
           <h3>👥 사용자 계정</h3>
-          <div id="user-list-wrap" style="margin-bottom:12px"></div>
+          <div class="u-mb-12px" id="user-list-wrap"></div>
           <div class="admin-add-row">
             <input id="user-add-id" placeholder="계정 ID (예: mj.park)" autocomplete="off" autocapitalize="none" spellcheck="false">
             <input id="user-add-display" placeholder="표시 이름">
@@ -2620,8 +2714,8 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
           <h3>ℹ 권한 안내</h3>
           <div style="font-size:12px;color:var(--text2);line-height:2">
             <div>• <strong>일반 사용자</strong> — 대시보드, 이슈, 케이스 트래커, 라이선스, 로그 분석, VT, 업무 링크</div>
-            <div>• <strong style="color:var(--warn)">일반 관리자</strong> — + 감사 로그 열람, 업무 링크 등록/삭제</div>
-            <div>• <strong style="color:var(--accent3)">최상위 관리자</strong> — + 시스템 설정, 권한 부여</div>
+            <div>• <strong class="u-c-warn">일반 관리자</strong> — + 감사 로그 열람, 업무 링크 등록/삭제</div>
+            <div>• <strong class="u-c-accent3">최상위 관리자</strong> — + 시스템 설정, 권한 부여</div>
           </div>
         </div>
       </details>
@@ -2630,7 +2724,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <summary><span>PIN 관리</span><small>사용자 PIN 초기화</small></summary>
         <div class="admin-card">
           <h3>🔐 사용자 PIN 관리</h3>
-          <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">사용자가 PIN을 잊은 경우 선택한 사용자의 PIN을 초기값으로 되돌립니다.</p>
+          <p class="u-fs12px-ctext2-mb12px-lh17">사용자가 PIN을 잊은 경우 선택한 사용자의 PIN을 초기값으로 되돌립니다.</p>
           <div class="admin-add-row compact-admin-row">
             <select id="pin-reset-user"><option value="">팀원 선택</option></select>
             <button class="btn btn-red" onclick="resetUserPin()">PIN 초기화</button>
@@ -2643,7 +2737,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <summary><span>저장소</span><small>KV 현황 · 백업</small></summary>
         <div class="admin-card">
           <h3>🗄 저장소 관리</h3>
-          <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">
+          <p class="u-fs12px-ctext2-mb12px-lh17">
             Cloudflare KV에 저장된 HUB 데이터 현황과 사용량 기준을 조회합니다. 정리 작업은 관리자 확인 후 수동으로만 수행합니다.
           </p>
           <div id="storage-stats-wrap" style="font-size:12px;color:var(--text3);line-height:1.8;margin-bottom:12px">아직 조회하지 않았습니다.</div>
@@ -2659,7 +2753,7 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none!imp
         <summary><span>위험 작업</span><small>캐시 · 감사 로그 · 전체 데이터 초기화</small></summary>
         <div class="admin-card danger-card">
           <h3>⚠ 위험 작업</h3>
-          <p style="font-size:12px;color:var(--text2);margin-bottom:12px;line-height:1.7">삭제성 작업입니다. 실행 전 전체 HUB 데이터 백업을 먼저 다운로드하세요.</p>
+          <p class="u-fs12px-ctext2-mb12px-lh17">삭제성 작업입니다. 실행 전 전체 HUB 데이터 백업을 먼저 다운로드하세요.</p>
           <div class="storage-actions danger-actions">
             <button id="storage-cache-btn" class="btn btn-red" onclick="clearCache()">🧹 AI 응답 캐시 초기화</button>
             <button id="storage-audit-btn" class="btn btn-gray" onclick="cleanupOldAuditLogs()">🧹 감사 로그 90일 초과 정리</button>

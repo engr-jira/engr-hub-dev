@@ -60,7 +60,7 @@ function setGreeting(){ const h=new Date().getHours(); let g,s;
   const ge=document.getElementById('greeting'); if(ge)ge.innerHTML=g+', <span class="name">'+(window.__HUB_DISPLAY||'팀원')+' 님</span>'; const se=document.getElementById('subline'); if(se)se.textContent=s; }
 function injectMyDeskHeader(){
   const pg=document.getElementById('page-mydesk'); if(!pg||document.getElementById('greeting'))return;
-  pg.insertAdjacentHTML('afterbegin','<style>#greeting .name{color:#a78bfa}</style><div style="display:flex;justify-content:space-between;align-items:flex-end;margin:0 0 16px;flex-wrap:wrap;gap:10px"><div><div id="greeting" style="font-size:18px;font-weight:800;color:var(--text,#e8edff)"></div><div id="subline" style="font-size:12px;color:var(--text3);margin-top:3px"></div></div><div style="text-align:right"><div id="clock" style="font-size:22px;font-weight:800;color:var(--text,#e8edff);font-variant-numeric:tabular-nums;line-height:1"></div><div id="datestr" style="font-size:11px;color:var(--text3);margin-top:2px"></div></div></div>');
+  pg.insertAdjacentHTML('afterbegin','<style>#greeting .name{color:#a78bfa}</style><div style="display:flex;justify-content:space-between;align-items:flex-end;margin:0 0 16px;flex-wrap:wrap;gap:10px"><div><div id="greeting" style="font-size:18px;font-weight:800;color:var(--text,#e8edff)"></div><div id="subline" style="font-size:12px;color:var(--text3);margin-top:3px"></div></div><div class="u-ta-right"><div id="clock" style="font-size:22px;font-weight:800;color:var(--text,#e8edff);font-variant-numeric:tabular-nums;line-height:1"></div><div id="datestr" style="font-size:11px;color:var(--text3);margin-top:2px"></div></div></div>');
 }
 
 /* ---------- ROUTINE ---------- */

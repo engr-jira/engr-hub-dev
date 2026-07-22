@@ -247,30 +247,30 @@ function renderAIBriefing(d){
   title.style.display=''; wrap.style.display='';
   const t=d.team||{};
   const secs=[];
-  if(t.monthly)secs.push(`<div class="chart-card"><h4>월간 동향</h4><div style="font-size:12.5px;line-height:1.7;color:var(--text2);white-space:pre-wrap">${escapeHtml(String(t.monthly))}</div></div>`);
-  if(t.patterns)secs.push(`<div class="chart-card"><h4>고객사 패턴</h4><div style="font-size:12.5px;line-height:1.7;color:var(--text2);white-space:pre-wrap">${escapeHtml(String(t.patterns))}</div></div>`);
-  if(t.focus)secs.push(`<div class="chart-card"><h4>오늘의 포커스</h4><div style="font-size:12.5px;line-height:1.7;color:var(--text2);white-space:pre-wrap">${escapeHtml(String(t.focus))}</div></div>`);
-  wrap.innerHTML=`<div style="font-size:11px;color:var(--text3);margin-bottom:8px">🕐 ${fmtBuiltAt(d.built_at)} 기준 · 스케줄 분석(일 2회 07:00/15:30) · 이슈 분석 ${(d.issueKeys||[]).length}건</div><div class="chart-grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">${secs.join('')||'<div class="chart-card"><div style="font-size:12px;color:var(--text3)">팀 리포트가 아직 없습니다</div></div>'}</div>`;
+  if(t.monthly)secs.push(`<div class="chart-card"><h4>월간 동향</h4><div class="u-fs125px-lh17-ctext2-wsprewra">${escapeHtml(String(t.monthly))}</div></div>`);
+  if(t.patterns)secs.push(`<div class="chart-card"><h4>고객사 패턴</h4><div class="u-fs125px-lh17-ctext2-wsprewra">${escapeHtml(String(t.patterns))}</div></div>`);
+  if(t.focus)secs.push(`<div class="chart-card"><h4>오늘의 포커스</h4><div class="u-fs125px-lh17-ctext2-wsprewra">${escapeHtml(String(t.focus))}</div></div>`);
+  wrap.innerHTML=`<div class="u-fs11px-ctext3-mb8px">🕐 ${fmtBuiltAt(d.built_at)} 기준 · 스케줄 분석(일 2회 07:00/15:30) · 이슈 분석 ${(d.issueKeys||[]).length}건</div><div class="chart-grid u-gridtemplatecolumns-repeatautofi">${secs.join('')||'<div class="chart-card"><div class="u-fs12px-ctext3">팀 리포트가 아직 없습니다</div></div>'}</div>`;
 }
 async function renderIssueAnalysis(key,secId){
   const sec=document.getElementById(secId||'ai-analysis-sec'); if(!sec||!key)return;
   const isAdm=(typeof IS_ADMIN!=='undefined'&&IS_ADMIN)||(typeof IS_SUPER!=='undefined'&&IS_SUPER)||!!window.__HUB_IS_ADMIN;
   const btn=isAdm?`<button class="btn btn-ghost" style="width:auto;padding:3px 10px;font-size:10.5px" onclick="requestReanalysis('${key}')">🔄 재분석 요청</button>`:'';
-  sec.innerHTML=`<div style="font-size:10px;color:var(--text3);font-weight:700;margin:4px 0 6px">🤖 AI 분석 (스케줄)</div><div class="sync-meta">불러오는 중...</div>`;
+  sec.innerHTML=`<div class="u-fs10px-ctext3-fw700-m4px06p">🤖 AI 분석 (스케줄)</div><div class="sync-meta">불러오는 중...</div>`;
   try{
     const d=await hubApi('/analysis/issue/'+encodeURIComponent(key));
     const a=d.analysis;
-    if(!a){sec.innerHTML=`<div style="font-size:10px;color:var(--text3);font-weight:700;margin:4px 0 6px">🤖 AI 분석 (스케줄)</div><div style="font-size:11.5px;color:var(--text3);background:rgba(255,255,255,.03);border:1px dashed var(--border);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>이 이슈는 최근 분석 대상에 포함되지 않았습니다. 다음 주기(07:00/15:30)에 미완료·정체 이슈가 분석됩니다.</span>${btn}</div>`;return;}
+    if(!a){sec.innerHTML=`<div class="u-fs10px-ctext3-fw700-m4px06p">🤖 AI 분석 (스케줄)</div><div style="font-size:11.5px;color:var(--text3);background:rgba(255,255,255,.03);border:1px dashed var(--border);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>이 이슈는 최근 분석 대상에 포함되지 않았습니다. 다음 주기(07:00/15:30)에 미완료·정체 이슈가 분석됩니다.</span>${btn}</div>`;return;}
     const rows=[];
-    if(a.summary)rows.push(`<div style="margin-bottom:8px"><b style="color:var(--text)">📋 내용 요약</b><div style="white-space:pre-wrap">${escapeHtml(String(a.summary))}</div></div>`);
-    if(a.tech_analysis)rows.push(`<div style="margin-bottom:8px"><b style="color:#a78bfa">🧪 기술 분석</b><div style="white-space:pre-wrap">${escapeHtml(String(a.tech_analysis))}</div></div>`);
-    if(a.stall_reason)rows.push(`<div style="margin-bottom:8px"><b style="color:#fbbf24">⏸ 정체 사유</b><div style="white-space:pre-wrap">${escapeHtml(String(a.stall_reason))}</div></div>`);
+    if(a.summary)rows.push(`<div class="u-mb-8px"><b style="color:var(--text)">📋 내용 요약</b><div class="u-ws-prewrap">${escapeHtml(String(a.summary))}</div></div>`);
+    if(a.tech_analysis)rows.push(`<div class="u-mb-8px"><b style="color:#a78bfa">🧪 기술 분석</b><div class="u-ws-prewrap">${escapeHtml(String(a.tech_analysis))}</div></div>`);
+    if(a.stall_reason)rows.push(`<div class="u-mb-8px"><b class="u-c-fbbf24">⏸ 정체 사유</b><div class="u-ws-prewrap">${escapeHtml(String(a.stall_reason))}</div></div>`);
     const dirArr=Array.isArray(a.direction)?a.direction:(a.direction?[a.direction]:(Array.isArray(a.next_actions)?a.next_actions:[]));
-    if(dirArr.length)rows.push(`<div style="margin-bottom:8px"><b style="color:#34d399">🧭 추천 진행 방향</b><ol style="margin:4px 0 0 18px;padding:0">${dirArr.map(x=>`<li style="margin-bottom:3px">${escapeHtml(String(x))}</li>`).join('')}</ol></div>`);
-    if(a.reply_draft){const rid=(secId||'ai-analysis-sec')+'-reply';rows.push(`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="color:#22d3ee">✉️ 고객사 회신 멘트</b><button class="btn btn-ghost" style="width:auto;padding:2px 9px;font-size:10px" onclick="copyText(document.getElementById('${rid}').innerText)">📋 복사</button></div><div id="${rid}" style="white-space:pre-wrap;background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.2);border-radius:8px;padding:9px 11px;margin-top:5px">${escapeHtml(String(a.reply_draft))}</div></div>`);}
-    if(a.due_risk)rows.push(`<div><b style="color:#f87171">⏰ 기한 리스크</b><div style="white-space:pre-wrap">${escapeHtml(String(a.due_risk))}</div></div>`);
-    sec.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 6px"><span style="font-size:10px;color:var(--text3);font-weight:700">🤖 AI 분석 · ${fmtBuiltAt(a.built_at)} 기준</span>${btn}</div><div style="font-size:12px;line-height:1.65;color:var(--text2);background:rgba(129,140,248,.06);border:1px solid rgba(129,140,248,.22);border-radius:10px;padding:12px 14px">${rows.join('')||'<span style="color:var(--text3)">내용 없음</span>'}</div>`;
-  }catch(e){sec.innerHTML=`<div style="font-size:11px;color:var(--text3)">AI 분석 조회 실패: ${escapeHtml(e.message)}</div>`;}
+    if(dirArr.length)rows.push(`<div class="u-mb-8px"><b class="u-c-34d399">🧭 추천 진행 방향</b><ol style="margin:4px 0 0 18px;padding:0">${dirArr.map(x=>`<li style="margin-bottom:3px">${escapeHtml(String(x))}</li>`).join('')}</ol></div>`);
+    if(a.reply_draft){const rid=(secId||'ai-analysis-sec')+'-reply';rows.push(`<div class="u-mb-8px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="color:#22d3ee">✉️ 고객사 회신 멘트</b><button class="btn btn-ghost" style="width:auto;padding:2px 9px;font-size:10px" onclick="copyText(document.getElementById('${rid}').innerText)">📋 복사</button></div><div id="${rid}" style="white-space:pre-wrap;background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.2);border-radius:8px;padding:9px 11px;margin-top:5px">${escapeHtml(String(a.reply_draft))}</div></div>`);}
+    if(a.due_risk)rows.push(`<div><b class="u-c-f87171">⏰ 기한 리스크</b><div class="u-ws-prewrap">${escapeHtml(String(a.due_risk))}</div></div>`);
+    sec.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 6px"><span style="font-size:10px;color:var(--text3);font-weight:700">🤖 AI 분석 · ${fmtBuiltAt(a.built_at)} 기준</span>${btn}</div><div style="font-size:12px;line-height:1.65;color:var(--text2);background:rgba(129,140,248,.06);border:1px solid rgba(129,140,248,.22);border-radius:10px;padding:12px 14px">${rows.join('')||'<span class="u-muted">내용 없음</span>'}</div>`;
+  }catch(e){sec.innerHTML=`<div class="u-muted-11">AI 분석 조회 실패: ${escapeHtml(e.message)}</div>`;}
 }
 async function requestReanalysis(key){
   try{ await hubApi('/analysis/request/'+encodeURIComponent(key),{method:'POST'}); toast(`${key} 재분석 요청 등록 — 다음 실행 시 우선 분석됩니다`); }
@@ -312,9 +312,9 @@ function compatDdayHtml(d){ const n=compatDday(d); if(n===null)return ''; const 
 async function loadCompat(){
   document.querySelectorAll('.compat-admin').forEach(b=>b.style.display=(IS_ADMIN||IS_SUPER)?'':'none');
   if(typeof vendorKbVersions==='function')vendorKbVersions();
-  const wrap=document.getElementById('compat-table-wrap'); if(wrap)wrap.innerHTML='<div class="muted" style="padding:20px">불러오는 중...</div>';
+  const wrap=document.getElementById('compat-table-wrap'); if(wrap)wrap.innerHTML='<div class="muted u-p-20px">불러오는 중...</div>';
   try{ const d=await hubApi('/compat'); COMPAT_ROWS=d.items||[]; }
-  catch(e){ COMPAT_ROWS=[]; if(wrap)wrap.innerHTML=`<div style="color:var(--danger);padding:20px">조회 실패: ${escapeHtml(e.message)}</div>`; return; }
+  catch(e){ COMPAT_ROWS=[]; if(wrap)wrap.innerHTML=`<div class="u-cdanger-p20px">조회 실패: ${escapeHtml(e.message)}</div>`; return; }
   renderCompat();
 }
 function renderCompat(){
@@ -325,18 +325,18 @@ function renderCompat(){
   if(q)rows=rows.filter(r=>[r.product,r.product_version,r.os,r.os_version,r.note,r.supported].some(v=>(v||'').toLowerCase().includes(q)));
   const sum=document.getElementById('compat-summary');
   if(sum)sum.textContent=`총 ${rows.length}행 · 확정 ${rows.filter(r=>r.status==='confirmed').length} · 초안 ${rows.filter(r=>r.status!=='confirmed').length}`;
-  if(!rows.length){ wrap.innerHTML='<div class="muted" style="padding:20px">데이터가 없습니다.'+(admin?' “+ 행 추가” 또는 “AI 후보”로 등록하세요.':'')+'</div>'; return; }
+  if(!rows.length){ wrap.innerHTML='<div class="muted u-p-20px">데이터가 없습니다.'+(admin?' “+ 행 추가” 또는 “AI 후보”로 등록하세요.':'')+'</div>'; return; }
   const supBadge=s=>{ s=s||''; const c=/미지원|불가|no/i.test(s)?'var(--danger)':/조건|부분|partial/i.test(s)?'var(--warn)':/지원|ok|yes/i.test(s)?'#34d399':'var(--text3)'; return `<span style="color:${c};font-weight:600">${escapeHtml(s||'-')}</span>`; };
-  const head=`<tr>${admin?`<th class="nosort" style="width:26px"><input type="checkbox" onclick="bulkSelectAll(this,'.cmp-pick')" title="전체 선택"></th>`:''}<th>제품</th><th>버전</th><th>OS</th><th>OS버전</th><th>지원</th><th>EOS</th><th>EOL</th><th>비고</th><th>상태</th>${admin?'<th>작업</th>':''}</tr>`;
+  const head=`<tr>${admin?`<th class="nosort u-w-26px"><input type="checkbox" onclick="bulkSelectAll(this,'.cmp-pick')" title="전체 선택"></th>`:''}<th>제품</th><th>버전</th><th>OS</th><th>OS버전</th><th>지원</th><th>EOS</th><th>EOL</th><th>비고</th><th>상태</th>${admin?'<th>작업</th>':''}</tr>`;
   const body=rows.map(r=>`<tr>
     ${admin?`<td><input type="checkbox" class="cmp-pick" data-id="${r.id}"></td>`:''}<td><strong>${escapeHtml(r.product||'-')}</strong></td><td>${escapeHtml(r.product_version||'')}</td>
     <td>${escapeHtml(r.os||'')}</td><td class="c-osv">${escapeHtml(r.os_version||'')}</td>
     <td>${supBadge(r.supported)}</td>
-    <td style="white-space:nowrap">${r.eos_date?escapeHtml(r.eos_date)+compatDdayHtml(r.eos_date):'-'}</td>
+    <td class="u-ws-nowrap">${r.eos_date?escapeHtml(r.eos_date)+compatDdayHtml(r.eos_date):'-'}</td>
     <td>${r.eol_date?escapeHtml(r.eol_date):'-'}</td>
     <td class="c-note">${escapeHtml(r.note||'')}${r.source?`<span class="cmp-src">출처: ${/^https?:\/\//.test(r.source)?`<a href="${escapeHtml(r.source)}" target="_blank" rel="noopener">${escapeHtml(r.source)}</a>`:escapeHtml(r.source)}</span>`:''}</td>
     <td>${r.status==='confirmed'?'<span style="color:#34d399;white-space:nowrap">✓ 확정</span>':'<span style="background:rgba(251,191,36,.15);color:#fbbf24;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap">초안</span>'}</td>
-    ${admin?`<td style="white-space:nowrap">${r.status!=='confirmed'?`<button style="${CMB}" onclick="confirmCompat(${r.id})">확정</button>`:''}<button style="${CMB}" onclick="openCompatModal(${r.id})">수정</button><button style="${CMB};color:var(--danger)" onclick="deleteCompat(${r.id})">삭제</button></td>`:''}
+    ${admin?`<td class="u-ws-nowrap">${r.status!=='confirmed'?`<button style="${CMB}" onclick="confirmCompat(${r.id})">확정</button>`:''}<button style="${CMB}" onclick="openCompatModal(${r.id})">수정</button><button style="${CMB};color:var(--danger)" onclick="deleteCompat(${r.id})">삭제</button></td>`:''}
   </tr>`).join('');
   wrap.innerHTML=`<table class="data-tbl srt">${head}${body}</table>`;
   const _st=wrap.querySelector('table.srt'); if(_st)applySrtState(_st);
@@ -480,7 +480,7 @@ function showCompatAICandidates(mode){
   const m=document.getElementById('compat-ai-modal'), body=document.getElementById('compat-ai-rows'); if(!m||!body)return;
   const _tt=document.getElementById('compat-ai-title'), _wn=document.getElementById('compat-ai-warn');
   const _v=(mode===true||mode==='verified'), _off=(mode==='official');
-  if(_tt)_tt.innerHTML=_v?'📋 검증 호환성 데이터 <span style="font-size:11px;color:var(--text3);font-weight:400">· 공식 문서 기준 · 검토 후 저장</span>':_off?'🌐 공식 문서 기반 추출 <span style="font-size:11px;color:var(--text3);font-weight:400">· Broadcom 페이지에서 추출 · 검토 후 저장</span>':'🤖 AI 호환성 후보 <span style="font-size:11px;color:var(--text3);font-weight:400">· 검토 후 초안 저장</span>';
+  if(_tt)_tt.innerHTML=_v?'📋 검증 호환성 데이터 <span class="u-muted-11-400">· 공식 문서 기준 · 검토 후 저장</span>':_off?'🌐 공식 문서 기반 추출 <span class="u-muted-11-400">· Broadcom 페이지에서 추출 · 검토 후 저장</span>':'🤖 AI 호환성 후보 <span class="u-muted-11-400">· 검토 후 초안 저장</span>';
   if(_wn)_wn.innerHTML=_v?'✅ Broadcom 공식 System Requirements 기준으로 큐레이션된 데이터입니다. 저장 시 <b>초안</b>으로 들어가며 확인 후 <b>확정</b>하세요.':_off?'🌐 Broadcom 공식 페이지에서 AI가 추출한 데이터입니다(창작 아님). 저장 전 원문과 대조해 확인하세요.':'⚠ AI 추정값입니다. 저장 시 모두 <b>초안</b>으로 들어가며, 표에서 검토·수정 후 <b>확정</b>하세요.';
   body.innerHTML=COMPAT_AI_CANDS.map((r,i)=>`<tr>
     <td><input type="checkbox" class="cai-pick" data-i="${i}" checked></td>

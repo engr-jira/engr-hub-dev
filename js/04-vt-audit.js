@@ -67,14 +67,14 @@ async function vtFileScan(file){
   if(!file)return;
   const st=document.getElementById('vt-file-status'),res=document.getElementById('vt-result');
   const MAX=32*1024*1024;
-  if(file.size>MAX){st.innerHTML=`<span style="color:var(--danger);font-size:12px">파일이 너무 큽니다 (${(file.size/1048576).toFixed(1)}MB · 최대 32MB)</span>`;return;}
-  st.innerHTML=`<span style="font-size:12px;color:var(--text2)"><span class="spin">⏳</span> 업로드 중… <b>${escapeHtml(file.name)}</b> (${(file.size/1024).toFixed(0)}KB)</span>`;
+  if(file.size>MAX){st.innerHTML=`<span class="u-err-12">파일이 너무 큽니다 (${(file.size/1048576).toFixed(1)}MB · 최대 32MB)</span>`;return;}
+  st.innerHTML=`<span class="u-fs12px-ctext2"><span class="spin">⏳</span> 업로드 중… <b>${escapeHtml(file.name)}</b> (${(file.size/1024).toFixed(0)}KB)</span>`;
   try{
     const fd=new FormData(); fd.append('file',file,file.name);
     const up=await fetch(`${WORKERS}/vt/file`,{method:'POST',headers:authHeaders(),body:fd});
     const ud=await up.json();
     if(!up.ok||!ud.analysisId){throw new Error(ud.error?.message||ud.error||'업로드 실패');}
-    st.innerHTML=`<span style="font-size:12px;color:var(--text2)"><span class="spin">⏳</span> VirusTotal 분석 중… (수십 초 소요될 수 있어요)</span>`;
+    st.innerHTML=`<span class="u-fs12px-ctext2"><span class="spin">⏳</span> VirusTotal 분석 중… (수십 초 소요될 수 있어요)</span>`;
     let an=null;
     for(let i=0;i<20;i++){
       const ar=await fetch(`${WORKERS}/vt/analysis?id=${encodeURIComponent(ud.analysisId)}`,{headers:authHeaders()});
@@ -98,7 +98,7 @@ async function vtFileScan(file){
     res.innerHTML=renderVtRich(rec);
     if(sha){VT_HISTORY=VT_HISTORY.filter(h=>h.hash!==sha.toLowerCase());VT_HISTORY.unshift({hash:sha.toLowerCase(),mal,total,name:file.name,size:attrs.size,type:attrs.type_description,user:(typeof CURRENT_USER!=='undefined'?CURRENT_USER:''),ts:Date.now()});if(VT_HISTORY.length>50)VT_HISTORY=VT_HISTORY.slice(0,50);try{localStorage.setItem('vt_history',JSON.stringify(VT_HISTORY));}catch(_){}renderVTHistory();}
     const fin=document.getElementById('vt-file-input'); if(fin)fin.value='';
-  }catch(e){st.innerHTML=`<span style="color:var(--danger);font-size:12px">파일 검사 실패: ${escapeHtml(e.message)}</span>`;}
+  }catch(e){st.innerHTML=`<span class="u-err-12">파일 검사 실패: ${escapeHtml(e.message)}</span>`;}
 }
 function vtTableHtml(results,total,done){
   window.__vtLastResults=results;
@@ -107,7 +107,7 @@ function vtTableHtml(results,total,done){
   const okRows=ok.map(r=>{
     const col=vtRiskColor(r.mal),label=r.mal>=5?'악성':r.mal>=1?'의심':'안전';
     const dets=r.detections||[];
-    const detShort=dets.length?escapeHtml(dets.slice(0,2).join(' · '))+(dets.length>2?` <span style="color:var(--text3)">외 ${dets.length-2}</span>`:''):(r.info?escapeHtml(String(r.info).slice(0,60)):'<span style="color:var(--text3)">-</span>');
+    const detShort=dets.length?escapeHtml(dets.slice(0,2).join(' · '))+(dets.length>2?` <span class="u-muted">외 ${dets.length-2}</span>`:''):(r.info?escapeHtml(String(r.info).slice(0,60)):'<span class="u-muted">-</span>');
     return `<tr>
       <td><span class="badge" style="background:var(--accent-soft,rgba(99,102,241,.14));color:var(--accent3)">${VT_TYPE_LABEL[r.vtType]||r.vtType}</span></td>
       <td style="font-family:monospace;font-size:11px;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(r.value)}">${escapeHtml(String(r.value).slice(0,30))}${String(r.value).length>30?'…':''}</td>
@@ -120,11 +120,11 @@ function vtTableHtml(results,total,done){
   const nfRows=nf.map(r=>`<tr><td style="font-family:monospace;font-size:11px">${escapeHtml(r.value||r.hash)}</td><td style="font-size:11px;color:${r.notFound?'var(--text3)':'var(--danger)'}">${r.notFound?'미발견 (VT 미등록)':escapeHtml(r.error||'오류')}</td></tr>`).join('');
   const head=done<total
     ?`<div style="font-size:12px;color:var(--text2);margin-bottom:10px"><span class="loading"></span> 조회 중 ${done}/${total} …</div>`
-    :`<div style="font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px"><span>완료 ${results.length}/${total}건 · 성공 ${ok.length} · 미발견/오류 ${nf.length}</span><span style="color:#f87171">악성/의심 ${ok.filter(r=>r.mal>0).length}건</span></div>`;
+    :`<div style="font-size:12px;color:var(--text2);margin-bottom:10px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px"><span>완료 ${results.length}/${total}건 · 성공 ${ok.length} · 미발견/오류 ${nf.length}</span><span class="u-c-f87171">악성/의심 ${ok.filter(r=>r.mal>0).length}건</span></div>`;
   const copyBar=done>=total?`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-    <button onclick="vtCopyResults('tsv')" class="btn btn-ghost" style="width:auto;padding:6px 12px;font-size:11px">📋 표 복사(엑셀 붙여넣기)</button>
-    <button onclick="vtCopyResults('csv')" class="btn btn-ghost" style="width:auto;padding:6px 12px;font-size:11px">📋 CSV 복사</button>
-    ${nf.length?`<button onclick="vtCopyResults('notfound')" class="btn btn-ghost" style="width:auto;padding:6px 12px;font-size:11px">📋 미발견 해시 복사 (${nf.length})</button>`:''}
+    <button onclick="vtCopyResults('tsv')" class="btn btn-ghost u-btn-xs">📋 표 복사(엑셀 붙여넣기)</button>
+    <button onclick="vtCopyResults('csv')" class="btn btn-ghost u-btn-xs">📋 CSV 복사</button>
+    ${nf.length?`<button onclick="vtCopyResults('notfound')" class="btn btn-ghost u-btn-xs">📋 미발견 해시 복사 (${nf.length})</button>`:''}
   </div>`:'';
   return `<div class="vt-result">${head}${copyBar}
     ${ok.length?`<div class="sec-title" style="margin:4px 0 8px">✅ 조회 성공 ${ok.length}건</div>
@@ -164,20 +164,20 @@ function renderVtRich(rec){
   // 유형별 메타 셀
   let metaCells='';
   if(t==='hash'){
-    metaCells=`<div class="vt-cell" style="grid-column:span 2"><div class="vt-cell-label">파일명</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(name||'-')}</div></div>
-      ${attrs.size?`<div class="vt-cell"><div class="vt-cell-label">크기</div><div class="vt-cell-val" style="font-size:11px">${(attrs.size/1024).toFixed(1)}KB</div></div>`:''}
-      ${attrs.type_description?`<div class="vt-cell"><div class="vt-cell-label">파일유형</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(attrs.type_description)}</div></div>`:''}`;
+    metaCells=`<div class="vt-cell u-gc-span2"><div class="vt-cell-label">파일명</div><div class="vt-cell-val u-fs-11px">${escapeHtml(name||'-')}</div></div>
+      ${attrs.size?`<div class="vt-cell"><div class="vt-cell-label">크기</div><div class="vt-cell-val u-fs-11px">${(attrs.size/1024).toFixed(1)}KB</div></div>`:''}
+      ${attrs.type_description?`<div class="vt-cell"><div class="vt-cell-label">파일유형</div><div class="vt-cell-val u-fs-11px">${escapeHtml(attrs.type_description)}</div></div>`:''}`;
   }else if(t==='ip'){
     metaCells=`${attrs.country?`<div class="vt-cell"><div class="vt-cell-label">국가</div><div class="vt-cell-val" style="font-size:12px">${escapeHtml(attrs.country)}</div></div>`:''}
-      ${attrs.as_owner?`<div class="vt-cell" style="grid-column:span 2"><div class="vt-cell-label">소유 (AS)</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(attrs.as_owner)}</div></div>`:''}
-      ${attrs.network?`<div class="vt-cell"><div class="vt-cell-label">네트워크</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(attrs.network)}</div></div>`:''}`;
+      ${attrs.as_owner?`<div class="vt-cell u-gc-span2"><div class="vt-cell-label">소유 (AS)</div><div class="vt-cell-val u-fs-11px">${escapeHtml(attrs.as_owner)}</div></div>`:''}
+      ${attrs.network?`<div class="vt-cell"><div class="vt-cell-label">네트워크</div><div class="vt-cell-val u-fs-11px">${escapeHtml(attrs.network)}</div></div>`:''}`;
   }else if(t==='domain'){
-    metaCells=`${attrs.registrar?`<div class="vt-cell" style="grid-column:span 2"><div class="vt-cell-label">등록기관</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(attrs.registrar)}</div></div>`:''}
-      ${attrs.creation_date?`<div class="vt-cell" style="grid-column:span 2"><div class="vt-cell-label">생성일</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(fdt(attrs.creation_date*1000))}</div></div>`:''}`;
+    metaCells=`${attrs.registrar?`<div class="vt-cell u-gc-span2"><div class="vt-cell-label">등록기관</div><div class="vt-cell-val u-fs-11px">${escapeHtml(attrs.registrar)}</div></div>`:''}
+      ${attrs.creation_date?`<div class="vt-cell u-gc-span2"><div class="vt-cell-label">생성일</div><div class="vt-cell-val u-fs-11px">${escapeHtml(fdt(attrs.creation_date*1000))}</div></div>`:''}`;
   }else if(t==='url'){
     const fin=attrs.last_final_url||attrs.url||value;
-    metaCells=`<div class="vt-cell" style="grid-column:span 4"><div class="vt-cell-label">최종 URL</div><div class="vt-cell-val" style="font-size:11px;word-break:break-all">${escapeHtml(fin)}</div></div>
-      ${attrs.title?`<div class="vt-cell" style="grid-column:span 4"><div class="vt-cell-label">제목</div><div class="vt-cell-val" style="font-size:11px">${escapeHtml(attrs.title)}</div></div>`:''}`;
+    metaCells=`<div class="vt-cell u-gc-span4"><div class="vt-cell-label">최종 URL</div><div class="vt-cell-val u-fs11px-worbreaka">${escapeHtml(fin)}</div></div>
+      ${attrs.title?`<div class="vt-cell u-gc-span4"><div class="vt-cell-label">제목</div><div class="vt-cell-val u-fs-11px">${escapeHtml(attrs.title)}</div></div>`:''}`;
   }
   const aiArg=encodeURIComponent(JSON.stringify({value,vtType:t,mal,total}));
   return `<div class="vt-result">
@@ -188,18 +188,18 @@ function renderVtRich(rec){
         <span class="badge" style="background:${riskColor}22;color:${riskColor};font-size:13px;padding:5px 16px">${riskLabel}</span>
       </div>
       <div class="vt-grid">
-        <div class="vt-cell"><div class="vt-cell-label">악성</div><div class="vt-cell-val" style="color:#f87171">${stats.malicious||0}</div></div>
-        <div class="vt-cell"><div class="vt-cell-label">의심</div><div class="vt-cell-val" style="color:#fbbf24">${stats.suspicious||0}</div></div>
+        <div class="vt-cell"><div class="vt-cell-label">악성</div><div class="vt-cell-val u-c-f87171">${stats.malicious||0}</div></div>
+        <div class="vt-cell"><div class="vt-cell-label">의심</div><div class="vt-cell-val u-c-fbbf24">${stats.suspicious||0}</div></div>
         <div class="vt-cell"><div class="vt-cell-label">안전</div><div class="vt-cell-val" style="color:#22d3a5">${stats.harmless||0}</div></div>
         <div class="vt-cell"><div class="vt-cell-label">미탐지</div><div class="vt-cell-val">${stats.undetected||0}</div></div>
         ${metaCells}
       </div>
-      ${malEngines.length?`<div style="margin-top:14px"><div class="sec-title" style="margin-bottom:8px">탐지 엔진 (${malEngines.length}개)</div>
+      ${malEngines.length?`<div class="u-mt-14px"><div class="sec-title u-mb-8px">탐지 엔진 (${malEngines.length}개)</div>
       ${malEngines.map(e=>`<div style="font-size:11px;color:var(--danger);padding:4px 0;border-bottom:1px solid var(--border)">${escapeHtml(e)}</div>`).join('')}</div>`:''}
       <div style="margin-top:14px;display:flex;gap:8px">
-        <button class="btn btn-purple" onclick="vtAIAnalysis('${aiArg}')" style="width:auto;padding:8px 16px;font-size:11px">🤖 AI 위험도 분석</button>
-        <a href="${link||'https://www.virustotal.com/'}" target="_blank" style="text-decoration:none">
-          <button class="btn btn-ghost" style="width:auto;padding:8px 16px;font-size:11px">VT에서 보기 →</button>
+        <button class="btn btn-purple u-wauto-p8px16p-fs11px" onclick="vtAIAnalysis('${aiArg}')">🤖 AI 위험도 분석</button>
+        <a class="u-td-none" href="${link||'https://www.virustotal.com/'}" target="_blank">
+          <button class="btn btn-ghost u-wauto-p8px16p-fs11px">VT에서 보기 →</button>
         </a>
       </div>
     </div>`;
@@ -227,7 +227,7 @@ async function vtAIAnalysis(arg,malArg,totalArg){
     const links=`\n\n### 관련 자료 빠른 검색\n- [Google 검색](https://www.google.com/search?q=${encodeURIComponent(value)})\n- [Google News 검색](https://news.google.com/search?q=${encodeURIComponent(value)})\n- [Broadcom KB 검색](https://support.broadcom.com/web/ecx/search?searchString=${encodeURIComponent(value)})`;
     setAIModalBody(text+links);
     document.getElementById('ai-modal-meta').textContent=`${mal}/${total} 탐지`;
-  }catch(e){setAIModalBody(`<div style="color:var(--danger);padding:20px">오류: ${e.message}</div>`,true);}
+  }catch(e){setAIModalBody(`<div class="u-cdanger-p20px">오류: ${e.message}</div>`,true);}
 }
 
 // ── MONTHLY/PATTERN ───────────────────────────────
@@ -240,7 +240,7 @@ async function runMonthly(){
 이슈:\n${list}`,'monthly',{count:ISSUES.length});
     setAIModalBody(text);
     document.getElementById('ai-modal-meta').textContent=`${ISSUES.length}건 분석`;
-  }catch(e){setAIModalBody(`<div style="color:var(--danger);padding:20px">오류: ${e.message}</div>`,true);}
+  }catch(e){setAIModalBody(`<div class="u-cdanger-p20px">오류: ${e.message}</div>`,true);}
 }
 async function runPattern(){
   openAIModal('🔍','고객사 패턴 분석','','<div class="loading">분석 중...</div>');
@@ -253,7 +253,7 @@ async function runPattern(){
 이슈:\n${list}`,'pattern',{customers:topCus.join(',')});
     setAIModalBody(text);
     document.getElementById('ai-modal-meta').textContent=`상위 ${topCus.length}개 고객사`;
-  }catch(e){setAIModalBody(`<div style="color:var(--danger);padding:20px">오류: ${e.message}</div>`,true);}
+  }catch(e){setAIModalBody(`<div class="u-cdanger-p20px">오류: ${e.message}</div>`,true);}
 }
 
 // ── AUDIT ─────────────────────────────────────────
@@ -334,11 +334,11 @@ async function loadAudit(){
         <td><span class="audit-type-badge" style="background:${t.bg};color:${t.color}">${t.label}</span></td>
         <td style="font-weight:700;color:var(--accent3)">${escapeHtml(a.user||'-')}</td>
         <td>${escapeHtml(target)}</td>
-        <td><div class="audit-detail" title="${escapeHtml(detail)}">${detail||'<span style="color:var(--text3)">-</span>'}</div></td>
+        <td><div class="audit-detail" title="${escapeHtml(detail)}">${detail||'<span class="u-muted">-</span>'}</div></td>
         <td style="color:var(--text3);font-size:11px;white-space:nowrap" data-sort="${a.tsNum||Date.parse(a.ts)||0}">${fdt(a.tsNum||a.ts)}</td>
       </tr>`;
     }).join('')||`<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">로그 없음</td></tr>`;
-  }catch(e){tbody.innerHTML=`<tr><td colspan="5" style="color:var(--danger);padding:16px">로드 실패: ${e.message}</td></tr>`;}
+  }catch(e){tbody.innerHTML=`<tr><td class="u-cdanger-p16px" colspan="5">로드 실패: ${e.message}</td></tr>`;}
 }
 
 // ── SETTINGS ──────────────────────────────────────
@@ -384,8 +384,8 @@ async function loadSettings(){
             <option value="admin" ${role==='admin'?'selected':''}>일반 관리자</option>
             <option value="super" ${role==='super'?'selected':''}>최상위 관리자</option>
           </select>
-          <button onclick="removeAdmin('${escapeHtml(name)}')" class="btn btn-red" style="width:auto;padding:4px 12px;font-size:11px">회수</button>
-        </div>`:'<span style="font-size:11px;color:var(--text3)">변경 불가</span>'}
+          <button onclick="removeAdmin('${escapeHtml(name)}')" class="btn btn-red u-btn-xxs">회수</button>
+        </div>`:'<span class="u-muted-11">변경 불가</span>'}
       </div>`;
     }).join('');
     const adminNames=Object.keys(admins);
@@ -396,7 +396,7 @@ async function loadSettings(){
     window.__userMap=userMap; window.__teamNames=TEAM_NAMES;
     if(typeof loadPushSettings==='function')loadPushSettings();
     if(typeof loadUsageStats==='function')loadUsageStats();
-  }catch(e){wrap.innerHTML=`<div style="color:var(--danger);font-size:12px">로드 실패: ${e.message}</div>`;}
+  }catch(e){wrap.innerHTML=`<div class="u-err-12">로드 실패: ${e.message}</div>`;}
 }
 // ── 기능 사용 현황(컷 판단용) : audit_log 집계 렌더 ──
 const USAGE_FEATURE_MAP={AI_CALL:'로그/이슈 AI분석',AI_DEBUG:'AI 디버그',VT_LOOKUP:'VirusTotal 조회',VT_UPLOAD:'VirusTotal 파일',MON_VIEW:'팀 업무 모니터',HIST_VIEW:'고객사 이력',MATRIX_ADD:'호환성 매트릭스',MATRIX_UPDATE:'호환성 매트릭스',MATRIX_DELETE:'호환성 매트릭스',MATRIX_CONFIRM:'호환성 매트릭스',LINK_ADD:'업무 링크',LINK_UPDATE:'업무 링크',LINK_DELETE:'업무 링크',KNOWLEDGE_ADD:'팀 노하우',KNOWLEDGE_UPDATE:'팀 노하우',KNOWLEDGE_DELETE:'팀 노하우',EOS_ADD:'라이선스',EOS_ADD_BULK:'라이선스',EOS_UPDATE:'라이선스',EOS_DELETE:'라이선스',PUSH_SEND:'푸시 발송',PUSH_SETTINGS_CHANGE:'푸시 설정',LOGIN:'로그인',PIN_CHANGE:'PIN 변경',PIN_RESET:'PIN 초기화'};
@@ -408,7 +408,7 @@ async function loadUsageStats(){
   try{
     const r=await fetch(`${WORKERS}/admin/usage/features?days=${days}`,{headers:authHeaders()});
     const d=await r.json();
-    if(!d||!d.ok){wrap.innerHTML=`<div style="color:var(--danger);font-size:12px">집계 실패: ${escapeHtml((d&&d.message)||'응답 오류')}</div>`;return;}
+    if(!d||!d.ok){wrap.innerHTML=`<div class="u-err-12">집계 실패: ${escapeHtml((d&&d.message)||'응답 오류')}</div>`;return;}
     const feat={};
     const add=(name,cnt,last,users)=>{ if(!feat[name])feat[name]={count:0,last:0,users:0}; feat[name].count+=cnt||0; feat[name].last=Math.max(feat[name].last,last||0); feat[name].users=Math.max(feat[name].users,users||0); };
     (d.byType||[]).forEach(t=>{ const nm=USAGE_FEATURE_MAP[t.type]; if(nm)add(nm,t.count,t.last,t.users); });
@@ -417,13 +417,13 @@ async function loadUsageStats(){
     const now=Date.now();
     const rows=Object.entries(feat).map(([name,v])=>({name,...v})).sort((a,b)=>a.count-b.count||b.last-a.last);
     const fmtLast=ts=>{ if(!ts)return '—'; const dd=Math.floor((now-ts)/86400000); return dd<=0?'오늘':(dd+'일 전'); };
-    const badge=v=>{ if(v.count===0)return '<span style="color:#f87171;font-weight:700">🔴 컷후보</span>'; if(v.users<=1)return '<span style="color:#fbbf24;font-weight:700">🟡 1인</span>'; return ''; };
+    const badge=v=>{ if(v.count===0)return '<span style="color:#f87171;font-weight:700">🔴 컷후보</span>'; if(v.users<=1)return '<span class="u-cfbbf24-fw700">🟡 1인</span>'; return ''; };
     wrap.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px">
-      <thead><tr style="color:var(--text3);text-align:left;border-bottom:1px solid var(--border)"><th style="padding:6px 4px">기능</th><th style="padding:6px 4px;text-align:right">호출수</th><th style="padding:6px 4px;text-align:right">사용자</th><th style="padding:6px 4px;text-align:right">최근</th><th style="padding:6px 4px">판정</th></tr></thead>
-      <tbody>${rows.map(v=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 4px;color:var(--text)">${escapeHtml(v.name)}</td><td style="padding:6px 4px;text-align:right;color:var(--text)">${v.count}</td><td style="padding:6px 4px;text-align:right;color:var(--text3)">${v.users?('≥'+v.users):'—'}</td><td style="padding:6px 4px;text-align:right;color:var(--text3)">${fmtLast(v.last)}</td><td style="padding:6px 4px">${badge(v)}</td></tr>`).join('')}</tbody></table>`;
+      <thead><tr style="color:var(--text3);text-align:left;border-bottom:1px solid var(--border)"><th class="u-p-6px4px">기능</th><th class="u-p6px4px-taright">호출수</th><th class="u-p6px4px-taright">사용자</th><th class="u-p6px4px-taright">최근</th><th class="u-p-6px4px">판정</th></tr></thead>
+      <tbody>${rows.map(v=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 4px;color:var(--text)">${escapeHtml(v.name)}</td><td style="padding:6px 4px;text-align:right;color:var(--text)">${v.count}</td><td class="u-p6px4px-taright-ctext3">${v.users?('≥'+v.users):'—'}</td><td class="u-p6px4px-taright-ctext3">${fmtLast(v.last)}</td><td class="u-p-6px4px">${badge(v)}</td></tr>`).join('')}</tbody></table>`;
     const cov=document.getElementById('usage-coverage');
     if(cov){ const cs=d.coverageStart?new Date(d.coverageStart):null; cov.textContent=cs?`※ 집계 데이터 보유 시작: ${cs.toISOString().slice(0,10)} — 그 이전 기간은 0으로 표시될 수 있음`:'※ 아직 집계 데이터 없음(비콘 배포 후 누적)'; }
-  }catch(e){wrap.innerHTML=`<div style="color:var(--danger);font-size:12px">로드 실패: ${escapeHtml(e.message)}</div>`;}
+  }catch(e){wrap.innerHTML=`<div class="u-err-12">로드 실패: ${escapeHtml(e.message)}</div>`;}
 }
 function renderUserAccounts(users=[]){
   const wrap=document.getElementById('user-list-wrap');if(!wrap)return;
@@ -431,11 +431,11 @@ function renderUserAccounts(users=[]){
     <div style="display:flex;align-items:center;gap:10px;min-width:0">
       <span style="font-size:10px;padding:2px 9px;border-radius:20px;background:${u.active===false?'rgba(148,163,184,.14)':u.role==='super'?'rgba(248,113,113,.15)':u.role==='admin'?'rgba(99,102,241,.15)':'rgba(45,230,184,.12)'};color:${u.active===false?'var(--text3)':u.role==='super'?'#f87171':u.role==='admin'?'var(--accent3)':'var(--accent2)'};font-weight:800">${u.active===false?'비활성':u.role==='super'?'SUPER':u.role==='admin'?'ADMIN':'USER'}</span>
       <span style="font-weight:800;color:var(--text)">${escapeHtml(u.displayName||u.id)}</span>
-      <span style="font-size:11px;color:var(--text3)">${escapeHtml(u.id)}</span>
+      <span class="u-muted-11">${escapeHtml(u.id)}</span>
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
-      <button class="btn btn-ghost" onclick="fillUserForm(${jsAttr(u.id)},${jsAttr(u.displayName||'')},${jsAttr(u.role||'user')})" style="width:auto;padding:4px 12px;font-size:11px">수정</button>
-      ${u.id!==SUPER_ADMIN&&u.active!==false?`<button class="btn btn-red" onclick="deleteUserAccount('${escapeHtml(u.id)}')" style="width:auto;padding:4px 12px;font-size:11px">로그인 차단</button>`:''}
+      <button class="btn btn-ghost u-btn-xxs" onclick="fillUserForm(${jsAttr(u.id)},${jsAttr(u.displayName||'')},${jsAttr(u.role||'user')})">수정</button>
+      ${u.id!==SUPER_ADMIN&&u.active!==false?`<button class="btn btn-red u-btn-xxs" onclick="deleteUserAccount('${escapeHtml(u.id)}')">로그인 차단</button>`:''}
       ${u.id!==SUPER_ADMIN?`<button class="btn btn-red" onclick="purgeUserAccount('${escapeHtml(u.id)}')" style="width:auto;padding:4px 12px;font-size:11px;opacity:.7">계정 삭제</button>`:''}
     </div>
   </div>`).join('')||'<div class="empty">등록된 사용자가 없습니다.</div>';

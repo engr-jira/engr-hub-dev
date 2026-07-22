@@ -28,7 +28,7 @@ function renderDash_legacy_v1(){
   });
   const maxC=Math.max(1,...Object.values(cusCnt));
   const maxL=Math.max(1,...Object.values(labCnt));
-  const noData='<div style="color:var(--text3);font-size:11px">데이터 없음</div>';
+  const noData='<div class="u-ctext3-fs11px">데이터 없음</div>';
   document.getElementById('chart-section').innerHTML=`
   <div class="chart-card"><h4>고객사별 분포 TOP 8</h4>
   ${Object.entries(cusCnt).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>`
@@ -60,7 +60,7 @@ function renderDash_legacy_v1(){
   document.getElementById('rank-handled').innerHTML=byHandled.map((r,idx)=>`
   <div class="rank-row">
     <span class="rank-pos ${idx===0?'top1':idx===1?'top2':idx===2?'top3':''}">${idx+1}</span>
-    <span class="rank-name">${escapeHtml(r.name)}${r.name===CURRENT_USER?' <span style="color:var(--accent3);font-size:9px">(나)</span>':''}</span>
+    <span class="rank-name">${escapeHtml(r.name)}${r.name===CURRENT_USER?' <span class="u-caccent-fs9px">(나)</span>':''}</span>
     <span class="rank-stat">${r.total}건</span>
     <div class="rank-bar"><div class="rank-bar-fill" style="width:${Math.round(r.total/maxH*100)}%"></div></div>
   </div>`).join('')||noData;
@@ -68,10 +68,10 @@ function renderDash_legacy_v1(){
   document.getElementById('rank-rate').innerHTML=byRate.map((r,idx)=>`
   <div class="rank-row">
     <span class="rank-pos ${idx===0?'top1':idx===1?'top2':idx===2?'top3':''}">${idx+1}</span>
-    <span class="rank-name">${escapeHtml(r.name)}${r.name===CURRENT_USER?' <span style="color:var(--accent3);font-size:9px">(나)</span>':''}</span>
+    <span class="rank-name">${escapeHtml(r.name)}${r.name===CURRENT_USER?' <span class="u-caccent-fs9px">(나)</span>':''}</span>
     <span class="rank-stat">${r.rate}% (${r.done}/${r.total})</span>
     <div class="rank-bar"><div class="rank-bar-fill" style="width:${r.rate}%"></div></div>
-  </div>`).join('')||'<div style="color:var(--text3);font-size:11px">5건 이상 담당자 없음</div>';
+  </div>`).join('')||'<div class="u-ctext3-fs11px">5건 이상 담당자 없음</div>';
 
   // 월별 추이
   const monthCnt={};
@@ -146,13 +146,13 @@ function renderRightPanel(){
       ${i.labels.map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join('')}
     </div>
     <div class="rp-meta">
-      ${(()=>{const na='<span style="color:#fbbf24;font-weight:700">미입력</span>';
+      ${(()=>{const na='<span class="u-cfbbf24-fw700">미입력</span>';
         const dueCell=i.due?(()=>{const d=daysUntil(i.due);const col=d<0?'#fc8181':d<=7?'#fbbf24':'var(--text)';return `<span style="color:${col}">${i.due} ${d<0?'(기한초과 '+Math.abs(d)+'일)':'(D-'+d+')'}</span>`;})():na;
         const custCell=(i.customers&&i.customers.length)?escapeHtml(i.customers.join(', ')):(i.customer?`<span>${escapeHtml(i.customer)} <span style="color:var(--text3);font-size:10px">(제목 추정)</span></span>`:na);
-        const divCell=(i.division&&i.division.length)?escapeHtml(i.division.join(', ')):'<span style="color:var(--text3)">-</span>';
+        const divCell=(i.division&&i.division.length)?escapeHtml(i.division.join(', ')):'<span class="u-muted">-</span>';
         const catCell=(i.category&&i.category!=='N/A')?escapeHtml(i.category):na;
         const labCell=(i.labels&&i.labels.length)?i.labels.map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join(' '):na;
-        const rateCell=i.rating?escapeHtml(i.rating):'<span style="color:var(--text3)">-</span>';
+        const rateCell=i.rating?escapeHtml(i.rating):'<span class="u-muted">-</span>';
         return `
       <div class="rp-row"><span>이슈키</span><span style="color:var(--accent3);font-weight:700;display:inline-flex;align-items:center;gap:7px">${i.key}<button onclick="copyText('${i.key}');event.stopPropagation()" title="이슈키 복사" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px;display:inline-flex;border-radius:5px" onmouseover="this.style.color='var(--accent3)'" onmouseout="this.style.color='var(--text3)'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></span></div>
       <div class="rp-row"><span>우선순위</span><span>${escapeHtml(i.pri)}</span></div>
@@ -163,20 +163,20 @@ function renderRightPanel(){
       <div class="rp-row"><span>담당자</span><span>${escapeHtml(i.assignee||'-')}</span></div>
       <div class="rp-row"><span>보고자</span><span>${escapeHtml(i.reporter||'-')}</span></div>
       <div class="rp-row"><span>평가</span><span>${rateCell}</span></div>
-      <div class="rp-row"><span>시작일</span><span>${i.startDate?fd(i.startDate):'<span style="color:var(--text3)">-</span>'}</span></div>
+      <div class="rp-row"><span>시작일</span><span>${i.startDate?fd(i.startDate):'<span class="u-muted">-</span>'}</span></div>
       <div class="rp-row"><span>기한</span><span>${dueCell}</span></div>
       <div class="rp-row"><span>접수일</span><span>${fd(i.date)}</span></div>
       <div class="rp-row"><span>수정일</span><span>${fd(i.updated)}</span></div>`;})()}
     </div>
     ${i.attachments&&i.attachments.length?`
-    <div style="margin-bottom:12px">
-      <div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px">📎 첨부파일 (${i.attachments.length})</div>
-      ${i.attachments.map(a=>`<div class="rp-attach-item">📄 ${escapeHtml(a.name)} <span style="color:var(--text3);margin-left:auto">${(a.size/1024).toFixed(1)}KB</span></div>`).join('')}
+    <div class="u-mb-12px">
+      <div class="u-sec-label">📎 첨부파일 (${i.attachments.length})</div>
+      ${i.attachments.map(a=>`<div class="rp-attach-item">📄 ${escapeHtml(a.name)} <span class="u-ctext3-mlauto">${(a.size/1024).toFixed(1)}KB</span></div>`).join('')}
     </div>`:''}
     ${i.desc?`<div class="rp-desc">${adfToHtml(i.desc)}</div>`:''}
     ${i.comments&&i.comments.length?`
     <div class="rp-comments">
-      <div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px">💬 코멘트 (${i.comments.length})</div>
+      <div class="u-sec-label">💬 코멘트 (${i.comments.length})</div>
       ${i.comments.map(c=>`<div class="rp-comment-item">
         <div class="rp-comment-author">${escapeHtml(c.author)} · ${fdt(c.created)}</div>
         <div class="rp-comment-body">${adfToHtml(c.body)}</div>
@@ -188,9 +188,9 @@ function renderRightPanel(){
         전체화면
       </button>
     </div>
-    <div id="ai-analysis-sec" style="margin-bottom:10px"></div>
+    <div class="u-mb-10px" id="ai-analysis-sec"></div>
     <div class="detail-link-row">
-      <a href="https://escare-engr.atlassian.net/browse/${i.key}" target="_blank" style="text-decoration:none">
+      <a class="u-td-none" href="https://escare-engr.atlassian.net/browse/${i.key}" target="_blank">
         <button class="btn btn-ghost">Jira →</button>
       </a>
     </div>
@@ -285,7 +285,7 @@ ${i.comments.slice(-5).map(c=>'['+c.author+'] '+c.bodyPlain).join('\n')||'(없�
     const text=await callAI(prompt,mode,{issue:i.key,title:cleanTitle(i.title)});
     setAIModalBody(text);
     document.getElementById('ai-modal-meta').textContent=`${i.key} · ${cleanTitle(i.title).slice(0,60)}`;
-  }catch(e){setAIModalBody(`<div style="color:var(--danger);padding:20px">오류: ${e.message}</div>`,true);}
+  }catch(e){setAIModalBody(`<div class="u-cdanger-p20px">오류: ${e.message}</div>`,true);}
   btn.disabled=false;btn.textContent=labelMap[mode];
 }
 
@@ -348,11 +348,11 @@ function setAIModalBody(text,isError){
     // H1 #
     s=s.replace(/^# (.+)$/gm,'<div style="font-size:15px;font-weight:800;color:var(--text);margin:20px 0 8px">$1</div>');
     // bold **
-    s=s.replace(/\*\*([^*\n]+)\*\*/g,'<strong style="color:var(--accent3);font-weight:700">$1</strong>');
+    s=s.replace(/\*\*([^*\n]+)\*\*/g,'<strong class="u-caccent-fw700">$1</strong>');
     // links [text](url)
     s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer" style="color:var(--cyan);text-decoration:none">$1 ↗</a>');
     // italic *
-    s=s.replace(/\*([^*\n]+)\*/g,'<em style="color:var(--text2)">$1</em>');
+    s=s.replace(/\*([^*\n]+)\*/g,'<em class="u-c-text2">$1</em>');
     // --- 구분선
     s=s.replace(/^---+$/gm,'<hr style="border:none;border-top:1px solid var(--border2);margin:14px 0">');
     // > blockquote
@@ -387,7 +387,7 @@ function openFullIssue(){
     <div style="font-size:10px;color:var(--accent3);font-weight:700;margin-bottom:5px">${escapeHtml(c.author)} · ${fdt(c.created)}</div>
     <div style="font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap">${adfToHtml(c.body)}</div>
   </div>`).join('');
-  const attachHtml=i.attachments.map(a=>`<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:var(--cyan);border-radius:8px;padding:4px 10px;font-size:11px">📄 ${escapeHtml(a.name)} <span style="color:var(--text3)">${(a.size/1024).toFixed(1)}KB</span></span>`).join(' ');
+  const attachHtml=i.attachments.map(a=>`<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:var(--cyan);border-radius:8px;padding:4px 10px;font-size:11px">📄 ${escapeHtml(a.name)} <span class="u-muted">${(a.size/1024).toFixed(1)}KB</span></span>`).join(' ');
   openGenModal(`${i.key} — ${cleanTitle(i.title)}`,`
     <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px">
       <span class="badge" style="background:${sc}22;color:${sc}">${i.status}</span>
@@ -395,15 +395,15 @@ function openFullIssue(){
       ${i.labels.map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join('')}
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px;font-size:12px">
-      <div><span style="color:var(--text3)">담당자</span>&nbsp;${escapeHtml(i.assignee)}</div>
-      <div><span style="color:var(--text3)">고객사</span>&nbsp;${escapeHtml(i.customer||'-')}</div>
-      <div><span style="color:var(--text3)">접수일</span>&nbsp;${fd(i.date)}</div>
-      <div><span style="color:var(--text3)">수정일</span>&nbsp;${fd(i.updated)}</div>
+      <div><span class="u-muted">담당자</span>&nbsp;${escapeHtml(i.assignee)}</div>
+      <div><span class="u-muted">고객사</span>&nbsp;${escapeHtml(i.customer||'-')}</div>
+      <div><span class="u-muted">접수일</span>&nbsp;${fd(i.date)}</div>
+      <div><span class="u-muted">수정일</span>&nbsp;${fd(i.updated)}</div>
     </div>
     ${attachHtml?`<div style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:6px">${attachHtml}</div>`:''}
-    ${i.desc?`<div style="margin-bottom:16px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px;text-transform:uppercase">본문</div><div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:12.5px;line-height:1.75;white-space:pre-wrap;max-height:400px;overflow-y:auto;color:var(--text2)">${adfToHtml(i.desc)}</div></div>`:''}
+    ${i.desc?`<div class="u-mb-16px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px;text-transform:uppercase">본문</div><div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:12.5px;line-height:1.75;white-space:pre-wrap;max-height:400px;overflow-y:auto;color:var(--text2)">${adfToHtml(i.desc)}</div></div>`:''}
     ${commentHtml?`<div><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:8px;text-transform:uppercase">코멘트 (${i.comments.length})</div>${commentHtml}</div>`:''}
-  `,`<a href="https://escare-engr.atlassian.net/browse/${i.key}" target="_blank" style="text-decoration:none"><button class="btn btn-ghost" style="width:auto;padding:8px 18px">Jira에서 보기 →</button></a>`);
+  `,`<a class="u-td-none" href="https://escare-engr.atlassian.net/browse/${i.key}" target="_blank"><button class="btn btn-ghost u-btn-inline">Jira에서 보기 →</button></a>`);
 }
 
 function openGenModal(title,bodyHTML,footHTML){
@@ -441,7 +441,7 @@ function renderCases_legacy_v1(){
   const wrap=document.getElementById('case-list');
   const pageCases=sliceForPage(cases,'cases');
   document.getElementById('case-count').textContent=pageCountText('cases',cases.length);
-  if(!pageCases.length){wrap.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">케이스 번호가 포함된 이슈가 없습니다</div>`;renderPager('case-pager','cases',cases.length,'renderCases');return;}
+  if(!pageCases.length){wrap.innerHTML=`<div class="u-empty">케이스 번호가 포함된 이슈가 없습니다</div>`;renderPager('case-pager','cases',cases.length,'renderCases');return;}
   wrap.innerHTML=pageCases.map((c,idx)=>{const days=daysSince(c.date);const slaBg=days>=7?'rgba(248,113,113,.2)':days>=5?'rgba(251,191,36,.2)':days>=3?'rgba(251,191,36,.12)':'rgba(34,211,165,.15)';const slaColor=days>=7?'#f87171':days>=5?'#fbbf24':days>=3?'#fbbf24':'#22d3a5';const sc=SC[c.status]||'#94a3b8';let t=c.title.replace(new RegExp('\[?\s*'+c.caseNum+'\s*\]?'),'').replace(/\[\s*\]/g,'').replace(/\s+/g,' ').trim();return `<div class="case-card${CASE_SEL&&CASE_SEL.caseNum===c.caseNum&&CASE_SEL.key===c.key?' selected':''}" style="--lc:${sc}" data-idx="${idx}"><div class="irow-top"><span class="case-num">📦 ${c.caseNum}</span><span class="badge" style="background:${sc}22;color:${sc}">${c.status}</span><span class="sla-badge" style="background:${slaBg};color:${slaColor}">${days}일 경과</span><span class="ititle">${escapeHtml(t)}</span><span class="imeta">${escapeHtml(c.customer||'-')}</span></div><div class="irow-bot">${c.labels.map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join('')}<span class="imeta">@${escapeHtml(c.assignee)}</span><span class="imeta">${fd(c.date)}</span></div></div>`;}).join('');
   wrap.querySelectorAll('.case-card').forEach((el,idx)=>{el.onclick=()=>{CASE_SEL=pageCases[idx];renderCases();renderCaseRight();};});
   renderPager('case-pager','cases',cases.length,'renderCases');
@@ -494,7 +494,7 @@ function renderEosBanner(){
     <div class="eos-banner-text">
       <div class="eos-banner-title">라이선스 만료 임박 ${urgent.length}건</div>
       <div class="eos-banner-detail">
-        가장 임박: <strong style="color:#fca5a5">${escapeHtml(top.customer||'-')}</strong> · ${escapeHtml(top.productDesc||top.product||'')} (${tDays}일 후 ${top.expireDate})
+        가장 임박: <strong class="u-c-fca5a5">${escapeHtml(top.customer||'-')}</strong> · ${escapeHtml(top.productDesc||top.product||'')} (${tDays}일 후 ${top.expireDate})
       </div>
     </div>
     <button class="eos-banner-btn" onclick="showPage('eos',document.getElementById('nav-eos'))">자세히 →</button>

@@ -21,7 +21,7 @@ async function refreshStorageStats(){
     const opPct=Number(ops.estimatedNewWritePct||0);
     const opColor=opPct>=90?'var(--danger)':(opPct>=70?'var(--warn)':'var(--success)');
     const opHtml=ops.dailyLimits?`
-      <div class="storage-summary" style="margin-top:10px">
+      <div class="storage-summary u-mt-10px">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px">
           <div>
             <div style="font-size:12px;font-weight:900;color:#eaf0ff">Cloudflare KV Operation 사용량</div>
@@ -32,12 +32,12 @@ async function refreshStorageStats(){
         <div class="storage-summary-top">
           <div class="storage-metric"><div class="label">AI 기준 예상 write</div><div class="value" style="color:${opColor}">${ops.estimatedNewAiWritesToday||0} / ${limits.writes||1000}</div></div>
           <div class="storage-metric"><div class="label">기존 구조였다면</div><div class="value">${ops.estimatedOldAiWritesToday||0}</div></div>
-          <div class="storage-metric"><div class="label">오늘 절감 추정</div><div class="value" style="color:var(--success)">${ops.estimatedSavedWritesToday||0}</div></div>
+          <div class="storage-metric"><div class="label">오늘 절감 추정</div><div class="value u-c-success">${ops.estimatedSavedWritesToday||0}</div></div>
           <div class="storage-metric"><div class="label">AI 성공 / 실패</div><div class="value">${ops.aiSuccessToday||0} / ${ops.aiFailToday||0}</div></div>
         </div>
         <div class="storage-bar"><div class="storage-bar-fill" style="width:${Math.max(0.2,Math.min(100,opPct))}%;background:${opColor}"></div></div>
-        <div class="storage-grid" style="margin-top:10px">
-          ${(ops.reductions||[]).map(x=>`<div class="storage-item"><div class="storage-item-title">${escapeHtml(x.item)}</div><small>이전: ${escapeHtml(x.before)}</small><small style="color:var(--success)">현재: ${escapeHtml(x.after)}</small></div>`).join('')}
+        <div class="storage-grid u-mt-10px">
+          ${(ops.reductions||[]).map(x=>`<div class="storage-item"><div class="storage-item-title">${escapeHtml(x.item)}</div><small>이전: ${escapeHtml(x.before)}</small><small class="u-c-success">현재: ${escapeHtml(x.after)}</small></div>`).join('')}
         </div>
         <div class="storage-note">${(ops.notes||[]).map(escapeHtml).join(' · ')}</div>
       </div>`:'';
@@ -62,8 +62,8 @@ async function refreshStorageStats(){
       <div class="storage-grid">
         ${(d.items||[]).map(x=>`<div class="storage-item">
           <div class="storage-item-title">${escapeHtml(x.label)}</div>
-          <div>항목: <strong style="color:var(--accent3)">${escapeHtml(String(x.count??'-'))}</strong></div>
-          <div>크기: <strong style="color:var(--success)">${x.bytes!==undefined?fmtBytes(x.bytes):'-'}</strong>${x.estimated?' <span style="color:var(--warn);font-size:10px">추정</span>':''}</div>
+          <div>항목: <strong class="u-c-accent3">${escapeHtml(String(x.count??'-'))}</strong></div>
+          <div>크기: <strong class="u-c-success">${x.bytes!==undefined?fmtBytes(x.bytes):'-'}</strong>${x.estimated?' <span style="color:var(--warn);font-size:10px">추정</span>':''}</div>
           <small>${escapeHtml(x.note||'')}</small>
         </div>`).join('')}
       </div>
@@ -309,7 +309,7 @@ function renderIssues_legacy_v2(){
   const wrap=document.getElementById('issue-list-wrap');
   document.getElementById('f-count').textContent=`총 ${list.length}건 · ${size}건씩 표시`;
   renderFilterTags();
-  if(!page.length){wrap.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">조건에 맞는 일반 이슈가 없습니다<br><span style="font-size:11px">케이스 항목은 케이스 트래커에서 확인하세요.</span></div>`;document.getElementById('page-nav').innerHTML='';return;}
+  if(!page.length){wrap.innerHTML=`<div class="u-empty">조건에 맞는 일반 이슈가 없습니다<br><span class="u-fs-11px">케이스 항목은 케이스 트래커에서 확인하세요.</span></div>`;document.getElementById('page-nav').innerHTML='';return;}
   wrap.innerHTML=page.map(i=>issueRow(i)).join('');
   wrap.querySelectorAll('.irow').forEach((el,idx)=>el.onclick=()=>selectIssue(page[idx]));
   renderPageNav(list.length,size);
@@ -362,7 +362,7 @@ function renderCases_legacy_v2(){
   const pageCases=sliceForPage(cases,'cases');
   const cnt=document.getElementById('case-count');
   if(cnt)cnt.textContent=pageCountText('cases',cases.length);
-  if(!pageCases.length){wrap.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">제목 맨 앞이 [숫자8자리] 형식인 케이스가 없습니다</div>`;renderPager('case-pager','cases',cases.length,'renderCases');return;}
+  if(!pageCases.length){wrap.innerHTML=`<div class="u-empty">제목 맨 앞이 [숫자8자리] 형식인 케이스가 없습니다</div>`;renderPager('case-pager','cases',cases.length,'renderCases');return;}
   wrap.innerHTML=pageCases.map((c,idx)=>{const days=daysSince(c.date);const slaBg=days>=7?'rgba(248,113,113,.2)':days>=5?'rgba(251,191,36,.2)':days>=3?'rgba(251,191,36,.12)':'rgba(34,211,165,.15)';const slaColor=days>=7?'#f87171':days>=5?'#fbbf24':days>=3?'#fbbf24':'#22d3a5';const sc=SC[c.status]||'#94a3b8';let t=c.title.replace(new RegExp('^\\s*\\[\\s*'+c.caseNum+'\\s*\\]'),'').replace(/\[\s*\]/g,'').replace(/\s+/g,' ').trim();return `<div class="case-card${CASE_SEL&&CASE_SEL.caseNum===c.caseNum&&CASE_SEL.key===c.key?' selected':''}" style="--lc:${sc}" data-idx="${idx}"><div class="irow-top"><span class="case-num">📦 ${c.caseNum}</span><span class="badge" style="background:${sc}22;color:${sc}">${c.status}</span><span class="sla-badge" style="background:${slaBg};color:${slaColor}">${days}일 경과</span><span class="ititle">${escapeHtml(t)}</span><span class="imeta">${escapeHtml(c.customer||'-')}</span></div><div class="irow-bot">${(c.labels||[]).map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join('')}<span class="imeta">@${escapeHtml(c.assignee)}</span><span class="imeta">${fd(c.date)}</span><span class="imeta">첨부 ${c.attachments?.length||0} · 댓글 ${c.comments?.length||0}</span></div></div>`;}).join('');
   wrap.querySelectorAll('.case-card').forEach((el,idx)=>{el.onclick=()=>selectCase(pageCases[idx]);});
   renderPager('case-pager','cases',cases.length,'renderCases');
@@ -377,20 +377,20 @@ function renderCaseRight(loading=false){
     <div class="rp-title">${escapeHtml(cleanTitle(c.title))}</div>
     <div class="rp-meta">
       <div class="rp-row"><span>케이스</span><span style="color:var(--cyan);font-weight:700">${escapeHtml(c.caseNum)}</span></div>
-      <div class="rp-row"><span>Jira 이슈키</span><span style="color:var(--accent3)">${escapeHtml(c.key)}</span></div>
+      <div class="rp-row"><span>Jira 이슈키</span><span class="u-c-accent3">${escapeHtml(c.key)}</span></div>
       <div class="rp-row"><span>고객사</span><span>${escapeHtml(caseCustomerName(c)||'-')}</span></div>
       <div class="rp-row"><span>담당자</span><span>${escapeHtml(c.assignee)}</span></div>
       <div class="rp-row"><span>상태</span><span style="color:${sc}">${escapeHtml(c.status)}</span></div>
       <div class="rp-row"><span>경과일</span><span style="color:${days>=7?'#f87171':days>=3?'#fbbf24':'#22d3a5'};font-weight:700">${days}일</span></div>
     </div>
-    ${loading?'<div class="loading" style="margin-bottom:12px">첨부파일/댓글 상세 조회 중...</div>':''}
+    ${loading?'<div class="loading u-mb-12px">첨부파일/댓글 상세 조회 중...</div>':''}
     ${c.desc?`<div class="rp-desc">${adfToHtml(c.desc)}</div>`:''}
-    ${c.attachments&&c.attachments.length?`<div style="margin-bottom:12px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px">📎 첨부파일 (${c.attachments.length})</div>${c.attachments.map(a=>`<div class="rp-attach-item">📄 ${escapeHtml(a.name)} <span style="color:var(--text3);margin-left:auto">${(a.size/1024).toFixed(1)}KB</span></div>`).join('')}</div>`:''}
-    ${c.comments&&c.comments.length?`<div class="rp-comments" style="margin-bottom:12px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px">💬 코멘트 (${c.comments.length})</div>${c.comments.map(cm=>`<div class="rp-comment-item"><div class="rp-comment-author">${escapeHtml(cm.author)} · ${fdt(cm.created)}</div><div class="rp-comment-body">${adfToHtml(cm.body)}</div></div>`).join('')}</div>`:''}
-    ${refIssues.length?`<div style="margin-bottom:12px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px">🔗 이 케이스를 참조한 일반 이슈 (${refIssues.length})</div>${refIssues.slice(0,8).map(i=>`<div class="rp-attach-item" style="cursor:pointer" onclick="v154GoIssueExact('${escapeAttr(i.key)}')">${escapeHtml(i.key)} · ${escapeHtml(cleanTitle(i.title||i.summary||''))} <span style="color:var(--text3);margin-left:auto">${escapeHtml(i.status||'')}</span></div>`).join('')}</div>`:''}
-    <div id="ai-analysis-sec-case" style="margin-bottom:10px"></div>
+    ${c.attachments&&c.attachments.length?`<div class="u-mb-12px"><div class="u-sec-label">📎 첨부파일 (${c.attachments.length})</div>${c.attachments.map(a=>`<div class="rp-attach-item">📄 ${escapeHtml(a.name)} <span class="u-ctext3-mlauto">${(a.size/1024).toFixed(1)}KB</span></div>`).join('')}</div>`:''}
+    ${c.comments&&c.comments.length?`<div class="rp-comments u-mb-12px"><div class="u-sec-label">💬 코멘트 (${c.comments.length})</div>${c.comments.map(cm=>`<div class="rp-comment-item"><div class="rp-comment-author">${escapeHtml(cm.author)} · ${fdt(cm.created)}</div><div class="rp-comment-body">${adfToHtml(cm.body)}</div></div>`).join('')}</div>`:''}
+    ${refIssues.length?`<div class="u-mb-12px"><div class="u-sec-label">🔗 이 케이스를 참조한 일반 이슈 (${refIssues.length})</div>${refIssues.slice(0,8).map(i=>`<div class="rp-attach-item u-cur-pointer" onclick="v154GoIssueExact('${escapeAttr(i.key)}')">${escapeHtml(i.key)} · ${escapeHtml(cleanTitle(i.title||i.summary||''))} <span class="u-ctext3-mlauto">${escapeHtml(i.status||'')}</span></div>`).join('')}</div>`:''}
+    <div class="u-mb-10px" id="ai-analysis-sec-case"></div>
     <div class="detail-link-row">
-      <a href="https://escare-engr.atlassian.net/browse/${c.key}" target="_blank" style="text-decoration:none"><button class="btn btn-ghost">Jira →</button></a>
+      <a class="u-td-none" href="https://escare-engr.atlassian.net/browse/${c.key}" target="_blank"><button class="btn btn-ghost">Jira →</button></a>
     </div>
   </div>`;
   try{ renderIssueAnalysis(c.key,'ai-analysis-sec-case'); }catch(_){}
@@ -416,7 +416,7 @@ async function runCaseAI(mode='summary'){
     const text=await callAI(prompts[mode]||prompts.summary,'case',{caseNum:c.caseNum,issue:c.key,mode});
     setAIModalBody(text);
     document.getElementById('ai-modal-meta').textContent=`${c.caseNum} · ${c.key}`;
-  }catch(e){setAIModalBody(`<div style="color:var(--danger);padding:20px">오류: ${escapeHtml(e.message)}</div>`,true);}
+  }catch(e){setAIModalBody(`<div class="u-cdanger-p20px">오류: ${escapeHtml(e.message)}</div>`,true);}
 }
 
 function renderOverdueBanner(){
@@ -428,9 +428,9 @@ function renderOverdueBanner(){
   if(!overdue.length&&!myOpen.length){wrap.innerHTML='';return;}
   const byAss={};overdue.forEach(i=>{byAss[i.assignee]=(byAss[i.assignee]||0)+1;});
   const topAss=Object.entries(byAss).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([n,c])=>`${escapeHtml(n)} ${c}건`).join(', ');
-  const overduePart=overdue.length?`<div style="flex:1;min-width:240px;background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(248,113,113,.08));border:1px solid rgba(251,191,36,.3);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px"><span style="font-size:22px">🚨</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:2px">${OVERDUE_DAYS}일 이상 미완료 일반 이슈 ${overdue.length}건</div><div style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">필터 기준: 케이스 제외 · 미완료/진행 상태 · 접수/수정일 기준 ${OVERDUE_DAYS}일 이상 · 주요 담당자: ${topAss}</div></div><button title="7일 이상 미완료 일반 이슈 목록을 엽니다" onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})" style="background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);color:var(--warn);padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap">이슈 보기 →</button></div>`:'';
+  const overduePart=overdue.length?`<div style="flex:1;min-width:240px;background:linear-gradient(135deg,rgba(251,191,36,.1),rgba(248,113,113,.08));border:1px solid rgba(251,191,36,.3);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px"><span class="u-fs-22px">🚨</span><div class="u-flex1-minw0"><div style="font-size:13px;font-weight:700;color:var(--warn);margin-bottom:2px">${OVERDUE_DAYS}일 이상 미완료 일반 이슈 ${overdue.length}건</div><div style="font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">필터 기준: 케이스 제외 · 미완료/진행 상태 · 접수/수정일 기준 ${OVERDUE_DAYS}일 이상 · 주요 담당자: ${topAss}</div></div><button title="7일 이상 미완료 일반 이슈 목록을 엽니다" onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})" style="background:rgba(251,191,36,.2);border:1px solid rgba(251,191,36,.4);color:var(--warn);padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap">이슈 보기 →</button></div>`:'';
   const myLabel=myOpen.length?`담당자: ${escapeHtml(CURRENT_DISPLAY||CURRENT_USER)} · 미완료/진행 ${myOpen.length}건`:'현재 담당 미완료 이슈 없음';
-  const myPart=`<div style="flex:1;min-width:240px;background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.08));border:1px solid rgba(99,102,241,.35);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="setIssueNavigationFilter({preset:{kind:'myopen',label:'내 미완료 이슈'}})"><span style="font-size:22px">📋</span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:700;color:#a5b4fc;margin-bottom:2px">내 미완료 이슈 ${myOpen.length}건</div><div style="font-size:11px;color:var(--text2)">${myLabel}</div></div><button style="background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.4);color:#a5b4fc;padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap" onclick="event.stopPropagation();setIssueNavigationFilter({preset:{kind:'myopen',label:'내 미완료 이슈'}})">내 이슈 보기 →</button></div>`;
+  const myPart=`<div style="flex:1;min-width:240px;background:linear-gradient(135deg,rgba(99,102,241,.12),rgba(139,92,246,.08));border:1px solid rgba(99,102,241,.35);border-radius:12px;padding:12px 18px;display:flex;align-items:center;gap:12px;cursor:pointer" onclick="setIssueNavigationFilter({preset:{kind:'myopen',label:'내 미완료 이슈'}})"><span class="u-fs-22px">📋</span><div class="u-flex1-minw0"><div style="font-size:13px;font-weight:700;color:#a5b4fc;margin-bottom:2px">내 미완료 이슈 ${myOpen.length}건</div><div style="font-size:11px;color:var(--text2)">${myLabel}</div></div><button style="background:rgba(99,102,241,.2);border:1px solid rgba(99,102,241,.4);color:#a5b4fc;padding:6px 14px;border-radius:8px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:700;white-space:nowrap" onclick="event.stopPropagation();setIssueNavigationFilter({preset:{kind:'myopen',label:'내 미완료 이슈'}})">내 이슈 보기 →</button></div>`;
   wrap.innerHTML=`<div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">${overduePart}${myPart}</div>`;
 }
 function renderOpsFocus(){
@@ -441,7 +441,7 @@ function renderOpsFocus(){
   const wrap=document.getElementById('ops-focus');
   if(!wrap)return;
   const sec=(title,items,empty,mapper)=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="font-size:12px;font-weight:800;color:#e8edff;margin-bottom:8px">${title}</div>${items.length?items.map(mapper).join(''):`<div style="font-size:11px;color:var(--text3);padding:8px">${empty}</div>`}</div>`;
-  wrap.innerHTML=`<div class="chart-card"><div class="chart-title">운영 포커스</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">${sec('7일 이상 미완료 일반 이슈',overdue,'대상 없음',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fcd34d">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#f87171">${daysSince(i.date)}일</span></div>`)}${sec('High 이상 미완료 일반 이슈',highOpen,'대상 없음',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'high',label:'High 이상 미완료 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fca5a5">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#fca5a5">${i.pri}</span></div>`)}${sec('메타 미완성 (고객사·레이블·범주·기한)',metaInc,'모두 입력됨 ✓',i=>`<div onclick="setIssueNavigationFilter({preset:{kind:'incomplete',label:'메타 미완성 일반 이슈'}})" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fbbf24">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,38)} <span style="float:right;color:#fbbf24">${metaMissingFields(i).join('·')}</span></div>`)}${sec('60일 내 라이선스 만료',nearEos,'대상 없음',x=>`<div onclick="showPage('eos',document.getElementById('nav-eos'));document.getElementById('eos-q').value=${jsAttr(x.customer)};PAGE_STATE.eos=1;renderEosList();" style="cursor:pointer;font-size:11px;color:var(--text2);padding:6px 0;border-bottom:1px solid rgba(255,255,255,.05)"><b style="color:#fcd34d">${escapeHtml(x.customer)}</b> ${escapeHtml(x.productDesc||x.product||'')} <span style="float:right;color:#fcd34d">D-${daysUntil(x.expireDate)}</span></div>`)}</div></div>`;
+  wrap.innerHTML=`<div class="chart-card"><div class="chart-title">운영 포커스</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">${sec('7일 이상 미완료 일반 이슈',overdue,'대상 없음',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})"><b class="u-c-fcd34d">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#f87171">${daysSince(i.date)}일</span></div>`)}${sec('High 이상 미완료 일반 이슈',highOpen,'대상 없음',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'high',label:'High 이상 미완료 일반 이슈'}})"><b class="u-c-fca5a5">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#fca5a5">${i.pri}</span></div>`)}${sec('메타 미완성 (고객사·레이블·범주·기한)',metaInc,'모두 입력됨 ✓',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'incomplete',label:'메타 미완성 일반 이슈'}})"><b class="u-c-fbbf24">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,38)} <span style="float:right;color:#fbbf24">${metaMissingFields(i).join('·')}</span></div>`)}${sec('60일 내 라이선스 만료',nearEos,'대상 없음',x=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="showPage('eos',document.getElementById('nav-eos'));document.getElementById('eos-q').value=${jsAttr(x.customer)};PAGE_STATE.eos=1;renderEosList();"><b class="u-c-fcd34d">${escapeHtml(x.customer)}</b> ${escapeHtml(x.productDesc||x.product||'')} <span style="float:right;color:#fcd34d">D-${daysUntil(x.expireDate)}</span></div>`)}</div></div>`;
 }
 
 

@@ -54,8 +54,8 @@ function forcePinChange(){   // H-1: 공유 PIN 폴백 로그인 시 개인 PIN 
     <div class="full"><label>새 개인 PIN</label><input id="pin-new" type="password" autocomplete="new-password" placeholder="6자 이상"></div>
     <div class="full"><label>새 PIN 확인</label><input id="pin-new2" type="password" autocomplete="new-password"></div>
   </div>`,
-  `<button class="btn btn-ghost" onclick="window.__pinLock=false;forceLogout()" style="width:auto;padding:8px 18px">로그아웃</button>
-   <button class="btn btn-indigo" onclick="changeMyPin()" style="width:auto;padding:8px 18px">개인 PIN 설정하고 계속</button>`);
+  `<button class="btn btn-ghost u-btn-inline" onclick="window.__pinLock=false;forceLogout()">로그아웃</button>
+   <button class="btn btn-indigo u-btn-inline" onclick="changeMyPin()">개인 PIN 설정하고 계속</button>`);
 }
 function openChangePinModal(){
   openGenModal('내 PIN 변경',`
@@ -64,8 +64,8 @@ function openChangePinModal(){
     <div class="full"><label>새 PIN</label><input id="pin-new" type="password" autocomplete="new-password" placeholder="6자 이상"></div>
     <div class="full"><label>새 PIN 확인</label><input id="pin-new2" type="password" autocomplete="new-password"></div>
   </div>`,
-  `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">취소</button>
-   <button class="btn btn-indigo" onclick="changeMyPin()" style="width:auto;padding:8px 18px">변경</button>`);
+  `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">취소</button>
+   <button class="btn btn-indigo u-btn-inline" onclick="changeMyPin()">변경</button>`);
 }
 async function changeMyPin(){
   const oldPin=document.getElementById('pin-old').value;
@@ -100,8 +100,8 @@ function resetAllHubData(){
       <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6">로그인 PIN을 입력하면 초기화가 시작됩니다.</div>
       <input id="reset-pin-input" type="password" placeholder="PIN 입력" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-size:14px;box-sizing:border-box;margin-bottom:12px" autocomplete="current-password">
       <div style="display:flex;gap:8px">
-        <button id="reset-pin-cancel" class="btn btn-ghost" style="flex:1">취소</button>
-        <button id="reset-pin-ok" class="btn btn-red" style="flex:1">초기화</button>
+        <button id="reset-pin-cancel" class="btn btn-ghost u-flex-1">취소</button>
+        <button id="reset-pin-ok" class="btn btn-red u-flex-1">초기화</button>
       </div>
     </div>`;
     document.body.appendChild(p);
@@ -181,7 +181,7 @@ function renderCustomers(){
   const wrap=document.getElementById("cust-list");
   const pageCusts=sliceForPage(custs,'customers');
   document.getElementById("cust-count").textContent=pageCountText('customers',custs.length,'개');
-  if(!pageCusts.length){wrap.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">Jira 동기화 후 자동 집계되거나 조건에 맞는 고객사가 없습니다</div>`;renderPager('cust-pager','customers',custs.length,'renderCustomers');return;}
+  if(!pageCusts.length){wrap.innerHTML=`<div class="u-empty">Jira 동기화 후 자동 집계되거나 조건에 맞는 고객사가 없습니다</div>`;renderPager('cust-pager','customers',custs.length,'renderCustomers');return;}
   wrap.innerHTML=pageCusts.map((c,idx)=>{
     const done=c.general.filter(i=>isDoneStatus(i.status)).length;
     const open=c.general.filter(i=>isOpenStatus(i.status)).length;
@@ -194,12 +194,12 @@ function renderCustomers(){
         <span style="font-size:13px;font-weight:700;color:#f0f4ff">${escapeHtml(c.name)}</span>
         <span style="font-size:10px;background:rgba(196,206,255,.15);color:#c4ceff;padding:2px 9px;border-radius:20px;font-weight:700">일반 ${c.general.length} · 케이스 ${c.cases.length}</span>
       </div>
-      <div style="font-size:11px;color:var(--text3);margin-bottom:6px">${escapeHtml(prods)}</div>
+      <div class="u-fs11px-ctext3-mb6px">${escapeHtml(prods)}</div>
       <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap">
         <span style="color:#2de6b8">일반 완료 ${done}</span>
         <span style="color:#fc8181">일반 미완료 ${open}</span>
-        <span style="color:#fcd34d">케이스 미완료 ${caseOpen}</span>
-        <span style="color:var(--text3);margin-left:auto">완료율 ${rate}%</span>
+        <span class="u-c-fcd34d">케이스 미완료 ${caseOpen}</span>
+        <span class="u-ctext3-mlauto">완료율 ${rate}%</span>
       </div>
     </div>`;
   }).join("");
@@ -229,7 +229,7 @@ function renderKnowledge(){
     const href=normalizeExternalUrl(k.link||'');
     const commentCount=(k.comments||[]).length;
     const canEdit=(k.createdBy===CURRENT_USER||IS_ADMIN||IS_SUPER);
-    return `<div class="card knowledge-card" onclick="openKnowledgeDetail('${k.id}')" style="padding:14px;position:relative;cursor:pointer"><div style="position:absolute;top:10px;right:10px;display:flex;gap:4px;align-items:center">${canEdit?`<input type="checkbox" class="kno-pick" data-id="${k.id}" onclick="event.stopPropagation()" style="width:15px;height:15px;cursor:pointer">`:''}<button onclick="event.stopPropagation();openKnowledgeDetail('${k.id}')" style="background:transparent;border:0;color:var(--text3);cursor:pointer;font-size:11px">댓글 ${commentCount}</button>${canEdit?`<button onclick="event.stopPropagation();openKnowledgeModal('${k.id}')" style="background:transparent;border:0;color:var(--text3);cursor:pointer">✎</button><button onclick="event.stopPropagation();deleteKnowledge('${k.id}')" style="background:transparent;border:0;color:var(--danger);cursor:pointer">×</button>`:''}</div><div style="display:flex;gap:6px;margin-bottom:8px"><span class="badge" style="background:${labelColor(k.product||'기타')}22;color:${labelColor(k.product||'기타')}">${escapeHtml(k.product||'기타')}</span><span class="badge" style="background:rgba(196,206,255,.12);color:#c4ceff">${escapeHtml(k.category||'')}</span></div><div style="font-size:14px;font-weight:800;color:#f0f4ff;margin-bottom:8px;padding-right:70px">${escapeHtml(k.title||'')}</div>${k.content?`<div class="knowledge-excerpt" style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;margin-bottom:10px">${escapeHtml(k.content)}</div>`:''}${href?`<a onclick="event.stopPropagation()" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:var(--cyan);text-decoration:none">참고 링크 ↗</a>`:''}<div style="font-size:10px;color:var(--text3);margin-top:10px">${escapeHtml(k.createdBy||'-')} · ${k.updatedAt?'수정 '+fd(k.updatedAt):fd(k.createdAt)}</div></div>`;
+    return `<div class="card knowledge-card" onclick="openKnowledgeDetail('${k.id}')" style="padding:14px;position:relative;cursor:pointer"><div style="position:absolute;top:10px;right:10px;display:flex;gap:4px;align-items:center">${canEdit?`<input type="checkbox" class="kno-pick" data-id="${k.id}" onclick="event.stopPropagation()" style="width:15px;height:15px;cursor:pointer">`:''}<button onclick="event.stopPropagation();openKnowledgeDetail('${k.id}')" style="background:transparent;border:0;color:var(--text3);cursor:pointer;font-size:11px">댓글 ${commentCount}</button>${canEdit?`<button onclick="event.stopPropagation();openKnowledgeModal('${k.id}')" style="background:transparent;border:0;color:var(--text3);cursor:pointer">✎</button><button onclick="event.stopPropagation();deleteKnowledge('${k.id}')" style="background:transparent;border:0;color:var(--danger);cursor:pointer">×</button>`:''}</div><div style="display:flex;gap:6px;margin-bottom:8px"><span class="badge" style="background:${labelColor(k.product||'기타')}22;color:${labelColor(k.product||'기타')}">${escapeHtml(k.product||'기타')}</span><span class="badge u-bgrgba19-cc4ceff">${escapeHtml(k.category||'')}</span></div><div style="font-size:14px;font-weight:800;color:#f0f4ff;margin-bottom:8px;padding-right:70px">${escapeHtml(k.title||'')}</div>${k.content?`<div class="knowledge-excerpt" style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;margin-bottom:10px">${escapeHtml(k.content)}</div>`:''}${href?`<a onclick="event.stopPropagation()" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:var(--cyan);text-decoration:none">참고 링크 ↗</a>`:''}<div style="font-size:10px;color:var(--text3);margin-top:10px">${escapeHtml(k.createdBy||'-')} · ${k.updatedAt?'수정 '+fd(k.updatedAt):fd(k.createdAt)}</div></div>`;
   }).join("");
   renderPager('know-pager','knowledge',list.length,'renderKnowledge');
 }
@@ -241,14 +241,14 @@ function openKnowledgeDetail(id){
   openGenModal(k.title||'노하우 상세',`
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
       <span class="badge" style="background:${labelColor(k.product||'기타')}22;color:${labelColor(k.product||'기타')}">${escapeHtml(k.product||'기타')}</span>
-      <span class="badge" style="background:rgba(196,206,255,.12);color:#c4ceff">${escapeHtml(k.category||'')}</span>
+      <span class="badge u-bgrgba19-cc4ceff">${escapeHtml(k.category||'')}</span>
     </div>
     <div style="font-size:13px;color:var(--text2);line-height:1.75;white-space:pre-wrap">${escapeHtml(k.content||'내용 없음')}</div>
-    ${href?`<div style="margin-top:14px"><a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:var(--cyan);text-decoration:none">참고 링크 열기 ↗</a></div>`:''}
+    ${href?`<div class="u-mt-14px"><a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="font-size:12px;color:var(--cyan);text-decoration:none">참고 링크 열기 ↗</a></div>`:''}
     <div style="font-size:10px;color:var(--text3);margin-top:16px">${escapeHtml(k.createdBy||'-')} · ${k.updatedAt?'수정 '+fd(k.updatedAt):fd(k.createdAt)}</div>
     ${itemCommentsHtml('knowledge',k)}`,
-    `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">닫기</button>
-     <button class="btn btn-indigo" onclick="openKnowledgeModal('${id}')" style="width:auto;padding:8px 18px">수정</button>`);
+    `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">닫기</button>
+     <button class="btn btn-indigo u-btn-inline" onclick="openKnowledgeModal('${id}')">수정</button>`);
 }
 
 function openKnowledgeModal(id){
@@ -265,8 +265,8 @@ function openKnowledgeModal(id){
     <div class="full"><label>내용</label><textarea id="know-form-content" style="min-height:100px">${escapeHtml(ex?.content||"")}</textarea></div>
     <div class="full"><label>KB/참고 링크</label><input id="know-form-link" value="${escapeHtml(ex?.link||"")}" placeholder="https://knowledge.broadcom.com/..."></div>
   </div>`,
-  `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">취소</button>
-   <button class="btn btn-indigo" onclick="${ex?`updateKnowledge('${id}')`:"saveKnowledge()"}" style="width:auto;padding:8px 18px">저장</button>`);
+  `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">취소</button>
+   <button class="btn btn-indigo u-btn-inline" onclick="${ex?`updateKnowledge('${id}')`:"saveKnowledge()"}">저장</button>`);
 }
 async function saveKnowledge(){
   const title=document.getElementById("know-form-title").value.trim();
@@ -302,7 +302,7 @@ function showStorageInfo(tab){
     audit:"<strong>감사 로그</strong><br>Cloudflare KV 서버 저장 · 90일 자동 삭제<br>최대 500건 표시",
   };
   if(!info[tab])return;
-  openGenModal("📦 데이터 저장 안내",`<div style="font-size:13px;color:var(--text2);line-height:2.2">${info[tab]}</div>`,"<button class='btn btn-ghost' onclick='closeGenModal()' style='width:auto;padding:8px 18px'>닫기</button>");
+  openGenModal("📦 데이터 저장 안내",`<div style="font-size:13px;color:var(--text2);line-height:2.2">${info[tab]}</div>`,"<button class='btn btn-ghost u-btn-inline' onclick='closeGenModal()'>닫기</button>");
 }
 
 

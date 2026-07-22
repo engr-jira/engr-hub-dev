@@ -27,16 +27,16 @@ function renderEosList(){
     }
     const pd=it.productDesc||it.product||'-';
     const period=[it.startDate,it.expireDate].filter(Boolean).join(' ~ ')||'-';
-    return `<tr class="${rowClass}" onclick="openEosDetailModal('${it.id}')" style="cursor:pointer">
+    return `<tr class="${rowClass} u-cur-pointer" onclick="openEosDetailModal('${it.id}')">
       <td onclick="event.stopPropagation()"><input type="checkbox" class="eos-pick" data-id="${it.id}"></td>
       <td style="font-weight:700">${escapeHtml(it.customer||'-')}</td>
       <td>${escapeHtml(pd)}</td>
-      <td style="color:var(--text2)">${escapeHtml(it.siteId||'-')}</td>
-      <td style="text-align:right" data-sort="${parseInt(String(it.quantity).replace(/[^0-9]/g,''))||0}">${escapeHtml(String(it.quantity||'-'))}</td>
+      <td class="u-c-text2">${escapeHtml(it.siteId||'-')}</td>
+      <td class="u-ta-right" data-sort="${parseInt(String(it.quantity).replace(/[^0-9]/g,''))||0}">${escapeHtml(String(it.quantity||'-'))}</td>
       <td style="font-family:'Consolas',monospace;font-size:11px">${escapeHtml(it.serial||'-')}</td>
       <td style="font-size:11px;color:var(--text2);white-space:nowrap" data-sort="${escapeHtml(it.startDate||'')}">${escapeHtml(period)}</td>
       <td data-sort="${hasEnd?days:99999}"><span class="eos-day-badge" style="background:${badgeBg};color:${badgeColor}">${badgeText}</span></td>
-      <td style="white-space:nowrap">
+      <td class="u-ws-nowrap">
         <button onclick="event.stopPropagation();openEosEditModal('${it.id}')" style="background:none;border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:11px;padding:3px 8px;font-family:inherit;margin-right:4px">✎ 수정</button>
         <button onclick="event.stopPropagation();deleteEos('${it.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px">×</button>
       </td>
@@ -63,23 +63,23 @@ function openEosDetailModal(id){
     <div class="rp-row"><span>D-Day</span><span style="color:${color};font-weight:900">${!hasEnd?'-':d<0?'만료':`D-${d}`}</span></div>
     <div class="rp-row"><span>등록</span><span>${escapeHtml(it.createdBy||'-')} · ${fd(it.createdAt)}</span></div>
   </div>
-  ${it.memo?`<div class="rp-desc" style="margin-top:12px">${escapeHtml(it.memo)}</div>`:''}`,
-  `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">닫기</button>
-   <button class="btn btn-indigo" onclick="openEosEditModal('${id}')" style="width:auto;padding:8px 18px">수정</button>`);
+  ${it.memo?`<div class="rp-desc u-mt-12px">${escapeHtml(it.memo)}</div>`:''}`,
+  `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">닫기</button>
+   <button class="btn btn-indigo u-btn-inline" onclick="openEosEditModal('${id}')">수정</button>`);
 }
 function openEosModal(){
   openGenModal('고객사 라이선스 등록',`
   <div class="modal-form">
     <div class="full"><label>고객사 *</label><input id="eos-form-customer" placeholder="고객사명" list="customer-list"></div>
     <div class="full">
-      <label>라이선스 항목 <span style="text-transform:none;color:var(--text3);font-weight:400">— 사진의 한 줄 = 한 항목. 여러 개면 아래에서 추가</span></label>
+      <label>라이선스 항목 <span class="u-ttnone-ctext3-fw400">— 사진의 한 줄 = 한 항목. 여러 개면 아래에서 추가</span></label>
       <div id="eos-lines"></div>
       <button type="button" class="btn btn-ghost" onclick="addEosLine()" style="width:auto;padding:7px 14px;font-size:12px;margin-top:6px">+ 라이선스 추가</button>
     </div>
-    <div class="full"><label>메모 <span style="text-transform:none;color:var(--text3);font-weight:400">(공통 · 선택)</span></label><textarea id="eos-form-memo" placeholder="비고"></textarea></div>
+    <div class="full"><label>메모 <span class="u-ttnone-ctext3-fw400">(공통 · 선택)</span></label><textarea id="eos-form-memo" placeholder="비고"></textarea></div>
   </div>`,
-  `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">취소</button>
-   <button class="btn btn-indigo" onclick="saveEos()" style="width:auto;padding:8px 18px">저장</button>`);
+  `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">취소</button>
+   <button class="btn btn-indigo u-btn-inline" onclick="saveEos()">저장</button>`);
   addEosLine();
 }
 function addEosLine(){
@@ -135,8 +135,8 @@ function openEosEditModal(id){
     <div><label>End Date (만료)</label><input type="date" id="eos-edit-end" value="${it.expireDate||''}"></div>
     <div class="full"><label>메모</label><textarea id="eos-edit-memo">${escapeHtml(it.memo||'')}</textarea></div>
   </div>`,
-  `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">취소</button>
-   <button class="btn btn-indigo" onclick="updateEos('${id}')" style="width:auto;padding:8px 18px">저장</button>`);
+  `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">취소</button>
+   <button class="btn btn-indigo u-btn-inline" onclick="updateEos('${id}')">저장</button>`);
 }
 async function updateEos(id){
   const customer=document.getElementById('eos-edit-customer').value.trim();
@@ -218,7 +218,7 @@ function renderLinks(){
   const pageLinks=sliceForPage(list,'links');
   const cnt=document.getElementById('links-count');if(cnt)cnt.textContent=pageCountText('links',list.length);
   const wrap=document.getElementById('links-grid');
-  if(!pageLinks.length){wrap.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3);font-size:13px">등록된 링크가 없거나 조건에 맞는 링크가 없습니다</div>`;renderPager('links-pager','links',list.length,'renderLinks');return;}
+  if(!pageLinks.length){wrap.innerHTML=`<div class="u-empty">등록된 링크가 없거나 조건에 맞는 링크가 없습니다</div>`;renderPager('links-pager','links',list.length,'renderLinks');return;}
   wrap.innerHTML=pageLinks.map(l=>{
     const commentCount=(l.comments||[]).length;
     const cat=escapeHtml(l.category||l.cat||'기타');
@@ -226,7 +226,7 @@ function renderLinks(){
     const url=escapeHtml(l.url||'');
     const meta=`by ${escapeHtml(l.createdBy||'-')}${l.createdAt?' · '+fd(l.createdAt):''}`;
     const canEdit=(l.createdBy===CURRENT_USER||IS_ADMIN||IS_SUPER);
-    return `<div class="link-card" style="position:relative" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')">${canEdit?`<input type="checkbox" class="lnk-pick" data-id="${escapeAttr(l.id)}" onclick="event.stopPropagation()" style="position:absolute;top:7px;left:7px;z-index:3;width:15px;height:15px;cursor:pointer">`:''}<span class="link-cat">${cat}</span><div class="link-info"><div class="link-title">${title}</div><div class="link-meta">${meta}</div></div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${url}</div><div class="link-actions" style="flex-shrink:0;display:flex;gap:4px;opacity:0;transition:opacity .15s"><button onclick="event.stopPropagation();openLinkDetail('${escapeAttr(l.id)}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">댓글 ${commentCount}</button>${canEdit?`<button onclick="event.stopPropagation();openLinkEditModal('${escapeAttr(l.id)}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:10px;padding:2px 8px;font-family:inherit">✎</button><button onclick="event.stopPropagation();deleteLink('${escapeAttr(l.id)}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button>`:''}</div></div>`;
+    return `<div class="link-card" style="position:relative" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')">${canEdit?`<input type="checkbox" class="lnk-pick" data-id="${escapeAttr(l.id)}" onclick="event.stopPropagation()" style="position:absolute;top:7px;left:7px;z-index:3;width:15px;height:15px;cursor:pointer">`:''}<span class="link-cat">${cat}</span><div class="link-info"><div class="link-title">${title}</div><div class="link-meta">${meta}</div></div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${url}</div><div class="link-actions" style="flex-shrink:0;display:flex;gap:4px;opacity:0;transition:opacity .15s"><button class="u-bgcard2-bor1pxsol-br6px-ctext3-curpointe" onclick="event.stopPropagation();openLinkDetail('${escapeAttr(l.id)}')">댓글 ${commentCount}</button>${canEdit?`<button class="u-bgcard2-bor1pxsol-br6px-ctext3-curpointe" onclick="event.stopPropagation();openLinkEditModal('${escapeAttr(l.id)}')">✎</button><button onclick="event.stopPropagation();deleteLink('${escapeAttr(l.id)}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button>`:''}</div></div>`;
   }).join('');
   renderPager('links-pager','links',list.length,'renderLinks');
 }
@@ -259,12 +259,12 @@ function openLinkDetail(id){
       <span class="link-cat">${escapeHtml(l.category||l.cat||'기타')}</span>
     </div>
     ${l.desc?`<div style="font-size:13px;color:var(--text2);line-height:1.7;white-space:pre-wrap;margin-bottom:12px">${escapeHtml(l.desc)}</div>`:''}
-    <div class="link-url" style="margin-bottom:10px">${escapeHtml(l.url||'')}</div>
+    <div class="link-url u-mb-10px">${escapeHtml(l.url||'')}</div>
     <div style="font-size:10px;color:var(--text3);margin-bottom:12px">${escapeHtml(l.createdBy||'-')} · ${l.updatedAt?'수정 '+fd(l.updatedAt):fd(l.createdAt)}</div>
     ${itemCommentsHtml('links',l)}`,
-    `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none"><button class="btn btn-ghost" style="width:auto;padding:8px 18px">열기 →</button></a>
-     <button class="btn btn-indigo" onclick="openLinkEditModal('${id}')" style="width:auto;padding:8px 18px">수정</button>
-     <button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">닫기</button>`);
+    `<a class="u-td-none" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer"><button class="btn btn-ghost u-btn-inline">열기 →</button></a>
+     <button class="btn btn-indigo u-btn-inline" onclick="openLinkEditModal('${id}')">수정</button>
+     <button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">닫기</button>`);
 }
 async function addItemComment(kind,id){
   const text=document.getElementById(`${kind}-comment-text-${id}`)?.value.trim()||'';
@@ -298,8 +298,8 @@ function openLinkModal(){
     <div class="full"><label>URL *</label><input id="link-form-url" placeholder="https://..."></div>
     <div class="full"><label>설명</label><textarea id="link-form-desc" placeholder="설명 (선택)"></textarea></div>
   </div>`,
-  `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">취소</button>
-   <button class="btn btn-indigo" onclick="saveLink()" style="width:auto;padding:8px 18px">저장</button>`);
+  `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">취소</button>
+   <button class="btn btn-indigo u-btn-inline" onclick="saveLink()">저장</button>`);
 }
 async function saveLink(){
   const title=document.getElementById('link-form-title').value.trim();
@@ -325,8 +325,8 @@ function openLinkEditModal(id){
     <div class="full"><label>URL *</label><input id="link-edit-url" value="${escapeHtml(l.url||'')}"></div>
     <div class="full"><label>설명</label><textarea id="link-edit-desc">${escapeHtml(l.desc||'')}</textarea></div>
   </div>`,
-  `<button class="btn btn-ghost" onclick="closeGenModal()" style="width:auto;padding:8px 18px">취소</button>
-   <button class="btn btn-indigo" onclick="updateLink('${id}')" style="width:auto;padding:8px 18px">저장</button>`);
+  `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">취소</button>
+   <button class="btn btn-indigo u-btn-inline" onclick="updateLink('${id}')">저장</button>`);
 }
 async function updateLink(id){
   const title=document.getElementById('link-edit-title').value.trim();
@@ -444,7 +444,7 @@ ${log.slice(0,28000)}`,'logx',{size:log.length});
     }else{
       res.innerHTML=renderLogResult(data);
     }
-  }catch(e){ if(res)res.innerHTML=`<div style="color:var(--danger);padding:16px">오류: ${escapeHtml(e.message)}</div>`; }
+  }catch(e){ if(res)res.innerHTML=`<div class="u-cdanger-p16px">오류: ${escapeHtml(e.message)}</div>`; }
   btn.disabled=false;btn.textContent='🔬 에러 발췌 & 링크 찾기';
 }
 // 제품명을 항상 검색어에 포함(엉뚱한 결과 방지). Google / KB / Broadcom 3종, 해당 없으면 url=null(없음).
@@ -483,7 +483,7 @@ function renderLogResult(data){
   return `<div class="vt-result">
     <div class="sec-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">📋 발췌된 로그 (시간순)<button class="btn btn-cyan" data-t="${escapeHtml(excerpt)}" onclick="copyText(this.dataset.t)" style="width:auto;padding:6px 14px;font-size:11px">📋 복사</button></div>
     <pre class="logx-pre">${escapeHtml(excerpt)}</pre>
-    ${issues.length?`<div class="sec-title" style="margin-top:16px">🔎 핵심 이슈 & 추천 링크 ${prodLabel}</div>${issuesHtml}`:'<div style="color:var(--text3);font-size:12px;margin-top:10px">추출된 핵심 이슈가 없습니다.</div>'}
+    ${issues.length?`<div class="sec-title u-mt-16px">🔎 핵심 이슈 & 추천 링크 ${prodLabel}</div>${issuesHtml}`:'<div style="color:var(--text3);font-size:12px;margin-top:10px">추출된 핵심 이슈가 없습니다.</div>'}
   </div>`;
 }
 async function registerLogLink(title, url, btn){
