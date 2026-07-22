@@ -499,8 +499,8 @@ function syncMobSheet(panelId){
 /* ── v1.5.11: session revoke + comment feed ───────────── */
 /* mobile primary nav + compact admin settings */
 const MOBILE_PRIMARY_NAV=['nav-dash','nav-issues','nav-cases','nav-customers'];
-const MOBILE_MORE_NAV=['nav-mydesk','nav-eos','nav-compat','nav-log','nav-vt','nav-nsis','nav-links','nav-knowledge','nav-monitor','nav-audit','nav-settings'];
-const MOBILE_NAV_LABELS={eos:'라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',nsis:'NSIS 분석기',monitor:'팀 모니터'};
+const MOBILE_MORE_NAV=['nav-mydesk','nav-sales','nav-eos','nav-compat','nav-log','nav-vt','nav-nsis','nav-links','nav-knowledge','nav-monitor','nav-audit','nav-settings'];
+const MOBILE_NAV_LABELS={sales:'영업 현황',eos:'라이선스',log:'로그 분석기',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',nsis:'NSIS 분석기',monitor:'팀 모니터'};
 function mobilePageNameFromNav(id){return String(id||'').replace(/^nav-/,'');}
 function canShowMobileMoreItem(id){
   if(id==='nav-audit')return !!(IS_ADMIN||IS_SUPER);

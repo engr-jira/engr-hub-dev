@@ -351,6 +351,7 @@ function renderCurrent(){
   else if(id==='cases')renderCases();
   else if(id==='customers')renderCustomers();
   else if(id==='eos')renderEosList();
+  else if(id==='sales')renderSalesPage();
   else if(id==='links')renderLinks();
   else if(id==='knowledge')renderKnowledge();
   else if(id==='audit')loadAudit();

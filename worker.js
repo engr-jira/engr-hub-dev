@@ -15,6 +15,7 @@ import { getFeatureFlags } from './src/settings.js';
 import { getUsage, readUsageCounter, updateAIUsage } from './src/usage.js';
 import { getVtHistory, saveVtHistory, vtDetectType, vtPollAnalysis, vtUrlId } from './src/vt.js';
 import { importRecentKBLinks } from './src/kb.js';
+import { buildSalesOverview, saveSalesNote, getSalesStaleDays } from './src/sales.js';
 
 export default {
   async fetch(request, env, ctx) {
@@ -370,7 +371,7 @@ export default {
       if (path === '/usage/pageview' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ ok: false }, 401);
         const body = await request.json().catch(() => ({}));
-        const ALLOWED = ['dash', 'issues', 'cases', 'customers', 'eos', 'log', 'vt', 'links', 'knowledge', 'audit', 'settings', 'mydesk', 'compat', 'nsis', 'monitor'];
+        const ALLOWED = ['dash', 'issues', 'cases', 'customers', 'eos', 'log', 'vt', 'links', 'knowledge', 'audit', 'settings', 'mydesk', 'compat', 'nsis', 'monitor', 'sales'];
         const pv = ALLOWED.includes(body.page) ? body.page : null;
         if (!pv) return corsResponse({ ok: false }, 400);
         ctx.waitUntil(auditLog(env, user, 'PAGE_VIEW', { page: pv }));
@@ -526,12 +527,14 @@ export default {
         const sessionMin = await env.ENGR_KV.get('config:session_min') || '120';
         const aiSystem = await env.ENGR_KV.get('config:ai_system') || '';
         const eosWarnDays = await env.ENGR_KV.get('config:eos_warn_days') || '60,30,7';
+        const salesStaleDays = await getSalesStaleDays(env);
         return corsResponse({
           ok: true,
           rangeMonths: parseInt(rangeMonths),
           sessionMin: parseInt(sessionMin),
           aiSystem,
           eosWarnDays,
+          salesStaleDays,
         });
       }
       if (path === '/admin/config' && request.method === 'POST') {
@@ -541,6 +544,7 @@ export default {
         if (body.sessionMin !== undefined) await env.ENGR_KV.put('config:session_min', String(body.sessionMin));
         if (body.aiSystem !== undefined) await env.ENGR_KV.put('config:ai_system', body.aiSystem);
         if (body.eosWarnDays !== undefined) await env.ENGR_KV.put('config:eos_warn_days', body.eosWarnDays);
+        if (body.salesStaleDays !== undefined) await env.ENGR_KV.put('config:sales_stale_days', String(parseInt(body.salesStaleDays,10)||14));
         await auditLog(env, user, 'CONFIG_CHANGE', { keys: Object.keys(body) });
         return corsResponse({ ok: true });
       }
@@ -1260,6 +1264,26 @@ export default {
         let keys = [];
         try { const r = await env.DB.prepare('SELECT issue_key FROM analysis_request ORDER BY requested_at ASC').all(); keys = (r.results || []).map(x => x.issue_key); } catch (_) {}
         return corsResponse({ ok: true, keys });
+      }
+
+      // ── STEP 6 영업 현황 : 규칙 기반 집계(AI 무관), 이슈 본문·코멘트는 반환하지 않음 ──
+      if (path === '/sales/overview' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        try {
+          const data = await buildSalesOverview(env);
+          return corsResponse(data);
+        } catch (e) { return corsResponse({ ok: false, message: '집계 실패: ' + (e && e.message || e) }, 500); }
+      }
+      if (path === '/sales/note' && request.method === 'PUT') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        const salesOk = (await isSalesRole(env, user)) || (await isAdmin(env, user));
+        if (!salesOk) return corsResponse({ ok: false, message: '영업·관리자만 수정할 수 있습니다.' }, 403);
+        const body = await request.json().catch(() => ({}));
+        try {
+          const saved = await saveSalesNote(env, user, body);
+          await auditLog(env, user, 'SALES_NOTE', { noteCustomer: saved.customer, noteProduct: saved.product, noteStatus: saved.status });
+          return corsResponse({ ok: true, saved });
+        } catch (e) { return corsResponse({ ok: false, message: '저장 실패: ' + (e && e.message || e) }, 400); }
       }
 
       return corsResponse({ ok: false, message: '\uC5C6\uB294 \uACBD\uB85C\uC785\uB2C8\uB2E4.' }, 404);

@@ -357,6 +357,7 @@ async function loadSettings(){
       document.getElementById('cfg-session').value=d.sessionMin;
       document.getElementById('cfg-ai-system').value=d.aiSystem||'';
       document.getElementById('cfg-eos-warn').value=d.eosWarnDays||'60,30,7';
+      const ss=document.getElementById('cfg-sales-stale'); if(ss)ss.value=d.salesStaleDays||14;
     }
   }catch(e){toast('설정 로드 실패',true);}
   const wrap=document.getElementById('admin-list-wrap');
@@ -491,6 +492,7 @@ async function saveConfig(){
     sessionMin:parseInt(document.getElementById('cfg-session').value),
     aiSystem:document.getElementById('cfg-ai-system').value,
     eosWarnDays:document.getElementById('cfg-eos-warn').value.trim()||'60,30,7',
+    salesStaleDays:parseInt(document.getElementById('cfg-sales-stale')?.value,10)||14,
   };
   try{
     const r=await fetch(`${WORKERS}/admin/config`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify(body)});
