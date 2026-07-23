@@ -143,6 +143,20 @@ export default {
       }
 
       //
+      // ── 스케줄 엔진용 Jira 첨부 프록시 (분석 토큰 인증) : 첨부 로그 분석의 통로 ──
+      // 일반 /jira/ 봉인보다 먼저 매칭되어야 함. 5MB 상한(로그 텍스트 위주).
+      if (path.startsWith('/jira/attach/') && request.method === 'GET') {
+        const tok = request.headers.get('x-analysis-token') || '';
+        if (!env.ANALYSIS_WRITE_TOKEN || tok !== env.ANALYSIS_WRITE_TOKEN) return corsResponse({ ok: false, message: '인증 실패' }, 401);
+        const attId = path.split('/')[3] || '';
+        if (!/^d+$/.test(attId)) return corsResponse({ ok: false, message: '잘못된 첨부 ID' }, 400);
+        const jiraAuth = 'Basic ' + btoa('mj.park@escare.co.kr:' + env.JIRA_TOKEN);
+        const jr = await fetch(`https://escare-engr.atlassian.net/rest/api/3/attachment/content/${attId}`, { headers: { 'Authorization': jiraAuth } });
+        if (!jr.ok) return corsResponse({ ok: false, message: '첨부 조회 실패 ' + jr.status }, 502);
+        const buf = await jr.arrayBuffer();
+        if (buf.byteLength > 5 * 1024 * 1024) return corsResponse({ ok: false, message: '5MB 초과 첨부는 분석 제외' }, 413);
+        return new Response(buf, { status: 200, headers: { ...CORS_HEADERS, 'Content-Type': jr.headers.get('Content-Type') || 'application/octet-stream' } });
+      }
       if (path.startsWith('/jira/')) {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const jiraPath = path.replace('/jira/', '');
