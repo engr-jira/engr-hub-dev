@@ -149,7 +149,7 @@ export default {
         const tok = request.headers.get('x-analysis-token') || '';
         if (!env.ANALYSIS_WRITE_TOKEN || tok !== env.ANALYSIS_WRITE_TOKEN) return corsResponse({ ok: false, message: '인증 실패' }, 401);
         const attId = path.split('/')[3] || '';
-        if (!/^d+$/.test(attId)) return corsResponse({ ok: false, message: '잘못된 첨부 ID' }, 400);
+        if (!/^\d+$/.test(attId)) return corsResponse({ ok: false, message: '잘못된 첨부 ID' }, 400);
         const jiraAuth = 'Basic ' + btoa('mj.park@escare.co.kr:' + env.JIRA_TOKEN);
         const jr = await fetch(`https://escare-engr.atlassian.net/rest/api/3/attachment/content/${attId}`, { headers: { 'Authorization': jiraAuth } });
         if (!jr.ok) return corsResponse({ ok: false, message: '첨부 조회 실패 ' + jr.status }, 502);
