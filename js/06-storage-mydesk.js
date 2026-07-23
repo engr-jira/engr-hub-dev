@@ -74,29 +74,8 @@ async function refreshStorageStats(){
 }
 
 // ── AI CALL ───────────────────────────────────────
-async function callAI(prompt,mode='technical_analysis',detail={}){
-  const r=await fetch(`${WORKERS}/ai/generate`,{
-    method:'POST',
-    headers:authHeaders({'Content-Type':'application/json'}),
-    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],mode,detail})
-  });
-  if(!r.ok){
-    let msg='';
-    try{const err=await r.json();msg=err.message||JSON.stringify(err).slice(0,200);}catch{msg='응답 파싱 실패';}
-    throw new Error(`(${r.status}) ${msg}`);
-  }
-  const d=await r.json();
-  LAST_AI_MODEL=d._model||'';
-  const _t=d.candidates?.[0]?.content?.parts?.[0]?.text;
-  if(_t==null)return '응답을 받지 못했습니다.';
-  return (typeof _t==='string')?_t:JSON.stringify(_t);  // 캐시 오염 등으로 배열/객체가 와도 항상 string 보장
-}
-function aiModelLabel(m){
-  m=String(m||'').toLowerCase();
-  if(m.includes('gemini')){const v=m.replace('gemini-','').replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase());return 'Gemini '+v;}
-  if(m.includes('llama'))return 'Llama 3.3 70B';
-  return m?m:(AI_MODEL_LABEL||'AI');
-}
+
+
 
 
 // ── v1.5.1: Case 분리 / 필터 이동 / 제조사 신고 ─────────────
@@ -395,29 +374,7 @@ function renderCaseRight(loading=false){
   </div>`;
   try{ renderIssueAnalysis(c.key,'ai-analysis-sec-case'); }catch(_){}
 }
-async function runCaseAI(mode='summary'){
-  if(!CASE_SEL)return;
-  const c=CASE_SEL;
-  await ensureIssueDetail(c);
-  renderCaseRight(false);
-  const titles={summary:'📋 케이스 내용 요약',tech:'🧪 케이스 기술 분석',similar:'🔎 유사 이슈 검토',reply:'✉️ 고객 회신'};
-  openAIModal('📦',titles[mode]||'케이스 분석',c.caseNum,'<div class="loading">AI 분석 중...</div>');
-  const days=daysSince(c.date);
-  const commentText=(c.comments||[]).map(x=>`[${x.author}] ${x.bodyPlain||x.body}`).join('\n');
-  const attachText=(c.attachments||[]).map(a=>`${a.name} (${Math.round((a.size||0)/1024)}KB)`).join(', ');
-  const common=`케이스 번호: ${c.caseNum}\nJira: ${c.key} | ${c.title}\n고객사: ${caseCustomerName(c)||'-'} | 담당자: ${c.assignee}\n현재 상태: ${c.status} | 접수일: ${c.date} | 경과: ${days}일\n첨부파일명: ${attachText||'(없음)'}\n본문: ${c.descPlain||'(없음)'}\n코멘트: ${commentText||'(없음)'}`;
-  const prompts={
-    summary:`벤더 케이스 내용을 실무자가 빠르게 인수인계할 수 있게 요약해줘.\n${common}\n\n형식: 확인된 사실 / 현재 상태 / 남은 확인사항 / 다음 액션`,
-    tech:`벤더 케이스를 기술 관점에서 분석해줘. 원인과 현상을 분리하고, 로그·첨부파일명·댓글에서 근거가 되는 관찰 포인트를 먼저 제시해줘.\n${common}\n\n형식: 확인된 사실 / 가능한 원인 / 재현 가능성 / 영향 범위 / 확인 방법 / 현실적인 조치안`,
-    similar:`아래 케이스와 유사한 내부 이슈를 찾기 위한 검색 키워드와 비교 기준을 만들어줘. 실제 HUB 데이터베이스 전체 검색 권한이 없으므로, 제목/증상/제품/오류문구 기준의 유사 이슈 탐색 전략으로 작성해줘.\n${common}\n\n형식: 핵심 키워드 / 유사도 판단 기준 / 제외 기준 / 검색 쿼리 예시 / 확인 순서`,
-    reply:`고객에게 보낼 회신 초안을 작성해줘. 확인된 사실과 벤더 확인 중인 사항을 분리하고, 과도한 확정 표현은 피해서 작성해줘.\n${common}\n\n형식: 제목 / 본문 / 추가 요청사항`
-  };
-  try{
-    const text=await callAI(prompts[mode]||prompts.summary,'case',{caseNum:c.caseNum,issue:c.key,mode});
-    setAIModalBody(text);
-    document.getElementById('ai-modal-meta').textContent=`${c.caseNum} · ${c.key}`;
-  }catch(e){setAIModalBody(`<div class="u-cdanger-p20px">오류: ${escapeHtml(e.message)}</div>`,true);}
-}
+
 
 function renderOverdueBanner(){
   const OVERDUE_DAYS=7;

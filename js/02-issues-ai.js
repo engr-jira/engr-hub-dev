@@ -198,186 +198,13 @@ function renderRightPanel(){
   try{ renderIssueAnalysis(i.key); }catch(_){}
 }
 
-async function runAI(mode){
-  if(!SEL)return;
-  const i=SEL;
-  const btnMap={summary:'summary-btn',technical_analysis:'analyze-btn',similar_issues:'similar-btn',reply_draft:'reply-btn',handover:'handover-btn'};
-  const labelMap={summary:'\uC694\uC57D',technical_analysis:'\uAE30\uC220 \uBD84\uC11D',similar_issues:'\uC720\uC0AC \uC774\uC288',reply_draft:'\uD68C\uC2E0 \uCD08\uC548',handover:'\uC778\uC218\uC778\uACC4'};
-  const iconMap={summary:'AI',technical_analysis:'AI',similar_issues:'AI',reply_draft:'AI',handover:'AI'};
-  const btn=document.getElementById(btnMap[mode]);
-  btn.disabled=true;btn.textContent='분석 중...';
-  openAIModal(iconMap[mode],labelMap[mode],i.key,'<div class="loading">AI 분석 중...</div>');
-  await ensureIssueDetail(i);
-  const commentText=i.comments.map(c=>`[${c.author}] ${c.bodyPlain||c.body}`).join('\n');
-  const fc=`이슈: ${i.key} | ${i.title}
-고객사: ${i.customer||'-'} | 레이블: ${i.labels.join(',')||'-'}
-우선순위: ${i.pri} | 상태: ${i.status} | 담당자: ${i.assignee} | 접수일: ${i.date}
-첨부: ${i.attachments.map(a=>a.name).join(', ')||'없음'}
-[본문]
-${i.descPlain||'(없음)'}
-[코멘트]
-${commentText||'(없음)'}`;
-  try{
-    let prompt='';
-    if(mode==='summary'){
-      prompt=`아래 Jira 이슈 전체 내용을 4가지로 간결하게 요약하세요:
-1. 핵심 문제 (1-2줄)
-2. 현재 상태
-3. 취한 조치
-4. 남은 과제
 
-${fc}`;
-    }else if(mode==='technical_analysis'){
-      prompt=`아래 이슈 전체를 4개 섹션으로 분석하세요:
-**🔍 상황 분석** (이슈 성격, 심각도, 기술 배경)
-**🧩 원인 및 기술 포인트** (추정 원인, 핵심 기술, 로그 키워드)
-**⚡ 권장 조치** (우선순위별 단계별 절차)
-**🛡 재발 방지** (정책, 모니터링, 예방)
-
-${fc}`;
-    }else if(mode==='similar_issues'){
-      const similar=ISSUES.filter(x=>x.key!==i.key&&(x.labels.some(l=>i.labels.includes(l))||x.customer===i.customer)).slice(0,8);
-      prompt=`현재 이슈와 유사 이슈를 비교 분석하세요.
-1.유사 케이스 공통점 2.반복 발생 패턴 3.과거 해결책 참고 4.종합 시사점
-현재: ${fc}
-유사:
-${similar.map((x,n)=>`${n+1}.[${x.key}]${x.title}(${x.date},${x.status})\n${x.descPlain.slice(0,500)}`).join('\n\n')}`;
-    }
-    if(mode==='handover'){
-      prompt=`아래 Jira 이슈를 내부 인수인계 메모 형식으로 정리하세요.
-반드시 다음 구조를 사용하세요:
-1. 제목 / 고객사 / 제품 / 담당자
-2. 확인된 사실
-3. 추정 또는 미확인 사항
-4. 현재 상태
-5. 영향 범위
-6. 다음 조치
-7. 고객 또는 제조사에 추가 확인할 내용
-8. 주의할 리스크
-
-확인된 사실과 추정은 섞지 말고 분리하세요.
-
-${fc}`;
-    }
-    if(mode==='reply_draft'){
-      prompt=`아래 Jira 이슈를 바탕으로 고객에게 보낼 한국어 공식 회신 메일 초안을 작성해주세요.
-이슈: ${i.key} | ${i.title}
-고객사: ${i.customer||'-'} | 담당자(수신): 고객사 담당자 | 발신: ESCARE 보안기술팀
-현재 상태: ${i.status} | 우선순위: ${i.pri}
-
-[이슈 본문]
-${i.descPlain||'(없음)'}
-[최근 코멘트/진행이력]
-${i.comments.slice(-5).map(c=>'['+c.author+'] '+c.bodyPlain).join('\n')||'(없음)'}
-
-메일 형식:
-제목: [ESCARE] [제품명] 기술 지원 - [이슈 요약]
-수신: [고객사 담당자]
-발신: ESCARE 보안기술팀 [담당자]
-
-안녕하세요...
-(현재 처리 현황 요약)
-(향후 일정 및 필요 정보)
-(마무리 인사)
-
-금융권 고객사 공식 문서 스타일로 작성. 기술 용어는 영문 병기. 확인되지 않은 사항은 "확인 후 안내 예정"으로 처리.`;
-    }
-    const text=await callAI(prompt,mode,{issue:i.key,title:cleanTitle(i.title)});
-    setAIModalBody(text);
-    document.getElementById('ai-modal-meta').textContent=`${i.key} · ${cleanTitle(i.title).slice(0,60)}`;
-  }catch(e){setAIModalBody(`<div class="u-cdanger-p20px">오류: ${e.message}</div>`,true);}
-  btn.disabled=false;btn.textContent=labelMap[mode];
-}
 
 // ── MODALS ────────────────────────────────────────
 let _loadingTimer=null;
-function openAIModal(icon,label,issueKey,bodyHTML){
-  document.getElementById('ai-modal-icon').textContent=icon;
-  document.getElementById('ai-modal-label').textContent=label;
-  document.getElementById('ai-modal-issue').textContent=issueKey||'';
-  document.getElementById('ai-modal-meta').textContent='분석 중...';
-  document.getElementById('ai-modal-copy').onclick=null;
-  document.getElementById('ai-modal').classList.add('show');
-  if(_loadingTimer){clearInterval(_loadingTimer);_loadingTimer=null;}
-  const steps=[
-    {msg:'이슈 데이터 수집 중...',pct:15},
-    {msg:'AI 컨텍스트 구성 중...',pct:35},
-    {msg:'패턴 분석 중...',pct:55},
-    {msg:'결과 생성 중...',pct:75},
-    {msg:'응답 마무리 중...',pct:92},
-  ];
-  let si=0;
-  const body=document.getElementById('ai-modal-body');
-  function showStep(){
-    const s=steps[Math.min(si,steps.length-1)];
-    body.innerHTML=`<div style="padding:30px 0">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
-        <div style="width:20px;height:20px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;flex-shrink:0"></div>
-        <span style="color:var(--text2);font-size:14px">${s.msg}</span>
-      </div>
-      <div style="height:5px;background:var(--border);border-radius:3px;overflow:hidden">
-        <div style="height:100%;width:${s.pct}%;background:linear-gradient(90deg,#6366f1,#a78bfa);border-radius:3px;transition:width .8s ease"></div>
-      </div>
-      <div style="margin-top:12px;font-size:11px;color:var(--text3)">${escapeHtml(AI_MODEL_LABEL||'AI')} 처리 중 · 평균 10~25초</div>
-    </div>`;
-    si++;
-  }
-  showStep();
-  _loadingTimer=setInterval(showStep,4500);
-}
-function setAIModalBody(text,isError){
-  const body=document.getElementById('ai-modal-body');
-  if(isError){body.innerHTML=text;return;}
-  if(_loadingTimer){clearInterval(_loadingTimer);_loadingTimer=null;}
-  // 마크다운 → HTML 렌더링
-  function renderMd(raw){
-    // 코드블록 보호 (pre로 대체 후 복원)
-    const blocks=[];
-    let s=raw.replace(/```(\w*)\n([\s\S]*?)```/g,(_,lang,code)=>{
-      blocks.push(`<pre style="background:rgba(0,0,0,.3);border:1px solid var(--border2);border-radius:8px;padding:12px;font-family:Consolas,monospace;font-size:12px;overflow-x:auto;white-space:pre;margin:10px 0"><code>${code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').trimEnd()}</code></pre>`);
-      return `\x00BLOCK${blocks.length-1}\x00`;
-    });
-    // 인라인 코드
-    s=s.replace(/`([^`]+)`/g,'<code style="background:rgba(99,102,241,.15);color:var(--accent3);padding:2px 6px;border-radius:4px;font-size:12px;font-family:Consolas,monospace">$1</code>');
-    // H4 ####
-    s=s.replace(/^#### (.+)$/gm,'<div style="font-size:12px;font-weight:700;color:var(--text2);margin:10px 0 4px;text-transform:uppercase;letter-spacing:.5px">$1</div>');
-    // H3 ###
-    s=s.replace(/^### (.+)$/gm,'<div style="font-size:13px;font-weight:700;color:var(--accent3);margin:16px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border)">$1</div>');
-    // H2 ##
-    s=s.replace(/^## (.+)$/gm,'<div style="font-size:14px;font-weight:800;color:var(--text);margin:20px 0 8px">$1</div>');
-    // H1 #
-    s=s.replace(/^# (.+)$/gm,'<div style="font-size:15px;font-weight:800;color:var(--text);margin:20px 0 8px">$1</div>');
-    // bold **
-    s=s.replace(/\*\*([^*\n]+)\*\*/g,'<strong class="u-caccent-fw700">$1</strong>');
-    // links [text](url)
-    s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer" style="color:var(--cyan);text-decoration:none">$1 ↗</a>');
-    // italic *
-    s=s.replace(/\*([^*\n]+)\*/g,'<em class="u-c-text2">$1</em>');
-    // --- 구분선
-    s=s.replace(/^---+$/gm,'<hr style="border:none;border-top:1px solid var(--border2);margin:14px 0">');
-    // > blockquote
-    s=s.replace(/^> (.+)$/gm,'<div style="border-left:3px solid var(--accent2);padding:6px 12px;background:rgba(99,102,241,.07);margin:6px 0;color:var(--text2);font-style:italic;border-radius:0 6px 6px 0">$1</div>');
-    // 번호 리스트 1.
-    s=s.replace(/^(\d+)\. (.+)$/gm,'<div style="display:flex;gap:8px;margin:4px 0;padding-left:4px"><span style="color:var(--accent2);flex-shrink:0;min-width:20px;font-weight:700">$1.</span><span>$2</span></div>');
-    // - * • 리스트
-    s=s.replace(/^[\-\*•] (.+)$/gm,'<div style="display:flex;gap:8px;margin:4px 0;padding-left:4px"><span style="color:var(--accent2);flex-shrink:0">•</span><span>$1</span></div>');
-    // 줄바꿈
-    s=s.replace(/\n/g,'<br>');
-    // 코드블록 복원
-    s=s.replace(/\x00BLOCK(\d+)\x00/g,(_,i)=>blocks[parseInt(i)]);
-    return s;
-  }
-  body.innerHTML=renderMd(text);
-  if(LAST_AI_MODEL){
-    const prov=LAST_AI_MODEL.toLowerCase().includes('gemini')?'#34a853':'#a78bfa';
-    body.innerHTML+=`<div style="margin-top:16px;padding-top:10px;border-top:1px solid var(--border2);font-size:11px;color:var(--text3);display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:${prov};display:inline-block"></span>${escapeHtml(aiModelLabel(LAST_AI_MODEL))} 모델로 생성됨</div>`;
-  }
-  body.style.whiteSpace='normal';
-  const btn=document.getElementById('ai-modal-copy');
-  btn.dataset.t=text;
-  btn.onclick=()=>copyText(btn.dataset.t);
-}
-function closeAIModal(){if(_loadingTimer){clearInterval(_loadingTimer);_loadingTimer=null;}document.getElementById('ai-modal').classList.remove('show');}
+
+
+
 function openFullIssue(){
   if(!SEL)return;
   const i=SEL;
@@ -417,8 +244,7 @@ function closeGenModal(){if(window.__pinLock)return;document.getElementById('gen
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){
     e.preventDefault();
-    if(document.getElementById('ai-modal')?.classList.contains('show'))closeAIModal();
-    else if(document.getElementById('gen-modal')?.classList.contains('show'))closeGenModal();
+    if(document.getElementById('gen-modal')?.classList.contains('show'))closeGenModal();
   }
 });
 

@@ -18,12 +18,9 @@ window.onerror=(msg,src,line,col,err)=>{
   console.error('[HUB] Global error:',msg,src,line,err);
   return false;
 };
-let AI_USAGE_LOADING=false, AI_USAGE_LAST=null;
-let AI_PROVIDER='', AI_MODEL_LABEL='AI', LAST_AI_MODEL='';
 let VT_HISTORY=JSON.parse(localStorage.getItem('vt_history')||'[]');
 let LINKS=[],EOS_ITEMS=[],TEAM_NAMES=[];
 let EOS_WARN_DAYS=[60,30,7];
-let LOG_FILES=[];
 const THEME_KEY='engr_theme';
 let UI_THEME=normalizeTheme((function(){try{return localStorage.getItem(THEME_KEY)}catch(_){return null}})()||document.documentElement.getAttribute('data-theme')||'dark');
 
@@ -99,7 +96,7 @@ function updateSyncMeta(meta=SYNC_META){
   if(banner){banner.style.display='flex';banner.innerHTML=`<span><b>Jira 동기화 기준</b> ${text}</span><button class="btn btn-ghost" onclick="syncJira()" style="width:auto;padding:7px 12px;font-size:11px">새로고침</button>`;}
 }
 async function loadSyncMeta(){
-  try{const r=await fetch(`${WORKERS}/config/public`);if(r.ok){const d=await r.json();if(d.rangeMonths)localStorage.setItem('jira_range_months',d.rangeMonths);if(d.aiProvider)AI_PROVIDER=d.aiProvider;if(d.aiModel)AI_MODEL_LABEL=aiModelLabel(d.aiModel);updateSyncMeta(d.lastSync?{...d.lastSync,rangeMonths:d.rangeMonths}:{rangeMonths:d.rangeMonths});return;}}catch{}
+  try{const r=await fetch(`${WORKERS}/config/public`);if(r.ok){const d=await r.json();if(d.rangeMonths)localStorage.setItem('jira_range_months',d.rangeMonths);updateSyncMeta(d.lastSync?{...d.lastSync,rangeMonths:d.rangeMonths}:{rangeMonths:d.rangeMonths});return;}}catch{}
   updateSyncMeta();
 }
 
@@ -209,79 +206,18 @@ function forceLogout(){clearLocalSession();location.reload();}
 function logout(){if(!confirm('로그아웃 하시겠어요?'))return;['engr_remember','engr_saved_user','engr_saved_pin'].forEach(k=>localStorage.removeItem(k));forceLogout();}
 
 // ── AI 사용량 ──────────────────────────────────────
-function setAIUsageText(id,text){const el=document.getElementById(id);if(el)el.textContent=text;}
-function fmtUsageCount(v){return `${Number(v||0)}회`;}
+
+
 function fmtClock(ts){
   try{return new Date(ts||Date.now()).toLocaleTimeString('ko-KR',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});}catch{return '-';}
 }
-function setAIUsageLoading(reason='manual'){
-  const btn=document.getElementById('ai-usage-refresh');
-  if(btn){btn.disabled=true;btn.textContent='조회 중';}
-  setAIUsageText('ai-usage-state',reason==='login'?'로그인 갱신':'수동 갱신');
-  ['ai-my-today','ai-my-month','ai-team-today','ai-team-month','ai-success-month','ai-fail-month'].forEach(id=>setAIUsageText(id,'계산 중...'));
-  setAIUsageText('ai-usage-updated','조회 중...');
-  const fill=document.getElementById('ai-usage-fill');if(fill){fill.style.width='0%';fill.style.background='';}
-}
-function finishAIUsageLoading(){
-  AI_USAGE_LOADING=false;
-  const btn=document.getElementById('ai-usage-refresh');
-  if(btn){btn.disabled=false;btn.textContent='↻ 갱신';}
-}
-function applyAIUsage(usage){
-  const me=usage.me||{};
-  const team=usage.team||usage||{};
-  AI_USAGE_LAST=usage;
-  try{localStorage.setItem('engr_ai_usage_last',JSON.stringify(usage));}catch(_){ }
-  setAIUsageText('ai-usage-state','갱신됨');
-  setAIUsageText('ai-my-today',fmtUsageCount(me.today));
-  setAIUsageText('ai-my-month',fmtUsageCount(me.month));
-  setAIUsageText('ai-team-today',fmtUsageCount(team.today));
-  setAIUsageText('ai-team-month',fmtUsageCount(team.month));
-  setAIUsageText('ai-success-month',fmtUsageCount(team.successMonth));
-  setAIUsageText('ai-fail-month',fmtUsageCount(team.failMonth));
-  const mt=team.modelsToday||{};
-  setAIUsageText('ai-model-gemini',fmtUsageCount(mt.gemini));
-  setAIUsageText('ai-model-llama',fmtUsageCount(mt.llama));
-  setAIUsageText('ai-active-model',(AI_PROVIDER==='gemini'?'Gemini 활성':AI_PROVIDER==='llama'?'Llama 활성':'-'));
-  setAIUsageText('ai-usage-updated',`갱신 ${fmtClock(usage.asOf)} · ${usage.timezone||'Asia/Seoul'}`);
-  const fill=document.getElementById('ai-usage-fill');
-  if(fill){
-    const pct=Math.min(Math.round(Number(team.today||0)/200*100),100);
-    fill.style.width=pct+'%';
-    fill.style.background=pct>80?'#ef4444':pct>50?'#fbbf24':'';
-  }
-}
-function applyCachedAIUsage(){
-  try{
-    const raw=localStorage.getItem('engr_ai_usage_last');
-    if(!raw)return;
-    const usage=JSON.parse(raw);
-    if(usage&&usage.asOf){applyAIUsage(usage);setAIUsageText('ai-usage-state','이전 값');}
-  }catch(_){ }
-}
-async function loadAIUsage(options={}){
-  if(AI_USAGE_LOADING)return;
-  AI_USAGE_LOADING=true;
-  const reason=options.reason||'manual';
-  if(reason==='login')applyCachedAIUsage();
-  setAIUsageLoading(reason);
-  try{
-    const usageEndpoint=(IS_ADMIN||IS_SUPER)?'/kv/usage':'/kv/usage/me';
-    const r=await fetch(`${WORKERS}${usageEndpoint}`,{headers:authHeaders()});
-    if(!r.ok)throw new Error('usage endpoint unavailable');
-    const usage=await r.json();
-    applyAIUsage(usage);
-  }catch(e){
-    console.warn('AI usage load failed:', e);
-    setAIUsageText('ai-usage-state','오류');
-    setAIUsageText('ai-usage-updated','사용량 조회 실패 · 새로고침 버튼으로 재시도');
-    const fill=document.getElementById('ai-usage-fill');if(fill)fill.style.width='0%';
-  }finally{
-    finishAIUsageLoading();
-  }
-}
 
-function refreshAIUsage(){loadAIUsage({reason:'manual'});}
+
+
+
+
+
+
 
 // ── PAGE NAV ──────────────────────────────────────
 const pageTitles={

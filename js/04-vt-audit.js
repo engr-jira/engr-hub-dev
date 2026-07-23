@@ -197,64 +197,17 @@ function renderVtRich(rec){
       ${malEngines.length?`<div class="u-mt-14px"><div class="sec-title u-mb-8px">탐지 엔진 (${malEngines.length}개)</div>
       ${malEngines.map(e=>`<div style="font-size:11px;color:var(--danger);padding:4px 0;border-bottom:1px solid var(--border)">${escapeHtml(e)}</div>`).join('')}</div>`:''}
       <div style="margin-top:14px;display:flex;gap:8px">
-        <button class="btn btn-purple u-wauto-p8px16p-fs11px" onclick="vtAIAnalysis('${aiArg}')">🤖 AI 위험도 분석</button>
         <a class="u-td-none" href="${link||'https://www.virustotal.com/'}" target="_blank">
           <button class="btn btn-ghost u-wauto-p8px16p-fs11px">VT에서 보기 →</button>
         </a>
       </div>
     </div>`;
 }
-async function vtAIAnalysis(arg,malArg,totalArg){
-  // 신형: arg = encodeURIComponent(JSON {value,vtType,mal,total}). 구형: (hash,mal,total)
-  let value,vtType,mal,total;
-  try{const o=JSON.parse(decodeURIComponent(arg));value=o.value;vtType=o.vtType||'hash';mal=o.mal;total=o.total;}
-  catch(_){value=arg;vtType='hash';mal=malArg;total=totalArg;}
-  const tLabel=VT_TYPE_LABEL[vtType]||vtType;
-  openAIModal('🛡','VT 위험도 분석',`${tLabel} · ${String(value).slice(0,20)}${String(value).length>20?'…':''}`,'<div class="loading">분석 중...</div>');
-  try{
-    const text=await callAI(`VirusTotal 탐지 결과 분석.
-유형: ${tLabel}
-대상: ${value}
-탐지: ${mal}/${total}개 엔진
 
-**🎯 종합 판정** (악성/오탐/안전)
-**📊 탐지율 해석**
-**⚡ 권장 조치** (${vtType==='ip'?'IP 차단/모니터링':vtType==='domain'?'도메인 차단/DNS 싱크홀':vtType==='url'?'URL 차단/사용자 경고':'파일 격리/삭제'} 관점)
-**📰 관련 공개 자료 확인**
-- 이 ${tLabel}로 공개 기사, 벤더 권고, 보안 블로그를 찾아볼 때 쓸 검색 키워드
-- 검색 결과가 없을 때의 해석
-**📝 오탐 가능성**`,'vt',{value:String(value).slice(0,32),vtType,mal,total});
-    const links=`\n\n### 관련 자료 빠른 검색\n- [Google 검색](https://www.google.com/search?q=${encodeURIComponent(value)})\n- [Google News 검색](https://news.google.com/search?q=${encodeURIComponent(value)})\n- [Broadcom KB 검색](https://support.broadcom.com/web/ecx/search?searchString=${encodeURIComponent(value)})`;
-    setAIModalBody(text+links);
-    document.getElementById('ai-modal-meta').textContent=`${mal}/${total} 탐지`;
-  }catch(e){setAIModalBody(`<div class="u-cdanger-p20px">오류: ${e.message}</div>`,true);}
-}
 
 // ── MONTHLY/PATTERN ───────────────────────────────
-async function runMonthly(){
-  openAIModal('📊','월간 동향 분석','','<div class="loading">분석 중...</div>');
-  const list=ISSUES.slice(0,80).map(i=>`[${i.key}]${i.title}|${i.customer||'-'}|${i.status}|${i.labels.join(',')}|${i.date}`).join('\n');
-  try{
-    const text=await callAI(`아래 이슈 목록의 월간 동향 보고서.
-1.이슈 유형별 현황 2.고객사별 현황(상위5사) 3.반복 패턴 4.특이사항 5.다음 기간 권고
-이슈:\n${list}`,'monthly',{count:ISSUES.length});
-    setAIModalBody(text);
-    document.getElementById('ai-modal-meta').textContent=`${ISSUES.length}건 분석`;
-  }catch(e){setAIModalBody(`<div class="u-cdanger-p20px">오류: ${e.message}</div>`,true);}
-}
-async function runPattern(){
-  openAIModal('🔍','고객사 패턴 분석','','<div class="loading">분석 중...</div>');
-  const cusCnt={};ISSUES.forEach(i=>{if(i.customer)cusCnt[i.customer]=(cusCnt[i.customer]||0)+1;});
-  const topCus=Object.entries(cusCnt).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([k])=>k);
-  const list=ISSUES.filter(i=>topCus.includes(i.customer)).map(i=>`[${i.customer}]${i.title}|${i.status}|${i.labels.join(',')}|${i.date}`).join('\n');
-  try{
-    const text=await callAI(`상위 5개 고객사 이슈 패턴 분석.
-1.주요 이슈 유형 2.반복 문제 3.관리 포인트 4.예방 조치
-이슈:\n${list}`,'pattern',{customers:topCus.join(',')});
-    setAIModalBody(text);
-    document.getElementById('ai-modal-meta').textContent=`상위 ${topCus.length}개 고객사`;
-  }catch(e){setAIModalBody(`<div class="u-cdanger-p20px">오류: ${e.message}</div>`,true);}
-}
+
+
 
 // ── AUDIT ─────────────────────────────────────────
 async function loadAudit(){
@@ -355,7 +308,6 @@ async function loadSettings(){
     if(d.ok){
       document.getElementById('cfg-range').value=d.rangeMonths;
       document.getElementById('cfg-session').value=d.sessionMin;
-      document.getElementById('cfg-ai-system').value=d.aiSystem||'';
       document.getElementById('cfg-eos-warn').value=d.eosWarnDays||'60,30,7';
       const ss=document.getElementById('cfg-sales-stale'); if(ss)ss.value=d.salesStaleDays||14;
     }
@@ -401,7 +353,7 @@ async function loadSettings(){
 }
 // ── 기능 사용 현황(컷 판단용) : audit_log 집계 렌더 ──
 const USAGE_FEATURE_MAP={AI_CALL:'로그/이슈 AI분석',AI_DEBUG:'AI 디버그',VT_LOOKUP:'VirusTotal 조회',VT_UPLOAD:'VirusTotal 파일',MON_VIEW:'팀 업무 모니터',HIST_VIEW:'고객사 이력',MATRIX_ADD:'호환성 매트릭스',MATRIX_UPDATE:'호환성 매트릭스',MATRIX_DELETE:'호환성 매트릭스',MATRIX_CONFIRM:'호환성 매트릭스',LINK_ADD:'업무 링크',LINK_UPDATE:'업무 링크',LINK_DELETE:'업무 링크',KNOWLEDGE_ADD:'팀 노하우',KNOWLEDGE_UPDATE:'팀 노하우',KNOWLEDGE_DELETE:'팀 노하우',EOS_ADD:'라이선스',EOS_ADD_BULK:'라이선스',EOS_UPDATE:'라이선스',EOS_DELETE:'라이선스',PUSH_SEND:'푸시 발송',PUSH_SETTINGS_CHANGE:'푸시 설정',LOGIN:'로그인',PIN_CHANGE:'PIN 변경',PIN_RESET:'PIN 초기화'};
-const USAGE_PAGE_LABEL={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',log:'로그 분석기',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',nsis:'NSIS 분석기',monitor:'팀 업무 모니터'};
+const USAGE_PAGE_LABEL={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',monitor:'팀 업무 모니터'};
 async function loadUsageStats(){
   const wrap=document.getElementById('usage-stats-wrap'); if(!wrap)return;
   const days=parseInt((document.getElementById('usage-days')||{}).value||'90',10)||90;
@@ -490,7 +442,6 @@ async function saveConfig(){
   const body={
     rangeMonths:parseInt(document.getElementById('cfg-range').value),
     sessionMin:parseInt(document.getElementById('cfg-session').value),
-    aiSystem:document.getElementById('cfg-ai-system').value,
     eosWarnDays:document.getElementById('cfg-eos-warn').value.trim()||'60,30,7',
     salesStaleDays:parseInt(document.getElementById('cfg-sales-stale')?.value,10)||14,
   };
@@ -502,19 +453,4 @@ async function saveConfig(){
     setAdminActionStatus('시스템 설정 저장 완료. 일부 설정은 새로고침 후 반영됩니다.');
     loadEosWarnDays();
   }catch(e){toast('오류: '+e.message,true);setAdminActionStatus('시스템 설정 저장 실패: '+e.message,'err');}
-}
-async function clearCache(){
-  if(!confirm(`AI 응답 캐시(ai:*)를 삭제하시겠어요?\n캐시만 삭제되며 업무 링크/노하우/Jira 데이터는 삭제되지 않습니다.`))return;
-  const btn=document.getElementById('storage-cache-btn');
-  const old=btn?.textContent;
-  if(btn){btn.disabled=true;btn.textContent='정리 중...';}
-  try{
-    const r=await fetch(`${WORKERS}/admin/cache/clear`,{method:'POST',headers:authHeaders()});
-    const d=await r.json();
-    if(!d.ok){toast(d.message||'실패',true);setAdminActionStatus(d.message||'AI 응답 캐시 정리 실패','err');return;}
-    toast(`AI 캐시 ${d.cleared}개 삭제${d.truncated?' · 추가 캐시가 남아있을 수 있습니다. 다시 실행하세요.':''}`);
-    setAdminActionStatus(`AI 응답 캐시 정리 완료: ${d.cleared}개 삭제${d.truncated?' · 남은 캐시가 있을 수 있습니다.':''}`);
-    await refreshStorageStats();
-  }catch(e){toast('오류: '+e.message,true);setAdminActionStatus('AI 응답 캐시 정리 실패: '+e.message,'err');}
-  finally{if(btn){btn.disabled=false;btn.textContent=old||'🧹 AI 응답 캐시 초기화';}}
 }

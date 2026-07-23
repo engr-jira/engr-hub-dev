@@ -1,4 +1,4 @@
-﻿// ENGR HUB Cloudflare Worker v1.5.11
+// ENGR HUB Cloudflare Worker v1.5.11
 //
 //
 //
@@ -9,10 +9,8 @@ import { addCollectionComment, canModifyItem, deleteCollectionComment } from './
 import { auditLog, cleanupOldAudit, getAuditReadD1 } from './src/audit.js';
 import { buildDailySnapshot, getCustomersD1, handleJiraSearch, isMonitorAllowed, jiraSearchJql, jqlEsc, jqlTextEsc, mapJiraIssue, nextDayStr, okDate } from './src/jira.js';
 import { buildHubBackup, getStorageStats, resetHubData } from './src/kv.js';
-import { callAI, normalizeAIMode } from './src/ai.js';
 import { createSession, deactivateUserAccount, getAdmins, getDefaultResetPin, getSessionUser, getTeamNames, getUserAccount, getUserPinHash, getUsers, isAdmin, isSalesRole, isSuper, normalizeUserId, purgeUserAccount, revokeUserSessions, salesPathAllowed, saveUserAccount, setUserPin, validateUserPin } from './src/auth.js';
 import { getFeatureFlags } from './src/settings.js';
-import { getUsage, readUsageCounter, updateAIUsage } from './src/usage.js';
 import { getVtHistory, saveVtHistory, vtDetectType, vtPollAnalysis, vtUrlId } from './src/vt.js';
 import { importRecentKBLinks } from './src/kb.js';
 import { buildSalesOverview, saveSalesNote, getSalesStaleDays } from './src/sales.js';
@@ -44,13 +42,7 @@ export default {
       }
 
       //
-      if (path === '/debug/ai') {
-        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
-        if (!await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 사용할 수 있습니다.' }, 403);
-        const result = await callAI(env, 'Reply with test success in Korean.', 'debug');
-        await auditLog(env, user, 'AI_DEBUG', { path: '/debug/ai' });
-        return corsResponse({ ok: true, text: result?.candidates?.[0]?.content?.parts?.[0]?.text });
-      }
+      
 
       //
       if (path === '/auth/session' && request.method === 'GET') {
@@ -136,21 +128,11 @@ export default {
         const rangeRaw = await env.ENGR_KV.get('config:range_months') || await env.ENGR_KV.get('config:jira_range_months');
         let lastSync = null;
         try { const raw = await env.ENGR_KV.get('config:last_jira_sync'); if (raw) lastSync = JSON.parse(raw); } catch (_) {}
-        const geminiOn = !!(env.GEMINI_API_KEY || env.GEMINI_KEY);
-        const aiProvider = geminiOn ? 'gemini' : 'llama';
-        const aiModel = geminiOn ? (env.GEMINI_MODEL || 'gemini-2.5-flash') : 'llama-3.3-70b';
-        return corsResponse({ sessionMin: parseInt(sessionRaw || '120') || 120, rangeMonths: parseInt(rangeRaw || '6') || 6, lastSync, aiProvider, aiModel });
+        return corsResponse({ sessionMin: parseInt(sessionRaw || '120') || 120, rangeMonths: parseInt(rangeRaw || '6') || 6, lastSync });
       }
-      if (path === '/kv/usage' && request.method === 'GET') {
-        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 접근할 수 있습니다.' }, 403);
-        return corsResponse(await getUsage(env, user));
-      }
+      
       // 일반 유저용 개인 AI 사용량 (팀 통계 미포함)
-      if (path === '/kv/usage/me' && request.method === 'GET') {
-        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
-        const usage = await getUsage(env, user);
-        return corsResponse({ ok: true, me: usage.me, asOf: usage.asOf, timezone: usage.timezone, source: usage.source });
-      }
+      
       if (path === '/links/kb/import' && request.method === 'POST') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: 'Forbidden' }, 403);
         const years = Math.max(1, Math.min(10, parseInt(url.searchParams.get('years') || '5', 10) || 5));
@@ -189,41 +171,7 @@ export default {
       }
 
       //
-      if (path === '/ai/generate' && request.method === 'POST') {
-        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
-        const body = await request.json().catch(() => ({}));
-        const { contents, mode = 'technical_analysis' } = body;
-        let detail = (body.detail && typeof body.detail === 'object' && !Array.isArray(body.detail)) ? body.detail : {};
-        try { if (JSON.stringify(detail).length > 1000) detail = { _truncated: true }; } catch (_) { detail = {}; }  // L-31: detail 크기 캡(감사로그/D1 비대화 방지)
-        const prompt = contents?.[0]?.parts?.[0]?.text;
-        if (!prompt) return corsResponse({ ok: false, message: '\uD504\uB86C\uD504\uD2B8\uAC00 \uBE44\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.' }, 400);
-
-        // AI daily rate limit check
-        const AI_DAILY_LIMIT = parseInt(env.AI_DAILY_LIMIT || '300', 10);
-        const AI_USER_DAILY_LIMIT = parseInt(env.AI_USER_DAILY_LIMIT || '80', 10);
-        try {
-          const usageNow = await readUsageCounter(env, user);
-          if ((usageNow?.team?.today || 0) >= AI_DAILY_LIMIT) {
-            return corsResponse({ ok: false, message: `\ud300 \uc77c\uc77c AI \uc694\uccad \ud55c\ub3c4(${AI_DAILY_LIMIT}\ud68c)\uc5d0 \ub3c4\ub2ec\ud588\uc2b5\uB2C8\uB2E4.` }, 429);
-          }
-          if ((usageNow?.me?.today || 0) >= AI_USER_DAILY_LIMIT) {
-            return corsResponse({ ok: false, message: `\uac1c\uc778 \uc77c\uc77c AI \uc694\uccad \ud55c\ub3c4(${AI_USER_DAILY_LIMIT}\ud68c)\uc5d0 \ub3c4\ub2ec\ud588\uc2b5\uB2C8\uB2E4.` }, 429);
-          }
-        } catch (_) {}
-
-        const reqId = `${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
-        try {
-          const safeMode = normalizeAIMode(mode);
-          const result = await callAI(env, prompt, safeMode);
-          const outcome = result._cached ? 'cached' : 'success';
-          await auditLog(env, user, 'AI_CALL', { ...detail, reqId, mode: safeMode, promptLen: prompt.length, outcome, model: result._model });  // M-9: 클라 detail을 앞에 두어 서버 계산값이 항상 우선(감사 위조 방지)
-          await updateAIUsage(env, user, outcome, result._model);
-          return corsResponse(result);
-        } catch (e) {
-          await updateAIUsage(env, user, 'fail');
-          return corsResponse({ ok: false, message: e.message || 'AI \uD638\uCD9C \uC2E4\uD328' }, 502);
-        }
-      }
+      
 
       // VT \uBA40\uD2F0 \uD0C0\uC785 \uC870\uD68C (\uD574\uC2DC/IP/\uB3C4\uBA54\uC778/URL)
       if (path === '/vt/lookup' && request.method === 'POST') {
@@ -525,14 +473,12 @@ export default {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: 'Forbidden' }, 403);
         const rangeMonths = await env.ENGR_KV.get('config:range_months') || '3';
         const sessionMin = await env.ENGR_KV.get('config:session_min') || '120';
-        const aiSystem = await env.ENGR_KV.get('config:ai_system') || '';
         const eosWarnDays = await env.ENGR_KV.get('config:eos_warn_days') || '60,30,7';
         const salesStaleDays = await getSalesStaleDays(env);
         return corsResponse({
           ok: true,
           rangeMonths: parseInt(rangeMonths),
           sessionMin: parseInt(sessionMin),
-          aiSystem,
           eosWarnDays,
           salesStaleDays,
         });
@@ -542,7 +488,6 @@ export default {
         const body = await request.json().catch(() => ({}));
         if (body.rangeMonths !== undefined) await env.ENGR_KV.put('config:range_months', String(body.rangeMonths));
         if (body.sessionMin !== undefined) await env.ENGR_KV.put('config:session_min', String(body.sessionMin));
-        if (body.aiSystem !== undefined) await env.ENGR_KV.put('config:ai_system', body.aiSystem);
         if (body.eosWarnDays !== undefined) await env.ENGR_KV.put('config:eos_warn_days', body.eosWarnDays);
         if (body.salesStaleDays !== undefined) await env.ENGR_KV.put('config:sales_stale_days', String(parseInt(body.salesStaleDays,10)||14));
         await auditLog(env, user, 'CONFIG_CHANGE', { keys: Object.keys(body) });
@@ -550,23 +495,7 @@ export default {
       }
 
       //
-      if (path === '/admin/cache/clear' && request.method === 'POST') {
-        if (!hasSession || !await isSuper(env, user)) return corsResponse({ ok: false, message: 'Forbidden' }, 403);
-        let cursor, cnt = 0, truncated = false;
-        const max = 1000;
-        do {
-          const list = await env.ENGR_KV.list({ prefix: 'ai:', cursor, limit: 100 });
-          for (const key of list.keys || []) {
-            await env.ENGR_KV.delete(key.name);
-            cnt++;
-            if (cnt >= max) break;
-          }
-          cursor = list.cursor;
-          if (cnt >= max && cursor) { truncated = true; break; }
-        } while (cursor);
-        await auditLog(env, user, 'AI_CACHE_CLEAR', { cleared: cnt, truncated });
-        return corsResponse({ ok: true, cleared: cnt, truncated });
-      }
+      
 
       if (path === '/admin/storage/reset' && request.method === 'POST') {
         if (!hasSession || !await isSuper(env, user)) return corsResponse({ ok: false, message: 'Forbidden' }, 403);
@@ -1049,62 +978,7 @@ export default {
           return corsResponse({ ok: true, id: r.meta?.last_row_id });
         } catch (e) { return corsResponse({ ok: false, message: '\uC800\uC7A5 \uC2E4\uD328: ' + e.message }, 500); }
       }
-      if (path === '/compat/extract' && request.method === 'POST') {
-        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 사용할 수 있습니다.' }, 403);
-        const b = await request.json().catch(() => ({}));
-        const seed = (b.url || '').trim();
-        if (!/^https:\/\/(techdocs|knowledge)\.broadcom\.com\//.test(seed)) return corsResponse({ ok: false, message: '허용된 Broadcom 공식 문서 URL이 아닙니다.' }, 400);
-        const _strip = h => h.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/\s+/g, ' ').trim();
-        const _ft = async u => { try { const r = await fetch(u, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ENGRHUB/1.0)' }, cf: { cacheTtl: 3600 } }); if (!r.ok) return ''; return await r.text(); } catch (_) { return ''; } };
-        const _KW = /(operating-system-requirements|endpoint-computer-requirements|endpoint-systems|deprecated-platform|client-system|compatibility-with-the|supported-operating)/i;
-        const _seen = new Set([seed]); let _frontier = [seed]; const _texts = []; const _BUDGET = 14;
-        for (let _d = 0; _d < 3 && _frontier.length && _texts.length < _BUDGET; _d++) {
-          const _batch = _frontier.slice(0, _BUDGET - _texts.length);
-          const _htmls = await Promise.all(_batch.map(async u => ({ u, html: await _ft(u) })));
-          const _next = [];
-          for (const _pg of _htmls) {
-            if (!_pg.html) continue;
-            _texts.push('[' + _pg.u.split('/').pop().slice(0, 50) + '] ' + _strip(_pg.html).slice(0, 18000));
-            for (const _m of _pg.html.matchAll(/href="([^"#?]+)"/g)) {
-              if (!_KW.test(_m[1])) continue;
-              let _abs; try { _abs = new URL(_m[1], _pg.u).href.replace(/\/$/, ''); } catch (_) { continue; }
-              if (!/^https:\/\/(techdocs|knowledge)\.broadcom\.com\//.test(_abs) || _seen.has(_abs)) continue;
-              _seen.add(_abs); _next.push(_abs);
-            }
-          }
-          _frontier = _next;
-        }
-        if (!_texts.length) return corsResponse({ ok: false, message: '공식 시드 페이지 fetch 실패' }, 502);
-        const _subs = _texts;
-        const _DATA = /(endpoint-systems|for-servers|deprecated-platform|compatibility-with)/;
-        _texts.sort((a, b) => (_DATA.test(a) ? 0 : 1) - (_DATA.test(b) ? 0 : 1));
-        let pageText;
-        if (_texts.length <= 2 && _texts[0].length > 24000) {
-          const _full = _texts.join(' ');
-          const _kw = /(windows\s*(client|server|10|11|8\.1)|\bmac(os)?\b|\blinux\b|ubuntu|red hat|\brhel\b|oracle linux|debian|suse|rocky|amazon linux|operating system|client system requirement|supported (operating|platform))/gi;
-          const _w = []; const _tk = new Set(); let _mm;
-          while ((_mm = _kw.exec(_full)) && _w.length < 16) {
-            const _s = Math.max(0, _mm.index - 150); const _k = Math.floor(_s / 1400);
-            if (_tk.has(_k)) continue; _tk.add(_k); _w.push(_full.slice(_s, _s + 1700));
-          }
-          pageText = (_w.length ? _w.join(' … ') : _full).slice(0, 24000);
-        } else {
-          const _per = _texts.length <= 2 ? 22000 : 3500;
-          pageText = _texts.map(t => t.slice(0, _per)).join(' ').slice(0, 24000);
-        }
-        const prod = (b.product || '').trim(), ver = (b.version || '').trim();
-        const pr = `아래는 Broadcom 공식 페이지 여러 개의 텍스트다(각 [파일명]으로 구분). "Symantec ${prod} ${ver}"의 지원 OS를 JSON 배열로만 답하라(설명/코드블록 금지). 규칙: (1)텍스트에 실제로 적힌 버전만, 창작/추정 절대 금지, 없으면 []. (2)엔드포인트(클라이언트, 'endpoint-systems' 페이지)와 서버('for-servers' 페이지)를 반드시 별도 행으로. (3)os 예: "Windows(엔드포인트)","Windows Server","macOS(엔드포인트)","Linux(엔드포인트)","Linux(서버)". (4)os_version엔 해당 OS의 정확한 버전/범위를 페이지 그대로(예 "RHEL 8.4–8.8","Sonoma 14.0–14.7.6"). 서로 다른 페이지의 버전을 한 행에 섞지 마라. (5)deprecated/ARM64/VC++ 주석은 note에 한국어로 간결히. 각 원소: {"os":"","os_version":"","supported":"지원","note":""}. [텍스트] ${pageText}`;
-        try {
-          const d = await callAI(env, pr, 'technical_analysis');
-          const text = (d && d.candidates && d.candidates[0] && d.candidates[0].content && d.candidates[0].content.parts || []).map(p => p.text || '').join('');
-          const mt = text.match(/\[[\s\S]*\]/);
-          let rows = [];
-          try { rows = mt ? JSON.parse(mt[0]) : []; } catch (_) { rows = []; }
-          if (!Array.isArray(rows)) rows = [];
-          await auditLog(env, user, 'AI_CALL', { compatType: 'extract', target: `${prod} ${ver}`, count: rows.length });
-          return corsResponse({ ok: true, rows, source: seed, crawled: _subs.length, pages: _texts.map(t => (t.match(/^\[([^\]]*)\]/) || ['', ''])[1]) });
-        } catch (e) { return corsResponse({ ok: false, message: '추출 실패: ' + e.message }, 500); }
-      }
+      
       if (path.startsWith('/compat/') && path.endsWith('/confirm') && request.method === 'POST') {
         if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         if (!(await getFeatureFlags(env)).compat) return corsResponse({ ok: false, message: '\uBE44\uD65C\uC131\uD654\uB41C \uAE30\uB2A5\uC785\uB2C8\uB2E4.' }, 403);  // L-11

@@ -2,7 +2,6 @@
 // (worker.js에서 이동. 로직 변경 없음)
 
 import { DEFAULT_KV_STORAGE_LIMIT_BYTES, SUPER_ADMIN } from './config.js';
-import { readUsageCounter } from './usage.js';
 
 export function configuredBytes(env, name, fallback) {
   const raw = env?.[name];
@@ -71,11 +70,6 @@ export async function getStorageStats(env) {
   const audit = await estimatePrefixBytes(env, 'auditLatest:', 1000, 5);
   const aiCache = await estimatePrefixBytes(env, 'ai:', 1000, 5);
   const usage = await estimatePrefixBytes(env, 'usage:', 1000, 5);
-  const usageCounter = await readUsageCounter(env, '');
-  const aiToday = usageCounter?.team?.today || 0;
-  const aiMonth = usageCounter?.team?.month || 0;
-  const aiSuccessToday = usageCounter?.team?.successToday || 0;
-  const aiFailToday = usageCounter?.team?.failToday || 0;
   const estimatedOldAiWritesToday = aiSuccessToday * 11 + aiFailToday * 8;
   const estimatedNewAiWritesToday = aiSuccessToday * 3 + aiFailToday * 2;
   const estimatedSavedWritesToday = Math.max(0, estimatedOldAiWritesToday - estimatedNewAiWritesToday);
@@ -153,7 +147,7 @@ export async function buildHubBackup(env, user) {
     version: '1.4.4',
     generatedAt,
     generatedBy: user || '',
-    excludes: ['TEAM_PIN', 'JIRA_TOKEN', 'GEMINI_KEY', 'VT_KEY', 'Cloudflare Worker secrets/environment secrets'],
+    excludes: ['TEAM_PIN', 'JIRA_TOKEN', 'VT_KEY', 'Cloudflare Worker secrets/environment secrets'],
     data: {
       links: await readJsonKey(env, 'config:links', []),
       knowledge: await readJsonKey(env, 'config:knowledge', []),
@@ -163,7 +157,6 @@ export async function buildHubBackup(env, user) {
         rangeMonths: await getPlainKey(env, 'config:range_months', '3'),
         sessionMin: await getPlainKey(env, 'config:session_min', '120'),
         eosWarnDays: await getPlainKey(env, 'config:eos_warn_days', '60,30,7'),
-        aiSystem: await getPlainKey(env, 'config:ai_system', ''),
       },
     },
   };

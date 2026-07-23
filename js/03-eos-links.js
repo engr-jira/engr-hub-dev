@@ -353,150 +353,20 @@ async function deleteLink(id){
 }
 
 // ── LOG ANALYZER ──────────────────────────────────
-function bindFileUpload(){
-  const drop=document.getElementById('log-drop');
-  const input=document.getElementById('log-file');
-  if(!drop||!input)return;
-  input.onchange=e=>handleFiles(e.target.files);
-  drop.ondragover=e=>{e.preventDefault();drop.classList.add('drag');};
-  drop.ondragleave=()=>drop.classList.remove('drag');
-  drop.ondrop=e=>{e.preventDefault();drop.classList.remove('drag');handleFiles(e.dataTransfer.files);};
-}
-async function handleFiles(files){
-  for(const f of files){
-    if(f.size>MAX_FILE_SIZE){toast(`${f.name}: 20MB 초과`,true);continue;}
-    if(LOG_FILES.find(x=>x.name===f.name)){toast(`${f.name}: 이미 추가됨`,true);continue;}
-    const ext=f.name.split('.').pop().toLowerCase();
-    if(ext==='zip'){
-      try{
-        if(typeof JSZip==='undefined'){toast('ZIP 라이브러리 로드 실패. 압축을 풀어 업로드해주세요.',true);continue;}
-        const zip=await JSZip.loadAsync(f);
-        for(const [name,entry] of Object.entries(zip.files)){
-          if(entry.dir)continue;
-          if(!/\.(log|txt|csv|xml|json|conf|ini|out|err)$/i.test(name))continue;
-          const content=await entry.async('string');
-          LOG_FILES.push({name:`${f.name}/${name}`,size:content.length,content:sampleLogContent(content,14000)});
-          if(LOG_FILES.length>=20){toast('ZIP 내 파일은 최대 20개까지만 분석에 포함합니다.');break;}
-        }
-      }catch(e){toast('ZIP 읽기 실패: '+e.message,true);}
-    }else{
-      try{const content=await f.text();LOG_FILES.push({name:f.name,size:f.size,content:sampleLogContent(content,20000)});}
-      catch(e){toast('파일 읽기 실패: '+e.message,true);}
-    }
-  }
-  renderLogFiles();
-}
-function sampleLogContent(content,limit=12000){
-  const s=String(content||'');
-  if(s.length<=limit)return s;
-  const half=Math.floor((limit-180)/2);
-  return `${s.slice(0,half)}\n\n...[중간 ${s.length-limit}자 생략: 파일 끝부분 포함]...\n\n${s.slice(-half)}`;
-}
-function renderLogFiles(){
-  const wrap=document.getElementById('log-file-list');
-  if(!LOG_FILES.length){wrap.innerHTML='';return;}
-  wrap.innerHTML=LOG_FILES.map((f,idx)=>`<div class="file-item">
-    <span class="file-name">📄 ${escapeHtml(f.name)}</span>
-    <span class="file-size">${(f.size/1024).toFixed(1)}KB</span>
-    <span class="file-del" onclick="event.stopPropagation();removeLogFile(${idx})">✕</span>
-  </div>`).join('');
-}
-function removeLogFile(idx){LOG_FILES.splice(idx,1);renderLogFiles();}
-function clearLogInput(){document.getElementById('log-input').value='';const s=document.getElementById('log-symptom');if(s)s.value='';const r=document.getElementById('log-result');if(r)r.innerHTML='';LOG_FILES=[];renderLogFiles();updateLogCharCount();}
-function updateLogCharCount(){const t=document.getElementById('log-input');const el=document.getElementById('log-charcount');if(!t||!el)return;const n=t.value.length;el.textContent=n>=10000?`${(n/1000).toFixed(1)}천자`:`${n.toLocaleString()}자`;el.style.color=n>20000?'var(--warn,#fbbf24)':'var(--text3)';}
-async function pasteLogFromClipboard(){
-  const t=document.getElementById('log-input');if(!t)return;
-  try{
-    const txt=await navigator.clipboard.readText();
-    if(!txt){toast('클립보드가 비어 있습니다.',true);return;}
-    t.value=t.value?(t.value.replace(/\s*$/,'')+'\n'+txt):txt;
-    updateLogCharCount();toast('클립보드 내용을 붙여넣었습니다.');
-    t.focus();
-  }catch(e){toast('클립보드 접근 권한이 없습니다. Ctrl+V로 직접 붙여넣어 주세요.',true);t.focus();}
-}
-function collectLogContent(){
-  const t=document.getElementById('log-input').value.trim();
-  const f=LOG_FILES.map(x=>`[파일: ${x.name}]\n${x.content}`).join('\n\n');
-  return [t,f].filter(Boolean).join('\n\n').slice(0,28000);
-}
-async function analyzeLogs(){
-  const log=collectLogContent();
-  const symptom=(document.getElementById('log-symptom')?.value||'').trim();
-  const res=document.getElementById('log-result');
-  if(!log){toast('로그를 입력하거나 파일을 올려주세요',true);return;}
-  const btn=document.getElementById('log-btn');
-  btn.disabled=true;btn.textContent='발췌 중...';
-  if(res)res.innerHTML='<div class="loading">에러·경고·특이사항 발췌 중...</div>';
-  try{
-    const raw=await callAI(`당신은 보안/인프라 로그 분석가입니다. 아래 증상과 로그를 보고 (1) 제품·벤더 식별 (2) ERROR/WARN/실패/예외/타임아웃/비정상 등 "특이사항" 라인만 시간순 발췌 (3) 핵심 이슈와 검색 키워드 추출.
-${symptom?('증상/제품: '+symptom):'(증상 입력 없음 — 로그로 추정)'}
-출력은 아래 JSON "하나만" (그 외 설명/마크다운 금지):
-{"product":"구체 제품명(예: Symantec SEP, Windows Server, Oracle DB; 모르면 \\"\\")","vendor":"broadcom|microsoft|oracle|other","excerpt":"발췌 로그 — 시간순, 원문 그대로, 줄바꿈 \\n 포함","issues":[{"level":"error|warn|info","summary":"한국어 한 줄","term":"검색 키워드/에러코드(영문 위주, 5단어 이내)"}]}
-벤더 기준: SEP/SEPM/DLP/Endpoint/ProxySG/BlueCoat/Carbon Black/PacketShaper/CASB/Symantec=broadcom · Windows/MSSQL/SQL Server/.NET/AD/IIS/Azure=microsoft · Oracle DB=oracle · 그 외=other.
-issues 최대 6개. 특이사항 없으면 issues는 [].
 
-로그:
-${log.slice(0,28000)}`,'logx',{size:log.length});
-    let data=null;
-    try{ const m=raw&&raw.match(/\{[\s\S]*\}/); data=JSON.parse(m?m[0]:raw); }catch(_){}
-    if(!data||typeof data.excerpt!=='string'){
-      res.innerHTML=`<div class="vt-result"><div class="sec-title">분석 결과</div><pre class="logx-pre">${escapeHtml(raw||'(빈 응답)')}</pre><button class="btn btn-cyan" data-t="${escapeHtml(raw||'')}" onclick="copyText(this.dataset.t)" style="width:auto;padding:8px 16px;margin-top:10px">📋 복사</button></div>`;
-    }else{
-      res.innerHTML=renderLogResult(data);
-    }
-  }catch(e){ if(res)res.innerHTML=`<div class="u-cdanger-p16px">오류: ${escapeHtml(e.message)}</div>`; }
-  btn.disabled=false;btn.textContent='🔬 에러 발췌 & 링크 찾기';
-}
+
+
+
+
+
+
+
+
+
 // 제품명을 항상 검색어에 포함(엉뚱한 결과 방지). Google / KB / Broadcom 3종, 해당 없으면 url=null(없음).
-function logSearchLinks(term, product, vendor){
-  const pt=((product||'').trim()+' '+(term||'')).trim() || (term||'');
-  const q=encodeURIComponent(pt);
-  const links=[{key:'Google', label:'🔍 Google', url:`https://www.google.com/search?q=${q}`}];
-  if(vendor==='microsoft') links.push({key:'KB', label:'📚 MS Learn', url:`https://learn.microsoft.com/search/?terms=${q}`});
-  else if(vendor==='broadcom') links.push({key:'KB', label:'📚 KB', url:`https://www.google.com/search?q=${encodeURIComponent(pt+' site:knowledge.broadcom.com')}`});
-  else if(vendor==='oracle') links.push({key:'KB', label:'📚 Oracle Docs', url:`https://www.google.com/search?q=${encodeURIComponent(pt+' site:docs.oracle.com')}`});
-  else links.push({key:'KB', label:'KB', url:null});
-  if(vendor==='broadcom') links.push({key:'Broadcom', label:'🏢 Broadcom', url:`https://support.broadcom.com/web/ecx/search?searchString=${q}`});
-  else links.push({key:'Broadcom', label:'Broadcom', url:null});
-  return links;
-}
-function renderLogResult(data){
-  const col=l=>l==='error'?'#f87171':l==='warn'?'#fbbf24':'#22d3a5';
-  const product=(data.product||'').trim();
-  const vendor=data.vendor||'other';
-  const excerpt=data.excerpt||'특이사항 없음';
-  const issues=Array.isArray(data.issues)?data.issues:[];
-  const issuesHtml=issues.map(it=>{
-    const links=logSearchLinks(it.term||it.summary||'', product, vendor);
-    const rows=links.map(ln=>{
-      if(!ln.url) return `<div class="logx-link logx-none">${ln.key} 없음</div>`;
-      const title=`[${product||'로그'}] ${(it.term||it.summary||'').slice(0,50)} · ${ln.key}`;
-      return `<div class="logx-link"><a href="${ln.url}" target="_blank" rel="noopener">${ln.label}</a><button class="logx-reg" data-title="${escapeHtml(title)}" data-url="${escapeHtml(ln.url)}" onclick="registerLogLink(this.dataset.title,this.dataset.url,this)" title="업무 링크에 등록">➕</button></div>`;
-    }).join('');
-    return `<div class="logx-issue">
-      <div class="logx-issue-head"><span class="badge" style="background:${col(it.level)}22;color:${col(it.level)}">${String(it.level||'info').toUpperCase()}</span><span class="logx-sum">${escapeHtml(it.summary||it.term||'')}</span></div>
-      ${it.term?`<div class="logx-term">${escapeHtml(it.term)}</div>`:''}
-      <div class="logx-links">${rows}</div>
-    </div>`;
-  }).join('');
-  const prodLabel=product?`<span style="font-weight:400;color:var(--text3);font-size:11px">— 제품: ${escapeHtml(product)}</span>`:'<span style="font-weight:400;color:var(--warn,#fbbf24);font-size:11px">— 제품 미상(증상에 제품명을 적으면 정확해져요)</span>';
-  return `<div class="vt-result">
-    <div class="sec-title" style="display:flex;justify-content:space-between;align-items:center;gap:8px">📋 발췌된 로그 (시간순)<button class="btn btn-cyan" data-t="${escapeHtml(excerpt)}" onclick="copyText(this.dataset.t)" style="width:auto;padding:6px 14px;font-size:11px">📋 복사</button></div>
-    <pre class="logx-pre">${escapeHtml(excerpt)}</pre>
-    ${issues.length?`<div class="sec-title u-mt-16px">🔎 핵심 이슈 & 추천 링크 ${prodLabel}</div>${issuesHtml}`:'<div style="color:var(--text3);font-size:12px;margin-top:10px">추출된 핵심 이슈가 없습니다.</div>'}
-  </div>`;
-}
-async function registerLogLink(title, url, btn){
-  if(!url){toast('URL이 없습니다',true);return;}
-  try{
-    const r=await fetch(`${WORKERS}/links`,{method:'POST',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({title:String(title).slice(0,120),url,category:'로그분석',desc:'로그 분석에서 등록'})});
-    const d=await r.json();
-    if(!d.ok){toast(d.message||'등록 실패',true);return;}
-    toast('업무 링크에 등록됨 ✓');
-    if(btn){btn.textContent='✓ 등록됨';btn.disabled=true;btn.classList.add('done');}
-    try{await loadLinks();renderLinks();}catch(_){}
-  }catch(e){toast('오류: '+e.message,true);}
-}
+
+
+
 
 // ── VIRUSTOTAL ────────────────────────────────────
 const VT_HASH_RE=/^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64})$/i;

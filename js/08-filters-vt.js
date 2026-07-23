@@ -199,7 +199,7 @@ function injectV155Style(){
       .admin-add-row,.storage-actions,.safe-actions,.danger-actions{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}.admin-add-row .btn,.storage-actions .btn{width:100%!important;min-width:0!important;max-width:100%!important}
       #kb-seed-btn,#log-btn{width:100%!important;max-width:100%!important}
       #log-product{width:100%!important;min-width:0!important}.log-textarea,.admin-textarea{font-size:11px;min-height:130px}.file-drop{padding:14px!important}
-      #page-vt [style*="display:flex"],#page-log [style*="display:flex"]{flex-wrap:wrap!important}
+      #page-vt [style*="display:flex"]{flex-wrap:wrap!important}
       #vt-input{width:100%!important;min-width:0!important;flex:1 1 100%!important}.vt-history-item,.vt-hist-row{grid-template-columns:1fr!important;gap:4px!important}.vt-history-item .hide-narrow{display:none!important}
       .eos-table,.audit-table{display:block;width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-spacing:0}.eos-table thead,.eos-table tbody,.eos-table tr,.audit-table thead,.audit-table tbody,.audit-table tr{min-width:620px}.eos-table th,.eos-table td,.audit-table th,.audit-table td{white-space:nowrap}
       .audit-detail{max-width:220px;white-space:nowrap}.pager{gap:6px;flex-wrap:wrap}.pager button{min-width:64px}
@@ -236,21 +236,6 @@ function renderSidebarCompact(){
   const gi=getGeneralIssues().length, ci=getCaseIssueBase().length;
   const jiraState=ISSUES&&ISSUES.length?'<span class="dot dot-green"></span>연결됨':'<span class="dot u-bg-warn"></span>대기';
   box.innerHTML=`
-    <div class="usage-card ai-usage-v155">
-      <div class="u-head"><div class="u-title"><span class="u-dot"></span>AI 사용량 <span id="ai-usage-state" style="font-size:9px;color:var(--text3);font-weight:700">대기</span></div><button id="ai-usage-refresh" class="pill-btn" onclick="refreshAIUsage()">갱신</button></div>
-      <div class="usage-total"><span>팀 오늘</span><b id="ai-team-today">-</b></div>
-      <div class="usage-meter"><div id="ai-usage-fill" style="width:0%"></div></div>
-      <div class="u-grid">
-        <span class="u-muted">내 오늘</span><span class="u-val" id="ai-my-today">-</span>
-        <span class="u-muted">내 월간</span><span class="u-val" id="ai-my-month">-</span>
-        <span class="u-muted">팀 월간</span><span class="u-val" id="ai-team-month">-</span>
-      </div>
-      <div class="u-split">
-        <div class="u-mini"><span>성공</span><b class="u-ok" id="ai-success-month">-</b></div>
-        <div class="u-mini"><span>실패</span><b class="u-bad" id="ai-fail-month">-</b></div>
-      </div>
-      <div class="u-foot" id="ai-usage-updated">필요 시 갱신</div>
-    </div>
     <div class="health-card">
       <div class="h-head"><div class="h-title">연결/동기화</div><span class="u-muted-10" id="issue-count">${gi||ci?`일반 ${gi} / 케이스 ${ci}`:'-'}</span></div>
       <div class="h-row"><span>접속자</span><span class="h-state">${escapeHtml(CURRENT_DISPLAY||CURRENT_USER||'-')}</span></div>
@@ -261,7 +246,6 @@ function renderSidebarCompact(){
       <div class="u-foot" id="session-timer" style="font-size:9px;color:var(--text3);margin-top:4px;text-align:center"></div>
       <button onclick="logout()" style="width:100%;margin-top:4px;background:none;border:0;color:var(--text3);font-size:9px;cursor:pointer;font-family:inherit">로그아웃</button>
     </div>`;
-  if(AI_USAGE_LAST)applyAIUsage(AI_USAGE_LAST);
   renderTopbarStatus();
 }
 function renderDash(){

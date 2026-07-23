@@ -451,30 +451,7 @@ async function importRecentKBLinks(){
   }catch(e){toast('오류: '+e.message,true);setAdminActionStatus('KB 수집 실패: '+e.message,'err');}
   finally{if(btn){btn.disabled=false;btn.textContent=oldText||'📥 무료 KB article 수집';}}
 }
-async function collectCompatMatrix(){
-  if(typeof VENDOR_KB==='undefined'){toast('호환성 매트릭스 페이지를 한 번 연 뒤 시도하세요');return;}
-  if(!confirm('DLP·SEP 주요 버전의 호환성 매트릭스를 AI로 수집해 매트릭스에 초안으로 자동 등록합니다.\n(여러 번 AI 호출 — 1분 내외 소요) 계속할까요?'))return;
-  const btn=document.getElementById('collect-compat-btn'), st=document.getElementById('collect-status');
-  if(btn){btn.disabled=true;btn.textContent='수집 중...';}
-  const targets=[]; ['DLP','SEP'].forEach(prod=>{(VENDOR_KB[prod]||[]).slice(0,4).forEach(e=>targets.push({prod,e}));});
-  let total=0, done=0;
-  for(const {prod,e} of targets){
-    done++; const brand='Symantec '+prod;
-    if(st)st.textContent=`(${done}/${targets.length}) ${brand} ${e.v} 수집 중... 누적 ${total}건`;
-    const pr=`너는 보안제품 호환성 DB 보조자다. "${brand} ${e.v}"의 지원 OS 매트릭스를 JSON 배열로만 답하라(설명·코드블록 금지). 지원상태가 같은 OS는 한 행으로 묶어라(os 필드에 "Windows 10 / 11, Server 2016~2022"처럼). 총 2~4행. 각 원소: {"os":"","os_version":"","supported":"지원|미지원|조건부","eos_date":"","eol_date":"","note":"서버/엔드포인트 등"}.`;
-    try{
-      const txt=await callAI(pr,'cmpx',{feature:'collect'});
-      const mt=txt.match(/\[[\s\S]*\]/); const arr=mt?JSON.parse(mt[0]):[];
-      for(const o of (Array.isArray(arr)?arr:[]).slice(0,6)){
-        try{ await hubApi('/compat',{method:'POST',body:JSON.stringify({product:brand,product_version:e.v,os:o.os||'',os_version:o.os_version||'',supported:o.supported||'',eos_date:o.eos_date||'',eol_date:o.eol_date||'',note:o.note||'',source:e.sysreq||('AI 수집 · '+aiModelLabel(LAST_AI_MODEL))})}); total++; }catch(_){}
-      }
-    }catch(_){}
-  }
-  if(st)st.textContent=`완료 — ${total}건 초안 등록. 호환성 매트릭스에서 검토·확정하세요.`;
-  if(btn){btn.disabled=false;btn.textContent='🧩 호환성 매트릭스 수집 (DLP·SEP)';}
-  toast(`매트릭스 ${total}건 초안 수집 완료`);
-  if(typeof loadCompat==='function')loadCompat();
-}
+
 async function importKBSeed(){
   if(!confirm(`총 ${KB_SEED.length}개 KB 링크를 업무 링크에 등록합니다.\n기존 링크와 중복되는 것은 별도 체크하지 않습니다.\n\n계속하시겠어요?`))return;
   const btn=document.getElementById('kb-seed-btn');

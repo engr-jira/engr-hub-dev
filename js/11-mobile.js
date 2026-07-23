@@ -74,11 +74,9 @@ function normalizeAdminSettingsUI(){
   if(guide)guide.style.display='none';
   const labels=[['cfg-range','데이터 조회 기간'],['cfg-session','세션 타임아웃'],['cfg-eos-warn','라이선스 경고 일수']];
   labels.forEach(([id,text])=>{const input=document.getElementById(id);const label=input?.closest('.admin-row')?.querySelector('label');if(label)label.textContent=text;});
-  const aiLabel=document.getElementById('cfg-ai-system')?.parentElement?.querySelector('label');
-  if(aiLabel)aiLabel.textContent='AI 시스템 지침';
   const placeholders={'cfg-eos-warn':'60,30,7','user-add-id':'계정 ID (예: mj.park)','user-add-display':'표시 이름','user-add-pin':'초기 PIN (선택)'};
   Object.entries(placeholders).forEach(([id,text])=>{const el=document.getElementById(id);if(el)el.placeholder=text;});
-  const btnText={'storage-stats-btn':'저장소 / KV 사용량 조회','storage-backup-btn':'전체 HUB 데이터 백업','storage-cache-btn':'AI 응답 캐시 초기화','storage-audit-btn':'감사 로그 90일 초과 정리','storage-reset-btn':'전체 데이터 초기화'};
+  const btnText={'storage-stats-btn':'저장소 / KV 사용량 조회','storage-backup-btn':'전체 HUB 데이터 백업','storage-audit-btn':'감사 로그 90일 초과 정리','storage-reset-btn':'전체 데이터 초기화'};
   Object.entries(btnText).forEach(([id,text])=>{const el=document.getElementById(id);if(el)el.textContent=text;});
 }
 const showPageBeforeMobilePolish=showPage;

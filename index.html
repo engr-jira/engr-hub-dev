@@ -103,23 +103,8 @@ html[data-theme="light"] .sb-group-head svg{stroke:#a5b4fc}
 .sb-btn .badge-warn{background:var(--danger);color:#fff;font-size:9px;padding:1px 6px;border-radius:10px;font-weight:700;margin-left:auto}
 .sb-divider{height:1px;background:var(--border);margin:10px 16px}
 .sb-bottom{padding:10px 16px;margin-top:auto}
-.ai-usage-card{background:linear-gradient(135deg,rgba(99,102,241,.1),rgba(124,58,237,.08));border:1px solid rgba(99,102,241,.2);border-radius:14px;padding:11px 13px;margin-bottom:8px}
-.ai-usage-title{font-size:10px;font-weight:700;color:var(--accent2);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.ai-usage-title-main{display:flex;align-items:center;gap:6px}
-.ai-usage-refresh{margin-left:auto;border:1px solid rgba(129,140,248,.35);background:rgba(129,140,248,.12);color:#c7d2fe;border-radius:8px;padding:3px 7px;font-size:9px;font-weight:800;cursor:pointer;transition:.15s}
-.ai-usage-refresh:hover{background:rgba(129,140,248,.22);border-color:rgba(129,140,248,.55)}
-.ai-usage-refresh:disabled{opacity:.45;cursor:not-allowed}
-.ai-usage-section{border-top:1px solid rgba(255,255,255,.08);padding-top:7px;margin-top:7px}
-.ai-usage-section:first-of-type{border-top:none;padding-top:0;margin-top:0}
-.ai-usage-section-title{font-size:9px;color:var(--text3);font-weight:700;margin-bottom:5px;display:flex;justify-content:space-between;align-items:center}
-.ai-usage-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:4px}
-.ai-usage-row span:first-child{color:var(--text3)}
-.ai-usage-val{color:var(--text);font-weight:700}
 .ai-usage-val.good{color:var(--success)}
 .ai-usage-val.bad{color:var(--danger)}
-.ai-usage-meta{font-size:9px;color:var(--text3);margin-top:6px;line-height:1.35;text-align:right}
-.ai-usage-bar{height:4px;background:var(--border);border-radius:2px;margin-top:6px;overflow:hidden}
-.ai-usage-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,#6366f1,#a78bfa)}
 .sb-status{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:9px 12px;margin-bottom:8px}
 .sb-status-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;padding:2px 0}
 .sb-status-row span:first-child{color:var(--text3)}
@@ -139,10 +124,6 @@ body.is-admin .admin-only{display:flex!important}
   .sb-section{font-size:9px;margin-bottom:4px;margin-top:2px;padding:0 8px}
   .sb-nav{gap:1px}.sb-btn{padding:6px 10px;border-radius:9px;font-size:11.5px;gap:8px}.sb-btn svg{width:13px;height:13px}
   .sb-divider{margin:5px 12px}.sb-bottom{padding:5px 10px}
-  .ai-usage-card{padding:7px 9px;border-radius:11px;margin-bottom:5px}.ai-usage-title{font-size:9px;margin-bottom:4px}
-  .ai-usage-refresh{font-size:8.5px;padding:2px 5px;border-radius:7px}.ai-usage-section{padding-top:3px;margin-top:3px}
-  .ai-usage-section-title{font-size:8.5px;margin-bottom:1px}.ai-usage-row{font-size:10px;margin-bottom:1px}
-  .ai-usage-bar{height:2px;margin-top:3px}.ai-usage-meta{font-size:8px;margin-top:2px;line-height:1.2}
   .sb-status{padding:6px 9px;margin-bottom:5px;border-radius:10px}.sb-status-row{font-size:10px;padding:1px 0}
   .sync-meta{font-size:8.5px;line-height:1.2;margin-top:3px}.sb-sync-btn{padding:6px;font-size:10px;border-radius:8px}
   .session-timer{font-size:9px;margin-top:3px}.sb-bottom [onclick="logout()"]{font-size:9px}
@@ -679,7 +660,7 @@ html[data-theme="light"] .top-clock .tc-time{color:#1e293b}
   .admin-add-row,.storage-actions,.safe-actions,.danger-actions{display:grid!important;grid-template-columns:1fr!important;gap:8px!important}.admin-add-row .btn,.storage-actions .btn{width:100%!important;min-width:0!important;max-width:100%!important}
   #kb-seed-btn,#log-btn{width:100%!important;max-width:100%!important}
   #log-product{width:100%!important;min-width:0!important}.log-textarea,.admin-textarea{font-size:11px;min-height:130px}.file-drop{padding:14px!important}
-  #page-vt [style*="display:flex"],#page-log [style*="display:flex"]{flex-wrap:wrap!important}
+  #page-vt [style*="display:flex"]{flex-wrap:wrap!important}
   #vt-input{width:100%!important;min-width:0!important;flex:1 1 100%!important}.vt-history-item,.vt-hist-row{grid-template-columns:1fr!important;gap:4px!important}.vt-history-item .hide-narrow{display:none!important}
   .eos-table,.audit-table{display:block;width:100%;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;border-spacing:0}.eos-table thead,.eos-table tbody,.eos-table tr,.audit-table thead,.audit-table tbody,.audit-table tr{min-width:620px}.eos-table th,.eos-table td,.audit-table th,.audit-table td{white-space:nowrap}
   .audit-detail{max-width:220px;white-space:nowrap}.pager{gap:6px;flex-wrap:wrap}.pager button{min-width:64px}
@@ -1768,26 +1749,7 @@ body.is-sales #nav-sales,body.is-sales #nav-eos,body.is-sales #nav-mydesk{displa
   <div class="mob-sheet-body" id="mob-sheet-body"></div>
 </div>
 
-<div class="ai-modal-bg" id="ai-modal">
-  <div class="ai-modal">
-    <div class="ai-modal-head">
-      <div class="ai-modal-title">
-        <span id="ai-modal-icon">🤖</span>
-        <span id="ai-modal-label">AI 분석</span>
-        <span class="ai-modal-badge" id="ai-modal-issue"></span>
-      </div>
-      <div class="ai-modal-actions">
-        <button class="copy" id="ai-modal-copy" style="padding:6px 14px">📋 복사</button>
-        <div class="ai-modal-close" onclick="closeAIModal()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
-      </div>
-    </div>
-    <div class="ai-modal-body" id="ai-modal-body"></div>
-    <div class="ai-modal-foot">
-      <span id="ai-modal-meta">-</span>
-      <span class="u-muted">ESC 키로 닫기</span>
-    </div>
-  </div>
-</div>
+
 
 <div class="modal-bg" id="gen-modal">
   <div class="modal">
@@ -1841,9 +1803,7 @@ body.is-sales #nav-sales,body.is-sales #nav-eos,body.is-sales #nav-mydesk{displa
         <div class="sb-group collapsed" data-group="tools">
           <button class="sb-group-head" type="button" onclick="toggleNavGroup(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a4 4 0 00-5.6 5.6L3 18.1V21h2.9l6.2-6.1a4 4 0 005.6-5.6l-2.6 2.6-2-2 2.6-2.6z"/></svg>분석 도구<span class="sb-group-chev">▾</span></button>
           <div class="sb-group-body">
-            <button class="sb-btn" id="nav-log" onclick="showPage('log',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>로그 분석기</button>
             <button class="sb-btn" id="nav-vt" onclick="showPage('vt',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>VirusTotal 조회</button>
-            <button class="sb-btn" id="nav-nsis" onclick="showPage('nsis',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M9 13l2 2 4-4"/></svg>NSIS 분석기</button>
           </div>
         </div>
         <div class="sb-group collapsed" data-group="collab">
@@ -1865,30 +1825,7 @@ body.is-sales #nav-sales,body.is-sales #nav-eos,body.is-sales #nav-mydesk{displa
     </div>
     <div class="sb-divider"></div>
     <div class="sb-bottom">
-      <div class="ai-usage-card">
-        <div class="ai-usage-title"><span class="ai-usage-title-main"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>AI 사용량</span><button id="ai-usage-refresh" class="ai-usage-refresh" onclick="refreshAIUsage()" title="AI 사용량만 수동 갱신">↻ 갱신</button></div>
-        <div class="ai-usage-section">
-          <div class="ai-usage-section-title"><span>내 사용량</span><span id="ai-usage-state">대기</span></div>
-          <div class="ai-usage-row"><span>오늘</span><span class="ai-usage-val" id="ai-my-today">-</span></div>
-          <div class="ai-usage-row"><span>이번 달</span><span class="ai-usage-val" id="ai-my-month">-</span></div>
-        </div>
-        <div class="ai-usage-section">
-          <div class="ai-usage-section-title"><span>팀 전체</span><span>요청 기준</span></div>
-          <div class="ai-usage-row"><span>오늘</span><span class="ai-usage-val" id="ai-team-today">-</span></div>
-          <div class="ai-usage-row"><span>이번 달</span><span class="ai-usage-val" id="ai-team-month">-</span></div>
-        </div>
-        <div class="ai-usage-section">
-          <div class="ai-usage-section-title"><span>모델별 (오늘)</span><span id="ai-active-model">-</span></div>
-          <div class="ai-usage-row"><span>🟢 Gemini</span><span class="ai-usage-val" id="ai-model-gemini">-</span></div>
-          <div class="ai-usage-row"><span>🟣 Llama</span><span class="ai-usage-val" id="ai-model-llama">-</span></div>
-        </div>
-        <div class="ai-usage-section">
-          <div class="ai-usage-row"><span>성공</span><span class="ai-usage-val good" id="ai-success-month">-</span></div>
-          <div class="ai-usage-row"><span>실패</span><span class="ai-usage-val bad" id="ai-fail-month">-</span></div>
-        </div>
-        <div class="ai-usage-bar"><div class="ai-usage-fill" id="ai-usage-fill" style="width:0%"></div></div>
-        <div class="ai-usage-meta" id="ai-usage-updated">갱신 전</div>
-      </div>
+      
       <div class="sb-status">
         <div style="font-size:10px;font-weight:700;color:var(--text3);margin-bottom:7px">연결 상태</div>
         <div class="sb-status-row"><span>접속자</span><span class="u-caccent-fw700" id="user-label">-</span></div>
@@ -1941,8 +1878,6 @@ body.is-sales #nav-sales,body.is-sales #nav-eos,body.is-sales #nav-mydesk{displa
 
     <div class="page" id="page-issues">
       <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-        <button class="btn btn-purple" onclick="runMonthly()" style="width:auto;padding:8px 16px;font-size:11px;background:#dbeafe;color:#1e3a8a;border:1.5px solid #93c5fd">📊 월간 동향 요약</button>
-        <button class="btn btn-ghost" onclick="runPattern()" style="width:auto;padding:8px 16px;font-size:11px;background:rgba(255,255,255,.14);border:1.5px solid rgba(255,255,255,.3);color:#e8edff">🔍 고객사 패턴 분석</button>
       </div>
       <div class="filter-row">
         <input id="f-q" placeholder="이슈/고객사/담당자/레이블 검색..." oninput="PAGE=1;renderIssues()">
@@ -2068,7 +2003,7 @@ body.is-sales #nav-sales,body.is-sales #nav-eos,body.is-sales #nav-mydesk{displa
       #page-compat .cm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px}
       #page-compat .cm-grid label,#compat-modal .cm-note{display:flex;flex-direction:column;font-size:11px;color:var(--text3);gap:4px}
       #compat-modal input,#compat-modal textarea{background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:7px;padding:7px 9px;color:var(--text,#e2e8f0);font-size:13px;font-family:inherit}
-      #cust-history-btn,#page-compat .btn,#page-nsis .btn,#page-monitor .btn,#compat-ai-modal .btn,#cust-history-modal .btn,#audit-mig-section .btn{width:auto;min-width:0}
+      #cust-history-btn,#page-compat .btn,#page-monitor .btn,#compat-ai-modal .btn,#cust-history-modal .btn,#audit-mig-section .btn{width:auto;min-width:0}
       table.srt th{cursor:pointer;user-select:none;white-space:nowrap}
       table.srt th:hover{color:var(--text,#e2e8f0)}
       .srt-ar{opacity:.7;font-size:9px;margin-left:2px}
@@ -2173,7 +2108,6 @@ body.is-sales #nav-sales,body.is-sales #nav-eos,body.is-sales #nav-mydesk{displa
           <button class="btn btn-indigo" id="vkb-sysreq" onclick="openVendorKb('sysreq')">📄 System Requirements</button>
           <button class="btn" id="vkb-new" onclick="openVendorKb('whatsnew')" style="display:none">✨ What's New</button>
           <button class="btn" id="vkb-notes" onclick="openVendorKb('notes')" style="display:none">📝 릴리스 노트</button>
-          <button class="btn compat-admin" style="display:none" onclick="vendorAIMatrix()">🤖 OS 매트릭스 AI 채우기</button>
           <button class="btn btn-indigo compat-admin" style="display:none" onclick="vendorCuratedMatrix()">📋 검증 데이터 불러오기</button>
         </div>
         <div style="font-size:10.5px;color:var(--text3);margin-top:7px">버전 선택 → 공식 System Requirements 페이지(Broadcom)를 새 탭으로 엽니다. AI 채우기는 추정 매트릭스를 표에 <b>초안</b>으로 넣어줍니다(공식 링크로 검증·확정).</div>
@@ -2182,13 +2116,11 @@ body.is-sales #nav-sales,body.is-sales #nav-eos,body.is-sales #nav-mydesk{displa
         <input id="compat-q" placeholder="제품 / OS / 버전 / 비고 검색..." oninput="renderCompat()" style="flex:1;min-width:200px">
         <button class="btn" onclick="loadCompat()">새로고침</button>
         <button class="btn" onclick="copyCompatTable()">표 복사</button>
-        <button id="collect-compat-btn" class="btn compat-admin" style="display:none" onclick="collectCompatMatrix()">🧩 전체 수집</button>
         <button class="btn btn-indigo compat-admin" style="display:none" onclick="openCompatModal()">+ 행 추가</button>
         <button class="btn compat-admin" style="display:none;color:#34d399" onclick="confirmAllDrafts()">✅ 일괄 확정</button>
         <button class="btn compat-admin" style="display:none;color:var(--danger)" onclick="bulkDeleteItems('.cmp-pick', id=>hubApi('/compat/'+id,{method:'DELETE'}), loadCompat, '매트릭스')">🗑 선택 삭제</button>
       </div>
       <div id="compat-summary" class="muted u-fs115px-mb8px"></div>
-      <div class="u-fs11px-ctext3-mb8px" id="collect-status"></div>
       <div id="compat-table-wrap"></div>
       <div id="compat-ai-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto">
         <div style="background:var(--card);border:1px solid var(--border2);border-radius:14px;padding:22px;width:min(840px,96vw)">
@@ -2226,22 +2158,6 @@ body.is-sales #nav-sales,body.is-sales #nav-eos,body.is-sales #nav-mydesk{displa
         </div>
       </div>
     </div>
-    <div class="page" id="page-nsis">
-      <div style="background:rgba(244,114,182,.08);border:1px solid rgba(244,114,182,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--text2,#cbd5e1);margin-bottom:16px">🧰 NSIS(.nsi) 설치 스크립트 분석 — 구조 추출 · 설치 흐름도 · AI 보안 분석 · 추출 IOC를 VirusTotal로 조회. (입력 내용은 분석에만 사용)</div>
-      <textarea id="nsis-input" placeholder="NSIS 스크립트(.nsi / .nsh) 내용을 붙여넣으세요..." style="width:100%;min-height:200px;background:var(--bg,#0f172a);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text,#e2e8f0);font-family:monospace;font-size:12.5px;resize:vertical"></textarea>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin:10px 0">
-        <input type="file" id="nsis-file" accept=".nsi,.nsh,.txt" style="display:none" onchange="nsisLoadFile(event)">
-        <button class="btn" onclick="document.getElementById('nsis-file').click()">파일 열기</button>
-        <button class="btn btn-indigo" onclick="runNsisParse()">분석</button>
-        <button class="btn" onclick="renderNsisDiagram()">설치 흐름도</button>
-        <button class="btn" onclick="analyzeNsisAI()">AI 보안 분석</button>
-        <button class="btn" onclick="analyzeNsisImprove()">💡 개선안</button>
-        <button class="btn" onclick="nsisClear()">지우기</button>
-      </div>
-      <div id="nsis-summary"></div>
-      <div class="u-mt-14px" id="nsis-diagram"></div>
-      <div class="u-mt-14px" id="nsis-ai"></div>
-    </div>
     <div class="page" id="page-sales">
       <div id="sales-body"><div class="loading">로딩...</div></div>
     </div>
@@ -2273,35 +2189,6 @@ body.is-sales #nav-sales,body.is-sales #nav-eos,body.is-sales #nav-mydesk{displa
         </tbody>
       </table>
       <div id="eos-pager" class="pager"></div>
-    </div>
-
-    <div class="page" id="page-log">
-      <div style="background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:12px;padding:12px 16px;font-size:12px;color:var(--purple);margin-bottom:16px">🔬 로그를 붙여넣거나 파일을 올리면 <b>에러·경고·특이사항을 시간순으로 발췌</b>하고, <b>Google·KB·Broadcom 검색 링크</b>를 제품명과 함께 찾아줍니다. 링크 옆 <b>➕등록</b>으로 업무 링크에 저장, 발췌 로그는 📋로 복사하세요. (파일 ≤20MB)</div>
-      <div class="u-bgcard-bor1pxsol-br14px-p20px-mb16px">
-        <div class="file-drop" id="log-drop" onclick="document.getElementById('log-file').click()">
-          <div style="font-size:12px;color:var(--text2);margin-bottom:6px">📁 파일을 드래그하거나 클릭</div>
-          <div class="u-muted-10">.log / .txt / .zip / .csv · 최대 20MB · 여러 개/ZIP 가능</div>
-          <input type="file" id="log-file" accept=".log,.txt,.zip,.csv" multiple style="display:none">
-          <div id="log-file-list" class="file-list"></div>
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 6px">
-          <label class="u-fs11px-ctext3-fw700">증상 / 재현 조건 <span style="color:var(--purple)">— 제품명을 꼭 포함</span></label>
-          <button onclick="clearLogInput()" class="btn btn-ghost u-wauto-p5px12p-fs11px">지우기</button>
-        </div>
-        <textarea id="log-symptom" class="admin-textarea log-symptom" placeholder="제품명 + 증상을 적어주세요 (정확한 검색을 위해 제품명 필수).&#10;예) Symantec SEP — 특정 클라이언트 정책 업데이트 실패, 콘솔에 Download Protection Content Failures, 재부팅 후 반복&#10;예) Windows Server 2019 — 이벤트뷰어에 LSASS 오류 후 재부팅" style="min-height:84px"></textarea>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <label class="u-fs11px-ctext3-fw700">로그 붙여넣기 / 직접 입력</label>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span id="log-charcount" style="font-size:10.5px;color:var(--text3)">0자</span>
-            <button onclick="pasteLogFromClipboard()" class="btn btn-ghost u-wauto-p5px12p-fs11px" title="클립보드에서 붙여넣기">📋 붙여넣기</button>
-          </div>
-        </div>
-        <textarea id="log-input" class="log-textarea" placeholder="여기에 로그를 붙여넣으세요 (Ctrl+V) 또는 위에서 파일을 업로드하세요.  분석은 Ctrl+Enter" oninput="updateLogCharCount()" onkeydown="if(event.key==='Enter'&&(event.ctrlKey||event.metaKey)){event.preventDefault();analyzeLogs();}"></textarea>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button class="btn btn-purple" id="log-btn" onclick="analyzeLogs()" style="width:auto;padding:10px 20px">🔬 에러 발췌 &amp; 링크 찾기</button>
-        </div>
-      </div>
-      <div id="log-result"></div>
     </div>
 
     <div class="page" id="page-vt">
@@ -2607,10 +2494,7 @@ body.is-sales #nav-sales,body.is-sales #nav-eos,body.is-sales #nav-mydesk{displa
             <input id="cfg-sales-stale" class="admin-input u-mw-240px" type="number" min="1" max="365" placeholder="14">
             <span class="u-muted-10">영업 현황의 장기 정체 판정 기준</span>
           </div>
-          <div class="u-mt-14px">
-            <label style="font-size:11px;color:var(--text3);font-weight:700;display:block;margin-bottom:6px">AI 시스템 지침</label>
-            <textarea id="cfg-ai-system" class="admin-textarea" placeholder="당신은 ESCARE 보안기술팀의..."></textarea>
-          </div>
+          
           <div class="storage-actions safe-actions">
             <button class="btn btn-indigo" onclick="saveConfig()">💾 저장</button>
           </div>
@@ -2759,7 +2643,7 @@ body.is-sales #nav-sales,body.is-sales #nav-eos,body.is-sales #nav-mydesk{displa
             <button id="storage-stats-btn" class="btn btn-indigo" onclick="refreshStorageStats()">🗄 저장소 / KV 사용량 조회</button>
             <button id="storage-backup-btn" class="btn btn-green" onclick="downloadHubBackup()">⬇ 전체 HUB 데이터 백업</button>
           </div>
-          <div class="storage-toolbar-note">백업은 링크/노하우/라이선스/관리자 설정만 포함합니다. Secret, PIN, JIRA Token, Gemini Key 등 Cloudflare 환경 변수는 포함하지 않습니다.</div>
+          <div class="storage-toolbar-note">백업은 링크/노하우/라이선스/관리자 설정만 포함합니다. Secret, PIN, JIRA Token 등 Cloudflare 환경 변수는 포함하지 않습니다.</div>
         </div>
       </details>
 
@@ -2769,7 +2653,6 @@ body.is-sales #nav-sales,body.is-sales #nav-eos,body.is-sales #nav-mydesk{displa
           <h3>⚠ 위험 작업</h3>
           <p class="u-fs12px-ctext2-mb12px-lh17">삭제성 작업입니다. 실행 전 전체 HUB 데이터 백업을 먼저 다운로드하세요.</p>
           <div class="storage-actions danger-actions">
-            <button id="storage-cache-btn" class="btn btn-red" onclick="clearCache()">🧹 AI 응답 캐시 초기화</button>
             <button id="storage-audit-btn" class="btn btn-gray" onclick="cleanupOldAuditLogs()">🧹 감사 로그 90일 초과 정리</button>
             <button id="storage-reset-btn" class="btn btn-red" onclick="resetAllHubData()">⚠ 전체 데이터 초기화</button>
           </div>
