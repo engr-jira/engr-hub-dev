@@ -260,7 +260,7 @@ async function renderIssueAnalysis(key,secId){
   try{
     const d=await hubApi('/analysis/issue/'+encodeURIComponent(key));
     const a=d.analysis;
-    if(!a){sec.innerHTML=`<div class="u-fs10px-ctext3-fw700-m4px06p">🤖 AI 분석 (스케줄)</div><div style="font-size:11.5px;color:var(--text3);background:rgba(255,255,255,.03);border:1px dashed var(--border);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>이 이슈는 최근 분석 대상에 포함되지 않았습니다. 다음 주기(07:00/15:30)에 미완료·정체 이슈가 분석됩니다.</span>${btn}</div>`;return;}
+    if(!a){sec.innerHTML=`<div class="u-fs10px-ctext3-fw700-m4px06p">🤖 AI 분석 (스케줄)</div><div style="font-size:11.5px;color:var(--text3);background:rgba(255,255,255,.03);border:1px dashed var(--border);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>이 이슈는 최근 분석 대상에 포함되지 않았습니다. 다음 주기(07:00/15:30)에 변경된 이슈 위주로 분석됩니다.</span>${btn}</div>`;return;}
     const rows=[];
     if(a.summary)rows.push(`<div class="u-mb-8px"><b style="color:var(--text)">📋 내용 요약</b><div class="u-ws-prewrap">${escapeHtml(String(a.summary))}</div></div>`);
     if(a.tech_analysis)rows.push(`<div class="u-mb-8px"><b style="color:#a78bfa">🧪 기술 분석</b><div class="u-ws-prewrap">${escapeHtml(String(a.tech_analysis))}</div></div>`);
