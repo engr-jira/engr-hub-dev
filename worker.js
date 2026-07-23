@@ -1120,7 +1120,8 @@ export default {
           if (t) { team = JSON.parse(t.payload_json); builtAt = t.built_at; }
           const last = await env.DB.prepare('SELECT MAX(built_at) AS b FROM issue_analysis').first();
           if (last && last.b) {
-            const r = await env.DB.prepare('SELECT issue_key FROM issue_analysis WHERE built_at = ?').bind(last.b).all();
+            // 증분 분석 지원: 최신 배치만이 아니라 최근 14일 내 분석 이력이 있는 전체 키 반환
+            const r = await env.DB.prepare('SELECT DISTINCT issue_key FROM issue_analysis WHERE built_at >= ?').bind(Date.now() - 14 * 86400000).all();
             keys = (r.results || []).map(x => x.issue_key);
             if (!builtAt) builtAt = last.b;
           }
