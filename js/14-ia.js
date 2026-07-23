@@ -99,3 +99,9 @@ enterApp=function(){
   try{ renderIASubtabs((document.querySelector('.page.active')||{}).id?.replace('page-','')||'dash'); }catch(_){}
   return result;
 };
+/* 자동로그인 레이스 방어: 세션복원 fetch가 빨리 끝나면 enterApp이 이 파일 로드 전에
+   실행될 수 있다(스크립트 경계에서 마이크로태스크 드레인). 이미 입장한 상태면 즉시 렌더. */
+try{
+  if(document.body.classList.contains('app-entered'))
+    renderIASubtabs(((document.querySelector('.page.active')||{}).id||'page-dash').replace('page-',''));
+}catch(_){}
