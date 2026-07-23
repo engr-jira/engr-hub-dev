@@ -303,9 +303,9 @@ function syncMobSheet(panelId){
 /* ── v1.5.8: mobile app polish + admin alignment ───────────── */
 /* ── v1.5.11: session revoke + comment feed ───────────── */
 /* mobile primary nav + compact admin settings */
-const MOBILE_PRIMARY_NAV=['nav-dash','nav-issues','nav-cases','nav-customers'];
-const MOBILE_MORE_NAV=['nav-mydesk','nav-sales','nav-eos','nav-compat','nav-vt','nav-links','nav-knowledge','nav-monitor','nav-audit','nav-settings'];
-const MOBILE_NAV_LABELS={sales:'영업 현황',eos:'라이선스',vt:'VirusTotal',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',monitor:'팀 모니터'};
+const MOBILE_PRIMARY_NAV=['nav-dash','nav-issues','nav-customers','nav-sales'];
+const MOBILE_MORE_NAV=['nav-vt','nav-links','nav-audit'];
+const MOBILE_NAV_LABELS={vt:'도구 (VT)',links:'자료실',audit:'관리'};
 function mobilePageNameFromNav(id){return String(id||'').replace(/^nav-/,'');}
 function canShowMobileMoreItem(id){
   if(id==='nav-audit')return !!(IS_ADMIN||IS_SUPER);

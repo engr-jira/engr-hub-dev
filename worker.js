@@ -1154,6 +1154,33 @@ export default {
         return corsResponse({ ok: true, keys });
       }
 
+      // ── 고객사 환경/사용 솔루션 (IA 재편) : 조회=세션(영업 포함), 수정=기술팀·관리자 ──
+      if (path === '/customer/env' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        const name = (url.searchParams.get('name') || '').trim().slice(0, 80);
+        if (!name) return corsResponse({ ok: false, message: '고객사명이 필요합니다.' }, 400);
+        let row = null;
+        try {
+          await env.DB.prepare("CREATE TABLE IF NOT EXISTS customer_env (customer TEXT PRIMARY KEY, solutions TEXT NOT NULL DEFAULT '', env_note TEXT NOT NULL DEFAULT '', updated_by TEXT, updated_at INTEGER)").run();
+          row = await env.DB.prepare('SELECT customer, solutions, env_note, updated_by, updated_at FROM customer_env WHERE customer = ?').bind(name).first();
+        } catch (_) {}
+        return corsResponse({ ok: true, env: row || null });
+      }
+      if (path === '/customer/env' && request.method === 'PUT') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        if (await isSalesRole(env, user)) return corsResponse({ ok: false, message: '환경 정보는 기술팀만 수정할 수 있습니다.' }, 403);
+        const body = await request.json().catch(() => ({}));
+        const customer = String(body.customer || '').trim().slice(0, 80);
+        if (!customer) return corsResponse({ ok: false, message: '고객사명이 필요합니다.' }, 400);
+        try {
+          await env.DB.prepare("CREATE TABLE IF NOT EXISTS customer_env (customer TEXT PRIMARY KEY, solutions TEXT NOT NULL DEFAULT '', env_note TEXT NOT NULL DEFAULT '', updated_by TEXT, updated_at INTEGER)").run();
+          await env.DB.prepare('INSERT INTO customer_env (customer, solutions, env_note, updated_by, updated_at) VALUES (?,?,?,?,?) ON CONFLICT(customer) DO UPDATE SET solutions=excluded.solutions, env_note=excluded.env_note, updated_by=excluded.updated_by, updated_at=excluded.updated_at')
+            .bind(customer, String(body.solutions || '').slice(0, 500), String(body.env_note || '').slice(0, 3000), user, Date.now()).run();
+          await auditLog(env, user, 'CUST_ENV', { envCustomer: customer });
+          return corsResponse({ ok: true });
+        } catch (e) { return corsResponse({ ok: false, message: '저장 실패: ' + (e && e.message || e) }, 500); }
+      }
+
       // ── STEP 6 영업 현황 : 규칙 기반 집계(AI 무관), 이슈 본문·코멘트는 반환하지 않음 ──
       if (path === '/sales/overview' && request.method === 'GET') {
         if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);

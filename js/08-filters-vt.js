@@ -458,7 +458,9 @@ function renderCustomerRight(){
     <div style="font-size:10px;color:var(--text3);font-weight:700;margin:12px 0 8px;text-transform:uppercase">최근 일반 이슈</div>${recent.map(i=>row(i,'issue')).join('')||'<div class="empty">최근 일반 이슈 없음</div>'}
     <div class="u-fs10px-ctext3-fw700-m14px08-ttupperc">최근 케이스</div>${recentCases.map(i=>row(i,'case')).join('')||'<div class="empty">최근 케이스 없음</div>'}
     <div class="u-fs10px-ctext3-fw700-m14px08-ttupperc">🔑 라이선스</div>${eosForCust.length?eosForCust.map(e=>`<div class="customer-work-row" onclick="showPage('eos',document.getElementById('nav-eos'))"><div><div class="k">${escapeHtml(e.productDesc||e.product||'-')}</div><div class="t">${escapeHtml(e.serial||e.siteId||'')}</div></div><div class="m">${e.expireDate?'~ '+escapeHtml(e.expireDate):'-'}</div></div>`).join(''):'<div class="empty">등록된 라이선스 없음</div>'}
+    <div id="cust-env-sec"></div>
   </div>`;
+  if(typeof loadCustomerEnv==='function')loadCustomerEnv(c.name);
 }
 function issueCaseMatches(issue,caseIssue){
   if(!issue||!caseIssue||issue.key===caseIssue.key)return false;
