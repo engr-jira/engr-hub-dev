@@ -154,7 +154,7 @@ export default {
         const jr = await fetch(`https://escare-engr.atlassian.net/rest/api/3/attachment/content/${attId}`, { headers: { 'Authorization': jiraAuth } });
         if (!jr.ok) return corsResponse({ ok: false, message: '첨부 조회 실패 ' + jr.status }, 502);
         const buf = await jr.arrayBuffer();
-        if (buf.byteLength > 5 * 1024 * 1024) return corsResponse({ ok: false, message: '5MB 초과 첨부는 분석 제외' }, 413);
+        if (buf.byteLength > 30 * 1024 * 1024) return corsResponse({ ok: false, message: '30MB 초과 첨부는 분석 제외' }, 413);
         return new Response(buf, { status: 200, headers: { ...CORS_HEADERS, 'Content-Type': jr.headers.get('Content-Type') || 'application/octet-stream' } });
       }
       if (path.startsWith('/jira/')) {
