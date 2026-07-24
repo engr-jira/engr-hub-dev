@@ -93,27 +93,29 @@ function renderSalesPage(){
     }).join('')||'<tr><td colspan="7" class="u-empty">라이선스 데이터가 없습니다</td></tr>'}</tbody>
   </table></div>`;
 
-  const custRows=(d.customers||[]).map(c=>{
+  const custRows=(d.customers||[]).filter(c=>c.name&&c.name!=='None').map(c=>{
     const days=c.lastActivity?daysSince(c.lastActivity.slice(0,10)):999;
-    const judge = days>=stale?`<span class="badge" style="background:rgba(248,113,113,.13);color:#f87171">정체 ${days}일</span>`
-      : days>=Math.ceil(stale/2)?`<span class="badge" style="background:rgba(251,191,36,.13);color:#fbbf24">주의</span>`
-      : `<span class="badge" style="background:rgba(52,211,153,.12);color:#34d399">활발</span>`;
+    const judge = days>=stale?`<span class="badge" style="background:rgba(248,113,113,.13);color:#f87171;font-size:11.5px">정체 ${days}일</span>`
+      : days>=Math.ceil(stale/2)?`<span class="badge" style="background:rgba(251,191,36,.13);color:#fbbf24;font-size:11.5px">주의</span>`
+      : `<span class="badge" style="background:rgba(52,211,153,.12);color:#34d399;font-size:11.5px">활발</span>`;
     const issues=(c.issues||[]).map(i=>{
       const od=i.due&&daysUntil(i.due)<0;
-      return `<div style="display:flex;gap:8px;align-items:center;padding:4px 0;border-bottom:1px solid rgba(44,55,87,.35)">
-        <span style="color:var(--accent3);font-weight:700;font-size:11px" class="u-ws-nowrap">${escapeHtml(i.key)}</span>
-        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${escapeHtml(i.title)}</span>
-        <span class="u-muted-10 u-ws-nowrap">${escapeHtml(i.status)}</span>
-        ${i.due?`<span class="u-ws-nowrap" style="font-size:10px;color:${od?'#f87171':'var(--text3)'}">${escapeHtml(i.due)}</span>`:''}
+      return `<div style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid rgba(44,55,87,.35)">
+        <span style="color:var(--accent3);font-weight:700;font-size:12px" class="u-ws-nowrap">${escapeHtml(i.key)}</span>
+        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">${escapeHtml(i.title)}</span>
+        <span class="u-ws-nowrap" style="font-size:11.5px;color:var(--text3)">${escapeHtml(i.status)}</span>
+        ${i.due?`<span class="u-ws-nowrap" style="font-size:11px;color:${od?'#f87171':'var(--text3)'}">${od?'기한초과 ':''}${escapeHtml(i.due)}</span>`:''}
       </div>`;
     }).join('');
-    return `<details class="sales-cust"><summary style="display:flex;gap:10px;align-items:center;cursor:pointer;padding:9px 12px">
-      <b style="min-width:140px">${escapeHtml(c.name)}</b>
-      <span class="u-muted-11">진행 ${c.open}</span>
-      <span style="font-size:11px;color:${c.overdue?'#f87171':'var(--text3)'}">기한초과 ${c.overdue}</span>
-      <span class="u-muted-11">최근 ${days>=999?'—':days===0?'오늘':days+'일 전'}</span>
+    const top=(c.issues||[])[0];
+    return `<details class="sales-cust"><summary style="display:flex;gap:12px;align-items:center;cursor:pointer;padding:11px 14px">
+      <b style="min-width:130px;font-size:14px">${escapeHtml(c.name)}</b>
+      <span style="font-size:12.5px;color:var(--text2)" class="u-ws-nowrap">진행 <b>${c.open}</b></span>
+      <span class="u-ws-nowrap" style="font-size:12.5px;color:${c.overdue?'#f87171':'var(--text3)'}">기한초과 <b>${c.overdue}</b></span>
+      <span class="u-ws-nowrap" style="font-size:12.5px;color:var(--text3)">최근 ${days>=999?'—':days===0?'오늘':days+'일 전'}</span>
+      ${top?`<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text3)">└ ${escapeHtml(top.title)}</span>`:'<span style="flex:1"></span>'}
       <span style="margin-left:auto">${judge}</span>
-    </summary><div style="padding:4px 14px 12px">${issues||'<div class="u-muted-11">이슈 없음</div>'}</div></details>`;
+    </summary><div style="padding:4px 16px 12px">${issues||'<div class="u-muted-11">이슈 없음</div>'}</div></details>`;
   }).join('');
 
   const cust=`<div class="sec-title" style="margin-top:20px">🏢 고객사 대응 현황 <span class="u-muted-11" style="font-weight:400">— 정체 기준 ${stale}일(관리자 설정)</span></div>

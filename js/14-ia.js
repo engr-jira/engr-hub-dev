@@ -21,6 +21,14 @@ function iaSubtabVisible(page){
 }
 
 function renderIASubtabs(current){
+  // 조회 기간 칩 — 모든 화면 상단에 데이터 기준 표시
+  try{
+    const rc=document.getElementById('range-chip');
+    if(rc){
+      const m=(typeof SYNC_META!=='undefined'&&SYNC_META&&SYNC_META.rangeMonths)||localStorage.getItem('jira_range_months');
+      if(m){rc.textContent=`📅 데이터 기준: 최근 ${m}개월`;rc.style.display='inline-block';}
+    }
+  }catch(_){}
   const bar=document.getElementById('ia-subtabs');
   if(!bar)return;
   let group=IA_GROUPS[current];

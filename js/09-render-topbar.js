@@ -241,6 +241,20 @@ async function loadAnalysisLatest(){
     renderAIBriefing(d);
   }catch(_){/* 데이터 없음/미로그인 = 조용히 */}
 }
+function hubJumpKey(key){
+  const isCase=(typeof getCaseIssueBase==='function'?getCaseIssueBase():[]).some(c=>c.key===key);
+  if(isCase&&typeof v154GoCaseExact==='function')v154GoCaseExact(key);
+  else if(typeof v154GoIssueExact==='function')v154GoIssueExact(key);
+}
+function briefLinkify(s){
+  return escapeHtml(String(s)).replace(/ENGR-\d+/g,m=>`<a style="color:var(--accent3);font-weight:700;cursor:pointer;text-decoration:none" onclick="hubJumpKey('${m}')">${m}</a>`);
+}
+function briefList(text,mode,accent){
+  // mode 'line'=줄 단위(포커스), 'sent'=문장 단위(동향·패턴)
+  const parts=(mode==='line'?String(text).split(/\n+/):String(text).split(/(?<=다\.)\s+/)).map(p=>p.trim()).filter(Boolean);
+  if(parts.length<2)return `<div class="u-fs125px-lh17-ctext2-wsprewra">${briefLinkify(text)}</div>`;
+  return parts.map(p=>`<div style="font-size:12.5px;line-height:1.6;color:var(--text2);padding:6px 10px;background:rgba(255,255,255,.03);border-left:2px solid ${accent};border-radius:0 8px 8px 0">${briefLinkify(p)}</div>`).join('<div style="height:6px"></div>');
+}
 function renderAIBriefing(d){
   const wrap=document.getElementById('ai-brief-wrap'), title=document.getElementById('ai-brief-title');
   if(!wrap||!title)return;
@@ -248,10 +262,10 @@ function renderAIBriefing(d){
   title.style.display=''; wrap.style.display='';
   const t=d.team||{};
   const secs=[];
-  if(t.monthly)secs.push(`<div class="chart-card"><h4>월간 동향</h4><div class="u-fs125px-lh17-ctext2-wsprewra">${escapeHtml(String(t.monthly))}</div></div>`);
-  if(t.patterns)secs.push(`<div class="chart-card"><h4>고객사 패턴</h4><div class="u-fs125px-lh17-ctext2-wsprewra">${escapeHtml(String(t.patterns))}</div></div>`);
-  if(t.focus)secs.push(`<div class="chart-card"><h4>오늘의 포커스</h4><div class="u-fs125px-lh17-ctext2-wsprewra">${escapeHtml(String(t.focus))}</div></div>`);
-  wrap.innerHTML=`<div class="u-fs11px-ctext3-mb8px">🕐 ${fmtBuiltAt(d.built_at)} 기준 · 스케줄 분석(일 2회 07:00/15:30) · 이슈 분석 ${(d.issueKeys||[]).length}건</div><div class="chart-grid u-gridtemplatecolumns-repeatautofi">${secs.join('')||'<div class="chart-card"><div class="u-fs12px-ctext3">팀 리포트가 아직 없습니다</div></div>'}</div>`;
+  if(t.focus)secs.push(`<div class="chart-card"><h4>🎯 오늘의 포커스</h4>${briefList(t.focus,'line','#f87171')}</div>`);
+  if(t.patterns)secs.push(`<div class="chart-card"><h4>🏢 고객사 패턴</h4>${briefList(t.patterns,'sent','#a78bfa')}</div>`);
+  if(t.monthly)secs.push(`<div class="chart-card"><h4>📈 월간 동향</h4>${briefList(t.monthly,'sent','#67e8f9')}</div>`);
+  wrap.innerHTML=`<div class="u-fs11px-ctext3-mb8px">🕐 ${fmtBuiltAt(d.built_at)} 기준 · 스케줄 분석(일 2회 07:00/15:30) · 이슈 분석 ${(d.issueKeys||[]).length}건 · 이슈키 클릭 시 해당 건으로 이동</div><div class="chart-grid u-gridtemplatecolumns-repeatautofi">${secs.join('')||'<div class="chart-card"><div class="u-fs12px-ctext3">팀 리포트가 아직 없습니다</div></div>'}</div>`;
 }
 async function renderIssueAnalysis(key,secId){
   const sec=document.getElementById(secId||'ai-analysis-sec'); if(!sec||!key)return;
