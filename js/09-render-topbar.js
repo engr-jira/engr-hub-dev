@@ -199,6 +199,7 @@ function enhanceDateButtons(){
 }
 function renderCases(){
   normalizeAllIssueAliases();
+  if(typeof RESP_METRICS!=='undefined'&&RESP_METRICS===null){RESP_METRICS=[];try{loadRespMetrics();}catch(_){}}
   const wrap=document.getElementById('case-list'); if(!wrap)return;
   const arr=getFilteredCases();
   const size=PAGE_SIZES.cases||10;
@@ -215,7 +216,7 @@ function renderCases(){
           <span class="title">${escapeHtml(cleanTitle(c.title||c.summary||''))}</span>
           <span class="date">${fd(c.date||c.created)}</span>
         </div>
-        <div class="issue-sub"><span>${escapeHtml(c.key)}</span><span>${escapeHtml(caseCustomerName(c)||'고객사 없음')}</span><span>@${escapeHtml(c.assignee||'미지정')}</span><span>${daysSince(c.date||c.created)}일</span></div>
+        <div class="issue-sub"><span>${escapeHtml(c.key)}</span><span>${escapeHtml(caseCustomerName(c)||'고객사 없음')}</span><span>@${escapeHtml(c.assignee||'미지정')}</span><span>${daysSince(c.date||c.created)}일</span>${typeof caseBallBadge==='function'?caseBallBadge(c.key):''}</div>
       </div>`;
     }).join(''):'<div class="empty">조건에 맞는 케이스가 없습니다.</div>');
   renderCompactPager('case-pager',PAGE_STATE.cases,pages,'setCasePage');

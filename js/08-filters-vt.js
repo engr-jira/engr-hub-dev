@@ -322,20 +322,33 @@ function completionRateRows(list){
 let RESP_METRICS=null;
 async function loadRespMetrics(){
   try{ const d=await hubApi('/analysis/resp'); RESP_METRICS=d.items||[]; }catch(_){ RESP_METRICS=[]; }
-  const cs=document.getElementById('rank-case-speed');
-  const pg=document.getElementById('page-dash');
-  if(cs&&pg&&pg.classList.contains('active'))cs.innerHTML=caseSpeedRows(getCaseIssueBase());
+  const active=document.querySelector('.page.active')?.id;
+  if(active==='page-dash'){
+    const cs=document.getElementById('rank-case-speed');
+    if(cs)cs.innerHTML=caseSpeedRows(getCaseIssueBase());
+  }
+  if(active==='page-cases'&&typeof renderCases==='function')renderCases();
+}
+function respByKey(key){ return (RESP_METRICS||[]).find(r=>r.key===key)||null; }
+function caseBallBadge(key){
+  // 다음 회신 주체 배지 — 스케줄 엔진이 마지막 코멘트 방향(팀→벤더/벤더→팀)으로 판정
+  const r=respByKey(key); if(!r||!r.ball)return '';
+  const days=r.last_comm!=null?` · ${Math.round(r.last_comm)}일 전`:'';
+  const tip=escapeHtml(r.ball_note||'');
+  if(r.ball==='team')return `<span title="${tip}" style="background:rgba(248,113,113,.14);color:#f87171;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">🔴 팀 회신 필요${days}</span>`;
+  return `<span title="${tip}" style="background:rgba(96,165,250,.12);color:#60a5fa;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">⏳ 제조사 대기${days}</span>`;
 }
 function respSpeedRows(){
   // 코멘트 기반 (스케줄 분석 산출): avg_resp = 최초응답+코멘트 간격+현재까지 무응답 구간의 평균
   const by={};
   (RESP_METRICS||[]).filter(r=>r.is_case).forEach(r=>{
     const a=r.assignee||''; if(!a||a==='-')return;
-    const t=by[a]=by[a]||{n:0,respSum:0,respN:0,firstSum:0,firstN:0,noCmt:0};
+    const t=by[a]=by[a]||{n:0,respSum:0,respN:0,firstSum:0,firstN:0,noCmt:0,needReply:0};
     t.n++;
     if(r.avg_resp!=null){t.respSum+=r.avg_resp;t.respN++;}
     if(r.first_resp!=null){t.firstSum+=r.first_resp;t.firstN++;}
     if(!r.comments)t.noCmt++;
+    if(r.ball==='team')t.needReply++;
   });
   return Object.entries(by)
     .sort((a,b)=>(b[1].respN?b[1].respSum/b[1].respN:999)-(a[1].respN?a[1].respSum/a[1].respN:999))
@@ -344,8 +357,8 @@ function respSpeedRows(){
       const avg=v.respN?Math.round(v.respSum/v.respN*10)/10:null;
       const first=v.firstN?Math.round(v.firstSum/v.firstN*10)/10:null;
       const col=avg===null?'var(--text3)':avg>=7?'#f87171':avg>=4?'#fbbf24':'#2de6b8';
-      const sub=[`케이스 ${v.n}건`,first!==null?`최초응답 평균 ${first}일`:'',v.noCmt?`코멘트 없음 ${v.noCmt}건`:''].filter(Boolean).join(' · ');
-      return `<div class="dash-list-row" onclick="setCaseNavigationFilter({assignee:${jsAttr(a)},status:'미해결'})"><span class="title">${escapeHtml(a)}<br><small style="color:var(--text3);font-size:10px">${escapeHtml(sub)}</small></span><b style="color:${col};white-space:nowrap">${avg===null?'-':avg+'일'}</b></div>`;
+      const sub=[v.needReply?`<span style="color:#f87171;font-weight:700">팀 회신 필요 ${v.needReply}건</span>`:'',first!==null?`최초응답 ${first}일`:'',v.noCmt?`코멘트 없음 ${v.noCmt}건`:''].filter(Boolean).join(' · ');
+      return `<div class="dash-list-row" onclick="setCaseNavigationFilter({assignee:${jsAttr(a)},status:'미해결'})"><span class="title">${escapeHtml(a)}${sub?`<br><small style="color:var(--text3);font-size:10px">${sub}</small>`:''}</span><span style="background:rgba(129,140,248,.14);color:var(--accent3);border-radius:7px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap;margin-right:8px">진행 ${v.n}건</span><b style="color:${col};white-space:nowrap">평균 ${avg===null?'-':avg+'일'}</b></div>`;
     }).join('');
 }
 function caseSpeedRows(list){

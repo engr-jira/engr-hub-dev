@@ -1103,10 +1103,14 @@ export default {
           try {
             if (Array.isArray(body.resp) && body.resp.length) {
               await env.DB.prepare("CREATE TABLE IF NOT EXISTS issue_resp (issue_key TEXT PRIMARY KEY, assignee TEXT, is_case INTEGER, first_resp REAL, avg_resp REAL, last_comment REAL, comments INTEGER, computed_at INTEGER)").run();
+              // 케이스 회신 주체 컬럼 (구 테이블 호환 — 이미 있으면 에러 무시)
+              try { await env.DB.prepare('ALTER TABLE issue_resp ADD COLUMN last_comm REAL').run(); } catch (_) {}
+              try { await env.DB.prepare('ALTER TABLE issue_resp ADD COLUMN ball TEXT').run(); } catch (_) {}
+              try { await env.DB.prepare('ALTER TABLE issue_resp ADD COLUMN ball_note TEXT').run(); } catch (_) {}
               for (const r of body.resp) {
                 if (!r || !/^[A-Z][A-Z0-9]*-\d+$/.test(r.key || '')) continue;
-                await env.DB.prepare('INSERT INTO issue_resp (issue_key, assignee, is_case, first_resp, avg_resp, last_comment, comments, computed_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(issue_key) DO UPDATE SET assignee=excluded.assignee, is_case=excluded.is_case, first_resp=excluded.first_resp, avg_resp=excluded.avg_resp, last_comment=excluded.last_comment, comments=excluded.comments, computed_at=excluded.computed_at')
-                  .bind(r.key, String(r.assignee || ''), r.isCase ? 1 : 0, r.firstRespDays ?? null, r.avgRespDays ?? null, r.lastCommentDays ?? null, Number(r.comments) || 0, builtAt).run();
+                await env.DB.prepare('INSERT INTO issue_resp (issue_key, assignee, is_case, first_resp, avg_resp, last_comment, comments, computed_at, last_comm, ball, ball_note) VALUES (?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(issue_key) DO UPDATE SET assignee=excluded.assignee, is_case=excluded.is_case, first_resp=excluded.first_resp, avg_resp=excluded.avg_resp, last_comment=excluded.last_comment, comments=excluded.comments, computed_at=excluded.computed_at, last_comm=excluded.last_comm, ball=excluded.ball, ball_note=excluded.ball_note')
+                  .bind(r.key, String(r.assignee || ''), r.isCase ? 1 : 0, r.firstRespDays ?? null, r.avgRespDays ?? null, r.lastCommentDays ?? null, Number(r.comments) || 0, builtAt, r.lastCommDays ?? null, String(r.ball || ''), String(r.ballNote || '').slice(0, 160)).run();
               }
             }
           } catch (_) {}
@@ -1142,7 +1146,7 @@ export default {
       if (path === '/analysis/resp' && request.method === 'GET') {
         if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
         let items = [];
-        try { const r = await env.DB.prepare('SELECT issue_key AS key, assignee, is_case, first_resp, avg_resp, last_comment, comments, computed_at FROM issue_resp WHERE computed_at >= ?').bind(Date.now() - 30 * 86400000).all(); items = r.results || []; } catch (_) {}
+        try { const r = await env.DB.prepare('SELECT issue_key AS key, assignee, is_case, first_resp, avg_resp, last_comment, comments, computed_at, last_comm, ball, ball_note FROM issue_resp WHERE computed_at >= ?').bind(Date.now() - 30 * 86400000).all(); items = r.results || []; } catch (_) {}
         return corsResponse({ ok: true, items });
       }
       if (path.startsWith('/analysis/issue/') && request.method === 'GET') {

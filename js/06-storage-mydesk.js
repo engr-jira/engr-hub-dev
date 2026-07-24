@@ -361,6 +361,7 @@ function renderCaseRight(loading=false){
       <div class="rp-row"><span>담당자</span><span>${escapeHtml(c.assignee)}</span></div>
       <div class="rp-row"><span>상태</span><span style="color:${sc}">${escapeHtml(c.status)}</span></div>
       <div class="rp-row"><span>경과일</span><span style="color:${days>=7?'#f87171':days>=3?'#fbbf24':'#22d3a5'};font-weight:700">${days}일</span></div>
+      ${(()=>{const r=typeof respByKey==='function'?respByKey(c.key):null;if(!r||!r.ball)return '';const lc=r.last_comm!=null?`${Math.round(r.last_comm)}일 전`:'-';return `<div class="rp-row"><span>다음 회신</span><span style="color:${r.ball==='team'?'#f87171':'#60a5fa'};font-weight:700">${r.ball==='team'?'🔴 팀 회신 필요':'⏳ 제조사 대기'} · 마지막 커뮤니케이션 ${lc}</span></div>${r.ball_note?`<div class="rp-row"><span></span><span style="color:var(--text3);font-size:11px">${escapeHtml(r.ball_note)}</span></div>`:''}`;})()}
     </div>
     ${loading?'<div class="loading u-mb-12px">첨부파일/댓글 상세 조회 중...</div>':''}
     ${c.desc?`<div class="rp-desc">${adfToHtml(c.desc)}</div>`:''}
