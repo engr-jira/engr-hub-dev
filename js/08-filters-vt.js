@@ -353,15 +353,25 @@ function respSpeedRows(){
     if(r.first_resp!=null){t.firstSum+=r.first_resp;t.firstN++;}
     if(r.ball==='team')t.needReply++;
   });
-  return Object.entries(by)
-    .sort((a,b)=>(b[1].respN?b[1].respSum/b[1].respN:999)-(a[1].respN?a[1].respSum/a[1].respN:999))
-    .slice(0,8)
-    .map(([a,v])=>{
-      const avg=v.respN?Math.round(v.respSum/v.respN*10)/10:null;
+  const list=Object.entries(by)
+    .map(([a,v])=>({a,v,avg:v.respN?Math.round(v.respSum/v.respN*10)/10:null}))
+    .sort((x,y)=>(y.avg??999)-(x.avg??999))
+    .slice(0,8);
+  const maxAvg=Math.max(1,...list.map(x=>x.avg||0));
+  return list.map(({a,v,avg})=>{
       const first=v.firstN?Math.round(v.firstSum/v.firstN*10)/10:null;
       const col=avg===null?'var(--text3)':avg>=7?'#f87171':avg>=4?'#fbbf24':'#2de6b8';
+      const pct=avg===null?0:Math.max(4,Math.round(avg/maxAvg*100));
       const sub=[`진행 ${v.open} · 완료 ${v.n-v.open}`,v.needReply?`<span style="color:#f87171;font-weight:700">팀 회신 필요 ${v.needReply}건</span>`:'',first!==null?`최초응답 ${first}일`:''].filter(Boolean).join(' · ');
-      return `<div class="dash-list-row" onclick="setCaseNavigationFilter({assignee:${jsAttr(a)}})"><span class="title">${escapeHtml(a)}<br><small style="color:var(--text3);font-size:10px">${sub}</small></span><span style="background:rgba(129,140,248,.14);color:var(--accent3);border-radius:7px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap;margin-right:8px">${v.n}건</span><b style="color:${col};white-space:nowrap">평균 ${avg===null?'-':avg+'일'}</b></div>`;
+      return `<div style="padding:7px 2px;border-bottom:1px solid var(--border);cursor:pointer" onclick="setCaseNavigationFilter({assignee:${jsAttr(a)}})">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 46px 64px;gap:8px;align-items:center">
+          <span style="font-weight:700;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(a)}</span>
+          <span style="background:rgba(129,140,248,.14);color:var(--accent3);border-radius:7px;padding:2px 0;font-size:11px;font-weight:700;text-align:center;white-space:nowrap">${v.n}건</span>
+          <b style="color:${col};white-space:nowrap;text-align:right;font-size:12.5px">${avg===null?'-':avg+'일'}</b>
+        </div>
+        <div style="height:4px;background:rgba(255,255,255,.06);border-radius:99px;margin-top:5px"><div style="height:4px;width:${pct}%;background:${col};border-radius:99px"></div></div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px">${sub}</div>
+      </div>`;
     }).join('');
 }
 function needReplyRows(){
@@ -443,16 +453,8 @@ function renderIssueFilterTags(){renderFilterTags();}
 function renderCompactPager(elId,page,totalPages,setter){
   const el=document.getElementById(elId);if(!el)return;
   if(totalPages<=1){el.innerHTML='';return;}
-  const nums=new Set([1,totalPages,page-1,page,page+1]);
-  const ordered=[...nums].filter(n=>n>=1&&n<=totalPages).sort((a,b)=>a-b);
-  let last=0;
-  const buttons=[];
-  ordered.forEach(n=>{
-    if(last&&n-last>1)buttons.push('<span style="color:var(--text3);padding:0 4px">…</span>');
-    buttons.push(`<button class="${page===n?'active':''}" onclick="${setter}(${n})">${n}</button>`);
-    last=n;
-  });
-  el.innerHTML=`<button ${page<=1?'disabled':''} onclick="${setter}(${page-1})">이전</button>${buttons.join('')}<button ${page>=totalPages?'disabled':''} onclick="${setter}(${page+1})">다음</button>`;
+  const buttons=pagerNums(page,totalPages).map(n=>`<button class="${page===n?'active':''}" onclick="${setter}(${n})">${n}</button>`).join('');
+  el.innerHTML=`<button ${page<=1?'disabled':''} onclick="${setter}(${page-1})">이전</button>${buttons}<button ${page>=totalPages?'disabled':''} onclick="${setter}(${page+1})">다음</button>`;
 }
 function setIssuePage(n){PAGE=n;renderIssues();}
 function setCasePage(n){PAGE_STATE.cases=n;renderCases();}

@@ -71,13 +71,22 @@ let SYNC_META=null;
 function changePageSize(scope,val){PAGE_SIZES[scope]=parseInt(val,10)||10;PAGE_STATE[scope]=1;if(scope==='issues')PAGE=1;}
 function sliceForPage(items,scope){const size=PAGE_SIZES[scope]||10;const pages=Math.max(1,Math.ceil(items.length/size));let page=PAGE_STATE[scope]||1;if(page<1)page=1;if(page>pages)page=pages;PAGE_STATE[scope]=page;return items.slice((page-1)*size,page*size);}
 function pageCountText(scope,total,unit='건'){const size=PAGE_SIZES[scope]||10;const pages=Math.max(1,Math.ceil(total/size));const page=PAGE_STATE[scope]||1;return `${total}${unit} (${page}/${pages})`;}
+function pagerNums(page,pages){
+  // 최대 10개 번호 버튼 — 현재 페이지 중심 슬라이딩 윈도우
+  const size=10;
+  let start=Math.max(1,Math.min(page-4,pages-size+1));
+  const end=Math.min(pages,start+size-1);
+  const out=[];for(let i=start;i<=end;i++)out.push(i);
+  return out;
+}
 function renderPager(id,scope,total,renderFn){
   const el=document.getElementById(id);if(!el)return;
   const size=PAGE_SIZES[scope]||10;const pages=Math.max(1,Math.ceil(total/size));
   if((PAGE_STATE[scope]||1)>pages)PAGE_STATE[scope]=pages;
   const page=PAGE_STATE[scope]||1;
   if(total<=size){el.innerHTML='';return;}
-  el.innerHTML=`<button ${page<=1?'disabled':''} onclick="PAGE_STATE['${scope}']--;${renderFn}()">이전</button><span>${page} / ${pages}</span><button ${page>=pages?'disabled':''} onclick="PAGE_STATE['${scope}']++;${renderFn}()">다음</button>`;
+  const nums=pagerNums(page,pages).map(n=>`<button class="${page===n?'active':''}" onclick="PAGE_STATE['${scope}']=${n};${renderFn}()">${n}</button>`).join('');
+  el.innerHTML=`<button ${page<=1?'disabled':''} onclick="PAGE_STATE['${scope}']--;${renderFn}()">이전</button>${nums}<button ${page>=pages?'disabled':''} onclick="PAGE_STATE['${scope}']++;${renderFn}()">다음</button>`;
 }
 function kstDayParts(date=new Date()){
   const parts=new Intl.DateTimeFormat('ko-KR',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);

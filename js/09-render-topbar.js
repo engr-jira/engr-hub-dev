@@ -247,7 +247,8 @@ function hubJumpKey(key){
   else if(typeof v154GoIssueExact==='function')v154GoIssueExact(key);
 }
 function briefLinkify(s){
-  return escapeHtml(String(s)).replace(/ENGR-\d+/g,m=>`<a style="color:var(--accent3);font-weight:700;cursor:pointer;text-decoration:none" onclick="hubJumpKey('${m}')">${m}</a>`);
+  // 클릭 가능 이슈키 = 청록 칩으로 명확히 구분
+  return escapeHtml(String(s)).replace(/ENGR-\d+/g,m=>`<a style="background:rgba(34,211,238,.14);color:#22d3ee;font-weight:800;cursor:pointer;text-decoration:none;padding:0 6px;border-radius:6px;border-bottom:1px dashed rgba(34,211,238,.55);white-space:nowrap" onclick="hubJumpKey('${m}')">${m}</a>`);
 }
 function briefList(text,mode,accent){
   // mode 'line'=줄 단위(포커스), 'sent'=문장 단위(동향·패턴)
