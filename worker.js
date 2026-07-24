@@ -564,16 +564,25 @@ export default {
 
       //
       if (path === '/links' && request.method === 'GET') {
-        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        // 세션 또는 분석 토큰(엔진의 중복 URL 확인용)
+        const anaOkL = !!env.ANALYSIS_WRITE_TOKEN && (request.headers.get('x-analysis-token') || '') === env.ANALYSIS_WRITE_TOKEN;
+        if (!hasSession && !anaOkL) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
         const raw = await env.ENGR_KV.get('config:links');
         return corsResponse({ ok: true, links: raw ? JSON.parse(raw) : [] });
       }
       //
       if (path === '/links' && request.method === 'POST') {
-        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        // 세션 또는 분석 토큰(엔진의 'AI 추천' 링크 — 강제 aiSuggested·중복 URL 거부)
+        const anaOkL = !!env.ANALYSIS_WRITE_TOKEN && (request.headers.get('x-analysis-token') || '') === env.ANALYSIS_WRITE_TOKEN;
+        if (!hasSession && !anaOkL) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        const byEngine = anaOkL && !hasSession;
+        const actorL = byEngine ? 'AI \uCD94\uCC9C(\uBD84\uC11D \uC5D4\uC9C4)' : user;
         const body = await request.json().catch(() => ({}));
         const raw = await env.ENGR_KV.get('config:links');
         let links = raw ? JSON.parse(raw) : [];
+        if (byEngine && links.some(l => (l.url || '').replace(/\/$/, '') === String(body.url || '').replace(/\/$/, ''))) {
+          return corsResponse({ ok: false, message: '\uC774\uBBF8 \uB4F1\uB85D\uB41C URL' }, 409);
+        }
         const newLink = {
           id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
           title: body.title || '',
@@ -581,13 +590,14 @@ export default {
           category: body.category || '\uAE30\uD0C0',
           desc: body.desc || '',
           comments: [],
-          createdBy: user,
+          createdBy: actorL,
           createdAt: new Date().toISOString(),
+          ...(byEngine ? { aiSuggested: true } : {}),
         };
         links.push(newLink);
         await env.ENGR_KV.put('config:links', JSON.stringify(links));
-        await auditLog(env, user, 'LINK_ADD', { title: newLink.title });
-        ctx.waitUntil(pushNotify(env, 'link', user, { target: newLink.title || '제목 없음' }));
+        await auditLog(env, actorL, 'LINK_ADD', { title: newLink.title, aiLink: byEngine ? 1 : 0 });
+        ctx.waitUntil(pushNotify(env, 'link', actorL, { target: newLink.title || '제목 없음' }));
         return corsResponse({ ok: true, link: newLink });
       }
       if (path.match(/^\/links\/[^/]+\/comments(?:\/[^/]+)?$/)) {
@@ -972,7 +982,9 @@ export default {
 
       // \u2500\u2500 \u00A71 \uD638\uD658\uC131\u00B7EOS \uB9E4\uD2B8\uB9AD\uC2A4 (compat_matrix \u00B7 D1) \u2500\u2500
       if (path === '/compat' && request.method === 'GET') {
-        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        // 세션 또는 분석 토큰(엔진의 diff 비교용 읽기)
+        const anaOkC = !!env.ANALYSIS_WRITE_TOKEN && (request.headers.get('x-analysis-token') || '') === env.ANALYSIS_WRITE_TOKEN;
+        if (!hasSession && !anaOkC) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         if (!(await getFeatureFlags(env)).compat) return corsResponse({ ok: false, message: '\uBE44\uD65C\uC131\uD654\uB41C \uAE30\uB2A5\uC785\uB2C8\uB2E4.' }, 403);
         const q = (new URL(request.url).searchParams.get('q') || '').trim().toLowerCase();
         let rows = [];
@@ -981,14 +993,18 @@ export default {
         return corsResponse({ ok: true, items: rows });
       }
       if (path === '/compat' && request.method === 'POST') {
-        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
+        // \uAD00\uB9AC\uC790 \uB610\uB294 \uBD84\uC11D \uD1A0\uD070(\uC5D4\uC9C4\uC758 \uCD08\uC548 \uB4F1\uB85D \uC804\uC6A9 \u2014 status\uB294 \uD56D\uC0C1 draft)
+        const anaOkP = !!env.ANALYSIS_WRITE_TOKEN && (request.headers.get('x-analysis-token') || '') === env.ANALYSIS_WRITE_TOKEN;
+        if (!anaOkP && (!hasSession || !await isAdmin(env, user))) return corsResponse({ ok: false, message: '\uAD00\uB9AC\uC790\uB9CC \uC0AC\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         if (!(await getFeatureFlags(env)).compat) return corsResponse({ ok: false, message: '\uBE44\uD65C\uC131\uD654\uB41C \uAE30\uB2A5\uC785\uB2C8\uB2E4.' }, 403);  // L-11
         const b = await request.json().catch(() => ({}));
         const now = new Date().toISOString();
         try {
           const r = await env.DB.prepare('INSERT INTO compat_matrix (product,product_version,os,os_version,supported,eos_date,eol_date,note,source,status,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)')
             .bind(b.product || '', b.product_version || '', b.os || '', b.os_version || '', b.supported || '', b.eos_date || '', b.eol_date || '', b.note || '', b.source || '', 'draft', now).run();
-          await auditLog(env, user, 'MATRIX_ADD', { matrixType: 'compat', product: b.product || '', os: b.os || '' });
+          const actorC = (anaOkP && !hasSession) ? 'analysis-engine' : user;
+          await auditLog(env, actorC, 'MATRIX_ADD', { matrixType: 'compat', product: b.product || '', os: b.os || '', aiDraft: (anaOkP && !hasSession) ? 1 : 0 });
+          if (anaOkP && !hasSession) ctx.waitUntil(pushNotify(env, 'compat', actorC, { target: `${b.product || ''} ${b.product_version || ''}`.trim() || '\uB9E4\uD2B8\uB9AD\uC2A4' }));
           return corsResponse({ ok: true, id: r.meta?.last_row_id });
         } catch (e) { return corsResponse({ ok: false, message: '\uC800\uC7A5 \uC2E4\uD328: ' + e.message }, 500); }
       }

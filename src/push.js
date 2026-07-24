@@ -7,6 +7,7 @@ export const PUSH_EVENTS = {
   link:      { label: '업무 링크 등록',    defTitle: '🔗 새 업무 링크',     defBody: "{user}님이 '{target}' 등록", page: 'links' },
   knowledge: { label: '팀 노하우 등록',    defTitle: '📚 새 팀 노하우',     defBody: "{user}님이 '{target}' 등록", page: 'knowledge' },
   eos:       { label: '라이선스 등록', defTitle: '⏳ 라이선스 등록', defBody: "{user}님이 '{target}' 등록", page: 'eos' },
+  compat:    { label: '매트릭스 변경 감지(AI)', defTitle: '📋 매트릭스 변경 감지', defBody: "AI가 '{target}' 초안 등록 — 확정 검토 필요", page: 'compat' },
 };
 
 export function u8ToB64url(u){ let s=''; for(let i=0;i<u.length;i++)s+=String.fromCharCode(u[i]); return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
