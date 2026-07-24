@@ -134,7 +134,9 @@ export default {
       // 일반 유저용 개인 AI 사용량 (팀 통계 미포함)
       
       if (path === '/links/kb/import' && request.method === 'POST') {
-        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: 'Forbidden' }, 403);
+        // 관리자 세션 또는 분석 토큰(초기 대량 수집·증분 트리거)
+        const anaOkK = !!env.ANALYSIS_WRITE_TOKEN && (request.headers.get('x-analysis-token') || '') === env.ANALYSIS_WRITE_TOKEN;
+        if (!anaOkK && (!hasSession || !await isAdmin(env, user))) return corsResponse({ ok: false, message: 'Forbidden' }, 403);
         const years = Math.max(1, Math.min(10, parseInt(url.searchParams.get('years') || '5', 10) || 5));
         const limit = Math.max(1, Math.min(50, parseInt(url.searchParams.get('limit') || '20', 10) || 20));
         const cursor = url.searchParams.get('cursor') || '';
@@ -1254,5 +1256,7 @@ export default {
       const kstDay = _kst.toISOString().slice(0, 10);
       ctx.waitUntil(buildDailySnapshot(env, kstDay));
     } catch (_) {}
+    // 자료실 KB 증분 수집 (매일, 무료 모드: 시드+기존링크+Jira 참조 KB, 2년 컷오프·중복 자동 제거)
+    try { ctx.waitUntil(importRecentKBLinks(env, 'system(cron)', 2, { limit: 120 })); } catch (_) {}
   },
 };
