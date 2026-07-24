@@ -69,21 +69,7 @@ async function loadSharedVTHistory(force=false){
   try{const res=await api('/vt/history'); VT_HISTORY=res.history||[]; VT_HISTORY_SHARED_LOADED=true;}catch(e){VT_HISTORY=VT_HISTORY||[];}
   renderVTHistory();
 }
-async function lookupVT(){
-  const input=document.getElementById('vt-hash'); const hash=input.value.trim(); const resBox=document.getElementById('vt-result');
-  if(!hash){resBox.innerHTML='<div class="alert warn">해시값을 입력하세요.</div>';return;}
-  resBox.innerHTML='<div class="empty">VirusTotal 조회 중...</div>';
-  try{
-    const data=await api('/vt/lookup?hash='+encodeURIComponent(hash));
-    const attrs=data.data?.attributes||{}; const stats=attrs.last_analysis_stats||{};
-    const total=(stats.harmless||0)+(stats.malicious||0)+(stats.suspicious||0)+(stats.undetected||0);
-    const danger=(stats.malicious||0)+(stats.suspicious||0);
-    resBox.innerHTML=`<div class="vt-card"><h3>${danger>0?'⚠️ 탐지됨':'✅ 미탐지'}</h3><div class="vt-stats"><div><span>악성</span><b>${stats.malicious||0}</b></div><div><span>의심</span><b>${stats.suspicious||0}</b></div><div><span>정상</span><b>${stats.harmless||0}</b></div><div><span>전체</span><b>${total}</b></div></div><p style="margin-top:12px;color:var(--text2);font-size:12px">${escapeHtml(attrs.meaningful_name||attrs.type_description||'파일 정보 없음')}</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px"><a class="btn" target="_blank" rel="noopener" href="https://www.virustotal.com/gui/file/${encodeURIComponent(hash)}">VirusTotal에서 보기</a><a class="btn" target="_blank" rel="noopener" href="https://symsubmit.symantec.com/">제조사 신고</a></div></div>`;
-    await loadSharedVTHistory(true);
-  }catch(e){
-    resBox.innerHTML=`<div class="alert error">조회 실패: ${escapeHtml(e.message||String(e))}</div><div class="u-mt-10px"><a class="btn" target="_blank" rel="noopener" href="https://symsubmit.symantec.com/">제조사 신고</a></div>`;
-  }
-}
+
 /* ── v1.5.5 hotfix: AI usage card polish + Jira render routing ───────────── */
 function injectV155Style(){
   if(document.getElementById('v155-style'))return;
@@ -212,6 +198,19 @@ function injectV155Style(){
   `;
   document.head.appendChild(st);
 }
+let CUST_ALIAS_MAP=null;
+async function loadCustomerAliases(){
+  // D1 customers의 별칭을 정식명으로 접기(워커 classifyBracket과 동일 규칙) — 우리FIS→우리에프아이에스 등
+  try{
+    const d=await hubApi('/customers');
+    const m={};
+    (d.items||[]).forEach(c=>(c.aliases||[]).forEach(a=>{if(a&&a!==c.name)m[a]=c.name;}));
+    CUST_ALIAS_MAP=m;
+    normalizeAllIssueAliases();
+    if(typeof renderCurrent==='function')renderCurrent();
+  }catch(_){CUST_ALIAS_MAP={};}
+}
+function canonCustomer(n){return (CUST_ALIAS_MAP&&CUST_ALIAS_MAP[n])||n;}
 function normalizeIssueAliases(i){
   if(!i)return i;
   i.summary=i.summary||i.title||'';
@@ -220,6 +219,10 @@ function normalizeIssueAliases(i){
   i.date=i.date||i.created||'';
   i.updated=i.updated||i.updatedAt||i.date||i.created||'';
   i.age=daysSince(i.date||i.created);
+  if(CUST_ALIAS_MAP){
+    if(i.customer)i.customer=canonCustomer(i.customer);
+    if(Array.isArray(i.customers)&&i.customers.length)i.customers=i.customers.map(canonCustomer);
+  }
   return i;
 }
 const normalizeJiraIssueV154=normalizeJiraIssue;

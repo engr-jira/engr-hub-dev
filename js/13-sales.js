@@ -6,7 +6,7 @@ let SALES_DATA=null, SALES_LOADING=false;
 const SALES_STATUS=['미착수','협의중','견적발송','계약완료','실패'];
 const SALES_STATUS_COLOR={'미착수':'#94a3b8','협의중':'#fbbf24','견적발송':'#34d399','계약완료':'#2de6b8','실패':'#f87171'};
 
-function salesNoteKey(c,p){return String(c||'')+'||'+String(p||'');}
+function salesNoteKey(c,p){return String(c||'')+'||'+String(p||'').slice(0,120);}  // 서버가 product를 120자 절단 저장 — 키 규칙 일치 필수
 
 async function loadSalesOverview(force){
   if(SALES_LOADING)return;
@@ -87,7 +87,7 @@ function renderSalesPage(){
           <select id="se-status-${i}" class="admin-input" style="max-width:130px">${SALES_STATUS.map(s=>`<option${(n.status||'미착수')===s?' selected':''}>${s}</option>`).join('')}</select>
           <input id="se-body-${i}" class="admin-input" style="flex:1;min-width:200px" placeholder="영업 메모" value="${escapeHtml(n.body||'')}">
           <input id="se-next-${i}" type="date" class="admin-input" style="max-width:150px" value="${escapeHtml(n.next_contact||'')}">
-          <button class="btn btn-indigo u-btn-xs" onclick="saveSalesNoteUI(${i},'${escapeHtml(r.customer).replace(/'/g,"\\'")}','${escapeHtml(r.product).replace(/'/g,"\\'")}')">저장</button>
+          <button class="btn btn-indigo u-btn-xs" onclick="saveSalesNoteUI(${i},${jsAttr(r.customer)},${jsAttr(r.product)})">저장</button>
         </div>
       </td></tr>`:''}`;
     }).join('')||'<tr><td colspan="7" class="u-empty">라이선스 데이터가 없습니다</td></tr>'}</tbody>
@@ -134,7 +134,7 @@ function toggleSalesEdit(i){
 
 async function saveSalesNoteUI(i,customer,product){
   try{
-    const body={customer,product,
+    const body={customer,product:String(product).slice(0,120),
       status:document.getElementById('se-status-'+i)?.value||'',
       body:document.getElementById('se-body-'+i)?.value||'',
       next_contact:document.getElementById('se-next-'+i)?.value||''};

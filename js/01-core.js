@@ -118,7 +118,14 @@ function fd(d){return d?new Date(d).toLocaleDateString('ko-KR',{year:'2-digit',m
 function fdt(d){if(!d)return '-';const dd=(typeof d==='number')?new Date(d):new Date(d);return dd.toLocaleString('ko-KR',{year:'2-digit',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}
 function daysSince(d){return d?Math.floor((Date.now()-new Date(d))/86400000):0;}
 function age(d){return daysSince(d);}
-function daysUntil(d){return d?Math.ceil((new Date(d)-Date.now())/86400000):0;}
+function daysUntil(d){
+  // date-only 기준(로컬 자정) — UTC 파싱 혼용으로 시각에 따라 D-day가 1일 흔들리던 문제 방지
+  if(!d)return 0;
+  const t=new Date(String(d).slice(0,10)+'T00:00:00');
+  if(isNaN(t))return 0;
+  const n=new Date();n.setHours(0,0,0,0);
+  return Math.round((t-n)/86400000);
+}
 function toast(msg,err){const t=document.getElementById('toast');t.textContent=msg;t.className=err?'err':'';t.style.display='block';setTimeout(()=>t.style.display='none',2800);}
 function copyText(text){navigator.clipboard.writeText(text).then(()=>toast('복사됐어요!')).catch(()=>{});}
 function encUser(n){try{return btoa(unescape(encodeURIComponent(n)));}catch{return btoa(n);}}

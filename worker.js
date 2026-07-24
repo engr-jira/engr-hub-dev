@@ -37,8 +37,15 @@ export default {
 
     try {
       //
-      if (path === '/debug') {
-        return corsResponse({ ok: true, ts: new Date().toISOString(), worker: 'engr-hub-proxy', model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast' });
+      // 고객사 정식명·별칭 (D1 customers) — 프론트 별칭 정규화용
+      if (path === '/customers' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        let items = [];
+        try {
+          const r = await env.DB.prepare('SELECT name, aliases FROM customers WHERE active=1').all();
+          items = (r.results || []).map(x => { let a = []; try { a = JSON.parse(x.aliases || '[]'); } catch (_) {} return { name: x.name, aliases: a }; });
+        } catch (_) {}
+        return corsResponse({ ok: true, items });
       }
 
       //

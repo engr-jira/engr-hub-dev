@@ -247,13 +247,23 @@ function enterApp(){
   renderSidebarCompact();
   const ai=document.getElementById('ai-status');if(ai){ai.textContent='준비됨';ai.className='h-state ok';}
   startSessionTimer();
-  syncJira();
+  const salesUI=(typeof USER_ROLE!=='undefined'&&USER_ROLE==='sales');
+  if(!salesUI){
+    // 초기 동기화 동안 랜딩(대시보드)이 빈 화면으로 보이지 않게 플레이스홀더
+    const kw=document.getElementById('kpi-wrap');
+    if(kw&&!kw.innerHTML.trim())kw.innerHTML='<div class="loading" style="grid-column:1/-1;padding:18px 4px">Jira 데이터 불러오는 중...</div>';
+    const dl=document.getElementById('dash-list');
+    if(dl&&!dl.innerHTML.trim())dl.innerHTML='<div class="empty">Jira 동기화 중...</div>';
+    syncJira();
+    renderVTHistory();
+    loadLinks();
+    loadKnowledge();
+    if(typeof loadCustomerAliases==='function')loadCustomerAliases();
+  }
+  // sales 역할은 서버 화이트리스트가 /jira·/links·/knowledge·/vt를 차단 — 호출 자체를 생략(403 오탐 토스트 방지)
   loadSyncMeta();
-  renderVTHistory();
   loadEOS();
-  loadLinks();
   loadEosWarnDays();
-  loadKnowledge();
 }
 injectV154Style();injectV155Style();try{renderSidebarCompact();}catch(e){console.warn('sidebar init failed',e);}
 
