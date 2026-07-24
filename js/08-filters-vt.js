@@ -362,7 +362,7 @@ function respSpeedRows(){
       const first=v.firstN?Math.round(v.firstSum/v.firstN*10)/10:null;
       const col=avg===null?'var(--text3)':avg>=7?'#f87171':avg>=4?'#fbbf24':'#2de6b8';
       const pct=avg===null?0:Math.max(4,Math.round(avg/maxAvg*100));
-      const sub=[`진행 ${v.open} · 완료 ${v.n-v.open}`,v.needReply?`<span style="color:#f87171;font-weight:700">팀 회신 필요 ${v.needReply}건</span>`:'',first!==null?`최초응답 ${first}일`:''].filter(Boolean).join(' · ');
+      const sub=[`진행 ${v.open} · 완료 ${v.n-v.open}`,v.needReply?`<span style="color:#f87171;font-weight:700">팀 회신 필요 ${v.needReply}건</span>`:'',first!==null?`접수→첫 기록 평균 ${first}일`:''].filter(Boolean).join(' · ');
       return `<div style="padding:7px 2px;border-bottom:1px solid var(--border);cursor:pointer" onclick="setCaseNavigationFilter({assignee:${jsAttr(a)}})">
         <div style="display:grid;grid-template-columns:minmax(0,1fr) 46px 64px;gap:8px;align-items:center">
           <span style="font-weight:700;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(a)}</span>
