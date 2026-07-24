@@ -319,8 +319,40 @@ function completionRateRows(list){
     .filter(([,v])=>v.t>=5).sort((a,b)=>(b[1].d/b[1].t)-(a[1].d/a[1].t)).slice(0,6);
   return grouped.map(([a,v])=>`<div class="dash-list-row"><span class="title">${escapeHtml(a)}</span><b>${Math.round(v.d/v.t*100)}%</b></div>`).join('')||'<div class="u-fs12px-ctext3">데이터 없음</div>';
 }
+let RESP_METRICS=null;
+async function loadRespMetrics(){
+  try{ const d=await hubApi('/analysis/resp'); RESP_METRICS=d.items||[]; }catch(_){ RESP_METRICS=[]; }
+  const cs=document.getElementById('rank-case-speed');
+  const pg=document.getElementById('page-dash');
+  if(cs&&pg&&pg.classList.contains('active'))cs.innerHTML=caseSpeedRows(getCaseIssueBase());
+}
+function respSpeedRows(){
+  // 코멘트 기반 (스케줄 분석 산출): avg_resp = 최초응답+코멘트 간격+현재까지 무응답 구간의 평균
+  const by={};
+  (RESP_METRICS||[]).filter(r=>r.is_case).forEach(r=>{
+    const a=r.assignee||''; if(!a||a==='-')return;
+    const t=by[a]=by[a]||{n:0,respSum:0,respN:0,firstSum:0,firstN:0,noCmt:0};
+    t.n++;
+    if(r.avg_resp!=null){t.respSum+=r.avg_resp;t.respN++;}
+    if(r.first_resp!=null){t.firstSum+=r.first_resp;t.firstN++;}
+    if(!r.comments)t.noCmt++;
+  });
+  return Object.entries(by)
+    .sort((a,b)=>(b[1].respN?b[1].respSum/b[1].respN:999)-(a[1].respN?a[1].respSum/a[1].respN:999))
+    .slice(0,8)
+    .map(([a,v])=>{
+      const avg=v.respN?Math.round(v.respSum/v.respN*10)/10:null;
+      const first=v.firstN?Math.round(v.firstSum/v.firstN*10)/10:null;
+      const col=avg===null?'var(--text3)':avg>=7?'#f87171':avg>=4?'#fbbf24':'#2de6b8';
+      const sub=[`케이스 ${v.n}건`,first!==null?`최초응답 평균 ${first}일`:'',v.noCmt?`코멘트 없음 ${v.noCmt}건`:''].filter(Boolean).join(' · ');
+      return `<div class="dash-list-row" onclick="setCaseNavigationFilter({assignee:${jsAttr(a)},status:'미해결'})"><span class="title">${escapeHtml(a)}<br><small style="color:var(--text3);font-size:10px">${escapeHtml(sub)}</small></span><b style="color:${col};white-space:nowrap">${avg===null?'-':avg+'일'}</b></div>`;
+    }).join('');
+}
 function caseSpeedRows(list){
-  // 담당자별 케이스 관리 속도 — updated(마지막 갱신) 기반. 코멘트 시각은 경량 동기화에 없어 갱신일 단위 근사.
+  // 1순위: 코멘트 기반 응답 지표(D1 issue_resp) / 폴백: updated(마지막 갱신) 기반
+  if(RESP_METRICS===null){ RESP_METRICS=[]; try{loadRespMetrics();}catch(_){} }
+  const respRows=respSpeedRows();
+  if(respRows)return respRows;
   const today=new Date(); today.setHours(0,0,0,0);
   const dayDiff=(a,b)=>Math.max(0,Math.round((a-b)/86400000));
   const by={};

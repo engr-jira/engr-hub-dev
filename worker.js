@@ -1099,6 +1099,17 @@ export default {
             await env.DB.prepare("INSERT OR REPLACE INTO issue_analysis (issue_key, built_at, day, payload_json) VALUES (?, ?, ?, ?)").bind(it.key, builtAt, day, JSON.stringify(it.payload)).run();
             issueN++;
           }
+          // \uB2F4\uB2F9\uC790 \uC751\uB2F5 \uC9C0\uD45C (\uCF54\uBA58\uD2B8 \uAE30\uBC18, \uC2A4\uCF00\uC904 \uC5D4\uC9C4\uC774 \uACC4\uC0B0\uD574 \uC804\uB2EC)
+          try {
+            if (Array.isArray(body.resp) && body.resp.length) {
+              await env.DB.prepare("CREATE TABLE IF NOT EXISTS issue_resp (issue_key TEXT PRIMARY KEY, assignee TEXT, is_case INTEGER, first_resp REAL, avg_resp REAL, last_comment REAL, comments INTEGER, computed_at INTEGER)").run();
+              for (const r of body.resp) {
+                if (!r || !/^[A-Z][A-Z0-9]*-\d+$/.test(r.key || '')) continue;
+                await env.DB.prepare('INSERT INTO issue_resp (issue_key, assignee, is_case, first_resp, avg_resp, last_comment, comments, computed_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(issue_key) DO UPDATE SET assignee=excluded.assignee, is_case=excluded.is_case, first_resp=excluded.first_resp, avg_resp=excluded.avg_resp, last_comment=excluded.last_comment, comments=excluded.comments, computed_at=excluded.computed_at')
+                  .bind(r.key, String(r.assignee || ''), r.isCase ? 1 : 0, r.firstRespDays ?? null, r.avgRespDays ?? null, r.lastCommentDays ?? null, Number(r.comments) || 0, builtAt).run();
+              }
+            }
+          } catch (_) {}
           const cutoff = Date.now() - 180 * 86400000;   // \uBCF4\uC874 180\uC77C
           try { await env.DB.prepare('DELETE FROM issue_analysis WHERE built_at < ?').bind(cutoff).run(); await env.DB.prepare('DELETE FROM analysis_snapshot WHERE built_at < ?').bind(cutoff).run(); } catch (_) {}
           try {
@@ -1127,6 +1138,12 @@ export default {
           }
         } catch (_) {}
         return corsResponse({ ok: true, built_at: builtAt, team, issueKeys: keys });
+      }
+      if (path === '/analysis/resp' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        let items = [];
+        try { const r = await env.DB.prepare('SELECT issue_key AS key, assignee, is_case, first_resp, avg_resp, last_comment, comments, computed_at FROM issue_resp WHERE computed_at >= ?').bind(Date.now() - 30 * 86400000).all(); items = r.results || []; } catch (_) {}
+        return corsResponse({ ok: true, items });
       }
       if (path.startsWith('/analysis/issue/') && request.method === 'GET') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
