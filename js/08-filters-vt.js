@@ -278,6 +278,7 @@ function renderDash(){
   ].join('');
   const handled=document.getElementById('rank-handled'); if(handled)handled.innerHTML=topAssigneeRows(g);
   const rate=document.getElementById('rank-rate'); if(rate)rate.innerHTML=completionRateRows(g);
+  const cs=document.getElementById('rank-case-speed'); if(cs)cs.innerHTML=caseSpeedRows(c);
   const chart=document.getElementById('trend-chart'); if(chart)chart.innerHTML=trendSvg(g,c);
   const dl=document.getElementById('dash-list');
   if(dl)dl.innerHTML=g.sort((a,b)=>issueDateValue(b)-issueDateValue(a)).slice(0,10).map(issueRowHTML).join('')||'<div class="empty">Jira 새로고침 후 최근 이슈가 표시됩니다.</div>';
@@ -317,6 +318,38 @@ function completionRateRows(list){
   const grouped=Object.entries(list.reduce((m,i)=>{const a=i.assignee||'-';m[a]=m[a]||{t:0,d:0};m[a].t++;if(isDoneStatus(i.status))m[a].d++;return m;},{}))
     .filter(([,v])=>v.t>=5).sort((a,b)=>(b[1].d/b[1].t)-(a[1].d/a[1].t)).slice(0,6);
   return grouped.map(([a,v])=>`<div class="dash-list-row"><span class="title">${escapeHtml(a)}</span><b>${Math.round(v.d/v.t*100)}%</b></div>`).join('')||'<div class="u-fs12px-ctext3">데이터 없음</div>';
+}
+function caseSpeedRows(list){
+  // 담당자별 케이스 관리 속도 — updated(마지막 갱신) 기반. 코멘트 시각은 경량 동기화에 없어 갱신일 단위 근사.
+  const today=new Date(); today.setHours(0,0,0,0);
+  const dayDiff=(a,b)=>Math.max(0,Math.round((a-b)/86400000));
+  const by={};
+  (list||[]).forEach(i=>{
+    const a=i.assignee||'';
+    if(!a||a==='-')return;
+    const t=by[a]=by[a]||{open:0,idleSum:0,idleMax:0,idleKey:'',doneN:0,doneSum:0};
+    const upd=new Date((i.updated||i.date)+'T00:00:00');
+    if(isNaN(upd))return;
+    if(isOpenStatus(i.status)){
+      const idle=dayDiff(today,upd);
+      t.open++; t.idleSum+=idle;
+      if(idle>t.idleMax){t.idleMax=idle;t.idleKey=i.caseNum||i.key;}
+    }else{
+      const cre=new Date((i.date||'')+'T00:00:00');
+      if(!isNaN(cre)){t.doneN++;t.doneSum+=dayDiff(upd,cre);}
+    }
+  });
+  const rows=Object.entries(by)
+    .sort((a,b)=>(b[1].open?b[1].idleSum/b[1].open:-1)-(a[1].open?a[1].idleSum/a[1].open:-1))
+    .slice(0,8)
+    .map(([a,v])=>{
+      const avgIdle=v.open?Math.round(v.idleSum/v.open):null;
+      const avgDone=v.doneN?Math.round(v.doneSum/v.doneN):null;
+      const col=avgIdle===null?'var(--text3)':avgIdle>=7?'#f87171':avgIdle>=4?'#fbbf24':'#2de6b8';
+      const sub=[v.open?`진행 ${v.open}건`:'',v.open&&v.idleMax>=7?`최장 ${v.idleMax}일(${v.idleKey})`:'',avgDone!==null?`완료평균 ${avgDone}일`:''].filter(Boolean).join(' · ');
+      return `<div class="dash-list-row" onclick="setCaseNavigationFilter({assignee:${jsAttr(a)},status:'미해결'})"><span class="title">${escapeHtml(a)}<br><small style="color:var(--text3);font-size:10px">${escapeHtml(sub)}</small></span><b style="color:${col};white-space:nowrap">${avgIdle===null?'진행 없음':avgIdle+'일'}</b></div>`;
+    });
+  return rows.join('')||'<div class="u-fs12px-ctext3">케이스 데이터 없음</div>';
 }
 function trendSvg(g,c){
   const keys=[];
