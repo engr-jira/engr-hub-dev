@@ -206,14 +206,14 @@ main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
 .rp-row:last-child{border-bottom:none}
 .rp-row span:first-child{color:var(--text3);width:72px;flex-shrink:0}
 .rp-row span:last-child{color:var(--text);flex:1}
-.rp-desc{font-size:12.5px;color:var(--text2);line-height:1.7;background:rgba(255,255,255,.02);border-radius:10px;padding:14px;margin-bottom:12px;max-height:280px;overflow-y:auto;white-space:pre-wrap;border:1px solid var(--border)}
+.rp-desc{font-size:12.5px;color:var(--text2);line-height:1.7;background:rgba(255,255,255,.02);border-radius:10px;padding:14px;margin-bottom:12px;max-height:280px;overflow-y:auto;white-space:pre-wrap;border:1px solid var(--border);overflow-wrap:anywhere}
 .rp-desc code{background:rgba(99,102,241,.12);color:var(--accent3);padding:2px 6px;border-radius:4px;font-size:11px}
 .rp-desc strong{color:var(--text);font-weight:700}
 .rp-attach-item{display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);border-radius:8px;font-size:11px;color:var(--cyan);margin-bottom:4px}
 .rp-comments{margin-bottom:12px}
 .rp-comment-item{padding:10px 12px;background:rgba(255,255,255,.02);border-left:3px solid var(--accent2);border-radius:0 8px 8px 0;margin-bottom:6px;font-size:11.5px}
 .rp-comment-author{font-size:10px;color:var(--accent3);font-weight:700;margin-bottom:4px}
-.rp-comment-body{color:var(--text2);line-height:1.6;white-space:pre-wrap}
+.rp-comment-body{color:var(--text2);line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
 .item-comments{margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
 .item-comments h4{font-size:11px;color:var(--text3);font-weight:900;margin-bottom:8px}
 .item-comment{background:rgba(255,255,255,.035);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:0 10px 10px 0;padding:9px 11px;margin-bottom:7px}
@@ -1736,6 +1736,10 @@ body.is-sales #nav-sales{display:flex!important}
 .ia-chip{font-size:12px;font-weight:700;padding:6px 14px;border-radius:999px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;font-family:inherit;transition:all .15s}
 .ia-chip:hover{color:var(--text2);border-color:var(--border2);background:rgba(255,255,255,.04)}
 .ia-chip.on{color:var(--accent3);border-color:rgba(99,102,241,.45);background:rgba(99,102,241,.12)}
+/* 케이스 행은 pri 셀이 없어 4열 — 5열 그리드에 놓이면 제목이 auto 칸에서 넘침 */
+#case-list .issue-main{grid-template-columns:auto auto minmax(0,1fr) auto}
+.rpanel{overflow-x:hidden}
+.rpanel .rp-title,.rpanel .rp-attach-item{overflow-wrap:anywhere}
 @media(max-width:700px){#ia-subtabs{margin:10px 12px 0}}
 </style>
 </head>
@@ -1837,11 +1841,12 @@ body.is-sales #nav-sales{display:flex!important}
       <div id="ai-brief-wrap" style="display:none"></div>
       <div class="chart-grid" id="chart-section"></div>
       <div class="sec-title">팀원 랭킹</div>
-      <div class="chart-grid u-gridtemplatecolumns-repeatautofi">
+      <div class="chart-grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">
         <div class="chart-card"><h4>처리 건수 TOP</h4><div id="rank-handled"></div></div>
         <div class="chart-card"><h4>완료율 (5건 이상)</h4><div id="rank-rate"></div></div>
-        <div class="chart-card"><h4>케이스 응답 속도</h4><div class="u-fs11px-ctext3-mb6px">진행 케이스 평균 응답 간격(담당자 코멘트 기준·스케줄 분석 산출) — 낮을수록 좋음</div><div id="rank-case-speed"></div></div>
-        <div class="chart-card"><h4>월별 추이 (최근 6개월)</h4><svg class="line-chart" id="trend-chart" viewBox="0 0 400 140"></svg></div>
+        <div class="chart-card"><h4>케이스 응답 속도</h4><div class="u-fs11px-ctext3-mb6px">조회 기간 내 담당 케이스(완료+진행) 평균 응답 간격 — 낮을수록 좋음</div><div id="rank-case-speed"></div></div>
+        <div class="chart-card"><h4>🔴 팀 회신 필요 케이스</h4><div class="u-fs11px-ctext3-mb6px">제조사 회신이 도착해 팀 응답 차례인 진행 케이스</div><div id="rank-need-reply"></div></div>
+        <div class="chart-card"><h4>월별 신규 등록</h4><div class="u-fs11px-ctext3-mb6px">최근 6개월 신규 이슈 — <span style="color:#67e8f9">● 일반</span> · <span style="color:#a78bfa">● 케이스</span></div><svg class="line-chart" id="trend-chart" viewBox="0 0 400 140"></svg></div>
       </div>
       <div class="sec-title">최근 이슈 (10건)</div>
       <div id="dash-list" class="issue-list"></div>

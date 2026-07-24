@@ -279,6 +279,7 @@ function renderDash(){
   const handled=document.getElementById('rank-handled'); if(handled)handled.innerHTML=topAssigneeRows(g);
   const rate=document.getElementById('rank-rate'); if(rate)rate.innerHTML=completionRateRows(g);
   const cs=document.getElementById('rank-case-speed'); if(cs)cs.innerHTML=caseSpeedRows(c);
+  const nr=document.getElementById('rank-need-reply'); if(nr)nr.innerHTML=needReplyRows();
   const chart=document.getElementById('trend-chart'); if(chart)chart.innerHTML=trendSvg(g,c);
   const dl=document.getElementById('dash-list');
   if(dl)dl.innerHTML=g.sort((a,b)=>issueDateValue(b)-issueDateValue(a)).slice(0,10).map(issueRowHTML).join('')||'<div class="empty">Jira 새로고침 후 최근 이슈가 표시됩니다.</div>';
@@ -326,6 +327,8 @@ async function loadRespMetrics(){
   if(active==='page-dash'){
     const cs=document.getElementById('rank-case-speed');
     if(cs)cs.innerHTML=caseSpeedRows(getCaseIssueBase());
+    const nr=document.getElementById('rank-need-reply');
+    if(nr)nr.innerHTML=needReplyRows();
   }
   if(active==='page-cases'&&typeof renderCases==='function')renderCases();
 }
@@ -343,11 +346,11 @@ function respSpeedRows(){
   const by={};
   (RESP_METRICS||[]).filter(r=>r.is_case).forEach(r=>{
     const a=r.assignee||''; if(!a||a==='-')return;
-    const t=by[a]=by[a]||{n:0,respSum:0,respN:0,firstSum:0,firstN:0,noCmt:0,needReply:0};
+    const t=by[a]=by[a]||{n:0,open:0,respSum:0,respN:0,firstSum:0,firstN:0,needReply:0};
     t.n++;
+    if(r.is_open)t.open++;
     if(r.avg_resp!=null){t.respSum+=r.avg_resp;t.respN++;}
     if(r.first_resp!=null){t.firstSum+=r.first_resp;t.firstN++;}
-    if(!r.comments)t.noCmt++;
     if(r.ball==='team')t.needReply++;
   });
   return Object.entries(by)
@@ -357,9 +360,22 @@ function respSpeedRows(){
       const avg=v.respN?Math.round(v.respSum/v.respN*10)/10:null;
       const first=v.firstN?Math.round(v.firstSum/v.firstN*10)/10:null;
       const col=avg===null?'var(--text3)':avg>=7?'#f87171':avg>=4?'#fbbf24':'#2de6b8';
-      const sub=[v.needReply?`<span style="color:#f87171;font-weight:700">팀 회신 필요 ${v.needReply}건</span>`:'',first!==null?`최초응답 ${first}일`:'',v.noCmt?`코멘트 없음 ${v.noCmt}건`:''].filter(Boolean).join(' · ');
-      return `<div class="dash-list-row" onclick="setCaseNavigationFilter({assignee:${jsAttr(a)},status:'미해결'})"><span class="title">${escapeHtml(a)}${sub?`<br><small style="color:var(--text3);font-size:10px">${sub}</small>`:''}</span><span style="background:rgba(129,140,248,.14);color:var(--accent3);border-radius:7px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap;margin-right:8px">진행 ${v.n}건</span><b style="color:${col};white-space:nowrap">평균 ${avg===null?'-':avg+'일'}</b></div>`;
+      const sub=[`진행 ${v.open} · 완료 ${v.n-v.open}`,v.needReply?`<span style="color:#f87171;font-weight:700">팀 회신 필요 ${v.needReply}건</span>`:'',first!==null?`최초응답 ${first}일`:''].filter(Boolean).join(' · ');
+      return `<div class="dash-list-row" onclick="setCaseNavigationFilter({assignee:${jsAttr(a)}})"><span class="title">${escapeHtml(a)}<br><small style="color:var(--text3);font-size:10px">${sub}</small></span><span style="background:rgba(129,140,248,.14);color:var(--accent3);border-radius:7px;padding:2px 9px;font-size:11px;font-weight:700;white-space:nowrap;margin-right:8px">${v.n}건</span><b style="color:${col};white-space:nowrap">평균 ${avg===null?'-':avg+'일'}</b></div>`;
     }).join('');
+}
+function needReplyRows(){
+  const cases=getCaseIssueBase();
+  const rows=(RESP_METRICS||[]).filter(r=>r.is_case&&r.ball==='team')
+    .sort((a,b)=>(b.last_comm||0)-(a.last_comm||0))
+    .slice(0,8)
+    .map(r=>{
+      const c=cases.find(x=>x.key===r.key);
+      const label=c?`<b>${escapeHtml(c.caseNum||c.key)}</b> ${escapeHtml(caseCustomerName(c)||'')} @${escapeHtml(c.assignee||r.assignee)}`:`<b>${escapeHtml(r.key)}</b> @${escapeHtml(r.assignee)}`;
+      const days=r.last_comm!=null?Math.round(r.last_comm):null;
+      return `<div class="dash-list-row" onclick="v154GoCaseExact(${jsAttr(r.key)})" title="${escapeHtml(r.ball_note||'')}"><span class="title">${label}</span><b style="color:#f87171;white-space:nowrap">${days===null?'-':days+'일 전'}</b></div>`;
+    });
+  return rows.join('')||'<div style="font-size:12px;color:var(--success);padding:8px 2px">✓ 팀 응답 대기 케이스 없음</div>';
 }
 function caseSpeedRows(list){
   // 1순위: 코멘트 기반 응답 지표(D1 issue_resp) / 폴백: updated(마지막 갱신) 기반
@@ -397,12 +413,15 @@ function caseSpeedRows(list){
   return rows.join('')||'<div class="u-fs12px-ctext3">케이스 데이터 없음</div>';
 }
 function trendSvg(g,c){
+  // 월별 신규 등록 건수 — 일반(청록)·케이스(보라) 2선 분리
   const keys=[];
   for(let n=5;n>=0;n--){const d=new Date();d.setMonth(d.getMonth()-n);keys.push(d.toISOString().slice(0,7));}
   const vals=keys.map(k=>({k,g:g.filter(i=>String(i.date).slice(0,7)===k).length,c:c.filter(i=>String(i.date).slice(0,7)===k).length}));
-  const max=Math.max(1,...vals.map(v=>v.g+v.c));
-  const pts=vals.map((v,idx)=>`${30+idx*68},${118-(v.g+v.c)/max*90}`).join(' ');
-  return `<polyline points="${pts}" fill="none" stroke="#67e8f9" stroke-width="3"/><g>${vals.map((v,idx)=>`<circle cx="${30+idx*68}" cy="${118-(v.g+v.c)/max*90}" r="4" fill="#2de6b8"/><text x="${30+idx*68}" y="135" text-anchor="middle" fill="#7b89aa" font-size="9">${v.k.slice(5)}</text>`).join('')}</g>`;
+  const max=Math.max(1,...vals.map(v=>Math.max(v.g,v.c)));
+  const y=n=>118-n/max*90;
+  const x=idx=>30+idx*68;
+  const line=(sel,color)=>`<polyline points="${vals.map((v,i)=>`${x(i)},${y(sel(v))}`).join(' ')}" fill="none" stroke="${color}" stroke-width="2.5"/>`+vals.map((v,i)=>`<circle cx="${x(i)}" cy="${y(sel(v))}" r="3.5" fill="${color}"/><text x="${x(i)}" y="${y(sel(v))-7}" text-anchor="middle" fill="${color}" font-size="9">${sel(v)}</text>`).join('');
+  return line(v=>v.g,'#67e8f9')+line(v=>v.c,'#a78bfa')+`<g>${vals.map((v,i)=>`<text x="${x(i)}" y="135" text-anchor="middle" fill="#7b89aa" font-size="9">${v.k.slice(5)}</text>`).join('')}</g>`;
 }
 function renderCurrent(){
   normalizeAllIssueAliases();
