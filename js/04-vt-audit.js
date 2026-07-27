@@ -190,7 +190,7 @@ function renderVtRich(rec){
       <div class="vt-grid">
         <div class="vt-cell"><div class="vt-cell-label">악성</div><div class="vt-cell-val u-c-f87171">${stats.malicious||0}</div></div>
         <div class="vt-cell"><div class="vt-cell-label">의심</div><div class="vt-cell-val u-c-fbbf24">${stats.suspicious||0}</div></div>
-        <div class="vt-cell"><div class="vt-cell-label">안전</div><div class="vt-cell-val" style="color:#2FB085">${stats.harmless||0}</div></div>
+        <div class="vt-cell"><div class="vt-cell-label">안전</div><div class="vt-cell-val" style="color:var(--success)">${stats.harmless||0}</div></div>
         <div class="vt-cell"><div class="vt-cell-label">미탐지</div><div class="vt-cell-val">${stats.undetected||0}</div></div>
         ${metaCells}
       </div>
@@ -370,7 +370,7 @@ async function loadUsageStats(){
     const now=Date.now();
     const rows=Object.entries(feat).map(([name,v])=>({name,...v})).sort((a,b)=>a.count-b.count||b.last-a.last);
     const fmtLast=ts=>{ if(!ts)return '—'; const dd=Math.floor((now-ts)/86400000); return dd<=0?'오늘':(dd+'일 전'); };
-    const badge=v=>{ if(v.count===0)return '<span style="color:#E06A63;font-weight:700">🔴 컷후보</span>'; if(v.users<=1)return '<span class="u-cfbbf24-fw700">🟡 1인</span>'; return ''; };
+    const badge=v=>{ if(v.count===0)return '<span style="color:var(--danger);font-weight:700">🔴 컷후보</span>'; if(v.users<=1)return '<span class="u-cfbbf24-fw700">🟡 1인</span>'; return ''; };
     wrap.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px">
       <thead><tr style="color:var(--text3);text-align:left;border-bottom:1px solid var(--border)"><th class="u-p-6px4px">기능</th><th class="u-p6px4px-taright">호출수</th><th class="u-p6px4px-taright">사용자</th><th class="u-p6px4px-taright">최근</th><th class="u-p-6px4px">판정</th></tr></thead>
       <tbody>${rows.map(v=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 4px;color:var(--text)">${escapeHtml(v.name)}</td><td style="padding:6px 4px;text-align:right;color:var(--text)">${v.count}</td><td class="u-p6px4px-taright-ctext3">${v.users?('≥'+v.users):'—'}</td><td class="u-p6px4px-taright-ctext3">${fmtLast(v.last)}</td><td class="u-p-6px4px">${badge(v)}</td></tr>`).join('')}</tbody></table>`;

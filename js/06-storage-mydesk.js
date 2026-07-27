@@ -125,8 +125,8 @@ function applyV151Dom(){
     st.id='v151-style';
     st.textContent=`
       .kpi.clickable{cursor:pointer;transition:transform .12s,border-color .12s,background .12s}.kpi.clickable:hover{transform:translateY(-1px);border-color:rgba(239,131,84,.55);background:rgba(239,131,84,.08)}
-      .case-chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 7px;font-size:10px;font-weight:700;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#C6BBAF;margin-left:4px}
-      .case-chip.done{color:#3FBE92;background:rgba(63,190,146,.12);border-color:rgba(63,190,146,.25)}.case-chip.open{color:#E8B23D;background:rgba(252,211,77,.10);border-color:rgba(252,211,77,.25)}
+      .case-chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 7px;font-size:10px;font-weight:700;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:var(--text2);margin-left:4px}
+      .case-chip.done{color:var(--success);background:rgba(63,190,146,.12);border-color:rgba(63,190,146,.25)}.case-chip.open{color:var(--warn);background:rgba(252,211,77,.10);border-color:rgba(252,211,77,.25)}
       .jump-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.jump-row button{width:auto;padding:7px 12px;font-size:11px}
       .case-ai-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:8px}.case-ai-grid .btn{width:100%;font-size:11px;padding:8px 10px}
     `;
@@ -399,7 +399,7 @@ function renderOpsFocus(){
   const wrap=document.getElementById('ops-focus');
   if(!wrap)return;
   const sec=(title,items,empty,mapper)=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="font-size:12px;font-weight:800;color:#F7E7DA;margin-bottom:8px">${title}</div>${items.length?items.map(mapper).join(''):`<div style="font-size:11px;color:var(--text3);padding:8px">${empty}</div>`}</div>`;
-  wrap.innerHTML=`<div class="chart-card"><div class="chart-title">운영 포커스</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">${sec('7일 이상 미완료 일반 이슈',overdue,'대상 없음',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})"><b class="u-c-fcd34d">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#E06A63">${daysSince(i.date)}일</span></div>`)}${sec('High 이상 미완료 일반 이슈',highOpen,'대상 없음',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'high',label:'High 이상 미완료 일반 이슈'}})"><b class="u-c-fca5a5">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:#EC9089">${i.pri}</span></div>`)}${sec('메타 미완성 (고객사·레이블·범주·기한)',metaInc,'모두 입력됨 ✓',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'incomplete',label:'메타 미완성 일반 이슈'}})"><b class="u-c-fbbf24">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,38)} <span style="float:right;color:#E0A32E">${metaMissingFields(i).join('·')}</span></div>`)}${sec('60일 내 라이선스 만료',nearEos,'대상 없음',x=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="showPage('eos',document.getElementById('nav-eos'));document.getElementById('eos-q').value=${jsAttr(x.customer)};PAGE_STATE.eos=1;renderEosList();"><b class="u-c-fcd34d">${escapeHtml(x.customer)}</b> ${escapeHtml(x.productDesc||x.product||'')} <span style="float:right;color:#E8B23D">D-${daysUntil(x.expireDate)}</span></div>`)}</div></div>`;
+  wrap.innerHTML=`<div class="chart-card"><div class="chart-title">운영 포커스</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">${sec('7일 이상 미완료 일반 이슈',overdue,'대상 없음',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})"><b class="u-c-fcd34d">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:var(--danger)">${daysSince(i.date)}일</span></div>`)}${sec('High 이상 미완료 일반 이슈',highOpen,'대상 없음',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'high',label:'High 이상 미완료 일반 이슈'}})"><b class="u-c-fca5a5">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:var(--danger)">${i.pri}</span></div>`)}${sec('메타 미완성 (고객사·레이블·범주·기한)',metaInc,'모두 입력됨 ✓',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'incomplete',label:'메타 미완성 일반 이슈'}})"><b class="u-c-fbbf24">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,38)} <span style="float:right;color:var(--warn)">${metaMissingFields(i).join('·')}</span></div>`)}${sec('60일 내 라이선스 만료',nearEos,'대상 없음',x=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="showPage('eos',document.getElementById('nav-eos'));document.getElementById('eos-q').value=${jsAttr(x.customer)};PAGE_STATE.eos=1;renderEosList();"><b class="u-c-fcd34d">${escapeHtml(x.customer)}</b> ${escapeHtml(x.productDesc||x.product||'')} <span style="float:right;color:var(--warn)">D-${daysUntil(x.expireDate)}</span></div>`)}</div></div>`;
 }
 
 
@@ -414,7 +414,7 @@ function applyV153Dom(){
       .kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;min-height:76px;cursor:pointer;transition:.15s}
       .kpi:hover{border-color:var(--accent2);transform:translateY(-1px)}
       .kpi .num{font-size:28px;font-weight:800;color:#FBF4EA;line-height:1}
-      .kpi .label{font-size:11px;color:#C6BBAF;margin-top:7px;font-weight:700}
+      .kpi .label{font-size:11px;color:var(--text2);margin-top:7px;font-weight:700}
       .kpi .sub{font-size:10px;color:var(--text3);margin-top:5px}
       .dash-alert{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px;padding:13px 16px;border-radius:16px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(90deg,rgba(251,191,36,.1),rgba(194,78,44,.08))}
       .dash-section{margin-top:14px}
@@ -425,8 +425,8 @@ function applyV153Dom(){
       .dash-list-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;cursor:pointer}
       .dash-list-row:last-child{border-bottom:0}
       .dash-list-row:hover .title{color:#FFFDF9}
-      .case-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid rgba(251,191,36,.32);background:rgba(251,191,36,.1);color:#E8B23D;border-radius:999px;padding:2px 7px;font-size:10px;font-weight:800;margin-left:6px;white-space:nowrap}
-      .case-chip.done{border-color:rgba(63,190,146,.32);background:rgba(63,190,146,.1);color:#3FBE92}
+      .case-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid rgba(251,191,36,.32);background:rgba(251,191,36,.1);color:var(--warn);border-radius:999px;padding:2px 7px;font-size:10px;font-weight:800;margin-left:6px;white-space:nowrap}
+      .case-chip.done{border-color:rgba(63,190,146,.32);background:rgba(63,190,146,.1);color:var(--success)}
       .case-chip.open{border-color:rgba(239,131,84,.32);background:rgba(239,131,84,.1);color:#EFA07E}
       .sb-bottom{gap:7px!important;padding-bottom:8px!important}
       .usage-card,.health-card{padding:9px 11px!important;border-radius:12px!important}
@@ -435,10 +435,10 @@ function applyV153Dom(){
       .usage-card .u-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 10px;font-size:10px!important}
       .usage-card .u-muted,.health-card .u-muted{color:var(--text3)}
       .usage-card .u-val,.health-card .u-val{color:#FBF4EA;font-weight:800;text-align:right}
-      .usage-card .u-ok{color:#3FBE92;font-weight:800}.usage-card .u-bad{color:#E06A63;font-weight:800}
+      .usage-card .u-ok{color:var(--success);font-weight:800}.usage-card .u-bad{color:var(--danger);font-weight:800}
       .usage-card .u-foot{font-size:9px;color:var(--text3);text-align:right;margin-top:5px}
-      .health-card .h-row{display:flex;align-items:center;justify-content:space-between;font-size:10px;margin:3px 0;color:#C6BBAF}
-      .health-card .h-state{font-weight:800}.health-card .ok{color:#3FBE92}.health-card .bad{color:#E06A63}.health-card .warn{color:#E8B23D}
+      .health-card .h-row{display:flex;align-items:center;justify-content:space-between;font-size:10px;margin:3px 0;color:var(--text2)}
+      .health-card .h-state{font-weight:800}.health-card .ok{color:var(--success)}.health-card .bad{color:var(--danger)}.health-card .warn{color:var(--warn)}
       .health-card .sync-mini{margin-top:6px;width:100%;padding:6px 8px!important;font-size:10px!important}
       @media(max-height:880px){.usage-card .u-hide-compact,.health-card .u-hide-compact{display:none!important}.usage-card,.health-card{padding:8px 10px!important}.sb-bottom{gap:6px!important}}
       @media(max-width:1400px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.mini-grid{grid-template-columns:1fr}}

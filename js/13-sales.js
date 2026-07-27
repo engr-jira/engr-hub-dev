@@ -36,10 +36,10 @@ function salesRenewalRows(d){
 }
 
 function salesDDayBadge(dd){
-  if(dd<0)return `<span class="badge" style="background:rgba(248,113,113,.15);color:#E06A63">만료 ${-dd}일 경과</span>`;
+  if(dd<0)return `<span class="badge" style="background:rgba(248,113,113,.15);color:var(--danger)">만료 ${-dd}일 경과</span>`;
   if(dd<=30)return `<span class="badge" style="background:rgba(248,113,113,.12);color:#fb923c">D-${dd}</span>`;
-  if(dd<=90)return `<span class="badge" style="background:rgba(251,191,36,.13);color:#E0A32E">D-${dd}</span>`;
-  return `<span class="badge" style="background:rgba(63,190,146,.12);color:#3FBE92">D-${dd}</span>`;
+  if(dd<=90)return `<span class="badge" style="background:rgba(251,191,36,.13);color:var(--warn)">D-${dd}</span>`;
+  return `<span class="badge" style="background:rgba(63,190,146,.12);color:var(--success)">D-${dd}</span>`;
 }
 
 function salesStatusBadge(st){
@@ -61,8 +61,8 @@ function renderSalesPage(){
   const stale=d.staleDays||14;
 
   const kpi=`<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px">
-    <div class="kpi"><div class="kpi-val" style="color:#E0A32E">${near}</div><div class="kpi-label">90일 내 만료</div></div>
-    <div class="kpi"><div class="kpi-val" style="color:#E06A63">${past}</div><div class="kpi-label">만료 경과</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:var(--warn)">${near}</div><div class="kpi-label">90일 내 만료</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:var(--danger)">${past}</div><div class="kpi-label">만료 경과</div></div>
     <div class="kpi"><div class="kpi-val">${(d.customers||[]).length}</div><div class="kpi-label">대응 중 고객사</div></div>
     <div class="kpi"><div class="kpi-val">${openTotal}</div><div class="kpi-label">진행중 이슈</div></div>
   </div>`;
@@ -95,9 +95,9 @@ function renderSalesPage(){
 
   const custRows=(d.customers||[]).filter(c=>c.name&&c.name!=='None').map(c=>{
     const days=c.lastActivity?daysSince(c.lastActivity.slice(0,10)):999;
-    const judge = days>=stale?`<span class="badge" style="background:rgba(248,113,113,.13);color:#E06A63;font-size:11.5px">정체 ${days}일</span>`
-      : days>=Math.ceil(stale/2)?`<span class="badge" style="background:rgba(251,191,36,.13);color:#E0A32E;font-size:11.5px">주의</span>`
-      : `<span class="badge" style="background:rgba(63,190,146,.12);color:#3FBE92;font-size:11.5px">활발</span>`;
+    const judge = days>=stale?`<span class="badge" style="background:rgba(248,113,113,.13);color:var(--danger);font-size:11.5px">정체 ${days}일</span>`
+      : days>=Math.ceil(stale/2)?`<span class="badge" style="background:rgba(251,191,36,.13);color:var(--warn);font-size:11.5px">주의</span>`
+      : `<span class="badge" style="background:rgba(63,190,146,.12);color:var(--success);font-size:11.5px">활발</span>`;
     const issues=(c.issues||[]).map(i=>{
       const od=i.due&&daysUntil(i.due)<0;
       return `<div style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid rgba(58,52,59,.35)">

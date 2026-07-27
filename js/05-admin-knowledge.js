@@ -196,8 +196,8 @@ function renderCustomers(){
       </div>
       <div class="u-fs11px-ctext3-mb6px">${escapeHtml(prods)}</div>
       <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap">
-        <span style="color:#3FBE92">일반 완료 ${done}</span>
-        <span style="color:#E06A63">일반 미완료 ${open}</span>
+        <span style="color:var(--success)">일반 완료 ${done}</span>
+        <span style="color:var(--danger)">일반 미완료 ${open}</span>
         <span class="u-c-fcd34d">케이스 미완료 ${caseOpen}</span>
         <span class="u-ctext3-mlauto">완료율 ${rate}%</span>
       </div>

@@ -248,7 +248,7 @@ function hubJumpKey(key){
 }
 function briefLinkify(s){
   // 클릭 가능 이슈키 = 청록 칩으로 명확히 구분
-  return escapeHtml(String(s)).replace(/ENGR-\d+/g,m=>`<a style="background:rgba(63,163,196,.14);color:#3FA3C4;font-weight:800;cursor:pointer;text-decoration:none;padding:0 6px;border-radius:8px;border-bottom:1px dashed rgba(63,163,196,.55);white-space:nowrap" onclick="hubJumpKey('${m}')">${m}</a>`);
+  return escapeHtml(String(s)).replace(/ENGR-\d+/g,m=>`<a style="background:rgba(63,163,196,.14);color:var(--cyan);font-weight:800;cursor:pointer;text-decoration:none;padding:0 6px;border-radius:8px;border-bottom:1px dashed rgba(63,163,196,.55);white-space:nowrap" onclick="hubJumpKey('${m}')">${m}</a>`);
 }
 function briefList(text,mode,accent){
   // mode 'line'=줄 단위(포커스), 'sent'=문장 단위(동향·패턴)
@@ -283,8 +283,8 @@ async function renderIssueAnalysis(key,secId){
     if(a.stall_reason)rows.push(`<div class="u-mb-8px"><b class="u-c-fbbf24">⏸ 정체 사유</b><div class="u-ws-prewrap">${escapeHtml(String(a.stall_reason))}</div></div>`);
     const dirArr=Array.isArray(a.direction)?a.direction:(a.direction?[a.direction]:(Array.isArray(a.next_actions)?a.next_actions:[]));
     if(dirArr.length)rows.push(`<div class="u-mb-8px"><b class="u-c-34d399">🧭 추천 진행 방향</b><ol style="margin:4px 0 0 18px;padding:0">${dirArr.map(x=>`<li style="margin-bottom:3px">${escapeHtml(String(x))}</li>`).join('')}</ol></div>`);
-    if(a.reply_draft){const rid=(secId||'ai-analysis-sec')+'-reply';rows.push(`<div class="u-mb-8px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="color:#3FA3C4">✉️ 고객사 회신 멘트</b><button class="btn btn-ghost" style="width:auto;padding:2px 9px;font-size:10px" onclick="copyText(document.getElementById('${rid}').innerText)">📋 복사</button></div><div id="${rid}" style="white-space:pre-wrap;background:rgba(63,163,196,.06);border:1px solid rgba(63,163,196,.2);border-radius:8px;padding:9px 11px;margin-top:5px">${escapeHtml(String(a.reply_draft))}</div></div>`);}
-    if(a.log_findings)rows.push(`<div style="margin-bottom:8px"><b style="color:#3FA3C4">📎 첨부 로그 분석</b><div style="white-space:pre-wrap">${escapeHtml(String(a.log_findings))}</div></div>`);
+    if(a.reply_draft){const rid=(secId||'ai-analysis-sec')+'-reply';rows.push(`<div class="u-mb-8px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="color:var(--cyan)">✉️ 고객사 회신 멘트</b><button class="btn btn-ghost" style="width:auto;padding:2px 9px;font-size:10px" onclick="copyText(document.getElementById('${rid}').innerText)">📋 복사</button></div><div id="${rid}" style="white-space:pre-wrap;background:rgba(63,163,196,.06);border:1px solid rgba(63,163,196,.2);border-radius:8px;padding:9px 11px;margin-top:5px">${escapeHtml(String(a.reply_draft))}</div></div>`);}
+    if(a.log_findings)rows.push(`<div style="margin-bottom:8px"><b style="color:var(--cyan)">📎 첨부 로그 분석</b><div style="white-space:pre-wrap">${escapeHtml(String(a.log_findings))}</div></div>`);
     if(a.due_risk)rows.push(`<div><b class="u-c-f87171">⏰ 기한 리스크</b><div class="u-ws-prewrap">${escapeHtml(String(a.due_risk))}</div></div>`);
     sec.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 6px"><span style="font-size:10px;color:var(--text3);font-weight:700">🤖 AI 분석 · ${fmtBuiltAt(a.built_at)} 기준</span>${btn}</div><div style="font-size:12px;line-height:1.65;color:var(--text2);background:rgba(239,131,84,.06);border:1px solid rgba(239,131,84,.22);border-radius:12px;padding:12px 14px">${rows.join('')||'<span class="u-muted">내용 없음</span>'}</div>`;
   }catch(e){sec.innerHTML=`<div class="u-muted-11">AI 분석 조회 실패: ${escapeHtml(e.message)}</div>`;}
@@ -352,7 +352,7 @@ function renderCompat(){
     <td class="u-ws-nowrap">${r.eos_date?escapeHtml(r.eos_date)+compatDdayHtml(r.eos_date):'-'}</td>
     <td>${r.eol_date?escapeHtml(r.eol_date):'-'}</td>
     <td class="c-note">${escapeHtml(r.note||'')}${r.source?`<span class="cmp-src">출처: ${/^https?:\/\//.test(r.source)?`<a href="${escapeHtml(r.source)}" target="_blank" rel="noopener">${escapeHtml(r.source)}</a>`:escapeHtml(r.source)}</span>`:''}</td>
-    <td>${r.status==='confirmed'?'<span style="color:#3FBE92;white-space:nowrap">✓ 확정</span>':'<span style="background:rgba(251,191,36,.15);color:#E0A32E;padding:1px 8px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap">초안</span>'}</td>
+    <td>${r.status==='confirmed'?'<span style="color:var(--success);white-space:nowrap">✓ 확정</span>':'<span style="background:rgba(251,191,36,.15);color:var(--warn);padding:1px 8px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap">초안</span>'}</td>
     ${admin?`<td class="u-ws-nowrap">${r.status!=='confirmed'?`<button style="${CMB}" onclick="confirmCompat(${r.id})">확정</button>`:''}<button style="${CMB}" onclick="openCompatModal(${r.id})">수정</button><button style="${CMB};color:var(--danger)" onclick="deleteCompat(${r.id})">삭제</button></td>`:''}
   </tr>`).join('');
   wrap.innerHTML=`<table class="data-tbl srt">${head}${body}</table>`;
