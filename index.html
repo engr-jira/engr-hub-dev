@@ -1838,10 +1838,11 @@ body.is-sales #nav-sales{display:flex!important}
     <div class="page active" id="page-dash">
       <div id="overdue-banner-wrap"></div>
       <div id="eos-banner-wrap"></div>
+      <div class="sec-title">현황 요약</div>
       <div class="kpi-grid" id="kpi-wrap"></div>
+      <div id="meta-incomplete-wrap"></div>
       <div class="sec-title">운영 포커스</div>
       <div id="ops-focus" class="ops-focus-grid"></div>
-      <div id="meta-incomplete-wrap"></div>
       <div class="sec-title" id="ai-brief-title" style="display:none">🤖 AI 브리핑</div>
       <div id="ai-brief-wrap" style="display:none"></div>
       <div class="chart-grid" id="chart-section"></div>
@@ -2100,9 +2101,8 @@ body.is-sales #nav-sales{display:flex!important}
           <button class="btn btn-primary" id="vkb-sysreq" onclick="openVendorKb('sysreq')">📄 System Requirements</button>
           <button class="btn" id="vkb-new" onclick="openVendorKb('whatsnew')" style="display:none">✨ What's New</button>
           <button class="btn" id="vkb-notes" onclick="openVendorKb('notes')" style="display:none">📝 릴리스 노트</button>
-          <button class="btn btn-primary compat-admin" style="display:none" onclick="vendorCuratedMatrix()">📋 검증 데이터 불러오기</button>
         </div>
-        <div style="font-size:10.5px;color:var(--text3);margin-top:7px">버전 선택 → 공식 System Requirements 페이지(Broadcom)를 새 탭으로 엽니다. AI 채우기는 추정 매트릭스를 표에 <b>초안</b>으로 넣어줍니다(공식 링크로 검증·확정).</div>
+        <div style="font-size:10.5px;color:var(--text3);margin-top:7px">버전 선택 → 공식 System Requirements 페이지(Broadcom)를 새 탭으로 엽니다. 매트릭스 초안은 <b>매주 월요일 스케줄 분석</b>이 공식 출처에서 자동 수집합니다(관리자가 검토·확정).</div>
       </div>
       <div class="filter-row" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
         <input id="compat-q" placeholder="제품 / OS / 버전 / 비고 검색..." oninput="renderCompat()" style="flex:1;min-width:200px">
