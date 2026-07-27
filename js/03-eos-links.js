@@ -60,7 +60,7 @@ function openEosDetailModal(id){
     <div class="rp-row"><span>Serial Number</span><span>${escapeHtml(it.serial||'-')}</span></div>
     <div class="rp-row"><span>Start Date</span><span>${escapeHtml(it.startDate||'-')}</span></div>
     <div class="rp-row"><span>End Date</span><span>${escapeHtml(it.expireDate||'-')}</span></div>
-    <div class="rp-row"><span>D-Day</span><span style="color:${color};font-weight:900">${!hasEnd?'-':d<0?'만료':`D-${d}`}</span></div>
+    <div class="rp-row"><span>D-Day</span><span style="color:${color};font-weight:800">${!hasEnd?'-':d<0?'만료':`D-${d}`}</span></div>
     <div class="rp-row"><span>등록</span><span>${escapeHtml(it.createdBy||'-')} · ${fd(it.createdAt)}</span></div>
   </div>
   ${it.memo?`<div class="rp-desc u-mt-12px">${escapeHtml(it.memo)}</div>`:''}`,

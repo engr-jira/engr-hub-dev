@@ -24,7 +24,7 @@ async function refreshStorageStats(){
       <div class="storage-summary u-mt-10px">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px">
           <div>
-            <div style="font-size:12px;font-weight:900;color:#F7E7DA">Cloudflare KV Operation 사용량</div>
+            <div style="font-size:12px;font-weight:800;color:#F7E7DA">Cloudflare KV Operation 사용량</div>
             <div class="storage-note">Free 기준 일일 한도: read ${Number(limits.reads||0).toLocaleString()} / write ${Number(limits.writes||0).toLocaleString()} / list ${Number(limits.lists||0).toLocaleString()} / delete ${Number(limits.deletes||0).toLocaleString()} · UTC ${escapeHtml(ops.resetAtUtc||'00:00')} 리셋</div>
           </div>
           <div style="text-align:right;font-size:11px;color:var(--text3)">AI 오늘 ${ops.aiToday||0}회 · 이번달 ${ops.aiMonth||0}회</div>
@@ -413,7 +413,7 @@ function applyV153Dom(){
       .kpi-grid{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:10px;margin-bottom:12px}
       .kpi{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:12px;min-height:76px;cursor:pointer;transition:.15s}
       .kpi:hover{border-color:var(--accent2);transform:translateY(-1px)}
-      .kpi .num{font-size:28px;font-weight:900;color:#FBF4EA;line-height:1}
+      .kpi .num{font-size:28px;font-weight:800;color:#FBF4EA;line-height:1}
       .kpi .label{font-size:11px;color:#C6BBAF;margin-top:7px;font-weight:700}
       .kpi .sub{font-size:10px;color:var(--text3);margin-top:5px}
       .dash-alert{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px;padding:13px 16px;border-radius:14px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(90deg,rgba(251,191,36,.1),rgba(194,78,44,.08))}
@@ -435,7 +435,7 @@ function applyV153Dom(){
       .usage-card .u-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:4px 10px;font-size:10px!important}
       .usage-card .u-muted,.health-card .u-muted{color:var(--text3)}
       .usage-card .u-val,.health-card .u-val{color:#FBF4EA;font-weight:800;text-align:right}
-      .usage-card .u-ok{color:#3FBE92;font-weight:900}.usage-card .u-bad{color:#E06A63;font-weight:900}
+      .usage-card .u-ok{color:#3FBE92;font-weight:800}.usage-card .u-bad{color:#E06A63;font-weight:800}
       .usage-card .u-foot{font-size:9px;color:var(--text3);text-align:right;margin-top:5px}
       .health-card .h-row{display:flex;align-items:center;justify-content:space-between;font-size:10px;margin:3px 0;color:#C6BBAF}
       .health-card .h-state{font-weight:800}.health-card .ok{color:#3FBE92}.health-card .bad{color:#E06A63}.health-card .warn{color:#E8B23D}

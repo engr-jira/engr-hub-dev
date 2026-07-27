@@ -123,13 +123,13 @@ function injectV158Style(){
       header{position:sticky!important;top:0!important;z-index:90!important;margin:0!important;padding:10px 12px!important;background:rgba(255,255,255,.96)!important;border-bottom:1px solid #E7D8C4!important;box-shadow:0 2px 14px rgba(15,23,42,.06)!important;backdrop-filter:blur(10px)!important}
       .topbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:start!important;gap:8px!important;width:100%!important}
       .top-left{min-width:0!important}
-      .top-title{font-size:17px!important;font-weight:900!important;color:#211D22!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+      .top-title{font-size:17px!important;font-weight:800!important;color:#211D22!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
       .top-desc{display:block!important;font-size:10px!important;color:#8A7B62!important;margin-top:2px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
       .top-status{grid-column:1/-1!important;display:flex!important;gap:6px!important;justify-content:flex-start!important;max-width:100%!important;overflow-x:auto!important;overflow-y:hidden!important;padding:4px 0 0!important;flex-wrap:nowrap!important;-webkit-overflow-scrolling:touch!important}
       .top-status::-webkit-scrollbar{height:0!important}
       .top-status-card,.top-pin,.top-refresh,.top-logout{flex:0 0 auto!important;height:32px!important;min-height:32px!important;border-radius:999px!important;background:#FFFDF9!important;border:1px solid #E1D0B8!important;color:#41372A!important;box-shadow:0 1px 5px rgba(15,23,42,.04)!important;padding:0 10px!important;white-space:nowrap!important}
       .top-status-card .label{display:none!important}
-      .top-status-card .value{font-size:10.5px!important;color:#41372A!important;font-weight:900!important}
+      .top-status-card .value{font-size:10.5px!important;color:#41372A!important;font-weight:800!important}
       .top-status-card .ok{color:#1E9E6A!important}
       .top-status-card .warn{color:#C07A10!important}
       .top-pin{color:#2E7FB8!important;background:#FBF1E8!important;border-color:#BFE0EC!important}
