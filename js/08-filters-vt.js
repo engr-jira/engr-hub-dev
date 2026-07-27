@@ -547,14 +547,15 @@ function renderCustomerRight(){
   const nearLic=licDday.length?licDday[0]:null;
   const row=(i,kind)=>`<div class="customer-work-row" onclick="${kind==='case'?`v154GoCaseExact('${escapeAttr(i.key)}')`:`v154GoIssueExact('${escapeAttr(i.key)}')`}"><div><div class="k">${escapeHtml(kind==='case'?(i.caseNum||getCasePrefixNum(i.title)||i.key):i.key)}</div><div class="t">${escapeHtml(cleanTitle(i.title||i.summary||''))}</div></div><div class="m">${escapeHtml(i.status||'')} · ${fd(i.date||i.created)}</div></div>`;
   right.innerHTML=`<div class="rpanel">
-    <div style="font-size:16px;font-weight:800;color:#FBEFE6;margin-bottom:14px">${escapeHtml(c.name)}</div>
+    <div style="font-size:16px;font-weight:800;color:var(--text-strong);margin-bottom:14px">${escapeHtml(c.name)}${(typeof isOwnerInactive==='function'&&isOwnerInactive(c.name))?` <span class="badge" style="font-size:10px;vertical-align:middle;background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger)">계약종료</span>`:''}</div>
     <div class="rp-meta">
       <div class="rp-row"><span>제품</span><span style="flex-wrap:wrap;display:flex;gap:4px">${[...(c.products||[])].map(p=>`<span class="badge" style="background:${(LC_MAP[p]||'#A2917A')}22;color:${(LC_MAP[p]||'#A2917A')}">${escapeHtml(p)}</span>`).join('')||'-'}</span></div>
       <div class="rp-row"><span>담당자</span><span>${escapeHtml([...(c.assignees||[])].join(', ')||'-')}</span></div>
+      ${(typeof ownerOf==='function'&&ownerOf(c.name))?`<div class="rp-row"><span>정/부 담당</span><span style="display:flex;flex-wrap:wrap;gap:4px">${ownerMetaHtml(c.name)}</span></div>`:''}
       <div class="rp-row"><span>일반 이슈</span><span>${general.length}건 (완료 ${done.length} / 미완료 ${open.length})</span></div>
       <div class="rp-row"><span>케이스</span><span>${cases.length}건 (완료 ${caseDone.length} / 미완료 ${caseOpen.length})</span></div>
-      <div class="rp-row"><span>일반 이슈 완료율</span><span style="color:${rate>=80?'#3FBE92':rate>=50?'#E8B23D':'#E06A63'};font-weight:700">${rate}%</span></div>
-      <div class="rp-row"><span>라이선스</span><span>${eosForCust.length}건${nearLic!==null?` · 최단 <b style="color:${nearLic<0?'#E06A63':nearLic<=30?'#E0A32E':'#2FB085'}">${nearLic<0?'만료':'D-'+nearLic}</b>`:''}</span></div>
+      <div class="rp-row"><span>일반 이슈 완료율</span><span style="color:${rate>=80?'var(--success)':rate>=50?'var(--warn)':'var(--danger)'};font-weight:700">${rate}%</span></div>
+      <div class="rp-row"><span>라이선스</span><span>${eosForCust.length}건${nearLic!==null?` · 최단 <b style="color:${nearLic<0?'var(--danger)':nearLic<=30?'var(--warn)':'var(--success)'}">${nearLic<0?'만료':'D-'+nearLic}</b>`:''}</span></div>
     </div>
     <div class="jump-row"><button class="btn btn-ghost" onclick="setIssueNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사: '+c.name)}}})">일반 이슈 보기</button><button class="btn btn-ghost" onclick="setCaseNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사 케이스: '+c.name)}}})">케이스 보기</button></div>
     <div style="font-size:10px;color:var(--text3);font-weight:700;margin:12px 0 8px;text-transform:uppercase">최근 일반 이슈</div>${recent.map(i=>row(i,'issue')).join('')||'<div class="empty">최근 일반 이슈 없음</div>'}

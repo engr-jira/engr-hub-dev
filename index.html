@@ -1982,6 +1982,21 @@ body.is-sales #nav-sales{display:flex!important}
       </div>
     </div>
 
+    <div class="page" id="page-owners">
+      <style>
+      #page-owners .own-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+      #page-owners .own-tbl th,#page-owners .own-tbl td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:middle}
+      #page-owners .own-tbl th{background:var(--bg2);font-size:11.5px;color:var(--text3);font-weight:600;border-bottom:1px solid var(--border2)}
+      #page-owners .own-tbl tr:hover td{background:var(--surface-hover)}
+      </style>
+      <div class="filter-row">
+        <input id="owners-q" placeholder="고객사 / 담당자 / 제품 검색..." oninput="renderOwners()">
+        <span class="filter-count" id="owners-count">0곳</span>
+        <span class="u-muted-11" style="margin-left:auto;font-weight:400">엑셀 기준 정/부 담당·계약 상태 — 이슈·영업·고객사 프로필에 자동 반영</span>
+      </div>
+      <div id="owners-body"></div>
+    </div>
+
     <div class="page" id="page-compat">
       <style>
       #page-compat .data-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
@@ -2668,5 +2683,6 @@ body.is-sales #nav-sales{display:flex!important}
 <script src="js/12-mydesk.js"></script>
 <script src="js/13-sales.js"></script>
 <script src="js/14-ia.js"></script>
+<script src="js/15-owners.js"></script>
 </body>
 </html>

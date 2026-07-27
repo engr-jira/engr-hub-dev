@@ -264,6 +264,7 @@ function enterApp(){
   loadSyncMeta();
   loadEOS();
   loadEosWarnDays();
+  if(typeof loadCustomerOwners==='function')loadCustomerOwners();
 }
 injectV154Style();injectV155Style();try{renderSidebarCompact();}catch(e){console.warn('sidebar init failed',e);}
 

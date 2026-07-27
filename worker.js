@@ -1202,6 +1202,36 @@ export default {
         return corsResponse({ ok: true, keys });
       }
 
+      // ── 고객사 담당자 관리 (정/부 담당 + 계약여부) : 조회=세션(영업 포함), 수정=관리자 ──
+      // 이슈·지원건·영업에 담당 메타를 자동 반영하기 위한 단일 소스.
+      if (path === '/customer/owners' && request.method === 'GET') {
+        const anaOkO = !!env.ANALYSIS_WRITE_TOKEN && (request.headers.get('x-analysis-token') || '') === env.ANALYSIS_WRITE_TOKEN;
+        if (!hasSession && !anaOkO) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        let items = [];
+        try {
+          await env.DB.prepare("CREATE TABLE IF NOT EXISTS customer_owner (customer TEXT PRIMARY KEY, primary_owner TEXT NOT NULL DEFAULT '', secondary_owner TEXT NOT NULL DEFAULT '', products TEXT NOT NULL DEFAULT '', support TEXT NOT NULL DEFAULT '', active INTEGER NOT NULL DEFAULT 1, updated_by TEXT, updated_at INTEGER)").run();
+          const r = await env.DB.prepare('SELECT customer, primary_owner, secondary_owner, products, support, active, updated_by, updated_at FROM customer_owner ORDER BY active DESC, customer').all();
+          items = r.results || [];
+        } catch (_) {}
+        return corsResponse({ ok: true, items });
+      }
+      if (path === '/customer/owner' && request.method === 'PUT') {
+        // 관리자 또는 분석 토큰(시드). 계약종료·담당 변경은 관리자.
+        const anaOkO = !!env.ANALYSIS_WRITE_TOKEN && (request.headers.get('x-analysis-token') || '') === env.ANALYSIS_WRITE_TOKEN;
+        if (!anaOkO && (!hasSession || !await isAdmin(env, user))) return corsResponse({ ok: false, message: '관리자만 수정할 수 있습니다.' }, 403);
+        const b = await request.json().catch(() => ({}));
+        const customer = String(b.customer || '').trim().slice(0, 80);
+        if (!customer) return corsResponse({ ok: false, message: '고객사명이 필요합니다.' }, 400);
+        const actor = (anaOkO && !hasSession) ? 'seed(엑셀)' : user;
+        try {
+          await env.DB.prepare("CREATE TABLE IF NOT EXISTS customer_owner (customer TEXT PRIMARY KEY, primary_owner TEXT NOT NULL DEFAULT '', secondary_owner TEXT NOT NULL DEFAULT '', products TEXT NOT NULL DEFAULT '', support TEXT NOT NULL DEFAULT '', active INTEGER NOT NULL DEFAULT 1, updated_by TEXT, updated_at INTEGER)").run();
+          await env.DB.prepare('INSERT INTO customer_owner (customer, primary_owner, secondary_owner, products, support, active, updated_by, updated_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(customer) DO UPDATE SET primary_owner=excluded.primary_owner, secondary_owner=excluded.secondary_owner, products=CASE WHEN excluded.products!=\'\' THEN excluded.products ELSE customer_owner.products END, support=CASE WHEN excluded.support!=\'\' THEN excluded.support ELSE customer_owner.support END, active=excluded.active, updated_by=excluded.updated_by, updated_at=excluded.updated_at')
+            .bind(customer, String(b.primary || '').slice(0, 40), String(b.secondary || '').slice(0, 40), String(b.products || '').slice(0, 120), String(b.support || '').slice(0, 40), b.active === false || b.active === 0 ? 0 : 1, actor, Date.now()).run();
+          if (!(anaOkO && !hasSession)) await auditLog(env, user, 'CUST_OWNER', { ownerCustomer: customer, ownerActive: b.active === false ? 0 : 1 });
+          return corsResponse({ ok: true });
+        } catch (e) { return corsResponse({ ok: false, message: '저장 실패: ' + (e && e.message || e) }, 500); }
+      }
+
       // ── 고객사 환경/사용 솔루션 (IA 재편) : 조회=세션(영업 포함), 수정=기술팀·관리자 ──
       if (path === '/customer/env' && request.method === 'GET') {
         if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);

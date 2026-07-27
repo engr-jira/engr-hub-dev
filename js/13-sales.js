@@ -74,7 +74,7 @@ function renderSalesPage(){
     <tbody>${rows.map((r,i)=>{
       const n=r.note||{};
       return `<tr>
-        <td class="u-ws-nowrap"><b>${escapeHtml(r.customer)}</b></td>
+        <td class="u-ws-nowrap"><b>${escapeHtml(r.customer)}</b>${(typeof ownerMetaHtml==='function'&&ownerMetaHtml(r.customer))?`<div style="margin-top:3px">${ownerMetaHtml(r.customer)}</div>`:''}</td>
         <td>${escapeHtml(r.product)}</td>
         <td class="u-ws-nowrap">${salesDDayBadge(r.dd)}<div class="u-muted-10">${escapeHtml(r.expire)}</div></td>
         <td>${salesStatusBadge(n.status)}</td>
@@ -104,14 +104,15 @@ function renderSalesPage(){
         <span style="color:var(--accent3);font-weight:700;font-size:12px" class="u-ws-nowrap">${escapeHtml(i.key)}</span>
         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">${escapeHtml(i.title)}</span>
         <span class="u-ws-nowrap" style="font-size:11.5px;color:var(--text3)">${escapeHtml(i.status)}</span>
-        ${i.due?`<span class="u-ws-nowrap" style="font-size:11px;color:${od?'#E06A63':'var(--text3)'}">${od?'기한초과 ':''}${escapeHtml(i.due)}</span>`:''}
+        ${i.due?`<span class="u-ws-nowrap" style="font-size:11px;color:${od?'var(--danger)':'var(--text3)'}">${od?'기한초과 ':''}${escapeHtml(i.due)}</span>`:''}
       </div>`;
     }).join('');
     const top=(c.issues||[])[0];
     return `<details class="sales-cust"><summary style="display:flex;gap:12px;align-items:center;cursor:pointer;padding:11px 14px">
       <b style="min-width:130px;font-size:14px">${escapeHtml(c.name)}</b>
+      ${(typeof ownerMetaHtml==='function'&&ownerMetaHtml(c.name))?`<span class="u-ws-nowrap" style="font-size:11px">${ownerMetaHtml(c.name)}</span>`:''}
       <span style="font-size:12.5px;color:var(--text2)" class="u-ws-nowrap">진행 <b>${c.open}</b></span>
-      <span class="u-ws-nowrap" style="font-size:12.5px;color:${c.overdue?'#E06A63':'var(--text3)'}">기한초과 <b>${c.overdue}</b></span>
+      <span class="u-ws-nowrap" style="font-size:12.5px;color:${c.overdue?'var(--danger)':'var(--text3)'}">기한초과 <b>${c.overdue}</b></span>
       <span class="u-ws-nowrap" style="font-size:12.5px;color:var(--text3)">최근 ${days>=999?'—':days===0?'오늘':days+'일 전'}</span>
       ${top?`<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text3)">└ ${escapeHtml(top.title)}</span>`:'<span style="flex:1"></span>'}
       <span style="margin-left:auto">${judge}</span>

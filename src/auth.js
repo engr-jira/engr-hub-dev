@@ -226,6 +226,8 @@ export const SALES_ALLOW = [
   { m: ['GET', 'POST', 'PUT', 'DELETE'], re: /^\/eos(\/|$)/ },  // 라이선스: 영업·기술 공동 편집(MJ 확정)
   { m: ['GET', 'POST', 'PUT', 'DELETE'], re: /^\/sales(\/|$)/ }, // 영업 전용 API (STEP 6에서 신설)
   { m: ['GET'], re: /^\/customer\/env$/ },   // 영업은 환경 조회만
+  { m: ['GET'], re: /^\/customer\/owners$/ },  // 영업은 담당자 조회만(수정은 관리자)
+  { m: ['GET'], re: /^\/analysis\/(latest|resp)$/ },  // 영업도 분석 요약·응답지표 열람
 ];
 
 export async function isSalesRole(env, user) {
