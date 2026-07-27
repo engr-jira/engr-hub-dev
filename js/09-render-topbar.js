@@ -60,7 +60,7 @@ function buildCustomers(){
     (i.labels||[]).forEach(l=>obj.products.add(l));
     if(i.assignee&&i.assignee!=='-')obj.assignees.add(i.assignee);
   });
-  return Object.values(map).sort((a,b)=>(b.general.length+b.cases.length)-(a.general.length+a.cases.length));
+  return Object.values(map).sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'));
 }
 function buildCustomerData(){return buildCustomers();}
 function metaMissingFields(i){
@@ -208,7 +208,8 @@ function renderCases(){
   normalizeAllIssueAliases();
   if(typeof RESP_METRICS!=='undefined'&&RESP_METRICS===null){RESP_METRICS=[];try{loadRespMetrics();}catch(_){}}
   const wrap=document.getElementById('case-list'); if(!wrap)return;
-  const arr=getFilteredCases();
+  // #3 기본 정렬: 진행중 우선 + 최근 등록순
+  const arr=getFilteredCases().slice().sort((a,b)=>{const ao=isOpenStatus(a.status)?0:1,bo=isOpenStatus(b.status)?0:1;return ao!==bo?ao-bo:issueDateValue(b)-issueDateValue(a);});
   const size=PAGE_SIZES.cases||10;
   const pages=Math.max(1,Math.ceil(arr.length/size)); if(PAGE_STATE.cases>pages)PAGE_STATE.cases=pages;if(PAGE_STATE.cases<1)PAGE_STATE.cases=1;
   const count=document.getElementById('case-count');if(count)count.textContent=`${arr.length}건`;

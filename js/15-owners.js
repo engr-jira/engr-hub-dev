@@ -73,8 +73,8 @@ function renderOwners(){
   const mint=`background:color-mix(in srgb,var(--success) 14%,transparent);color:var(--success)`;
   const red=`background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger)`;
   if(!rows.length){wrap.innerHTML='<div class="u-empty">담당자 데이터가 없습니다.</div>';return;}
-  wrap.innerHTML=`<div class="panel" style="overflow-x:auto;padding:0"><table class="own-tbl">
-    <thead><tr><th>고객사</th><th>영업 담당</th><th>제품</th><th>지원</th><th>정 담당</th><th>부 담당</th><th>계약</th>${isAdm?'<th></th>':''}</tr></thead>
+  wrap.innerHTML=`<div class="panel" style="overflow-x:auto;padding:0"><table class="own-tbl srt">
+    <thead><tr><th>고객사</th><th>영업 담당</th><th>제품</th><th>지원</th><th>USER</th><th>정 담당</th><th>부 담당</th><th>계약</th>${isAdm?'<th class="nosort"></th>':''}</tr></thead>
     <tbody>${rows.map(r=>{
       const inactive=r.active===0;
       const so=r.sales_owner||salesRepFromIssues(r.customer);
@@ -83,6 +83,7 @@ function renderOwners(){
         <td class="u-ws-nowrap">${so?`<span class="badge" style="background:color-mix(in srgb,var(--cyan) 15%,transparent);color:var(--cyan)">${escapeHtml(so)}</span>${!r.sales_owner?' <span class="u-muted-11" title="Jira 범주에서 자동 도출">·자동</span>':''}`:'<span class="u-muted-11">-</span>'}</td>
         <td class="u-muted-11">${escapeHtml(r.products||'-')}</td>
         <td class="u-muted-11">${escapeHtml(r.support||'-')}</td>
+        <td class="u-ws-nowrap" data-sort="${r.users||0}">${r.users?Number(r.users).toLocaleString():'<span class="u-muted-11">-</span>'}</td>
         <td>${escapeHtml(r.primary_owner||'-')}</td>
         <td class="u-muted-11">${escapeHtml(r.secondary_owner||'-')}</td>
         <td><span class="badge" style="${inactive?red:mint}">${inactive?'종료':'계약중'}</span></td>
@@ -107,6 +108,7 @@ async function editOwner(customer){
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end">
       <label class="u-muted-10">제품<br><input id="ow-products" class="admin-input" value="${escapeHtml(r.products||'')}" placeholder="예: DLP, SEP"></label>
       <label class="u-muted-10">지원<br><input id="ow-support" class="admin-input" value="${escapeHtml(r.support||'')}" placeholder="예: Onsite / Remote"></label>
+      <label class="u-muted-10">USER(수량)<br><input id="ow-users" class="admin-input" type="number" min="0" value="${r.users!=null?r.users:''}" placeholder="라이선스 수량" style="max-width:120px"></label>
       <label class="u-muted-10">영업 담당<br><select id="ow-sales" class="admin-input">${personOptions(r.sales_owner||salesRepFromIssues(customer))}</select></label>
       <label class="u-muted-10">정 담당<br><select id="ow-primary" class="admin-input">${personOptions(r.primary_owner)}</select></label>
       <label class="u-muted-10">부 담당<br><select id="ow-secondary" class="admin-input">${personOptions(r.secondary_owner)}</select></label>
@@ -125,6 +127,7 @@ async function saveOwner(customer){
       customer,
       products:document.getElementById('ow-products')?.value||'',
       support:document.getElementById('ow-support')?.value||'',
+      users:document.getElementById('ow-users')?.value||'0',
       sales_owner:document.getElementById('ow-sales')?.value||'',
       primary:document.getElementById('ow-primary')?.value||'',
       secondary:document.getElementById('ow-secondary')?.value||'',

@@ -273,12 +273,6 @@ function renderDash(){
     <div class="kpi" onclick="setIssueNavigationFilter({preset:{kind:'high',label:'High 이상 미완료 일반 이슈'}})"><div class="kpi-num">${highOpen.length}</div><div class="kpi-label">High+</div><div class="kpi-sub">미완료 기준</div></div>
     <div class="kpi" onclick="setIssueNavigationFilter({preset:{kind:'my',label:'내 담당 일반 이슈'}})"><div class="kpi-num">${my.length}</div><div class="kpi-label">내 담당</div><div class="kpi-sub">진행 ${myOpen.length} / 완료 ${myDone.length}</div></div>
     <div class="kpi" onclick="setCaseNavigationFilter({})"><div class="kpi-num">${c.length}</div><div class="kpi-label">케이스</div><div class="kpi-sub">진행 ${cOpen.length} / 완료 ${cDone.length}</div></div>`;
-  const ops=document.getElementById('ops-focus');
-  if(ops)ops.innerHTML=[
-    focusCardHtml('7일 이상 미완료 일반 이슈',stale,'대상 없음',i=>`<div class="dash-list-row" onclick="v154GoIssueExact(${jsAttr(i.key)})"><span class="title"><b>${escapeHtml(i.key)}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,48)}</span><span>${daysSince(i.date)}일</span></div>`),
-    focusCardHtml('High 이상 미완료 일반 이슈',highOpen,'대상 없음',i=>`<div class="dash-list-row" onclick="v154GoIssueExact(${jsAttr(i.key)})"><span class="title"><b>${escapeHtml(i.key)}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,48)}</span><span>${escapeHtml(i.pri)}</span></div>`),
-    focusCardHtml('진행 중 케이스',cOpen,'대상 없음',i=>`<div class="dash-list-row" onclick="v154GoCaseExact(${jsAttr(i.key)})"><span class="title"><b>${escapeHtml(i.caseNum||i.key)}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,48)}</span><span>${daysSince(i.date)}일</span></div>`)
-  ].join('');
   const handled=document.getElementById('rank-handled'); if(handled)handled.innerHTML=topAssigneeRows(g);
   const rate=document.getElementById('rank-rate'); if(rate)rate.innerHTML=completionRateRows(g);
   const cs=document.getElementById('rank-case-speed'); if(cs)cs.innerHTML=caseSpeedRows(c);
@@ -464,7 +458,8 @@ function setCasePage(n){PAGE_STATE.cases=n;renderCases();}
 function renderIssues(){
   normalizeAllIssueAliases();
   const wrap=document.getElementById('issue-list-wrap'); if(!wrap)return;
-  const arr=getFilteredIssues();
+  // #3 기본 정렬: 진행중 우선 + 최근 등록순
+  const arr=getFilteredIssues().slice().sort((a,b)=>{const ao=isOpenStatus(a.status)?0:1,bo=isOpenStatus(b.status)?0:1;return ao!==bo?ao-bo:issueDateValue(b)-issueDateValue(a);});
   const size=parseInt(document.getElementById('f-pg')?.value||'10',10)||10;
   const pages=Math.max(1,Math.ceil(arr.length/size)); if(PAGE>pages)PAGE=pages;if(PAGE<1)PAGE=1;
   const count=document.getElementById('f-count');if(count)count.textContent=`${arr.length}건`;

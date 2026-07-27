@@ -98,7 +98,7 @@ function renderSalesPage(){
   const _seenC=new Set(_custBase.map(c=>_canonC(c.name)));
   // #1 담당자 관리에 등록된 전 고객사 포함 — 이슈가 없어도 담당자 정보 노출
   (typeof OWNER_ROWS!=='undefined'&&OWNER_ROWS?OWNER_ROWS:[]).forEach(r=>{const k=_canonC(r.customer);if(r.customer&&!_seenC.has(k)){_custBase.push({name:r.customer,open:0,overdue:0,issues:[],lastActivity:null,_noIssues:true});_seenC.add(k);}});
-  _custBase.sort((a,b)=>(b.open||0)-(a.open||0)||(a.name||'').localeCompare(b.name||'','ko'));
+  _custBase.sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'));
   const custRows=_custBase.map(c=>{
     const days=c.lastActivity?daysSince(c.lastActivity.slice(0,10)):999;
     const noAct=c._noIssues||(!(c.issues&&c.issues.length)&&!c.open);

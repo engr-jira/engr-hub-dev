@@ -18,11 +18,7 @@ function renderEosList(){
   const q=(document.getElementById('eos-q')||{}).value?.toLowerCase()||'';
   let list=[...EOS_ITEMS];
   if(q)list=list.filter(it=>qMatch(q,[it.customer,it.productDesc,it.product,it.siteId,it.serial]));
-  list.sort((a,b)=>{
-    const da=a.expireDate?new Date(a.expireDate).getTime():Infinity;
-    const db=b.expireDate?new Date(b.expireDate).getTime():Infinity;
-    return da-db;
-  });
+  list.sort((a,b)=>(a.customer||'').localeCompare(b.customer||'','ko'));
   const pageList=sliceForPage(list,'eos');
   document.getElementById('eos-count').textContent=pageCountText('eos',list.length);
   const tbody=document.getElementById('eos-tbody');
