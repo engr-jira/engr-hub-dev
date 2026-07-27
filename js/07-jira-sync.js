@@ -112,7 +112,7 @@ function getFilteredIssues(){
   const lab=document.getElementById('f-lab')?.value||'';
   const ass=document.getElementById('f-ass')?.value||'';
   const date=document.getElementById('f-date')?.value||'';
-  if(q)arr=arr.filter(i=>[i.key,i.title,i.customer,i.assignee,i.reporter,...(i.labels||[]),...(i.caseNums||[]),...casesForIssue(i).map(c=>c.caseNum)].join(' ').toLowerCase().includes(q));
+  if(q)arr=arr.filter(i=>qMatch(q,[i.key,i.title,i.customer,i.assignee,i.reporter,...(i.labels||[]),...(i.caseNums||[]),...casesForIssue(i).map(c=>c.caseNum)]));
   if(st)arr=arr.filter(i=>st==='완료'?isDoneStatus(i.status):st==='진행 중'?isOpenStatus(i.status)&&/진행|처리|progress/i.test(i.status):st==='미해결'?isOpenStatus(i.status):i.status===st);
   if(pri)arr=arr.filter(i=>i.pri===pri);
   if(lab)arr=arr.filter(i=>(i.labels||[]).includes(lab));
@@ -129,7 +129,7 @@ function getFilteredCases(){
   const ass=document.getElementById('case-ass')?.value||'';
   const sla=document.getElementById('case-sla')?.value||'';
   const date=document.getElementById('case-date')?.value||'';
-  if(q)arr=arr.filter(i=>[i.key,i.caseNum,i.title,caseCustomerName(i),i.customer,i.assignee,i.parentKey,i.parentTitle,...(i.labels||[])].join(' ').toLowerCase().includes(q));
+  if(q)arr=arr.filter(i=>qMatch(q,[i.key,i.caseNum,i.title,caseCustomerName(i),i.customer,i.assignee,i.parentKey,i.parentTitle,...(i.labels||[])]));
   if(st)arr=arr.filter(i=>st==='완료'?isDoneStatus(i.status):st==='진행 중'?isOpenStatus(i.status)&&/진행|처리|progress/i.test(i.status):st==='미해결'?isOpenStatus(i.status):i.status===st);
   if(ass)arr=arr.filter(i=>i.assignee===ass);
   if(sla)arr=arr.filter(i=>isOpenStatus(i.status)&&age(i.date)>=parseInt(sla,10));

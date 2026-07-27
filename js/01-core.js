@@ -134,6 +134,14 @@ function authHeaders(extra={}){
   return {...extra,'X-User':encUser(CURRENT_USER),...(token?{'X-Session-Token':token}:{})};
 }
 function escapeHtml(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+/* 자유검색 토큰 AND: 검색어를 공백으로 나눠 각 토큰이 어느 한 필드라도 포함하면 통과(토큰 간 AND, 필드 간 OR).
+   → 한 검색창에서 "고객사 제품", "고객사 SEP" 같은 교차 조건이 좁혀짐. fields는 배열 또는 단일 문자열. */
+function qMatch(q, fields){
+  const ts=String(q||'').toLowerCase().split(/\s+/).filter(Boolean);
+  if(!ts.length)return true;
+  const hay=(Array.isArray(fields)?fields:[fields]).map(v=>(v==null?'':String(v)).toLowerCase());
+  return ts.every(t=>hay.some(h=>h.includes(t)));
+}
 function normalizeExternalUrl(url){
   const raw=(url||'').trim();
   if(!raw)return '';

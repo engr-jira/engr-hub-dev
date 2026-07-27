@@ -70,26 +70,53 @@ function histClsBadge(cls){
   if(cls.kind==='internal')return ' <span class="badge" style="background:#94a3b822;color:var(--text3)">내부</span>';
   return '';
 }
+// #6 월간 지원 리포트(ESCARE_DLP_Monthly) 컬럼 형식으로 출력.
+// Jira에서 채울 수 있는 항목만 자동 기입, 나머지(지원시간·서비스유형·지원유형·서비스방법 등)는 공란(리포트 작성 시 보완).
+const HIST_WD=['일','월','화','수','목','금','토'];
+const HIST_COLS=['Year','Month','Date','지원시간','hr.','제품명(관련 항목)','지원 내역','고객담당자','담당자','서비스 유형','지원유형','서비스 방법','Remark','지원그룹'];
+function histRowCells(i){
+  const c=(i.created||'').slice(0,10);
+  const dt=c?new Date(c+'T00:00:00'):null;
+  const wd=(dt&&!isNaN(dt))?HIST_WD[dt.getDay()]:'';
+  const year=c.slice(0,4)||'';
+  const mon=c.slice(5,7)?String(parseInt(c.slice(5,7),10)):'';
+  const dayN=c.slice(8,10)?String(parseInt(c.slice(8,10),10)):'';
+  const date=dayN?`${dayN}${wd?'('+wd+')':''}`:'';
+  const prod=(i.labels||[]).join(', ');
+  return { year, mon, date, support:'', hr:'', prod, detail:(i.summary||''), custMgr:'', assignee:(i.assignee||''), svcType:'', supType:'', svcMethod:'', remark:(i.key||''), group:'' };
+}
 function renderHistoryResults(){
   const res=document.getElementById('ch-results'); if(!res)return;
   if(!HISTORY_ITEMS.length){ res.innerHTML='<div class="muted" style="padding:16px">결과가 없습니다.</div>'; return; }
-  const rows=HISTORY_ITEMS.map(i=>`<tr>
-    <td><a href="https://escare-engr.atlassian.net/browse/${escapeAttr(i.key)}" target="_blank" rel="noopener" style="color:var(--cyan);white-space:nowrap">${escapeHtml(i.key)}</a></td>
-    <td style="max-width:340px">${escapeHtml(i.summary||'')}${histClsBadge(i.cls)}</td>
-    <td>${escapeHtml(i.status||'')}</td><td>${escapeHtml(i.assignee||'-')}</td>
-    <td class="u-fs-11px">${(i.labels||[]).map(l=>escapeHtml(l)).join(', ')}</td>
-    <td class="u-ws-nowrap">${i.type==='subtask'?'하위':'작업'}</td>
-    <td class="u-ws-nowrap">${escapeHtml((i.created||'').slice(0,10))}</td>
-    <td class="u-ws-nowrap">${escapeHtml((i.updated||'').slice(0,10))}</td>
-  </tr>`).join('');
-  res.innerHTML=`<table class="ch-tbl srt"><tr><th>키</th><th>제목</th><th>상태</th><th>담당</th><th>라벨</th><th>유형</th><th>생성</th><th>수정</th></tr>${rows}</table>`;
+  const rows=HISTORY_ITEMS.map(i=>{
+    const r=histRowCells(i);
+    return `<tr>
+    <td class="u-ws-nowrap">${escapeHtml(r.year)}</td>
+    <td class="u-ws-nowrap">${escapeHtml(r.mon)}</td>
+    <td class="u-ws-nowrap">${escapeHtml(r.date)}</td>
+    <td></td>
+    <td></td>
+    <td class="u-ws-nowrap">${escapeHtml(r.prod)}</td>
+    <td style="max-width:360px"><a href="https://escare-engr.atlassian.net/browse/${escapeAttr(i.key)}" target="_blank" rel="noopener" style="color:var(--cyan)">${escapeHtml(r.detail)}</a>${histClsBadge(i.cls)}</td>
+    <td></td>
+    <td class="u-ws-nowrap">${escapeHtml(r.assignee)}</td>
+    <td></td>
+    <td></td>
+    <td></td>
+    <td class="u-ws-nowrap"><a href="https://escare-engr.atlassian.net/browse/${escapeAttr(i.key)}" target="_blank" rel="noopener" style="color:var(--text3)">${escapeHtml(r.remark)}</a></td>
+    <td></td>
+  </tr>`;}).join('');
+  res.innerHTML=`<div class="u-muted-10" style="margin-bottom:6px">※ Jira에서 채울 수 있는 항목만 자동 기입 · 지원시간·서비스유형·지원유형·서비스방법·고객담당자는 공란(리포트 작성 시 보완)</div>
+    <table class="ch-tbl srt"><tr>${HIST_COLS.map(h=>`<th>${escapeHtml(h)}</th>`).join('')}</tr>${rows}</table>`;
   const _st=res.querySelector('table.srt'); if(_st)applySrtState(_st);
 }
 function copyHistoryTable(){
   if(!HISTORY_ITEMS.length){toast('복사할 결과가 없습니다');return;}
-  const head=['키','제목','상태','담당','라벨','유형','생성','수정'];
-  const lines=[head.join('\t')].concat(HISTORY_ITEMS.map(i=>[i.key,(i.summary||'').replace(/\s+/g,' '),i.status,i.assignee,(i.labels||[]).join('|'),i.type==='subtask'?'하위':'작업',(i.created||'').slice(0,10),(i.updated||'').slice(0,10)].map(v=>v||'').join('\t')));
-  navigator.clipboard.writeText(lines.join('\n')).then(()=>toast(`${HISTORY_ITEMS.length}건 복사`)).catch(()=>toast('복사 실패'));
+  const lines=[HIST_COLS.join('\t')].concat(HISTORY_ITEMS.map(i=>{
+    const r=histRowCells(i);
+    return [r.year,r.mon,r.date,r.support,r.hr,r.prod,(r.detail||'').replace(/\s+/g,' '),r.custMgr,r.assignee,r.svcType,r.supType,r.svcMethod,r.remark,r.group].map(v=>v||'').join('\t');
+  }));
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>toast(`${HISTORY_ITEMS.length}건 복사 (리포트 형식)`)).catch(()=>toast('복사 실패'));
 }
 /* ── §3 팀 업무 모니터 (mj.park 전용) ─────────────── */
 let MONITOR_ALLOWED=false;

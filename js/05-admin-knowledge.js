@@ -177,7 +177,7 @@ function renderCustomers(){
   if(assSel){const cur=assSel.value;assSel.innerHTML='<option value="">전체 담당자</option>'+Array.from(allAss).sort().map(a=>`<option ${a===cur?"selected":""}>${escapeHtml(a)}</option>`).join("");}
   if(prod)custs=custs.filter(c=>c.products.has(prod));
   if(ass)custs=custs.filter(c=>c.assignees.has(ass));
-  if(q)custs=custs.filter(c=>[c.name,[...c.products].join(" "),[...c.assignees].join(" ")].join(" ").toLowerCase().includes(q));
+  if(q)custs=custs.filter(c=>qMatch(q,[c.name,[...c.products].join(" "),[...c.assignees].join(" ")]));
   const wrap=document.getElementById("cust-list");
   const pageCusts=sliceForPage(custs,'customers');
   document.getElementById("cust-count").textContent=pageCountText('customers',custs.length,'개');
@@ -189,9 +189,9 @@ function renderCustomers(){
     const rate=c.general.length?Math.round(done/c.general.length*100):0;
     const prods=[...c.products].join(", ")||"-";
     const isSel=CUST_SEL&&CUST_SEL.name===c.name;
-    return `<div onclick="selectCustomer(${idx},this.dataset.name)" data-name="${escapeHtml(c.name)}" style="background:#332D34;border:1.5px solid ${isSel?"var(--accent)":"var(--border)"};border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s">
+    return `<div onclick="selectCustomer(${idx},this.dataset.name)" data-name="${escapeHtml(c.name)}" style="background:var(--card2);border:1.5px solid ${isSel?"var(--accent)":"var(--border)"};border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:13px;font-weight:700;color:#FBEFE6">${escapeHtml(c.name)}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--text-strong);display:flex;align-items:center;gap:2px">${escapeHtml(c.name)}${(typeof salesOwnerChip==='function')?salesOwnerChip(c.name):''}</span>
         <span style="font-size:10px;background:rgba(246,199,176,.15);color:#F6C7B0;padding:2px 9px;border-radius:20px;font-weight:700">일반 ${c.general.length} · 케이스 ${c.cases.length}</span>
       </div>
       <div class="u-fs11px-ctext3-mb6px">${escapeHtml(prods)}</div>
@@ -219,7 +219,7 @@ function renderKnowledge(){
   const q=(document.getElementById("know-q")?.value||"").toLowerCase();
   let list=KNOWLEDGE.filter(k=>{
     const txt=[k.title,k.content,k.category,k.product,k.link,k.createdBy,(k.comments||[]).map(c=>c.text).join(' ')].join(" ").toLowerCase();
-    return (!prod||k.product===prod)&&(!cat||k.category===cat)&&(!q||txt.includes(q));
+    return (!prod||k.product===prod)&&(!cat||k.category===cat)&&qMatch(q,txt);
   });
   const cnt=document.getElementById('know-count');if(cnt)cnt.textContent=`총 ${list.length}건 · ${PAGE_SIZES.knowledge}건씩 표시`;
   const pageKnowledge=sliceForPage(list,'knowledge');

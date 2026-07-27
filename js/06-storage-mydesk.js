@@ -249,7 +249,7 @@ function filteredIssues(){
   let list=getGeneralIssues().filter(i=>{
     const caseRefs=getIssueCaseRefs(i).map(c=>c.num).join(' ');
     const txt=[i.key,i.title,i.customer,i.assignee,i.reporter,(i.labels||[]).join(' '),caseRefs].join(' ').toLowerCase();
-    if(q&&!txt.includes(q))return false;
+    if(!qMatch(q,txt))return false;
     if(st&&i.status!==st)return false;
     if(pr&&i.pri!==pr)return false;
     if(lb&&!(i.labels||[]).includes(lb))return false;
@@ -321,7 +321,7 @@ function renderCases_legacy_v2(){
   const cDate=parseInt(document.getElementById('case-date')?.value||'0');
   let cases=getCases().filter(c=>{
     const txt=[c.caseNum,c.title,c.customer,c.assignee,(c.labels||[]).join(' ')].join(' ').toLowerCase();
-    if(q&&!txt.includes(q))return false;
+    if(!qMatch(q,txt))return false;
     if(cStat&&c.status!==cStat)return false;
     if(cAss&&c.assignee!==cAss)return false;
     if(cSla&&daysSince(c.date)<cSla)return false;

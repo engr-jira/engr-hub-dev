@@ -256,7 +256,7 @@ function renderCases_legacy_v1(){
   const cSla=parseInt(document.getElementById('case-sla')?.value||'0');
   const cases=getCases().filter(c=>{
     const txt=[c.caseNum,c.title,c.customer,c.assignee,(c.labels||[]).join(' ')].join(' ').toLowerCase();
-    if(q&&!txt.includes(q))return false;
+    if(!qMatch(q,txt))return false;
     if(cStat&&c.status!==cStat)return false;
     if(cAss&&c.assignee!==cAss)return false;
     if(cSla&&daysSince(c.date)<cSla)return false;

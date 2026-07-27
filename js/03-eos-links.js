@@ -1,8 +1,23 @@
+/* #7 제조사(Broadcom/Symantec) KB + 제품 취약점 — 기본 제공(검증) 링크.
+   2026-07-27 실검증(WebFetch). 업무 링크 목록에 병합되어 분류·검색으로 함께 노출(사용자 링크와 별개, 삭제 불가). */
+const VENDOR_KB_LINKS=[
+  {id:'vkb-dlp-docs',builtin:true,curated:true,category:'제조사 KB',createdBy:'제조사 KB(기본 제공)',title:'Symantec DLP — 공식 문서(Techdocs 26.1)',url:'https://techdocs.broadcom.com/us/en/symantec-security-software/information-security/data-loss-prevention/26-1.html',desc:'DLP 최신 공식 문서 홈 — 설치/정책/Endpoint/Cloud/REST API'},
+  {id:'vkb-dlp-relnotes',builtin:true,curated:true,category:'제조사 KB',createdBy:'제조사 KB(기본 제공)',title:'Symantec DLP — 릴리스노트·리소스 색인',url:'https://techdocs.broadcom.com/us/en/symantec-security-software/information-security/data-loss-prevention/25-1/new-and-changed/dlp-information-resources.html',desc:'DLP 릴리스노트(fixed/known issues)·KB·교육·커뮤니티 색인'},
+  {id:'vkb-sep-docs',builtin:true,curated:true,category:'제조사 KB',createdBy:'제조사 KB(기본 제공)',title:'Symantec Endpoint Protection(SEP) — 공식 문서(Techdocs)',url:'https://techdocs.broadcom.com/us/en/symantec-security-software/endpoint-security-and-management/endpoint-protection/all.html',desc:'SEP 설치/관리/운영/플랫폼(Win·Linux·Mac)/릴리스노트 — 버전 전환 가능'},
+  {id:'vkb-sep-res',builtin:true,curated:true,category:'제조사 KB',createdBy:'제조사 KB(기본 제공)',title:'SEP — 지원 리소스·릴리스노트',url:'https://techdocs.broadcom.com/us/en/symantec-security-software/endpoint-security-and-management/endpoint-protection/all/release-notes/symantec-endpoint-protection-help-resources.html',desc:'SEP KB·문서·교육·고객지원 채널 허브'},
+  {id:'vkb-kb-portal',builtin:true,curated:true,category:'제조사 KB',createdBy:'제조사 KB(기본 제공)',title:'Broadcom Knowledge Base(KB 검색 포털)',url:'https://knowledge.broadcom.com/',desc:'Symantec/Broadcom 지식베이스 검색 최상위'},
+  {id:'vkb-adv-portal',builtin:true,curated:true,category:'제조사 취약점',createdBy:'제조사 KB(기본 제공)',title:'Broadcom 보안 권고 포털(Security Advisory)',url:'https://support.broadcom.com/web/ecx/security-advisory',desc:'제품군별 보안 권고 진입점(ECX 로그인 필요할 수 있음)'},
+  {id:'vkb-adv-se',builtin:true,curated:true,category:'제조사 취약점',createdBy:'제조사 KB(기본 제공)',title:'Broadcom 보안 권고 — Symantec 사이버보안(SEP·DLP)',url:'https://support.broadcom.com/web/ecx/security-advisory?segment=SE',desc:'segment=SE: Symantec 제품군(SEP/DLP/ProxySG) 권고 필터'},
+  {id:'vkb-kb225891',builtin:true,curated:true,category:'제조사 취약점',createdBy:'제조사 KB(기본 제공)',title:'Broadcom 취약점·CVE·보안권고 통합 안내(KB 225891)',url:'https://knowledge.broadcom.com/external/article/225891/cves-vulnerabilities-and-security-adviso.html',desc:'제품 취약점 조회 정석 시작점 — 사업부별 권고 링크 포함'},
+  {id:'vkb-nvd-dlp',builtin:true,curated:true,category:'제조사 취약점',createdBy:'제조사 KB(기본 제공)',title:'NVD — Symantec DLP 취약점 검색',url:'https://nvd.nist.gov/vuln/search/results?query=Symantec+Data+Loss+Prevention&results_type=overview&form_type=Basic&search_type=all',desc:'NIST NVD 공식 CVE 키워드 검색(DLP)'},
+  {id:'vkb-nvd-sep',builtin:true,curated:true,category:'제조사 취약점',createdBy:'제조사 KB(기본 제공)',title:'NVD — Symantec Endpoint Protection 취약점 검색',url:'https://nvd.nist.gov/vuln/search/results?query=Symantec+Endpoint+Protection&results_type=overview&form_type=Basic&search_type=all',desc:'NIST NVD 공식 CVE 키워드 검색(SEP)'},
+  {id:'vkb-cveorg',builtin:true,curated:true,category:'제조사 취약점',createdBy:'제조사 KB(기본 제공)',title:'CVE.org — Symantec 취약점 검색',url:'https://www.cve.org/CVERecord/SearchResults?query=symantec',desc:'MITRE/CVE Program 공식 검색(현행)'}
+];
 
 function renderEosList(){
   const q=(document.getElementById('eos-q')||{}).value?.toLowerCase()||'';
   let list=[...EOS_ITEMS];
-  if(q)list=list.filter(it=>[it.customer,it.productDesc,it.product,it.siteId,it.serial].some(v=>(v||'').toString().toLowerCase().includes(q)));
+  if(q)list=list.filter(it=>qMatch(q,[it.customer,it.productDesc,it.product,it.siteId,it.serial]));
   list.sort((a,b)=>{
     const da=a.expireDate?new Date(a.expireDate).getTime():Infinity;
     const db=b.expireDate?new Date(b.expireDate).getTime():Infinity;
@@ -202,18 +217,20 @@ function renderCommentFeed(containerId, kind, items){
 }
 function renderLinks(){
   renderCommentFeed('links-comment-feed','links',LINKS);
+  const VKB=(typeof VENDOR_KB_LINKS!=='undefined'?VENDOR_KB_LINKS:[]).filter(v=>!LINKS.some(l=>(l.url||'').replace(/\/+$/,'')===v.url.replace(/\/+$/,'')));
+  const SRC=[...VKB,...LINKS];
   const catSel=document.getElementById('links-cat');
   if(catSel){
     const cur=catSel.value;
-    const opts=[...new Set(LINKS.map(l=>l.category||l.cat).filter(Boolean))].sort();
+    const opts=[...new Set(SRC.map(l=>l.category||l.cat).filter(Boolean))].sort();
     catSel.innerHTML='<option value="">전체 분류</option>'+opts.map(c=>`<option ${c===cur?"selected":""}>${escapeHtml(c)}</option>`).join('');
   }
   const q=(document.getElementById('links-q')||{}).value?.toLowerCase()||'';
   const cat=(document.getElementById('links-cat')||{}).value||'';
-  const list=LINKS.filter(l=>{
+  const list=SRC.filter(l=>{
     const itemCat=l.category||l.cat||'';
     const txt=[l.title,l.desc,l.url,itemCat,l.createdBy,(l.comments||[]).map(c=>c.text).join(' ')].join(' ').toLowerCase();
-    return (!cat||itemCat===cat)&&(!q||txt.includes(q));
+    return (!cat||itemCat===cat)&&qMatch(q,txt);
   });
   const pageLinks=sliceForPage(list,'links');
   const cnt=document.getElementById('links-count');if(cnt)cnt.textContent=pageCountText('links',list.length);
@@ -225,8 +242,8 @@ function renderLinks(){
     const title=escapeHtml(l.title||'');
     const url=escapeHtml(l.url||'');
     const meta=`by ${escapeHtml(l.createdBy||'-')}${l.createdAt?' · '+fd(l.createdAt):''}`;
-    const canEdit=(l.createdBy===CURRENT_USER||IS_ADMIN||IS_SUPER);
-    return `<div class="link-card" style="position:relative" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')">${canEdit?`<input type="checkbox" class="lnk-pick" data-id="${escapeAttr(l.id)}" onclick="event.stopPropagation()" style="position:absolute;top:7px;left:7px;z-index:3;width:15px;height:15px;cursor:pointer">`:''}<span class="link-cat">${cat}</span>${l.aiSuggested?'<span class="link-cat" style="background:rgba(63,163,196,.14);color:var(--cyan)">🤖 AI 추천</span>':''}<div class="link-info"><div class="link-title">${title}</div><div class="link-meta">${meta}</div></div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${url}</div><div class="link-actions" style="flex-shrink:0;display:flex;gap:4px;opacity:0;transition:opacity .15s"><button class="u-bgcard2-bor1pxsol-br6px-ctext3-curpointe" onclick="event.stopPropagation();openLinkDetail('${escapeAttr(l.id)}')">댓글 ${commentCount}</button>${canEdit?`<button class="u-bgcard2-bor1pxsol-br6px-ctext3-curpointe" onclick="event.stopPropagation();openLinkEditModal('${escapeAttr(l.id)}')">✎</button><button onclick="event.stopPropagation();deleteLink('${escapeAttr(l.id)}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button>`:''}</div></div>`;
+    const canEdit=!l.builtin&&(l.createdBy===CURRENT_USER||IS_ADMIN||IS_SUPER);
+    return `<div class="link-card" style="position:relative" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')">${canEdit?`<input type="checkbox" class="lnk-pick" data-id="${escapeAttr(l.id)}" onclick="event.stopPropagation()" style="position:absolute;top:7px;left:7px;z-index:3;width:15px;height:15px;cursor:pointer">`:''}<span class="link-cat">${cat}</span>${l.curated?'<span class="link-cat" style="background:rgba(30,158,106,.14);color:var(--success)">📘 검증 KB</span>':''}${l.aiSuggested?'<span class="link-cat" style="background:rgba(63,163,196,.14);color:var(--cyan)">🤖 AI 추천</span>':''}<div class="link-info"><div class="link-title">${title}</div><div class="link-meta">${meta}</div></div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${url}</div><div class="link-actions" style="flex-shrink:0;display:flex;gap:4px;opacity:0;transition:opacity .15s"><button class="u-bgcard2-bor1pxsol-br6px-ctext3-curpointe" onclick="event.stopPropagation();openLinkDetail('${escapeAttr(l.id)}')">댓글 ${commentCount}</button>${canEdit?`<button class="u-bgcard2-bor1pxsol-br6px-ctext3-curpointe" onclick="event.stopPropagation();openLinkEditModal('${escapeAttr(l.id)}')">✎</button><button onclick="event.stopPropagation();deleteLink('${escapeAttr(l.id)}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button>`:''}</div></div>`;
   }).join('');
   renderPager('links-pager','links',list.length,'renderLinks');
 }

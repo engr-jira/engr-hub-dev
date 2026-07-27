@@ -34,7 +34,7 @@ function renderCases_legacy_v3(){
   const cStat=document.getElementById('case-stat')?.value||''; const cAss=document.getElementById('case-ass')?.value||''; const cSla=parseInt(document.getElementById('case-sla')?.value||'0'); const cDate=parseInt(document.getElementById('case-date')?.value||'0');
   let cases=getCases().filter(c=>{
     const txt=[c.key,c.caseNum,c.title,c.customer,c.assignee,(c.labels||[]).join(' ')].join(' ').toLowerCase();
-    if(q&&!txt.includes(q))return false; if(cStat&&c.status!==cStat)return false; if(cAss&&c.assignee!==cAss)return false; if(cSla&&c.age<cSla)return false;
+    if(!qMatch(q,txt))return false; if(cStat&&c.status!==cStat)return false; if(cAss&&c.assignee!==cAss)return false; if(cSla&&c.age<cSla)return false;
     if(cDate){const t=new Date(c.created||0).getTime(); if(!t||Date.now()-t>cDate*86400000)return false;}
     return true;
   });
@@ -547,10 +547,10 @@ function renderCustomerRight(){
   const nearLic=licDday.length?licDday[0]:null;
   const row=(i,kind)=>`<div class="customer-work-row" onclick="${kind==='case'?`v154GoCaseExact('${escapeAttr(i.key)}')`:`v154GoIssueExact('${escapeAttr(i.key)}')`}"><div><div class="k">${escapeHtml(kind==='case'?(i.caseNum||getCasePrefixNum(i.title)||i.key):i.key)}</div><div class="t">${escapeHtml(cleanTitle(i.title||i.summary||''))}</div></div><div class="m">${escapeHtml(i.status||'')} · ${fd(i.date||i.created)}</div></div>`;
   right.innerHTML=`<div class="rpanel">
-    <div style="font-size:16px;font-weight:800;color:var(--text-strong);margin-bottom:14px">${escapeHtml(c.name)}${(typeof isOwnerInactive==='function'&&isOwnerInactive(c.name))?` <span class="badge" style="font-size:10px;vertical-align:middle;background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger)">계약종료</span>`:''}</div>
+    <div style="font-size:16px;font-weight:800;color:var(--text-strong);margin-bottom:14px">${escapeHtml(c.name)}${(typeof salesOwnerChip==='function')?salesOwnerChip(c.name):''}${(typeof isOwnerInactive==='function'&&isOwnerInactive(c.name))?` <span class="badge" style="font-size:10px;vertical-align:middle;background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger)">계약종료</span>`:''}</div>
     <div class="rp-meta">
       <div class="rp-row"><span>제품</span><span style="flex-wrap:wrap;display:flex;gap:4px">${[...(c.products||[])].map(p=>`<span class="badge" style="background:${(LC_MAP[p]||'#A2917A')}22;color:${(LC_MAP[p]||'#A2917A')}">${escapeHtml(p)}</span>`).join('')||'-'}</span></div>
-      <div class="rp-row"><span>담당자</span><span>${escapeHtml([...(c.assignees||[])].join(', ')||'-')}</span></div>
+      <div class="rp-row"><span>영업 담당자</span><span>${(typeof salesOwnerOf==='function'&&salesOwnerOf(c.name))?escapeHtml(salesOwnerOf(c.name)):'<span class="u-muted-11">미지정</span>'}</span></div>
       ${(typeof ownerOf==='function'&&ownerOf(c.name))?`<div class="rp-row"><span>정/부 담당</span><span style="display:flex;flex-wrap:wrap;gap:4px">${ownerMetaHtml(c.name)}</span></div>`:''}
       <div class="rp-row"><span>일반 이슈</span><span>${general.length}건 (완료 ${done.length} / 미완료 ${open.length})</span></div>
       <div class="rp-row"><span>케이스</span><span>${cases.length}건 (완료 ${caseDone.length} / 미완료 ${caseOpen.length})</span></div>

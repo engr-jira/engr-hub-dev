@@ -1210,7 +1210,8 @@ export default {
         let items = [];
         try {
           await env.DB.prepare("CREATE TABLE IF NOT EXISTS customer_owner (customer TEXT PRIMARY KEY, primary_owner TEXT NOT NULL DEFAULT '', secondary_owner TEXT NOT NULL DEFAULT '', products TEXT NOT NULL DEFAULT '', support TEXT NOT NULL DEFAULT '', active INTEGER NOT NULL DEFAULT 1, updated_by TEXT, updated_at INTEGER)").run();
-          const r = await env.DB.prepare('SELECT customer, primary_owner, secondary_owner, products, support, active, updated_by, updated_at FROM customer_owner ORDER BY active DESC, customer').all();
+          try { await env.DB.prepare("ALTER TABLE customer_owner ADD COLUMN sales_owner TEXT NOT NULL DEFAULT ''").run(); } catch (_) {}
+          const r = await env.DB.prepare('SELECT customer, primary_owner, secondary_owner, sales_owner, products, support, active, updated_by, updated_at FROM customer_owner ORDER BY active DESC, customer').all();
           items = r.results || [];
         } catch (_) {}
         return corsResponse({ ok: true, items });
@@ -1223,11 +1224,18 @@ export default {
         const customer = String(b.customer || '').trim().slice(0, 80);
         if (!customer) return corsResponse({ ok: false, message: '고객사명이 필요합니다.' }, 400);
         const actor = (anaOkO && !hasSession) ? 'seed(엑셀)' : user;
+        const isSeed = anaOkO && !hasSession;
+        // 시드(엑셀)는 빈 값이면 기존값 보존, 관리자 편집은 직접 덮어씀(제품·지원·영업담당 편집 가능)
+        const keepIfEmpty = (col) => `CASE WHEN excluded.${col}!='' THEN excluded.${col} ELSE customer_owner.${col} END`;
+        const prodSet = isSeed ? keepIfEmpty('products') : 'excluded.products';
+        const suppSet = isSeed ? keepIfEmpty('support') : 'excluded.support';
+        const salesSet = isSeed ? keepIfEmpty('sales_owner') : 'excluded.sales_owner';
         try {
           await env.DB.prepare("CREATE TABLE IF NOT EXISTS customer_owner (customer TEXT PRIMARY KEY, primary_owner TEXT NOT NULL DEFAULT '', secondary_owner TEXT NOT NULL DEFAULT '', products TEXT NOT NULL DEFAULT '', support TEXT NOT NULL DEFAULT '', active INTEGER NOT NULL DEFAULT 1, updated_by TEXT, updated_at INTEGER)").run();
-          await env.DB.prepare('INSERT INTO customer_owner (customer, primary_owner, secondary_owner, products, support, active, updated_by, updated_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(customer) DO UPDATE SET primary_owner=excluded.primary_owner, secondary_owner=excluded.secondary_owner, products=CASE WHEN excluded.products!=\'\' THEN excluded.products ELSE customer_owner.products END, support=CASE WHEN excluded.support!=\'\' THEN excluded.support ELSE customer_owner.support END, active=excluded.active, updated_by=excluded.updated_by, updated_at=excluded.updated_at')
-            .bind(customer, String(b.primary || '').slice(0, 40), String(b.secondary || '').slice(0, 40), String(b.products || '').slice(0, 120), String(b.support || '').slice(0, 40), b.active === false || b.active === 0 ? 0 : 1, actor, Date.now()).run();
-          if (!(anaOkO && !hasSession)) await auditLog(env, user, 'CUST_OWNER', { ownerCustomer: customer, ownerActive: b.active === false ? 0 : 1 });
+          try { await env.DB.prepare("ALTER TABLE customer_owner ADD COLUMN sales_owner TEXT NOT NULL DEFAULT ''").run(); } catch (_) {}
+          await env.DB.prepare(`INSERT INTO customer_owner (customer, primary_owner, secondary_owner, sales_owner, products, support, active, updated_by, updated_at) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(customer) DO UPDATE SET primary_owner=excluded.primary_owner, secondary_owner=excluded.secondary_owner, sales_owner=${salesSet}, products=${prodSet}, support=${suppSet}, active=excluded.active, updated_by=excluded.updated_by, updated_at=excluded.updated_at`)
+            .bind(customer, String(b.primary || '').slice(0, 40), String(b.secondary || '').slice(0, 40), String(b.sales_owner || '').slice(0, 40), String(b.products || '').slice(0, 120), String(b.support || '').slice(0, 40), b.active === false || b.active === 0 ? 0 : 1, actor, Date.now()).run();
+          if (!isSeed) await auditLog(env, user, 'CUST_OWNER', { ownerCustomer: customer, ownerActive: b.active === false ? 0 : 1 });
           return corsResponse({ ok: true });
         } catch (e) { return corsResponse({ ok: false, message: '저장 실패: ' + (e && e.message || e) }, 500); }
       }

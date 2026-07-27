@@ -339,7 +339,7 @@ function renderCompat(){
   const q=(document.getElementById('compat-q')?.value||'').trim().toLowerCase();
   const admin=!!(IS_ADMIN||IS_SUPER);
   let rows=COMPAT_ROWS;
-  if(q)rows=rows.filter(r=>[r.product,r.product_version,r.os,r.os_version,r.note,r.supported].some(v=>(v||'').toLowerCase().includes(q)));
+  if(q)rows=rows.filter(r=>qMatch(q,[r.product,r.product_version,r.os,r.os_version,r.note,r.supported]));
   const sum=document.getElementById('compat-summary');
   if(sum)sum.textContent=`총 ${rows.length}행 · 확정 ${rows.filter(r=>r.status==='confirmed').length} · 초안 ${rows.filter(r=>r.status!=='confirmed').length}`;
   if(!rows.length){ wrap.innerHTML='<div class="muted u-p-20px">데이터가 없습니다.'+(admin?' “+ 행 추가” 또는 “AI 후보”로 등록하세요.':'')+'</div>'; return; }
@@ -503,7 +503,7 @@ async function saveCompatAICandidates(){
 }
 function copyCompatTable(){
   const q=(document.getElementById('compat-q')?.value||'').trim().toLowerCase();
-  let rows=COMPAT_ROWS; if(q)rows=rows.filter(r=>[r.product,r.product_version,r.os,r.os_version,r.note,r.supported].some(v=>(v||'').toLowerCase().includes(q)));
+  let rows=COMPAT_ROWS; if(q)rows=rows.filter(r=>qMatch(q,[r.product,r.product_version,r.os,r.os_version,r.note,r.supported]));
   const head=['제품','버전','OS','OS버전','지원','EOS','EOL','비고','상태'];
   const lines=[head.join('\t')].concat(rows.map(r=>[r.product,r.product_version,r.os,r.os_version,r.supported,r.eos_date,r.eol_date,(r.note||'').replace(/\s+/g,' '),r.status==='confirmed'?'확정':'초안'].map(v=>v||'').join('\t')));
   navigator.clipboard.writeText(lines.join('\n')).then(()=>toast(`표 ${rows.length}행을 복사했습니다`)).catch(()=>toast('복사 실패'));
