@@ -93,9 +93,17 @@ function renderSalesPage(){
     }).join('')||'<tr><td colspan="7" class="u-empty">라이선스 데이터가 없습니다</td></tr>'}</tbody>
   </table></div>`;
 
-  const custRows=(d.customers||[]).filter(c=>c.name&&c.name!=='None').map(c=>{
+  const _canonC=n=>typeof canonCustomer==='function'?canonCustomer(n):n;
+  const _custBase=(d.customers||[]).filter(c=>c.name&&c.name!=='None');
+  const _seenC=new Set(_custBase.map(c=>_canonC(c.name)));
+  // #1 담당자 관리에 등록된 전 고객사 포함 — 이슈가 없어도 담당자 정보 노출
+  (typeof OWNER_ROWS!=='undefined'&&OWNER_ROWS?OWNER_ROWS:[]).forEach(r=>{const k=_canonC(r.customer);if(r.customer&&!_seenC.has(k)){_custBase.push({name:r.customer,open:0,overdue:0,issues:[],lastActivity:null,_noIssues:true});_seenC.add(k);}});
+  _custBase.sort((a,b)=>(b.open||0)-(a.open||0)||(a.name||'').localeCompare(b.name||'','ko'));
+  const custRows=_custBase.map(c=>{
     const days=c.lastActivity?daysSince(c.lastActivity.slice(0,10)):999;
-    const judge = days>=stale?`<span class="badge" style="background:rgba(248,113,113,.13);color:var(--danger);font-size:11.5px">정체 ${days}일</span>`
+    const noAct=c._noIssues||(!(c.issues&&c.issues.length)&&!c.open);
+    const judge = noAct?`<span class="badge" style="background:rgba(148,137,126,.15);color:var(--text3);font-size:11.5px">이슈 없음</span>`
+      : days>=stale?`<span class="badge" style="background:rgba(248,113,113,.13);color:var(--danger);font-size:11.5px">정체 ${days}일</span>`
       : days>=Math.ceil(stale/2)?`<span class="badge" style="background:rgba(251,191,36,.13);color:var(--warn);font-size:11.5px">주의</span>`
       : `<span class="badge" style="background:rgba(63,190,146,.12);color:var(--success);font-size:11.5px">활발</span>`;
     const issues=(c.issues||[]).map(i=>{
