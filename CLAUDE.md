@@ -82,8 +82,9 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
 
 ## 3. 테마 / 모바일 / PWA
 
-- **테마**: `html[data-theme="light|dark"]`. `applyTheme()`가 적용·저장(`engr_theme`). CSS 변수 기반.
-- **모바일(≤700px)은 다크 전용 강제**: `applyTheme`/초기 스크립트가 모바일이면 `data-theme=dark` 강제(라이트 누수로 글자 안보임 방지). 사용자 설정값은 보존되어 데스크톱엔 적용.
+- **⚠️ v2 웜 리테마(STEP 7, 2026-07-24)**: 팔레트 전면 교체 — **라이트=살구 페이퍼(#FAF1E6)가 기본**, 다크=웜 차콜(#211D22) 옵션. 토큰 이름은 그대로(--accent=코랄 #D9603B/dark #EF8354, --success=제이드, --cyan=웜블루, --warn=앰버, --danger=웜레드). 하드코딩색은 명도보존 웜 치환됨(쿨 잔재 0). **새 색 추가 시 반드시 `var(--토큰)` 사용**(하드코딩 네이비/인디고/민트 금지). 데스크톱 기본 라이트(00-theme-init·01-core UI_THEME 기본 light), 모바일은 여전히 다크(웜 차콜)로 강제.
+- **테마**: `html[data-theme="light|dark"]`. `applyTheme()`가 적용·저장(`engr_theme`). CSS 변수 기반. **`:root`=다크(웜차콜) 기본값, `html[data-theme=light]`=페이퍼 오버라이드**(라이트 오버라이드 기계가 컴포넌트별로 촘촘 — 사이드바도 라이트=페이퍼).
+- **모바일(≤700px)은 다크(웜 차콜) 강제**: `applyTheme`/초기 스크립트가 모바일이면 `data-theme=dark` 강제. `#codex-mobile-dark` 시트가 웜차콜 `:root !important`. (라이트 모바일 시트 `#v158-style`는 미완성 — 라이트 모바일 원하면 device 검증 후 별도 작업.)
   - 모바일 스타일: 정적 `#codex-mobile-dark`(다크, head 끝으로 re-append) + `#v158-style`(원래 라이트 모바일, 미완성). 둘 다 무가드 @media라 충돌했었음 → 다크 강제로 해결.
 - **상단바**: 데스크톱 = 큰 시계(날짜+시간 한 줄) + 사용자 드롭다운 메뉴(Jira상태/동기화/새로고침/매뉴얼/앱설치/테마/PIN변경/로그아웃). 모바일 = 시계 숨김, 메뉴 버튼만(팝오버는 버튼 기준 fixed 배치).
 - **헤더 하단 구분선**: 사이드바·상단바 개별 border 제거하고 `#app::before/::after` 단일 오버레이(top:58px)로 그림 → 줌/DPI 단차 방지.
