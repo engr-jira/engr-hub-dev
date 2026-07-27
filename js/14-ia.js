@@ -74,7 +74,7 @@ function editCustomerEnv(name){
     <input id="cust-env-sol" class="admin-input" style="margin-bottom:6px" placeholder="사용 솔루션 (예: DLP 16.0.2, SEP 14.3 RU9)" value="${escapeHtml(sol)}">
     <textarea id="cust-env-note" class="admin-textarea" style="min-height:90px" placeholder="환경 메모 — 서버 구성·OS·망 분리·특이사항 등">${escapeHtml(note)}</textarea>
     <div style="display:flex;gap:6px;margin-top:6px">
-      <button class="btn btn-indigo u-btn-xs" onclick="saveCustomerEnv(${jsAttr(name)})">저장</button>
+      <button class="btn btn-primary u-btn-xs" onclick="saveCustomerEnv(${jsAttr(name)})">저장</button>
       <button class="btn btn-ghost u-btn-xs" onclick="loadCustomerEnv(${jsAttr(name)})">취소</button>
     </div>`;
 }

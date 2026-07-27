@@ -37,7 +37,7 @@ function renderEosList(){
       <td style="font-size:11px;color:var(--text2);white-space:nowrap" data-sort="${escapeHtml(it.startDate||'')}">${escapeHtml(period)}</td>
       <td data-sort="${hasEnd?days:99999}"><span class="eos-day-badge" style="background:${badgeBg};color:${badgeColor}">${badgeText}</span></td>
       <td class="u-ws-nowrap">
-        <button onclick="event.stopPropagation();openEosEditModal('${it.id}')" style="background:none;border:1px solid var(--border2);border-radius:6px;color:var(--text3);cursor:pointer;font-size:11px;padding:3px 8px;font-family:inherit;margin-right:4px">✎ 수정</button>
+        <button onclick="event.stopPropagation();openEosEditModal('${it.id}')" style="background:none;border:1px solid var(--border2);border-radius:8px;color:var(--text3);cursor:pointer;font-size:11px;padding:3px 8px;font-family:inherit;margin-right:4px">✎ 수정</button>
         <button onclick="event.stopPropagation();deleteEos('${it.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px">×</button>
       </td>
     </tr>`;
@@ -65,7 +65,7 @@ function openEosDetailModal(id){
   </div>
   ${it.memo?`<div class="rp-desc u-mt-12px">${escapeHtml(it.memo)}</div>`:''}`,
   `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">닫기</button>
-   <button class="btn btn-indigo u-btn-inline" onclick="openEosEditModal('${id}')">수정</button>`);
+   <button class="btn btn-primary u-btn-inline" onclick="openEosEditModal('${id}')">수정</button>`);
 }
 function openEosModal(){
   openGenModal('고객사 라이선스 등록',`
@@ -79,7 +79,7 @@ function openEosModal(){
     <div class="full"><label>메모 <span class="u-ttnone-ctext3-fw400">(공통 · 선택)</span></label><textarea id="eos-form-memo" placeholder="비고"></textarea></div>
   </div>`,
   `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">취소</button>
-   <button class="btn btn-indigo u-btn-inline" onclick="saveEos()">저장</button>`);
+   <button class="btn btn-primary u-btn-inline" onclick="saveEos()">저장</button>`);
   addEosLine();
 }
 function addEosLine(){
@@ -136,7 +136,7 @@ function openEosEditModal(id){
     <div class="full"><label>메모</label><textarea id="eos-edit-memo">${escapeHtml(it.memo||'')}</textarea></div>
   </div>`,
   `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">취소</button>
-   <button class="btn btn-indigo u-btn-inline" onclick="updateEos('${id}')">저장</button>`);
+   <button class="btn btn-primary u-btn-inline" onclick="updateEos('${id}')">저장</button>`);
 }
 async function updateEos(id){
   const customer=document.getElementById('eos-edit-customer').value.trim();
@@ -226,7 +226,7 @@ function renderLinks(){
     const url=escapeHtml(l.url||'');
     const meta=`by ${escapeHtml(l.createdBy||'-')}${l.createdAt?' · '+fd(l.createdAt):''}`;
     const canEdit=(l.createdBy===CURRENT_USER||IS_ADMIN||IS_SUPER);
-    return `<div class="link-card" style="position:relative" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')">${canEdit?`<input type="checkbox" class="lnk-pick" data-id="${escapeAttr(l.id)}" onclick="event.stopPropagation()" style="position:absolute;top:7px;left:7px;z-index:3;width:15px;height:15px;cursor:pointer">`:''}<span class="link-cat">${cat}</span>${l.aiSuggested?'<span class="link-cat" style="background:rgba(63,163,196,.14);color:#3FA3C4">🤖 AI 추천</span>':''}<div class="link-info"><div class="link-title">${title}</div><div class="link-meta">${meta}</div></div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${url}</div><div class="link-actions" style="flex-shrink:0;display:flex;gap:4px;opacity:0;transition:opacity .15s"><button class="u-bgcard2-bor1pxsol-br6px-ctext3-curpointe" onclick="event.stopPropagation();openLinkDetail('${escapeAttr(l.id)}')">댓글 ${commentCount}</button>${canEdit?`<button class="u-bgcard2-bor1pxsol-br6px-ctext3-curpointe" onclick="event.stopPropagation();openLinkEditModal('${escapeAttr(l.id)}')">✎</button><button onclick="event.stopPropagation();deleteLink('${escapeAttr(l.id)}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button>`:''}</div></div>`;
+    return `<div class="link-card" style="position:relative" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')">${canEdit?`<input type="checkbox" class="lnk-pick" data-id="${escapeAttr(l.id)}" onclick="event.stopPropagation()" style="position:absolute;top:7px;left:7px;z-index:3;width:15px;height:15px;cursor:pointer">`:''}<span class="link-cat">${cat}</span>${l.aiSuggested?'<span class="link-cat" style="background:rgba(63,163,196,.14);color:#3FA3C4">🤖 AI 추천</span>':''}<div class="link-info"><div class="link-title">${title}</div><div class="link-meta">${meta}</div></div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${url}</div><div class="link-actions" style="flex-shrink:0;display:flex;gap:4px;opacity:0;transition:opacity .15s"><button class="u-bgcard2-bor1pxsol-br6px-ctext3-curpointe" onclick="event.stopPropagation();openLinkDetail('${escapeAttr(l.id)}')">댓글 ${commentCount}</button>${canEdit?`<button class="u-bgcard2-bor1pxsol-br6px-ctext3-curpointe" onclick="event.stopPropagation();openLinkEditModal('${escapeAttr(l.id)}')">✎</button><button onclick="event.stopPropagation();deleteLink('${escapeAttr(l.id)}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:8px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button>`:''}</div></div>`;
   }).join('');
   renderPager('links-pager','links',list.length,'renderLinks');
 }
@@ -246,7 +246,7 @@ function itemCommentsHtml(kind,item){
     ${rows}
     <div class="item-comment-form">
       <textarea id="${kind}-comment-text-${escapeHtml(item.id)}" class="admin-textarea" placeholder="의견, 보완할 점, 참고 내용을 남겨주세요"></textarea>
-      <button class="btn btn-indigo" onclick="addItemComment('${kind}','${escapeHtml(item.id)}')" style="width:auto;padding:8px 16px">댓글</button>
+      <button class="btn btn-primary" onclick="addItemComment('${kind}','${escapeHtml(item.id)}')" style="width:auto;padding:8px 16px">댓글</button>
     </div>
   </div>`;
 }
@@ -263,7 +263,7 @@ function openLinkDetail(id){
     <div style="font-size:10px;color:var(--text3);margin-bottom:12px">${escapeHtml(l.createdBy||'-')} · ${l.updatedAt?'수정 '+fd(l.updatedAt):fd(l.createdAt)}</div>
     ${itemCommentsHtml('links',l)}`,
     `<a class="u-td-none" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer"><button class="btn btn-ghost u-btn-inline">열기 →</button></a>
-     <button class="btn btn-indigo u-btn-inline" onclick="openLinkEditModal('${id}')">수정</button>
+     <button class="btn btn-primary u-btn-inline" onclick="openLinkEditModal('${id}')">수정</button>
      <button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">닫기</button>`);
 }
 async function addItemComment(kind,id){
@@ -299,7 +299,7 @@ function openLinkModal(){
     <div class="full"><label>설명</label><textarea id="link-form-desc" placeholder="설명 (선택)"></textarea></div>
   </div>`,
   `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">취소</button>
-   <button class="btn btn-indigo u-btn-inline" onclick="saveLink()">저장</button>`);
+   <button class="btn btn-primary u-btn-inline" onclick="saveLink()">저장</button>`);
 }
 async function saveLink(){
   const title=document.getElementById('link-form-title').value.trim();
@@ -326,7 +326,7 @@ function openLinkEditModal(id){
     <div class="full"><label>설명</label><textarea id="link-edit-desc">${escapeHtml(l.desc||'')}</textarea></div>
   </div>`,
   `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">취소</button>
-   <button class="btn btn-indigo u-btn-inline" onclick="updateLink('${id}')">저장</button>`);
+   <button class="btn btn-primary u-btn-inline" onclick="updateLink('${id}')">저장</button>`);
 }
 async function updateLink(id){
   const title=document.getElementById('link-edit-title').value.trim();

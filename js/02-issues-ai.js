@@ -154,7 +154,7 @@ function renderRightPanel(){
         const labCell=(i.labels&&i.labels.length)?i.labels.map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join(' '):na;
         const rateCell=i.rating?escapeHtml(i.rating):'<span class="u-muted">-</span>';
         return `
-      <div class="rp-row"><span>이슈키</span><span style="color:var(--accent3);font-weight:700;display:inline-flex;align-items:center;gap:7px">${i.key}<button onclick="copyText('${i.key}');event.stopPropagation()" title="이슈키 복사" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px;display:inline-flex;border-radius:5px" onmouseover="this.style.color='var(--accent3)'" onmouseout="this.style.color='var(--text3)'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></span></div>
+      <div class="rp-row"><span>이슈키</span><span style="color:var(--accent3);font-weight:700;display:inline-flex;align-items:center;gap:7px">${i.key}<button onclick="copyText('${i.key}');event.stopPropagation()" title="이슈키 복사" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px;display:inline-flex;border-radius:8px" onmouseover="this.style.color='var(--accent3)'" onmouseout="this.style.color='var(--text3)'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></span></div>
       <div class="rp-row"><span>우선순위</span><span>${escapeHtml(i.pri)}</span></div>
       <div class="rp-row"><span>고객사</span><span>${custCell}</span></div>
       <div class="rp-row"><span>레이블</span><span>${labCell}</span></div>
@@ -228,7 +228,7 @@ function openFullIssue(){
       <div><span class="u-muted">수정일</span>&nbsp;${fd(i.updated)}</div>
     </div>
     ${attachHtml?`<div style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:6px">${attachHtml}</div>`:''}
-    ${i.desc?`<div class="u-mb-16px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px;text-transform:uppercase">본문</div><div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:10px;padding:14px;font-size:12.5px;line-height:1.75;white-space:pre-wrap;max-height:400px;overflow-y:auto;color:var(--text2)">${adfToHtml(i.desc)}</div></div>`:''}
+    ${i.desc?`<div class="u-mb-16px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px;text-transform:uppercase">본문</div><div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:12.5px;line-height:1.75;white-space:pre-wrap;max-height:400px;overflow-y:auto;color:var(--text2)">${adfToHtml(i.desc)}</div></div>`:''}
     ${commentHtml?`<div><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:8px;text-transform:uppercase">코멘트 (${i.comments.length})</div>${commentHtml}</div>`:''}
   `,`<a class="u-td-none" href="https://escare-engr.atlassian.net/browse/${i.key}" target="_blank"><button class="btn btn-ghost u-btn-inline">Jira에서 보기 →</button></a>`);
 }

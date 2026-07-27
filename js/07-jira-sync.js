@@ -278,11 +278,11 @@ async function pwaInstall(){
   if(__deferredInstall){ __deferredInstall.prompt(); try{await __deferredInstall.userChoice;}catch(_){} __deferredInstall=null; syncInstallMenuItem(); return; }
   if(isIOSDevice()){
     openGenModal('📲 아이폰에 앱 설치',`<div style="font-size:13px;line-height:2;color:var(--text2)">
-      <b>Safari</b> 하단의 <b>공유</b> 버튼 <span style="display:inline-block;border:1px solid var(--border2);border-radius:5px;padding:0 7px;color:var(--accent3)">⬆</span> 을 누르고,<br>
+      <b>Safari</b> 하단의 <b>공유</b> 버튼 <span style="display:inline-block;border:1px solid var(--border2);border-radius:8px;padding:0 7px;color:var(--accent3)">⬆</span> 을 누르고,<br>
       메뉴에서 <b>"홈 화면에 추가"</b> 를 선택하세요.<br><br>
       홈 화면에 <b>ESCARE</b> 아이콘이 생기고, 주소 입력 없이 앱처럼 열립니다.<br><br>
       <span style="color:var(--text3);font-size:12px">※ 반드시 <b>Safari</b>에서 열어야 추가됩니다(다른 브라우저는 제한).</span>
-    </div>`,`<button class="btn btn-indigo u-btn-inline" onclick="closeGenModal()">확인</button>`);
+    </div>`,`<button class="btn btn-primary u-btn-inline" onclick="closeGenModal()">확인</button>`);
     return;
   }
   toast('이미 설치되었거나, 브라우저 메뉴의 "홈 화면에 추가"를 이용해 주세요.',true);
@@ -460,7 +460,7 @@ function injectV154Style(){
   st.textContent=`
     .mini-filter-note{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px 0}
     .mini-filter-note .tag{border:1px solid rgba(239,131,84,.35);background:rgba(217,96,59,.12);color:#F6D4C2;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700}
-    .customer-work-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:9px 10px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.025);cursor:pointer;margin-bottom:7px;transition:.12s ease}
+    .customer-work-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:9px 10px;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.025);cursor:pointer;margin-bottom:7px;transition:.12s ease}
     .customer-work-row:hover{border-color:rgba(239,131,84,.55);background:rgba(239,131,84,.09);transform:translateY(-1px)}
     .customer-work-row .k{font-weight:800;color:#BFE0EC;font-size:12px}.customer-work-row .t{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.35}.customer-work-row .m{font-size:10px;color:var(--text3);white-space:nowrap}
     .vt-history-item{display:grid;grid-template-columns:minmax(150px,1fr) 70px 76px 84px;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.08);font-size:11px}

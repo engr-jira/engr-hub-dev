@@ -118,7 +118,7 @@ function applyV151Dom(){
   }
   const caseInfo=document.querySelector('#page-cases > div');
   if(caseInfo&&caseInfo.textContent.includes('7자리 이상')){
-    caseInfo.innerHTML='📦 <strong>케이스 트래커 분류 기준:</strong> Jira 제목 맨 앞이 <code style="background:rgba(255,255,255,.08);padding:2px 5px;border-radius:5px">[숫자8자리]</code> 형식인 항목만 케이스로 분류합니다. 일반 이슈에 포함된 케이스 번호는 연결 케이스로만 표시합니다.';
+    caseInfo.innerHTML='📦 <strong>케이스 트래커 분류 기준:</strong> Jira 제목 맨 앞이 <code style="background:rgba(255,255,255,.08);padding:2px 5px;border-radius:8px">[숫자8자리]</code> 형식인 항목만 케이스로 분류합니다. 일반 이슈에 포함된 케이스 번호는 연결 케이스로만 표시합니다.';
   }
   if(!document.getElementById('v151-style')){
     const st=document.createElement('style');
@@ -411,17 +411,17 @@ function applyV153Dom(){
     s.id='v153-style';
     s.textContent=`
       .kpi-grid{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:10px;margin-bottom:12px}
-      .kpi{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:12px;min-height:76px;cursor:pointer;transition:.15s}
+      .kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;min-height:76px;cursor:pointer;transition:.15s}
       .kpi:hover{border-color:var(--accent2);transform:translateY(-1px)}
       .kpi .num{font-size:28px;font-weight:800;color:#FBF4EA;line-height:1}
       .kpi .label{font-size:11px;color:#C6BBAF;margin-top:7px;font-weight:700}
       .kpi .sub{font-size:10px;color:var(--text3);margin-top:5px}
-      .dash-alert{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px;padding:13px 16px;border-radius:14px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(90deg,rgba(251,191,36,.1),rgba(194,78,44,.08))}
+      .dash-alert{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:12px;padding:13px 16px;border-radius:16px;border:1px solid rgba(251,191,36,.35);background:linear-gradient(90deg,rgba(251,191,36,.1),rgba(194,78,44,.08))}
       .dash-section{margin-top:14px}
       .dash-section .sec-title{font-size:11px;color:#EFA07E;font-weight:800;margin:7px 0 9px;display:flex;align-items:center;gap:8px}
       .dash-section .sec-title:after{content:'';height:1px;background:var(--border);flex:1}
       .mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-      .mini-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:12px;min-height:140px;overflow:hidden}
+      .mini-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px;min-height:140px;overflow:hidden}
       .dash-list-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;cursor:pointer}
       .dash-list-row:last-child{border-bottom:0}
       .dash-list-row:hover .title{color:#FFFDF9}

@@ -95,11 +95,11 @@ function injectV155Style(){
     .issue-card:hover,.issue-card.sel{background:rgba(217,96,59,.12);border-color:rgba(239,131,84,.48);transform:translateY(-1px)}
     .issue-main{display:grid;grid-template-columns:auto auto auto minmax(0,1fr) auto;gap:7px;align-items:center;min-width:0}
     .issue-main .key{font-size:12px;font-weight:800;color:#BFE0EC;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
-    .issue-main .st,.issue-main .pri{font-size:10px;font-weight:800;border-radius:6px;padding:3px 6px;white-space:nowrap}
+    .issue-main .st,.issue-main .pri{font-size:10px;font-weight:800;border-radius:8px;padding:3px 6px;white-space:nowrap}
     .issue-main .title{font-size:13px;font-weight:700;color:#FBF4EA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
     .issue-main .date{font-size:11px;color:var(--text3);white-space:nowrap}
     .issue-sub{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:7px;font-size:11px;color:var(--text3)}
-    .issue-sub .badge{font-size:9px;border-radius:6px;padding:2px 6px;font-weight:800}
+    .issue-sub .badge{font-size:9px;border-radius:8px;padding:2px 6px;font-weight:800}
     .case-chip-wrap{grid-column:1/-1;display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px;min-width:0}
     .case-chip{display:inline-flex;align-items:center;gap:4px;max-width:100%;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:800;line-height:1.2;white-space:nowrap;border:1px solid rgba(255,255,255,.1);cursor:pointer}
     .case-chip.open{background:rgba(63,190,146,.16);border-color:rgba(63,190,146,.34);color:#3FBE92}
@@ -124,15 +124,15 @@ function injectV155Style(){
     .topbar-right .search-box{display:none!important}
     .sb-bottom .health-card{display:none!important}
     .top-status{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
-    .top-status-card{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:7px 10px;min-height:34px}
+    .top-status-card{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:7px 10px;min-height:34px}
     .top-status-card .label{font-size:9px;color:var(--text3);font-weight:800;letter-spacing:.2px}
     .top-status-card .value{font-size:11px;color:#f5f8ff;font-weight:800;white-space:nowrap}
     .top-status-card .ok{color:#3FBE92}.top-status-card .warn{color:#E8B23D}
-    .top-refresh,.top-logout,.top-pin{height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#F7E7DA;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px}
+    .top-refresh,.top-logout,.top-pin{height:34px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#F7E7DA;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px}
     .top-pin{color:#BFE0EC;border-color:rgba(63,163,196,.28);background:rgba(63,163,196,.08)}
     .top-refresh{width:36px;padding:0}.top-refresh svg{width:15px;height:15px}.top-refresh:hover,.top-logout:hover,.top-pin:hover{background:rgba(239,131,84,.2);border-color:rgba(239,131,84,.42)}
     #page-nav,#case-pager{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:6px!important;background:transparent!important;border:0!important;padding:8px 0!important}
-    #page-nav button,#case-pager button{background:#332D34;border:1px solid rgba(239,131,84,.25);color:#F6D4C2;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer}
+    #page-nav button,#case-pager button{background:#332D34;border:1px solid rgba(239,131,84,.25);color:#F6D4C2;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer}
     #page-nav button.active,#case-pager button.active{background:#D9603B;border-color:#E88A5E;color:#FFFDF9}
     #page-nav button:disabled,#case-pager button:disabled{opacity:.38;cursor:not-allowed}
     .private-layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px}
@@ -140,7 +140,7 @@ function injectV155Style(){
     .private-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.private-head strong{font-size:13px}.private-head span{font-size:10px;color:var(--text3)}
     .private-editor input,.private-editor textarea{width:100%;background:#242027;border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:10px 11px;margin-bottom:8px;font-family:inherit;font-size:12px}
     .private-editor textarea{min-height:140px;resize:vertical;line-height:1.5}
-    .private-actions{display:flex;gap:6px;margin-top:8px}.private-actions button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--text2);border-radius:7px;padding:5px 8px;font-size:10px;cursor:pointer}
+    .private-actions{display:flex;gap:6px;margin-top:8px}.private-actions button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--text2);border-radius:8px;padding:5px 8px;font-size:10px;cursor:pointer}
     .private-done{opacity:.65}.private-done .title{text-decoration:line-through;color:var(--text3)}
     @media(max-width:1100px){.private-layout{grid-template-columns:1fr}}
     @media(max-width:1200px){.issue-main{grid-template-columns:auto auto minmax(0,1fr) auto}.issue-main .pri{display:none}}
@@ -157,7 +157,7 @@ function injectV155Style(){
       aside{position:sticky;top:0;z-index:80;background:rgba(33,29,34,.98);box-shadow:0 8px 24px rgba(0,0,0,.28);max-width:100%;overflow:hidden}
       .sb-top{padding:10px 10px 8px}
       .sb-brand{margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08)}
-      .sb-logo{width:32px;height:32px;border-radius:10px}.sb-logo svg{width:17px;height:17px}.sb-name{font-size:14px}.sb-sub{font-size:9px}
+      .sb-logo{width:32px;height:32px;border-radius:12px}.sb-logo svg{width:17px;height:17px}.sb-name{font-size:14px}.sb-sub{font-size:9px}
       .sb-nav{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;padding:2px 10px 10px 10px;margin:0 -10px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
       .sb-nav::-webkit-scrollbar{height:0}
       .sb-btn{flex:0 0 auto;width:auto;min-width:max-content;padding:8px 10px;border-radius:999px;font-size:11px;scroll-snap-align:start;white-space:nowrap}
@@ -299,10 +299,10 @@ function renderMetaIncomplete(){
   const byAss={};
   inc.forEach(i=>{const a=i.assignee||'(미지정)';if(!byAss[a])byAss[a]={count:0,fields:{}};byAss[a].count++;metaMissingFields(i).forEach(f=>{byAss[a].fields[f]=(byAss[a].fields[f]||0)+1;});});
   const rows=Object.entries(byAss).sort((a,b)=>b[1].count-a[1].count).map(([name,info])=>{
-    const fieldChips=Object.entries(info.fields).sort((a,b)=>b[1]-a[1]).map(([f,n])=>`<span style="display:inline-block;background:rgba(251,191,36,.12);color:#E0A32E;border-radius:6px;padding:1px 7px;font-size:10px;margin:1px">${f} ${n}</span>`).join(' ');
+    const fieldChips=Object.entries(info.fields).sort((a,b)=>b[1]-a[1]).map(([f,n])=>`<span style="display:inline-block;background:rgba(251,191,36,.12);color:#E0A32E;border-radius:8px;padding:1px 7px;font-size:10px;margin:1px">${f} ${n}</span>`).join(' ');
     return `<div onclick="setIssueNavigationFilter({assignee:${jsAttr(name==='(미지정)'?'':name)},preset:{kind:'incomplete',label:${jsAttr('메타 미완성 · '+name)}}})" style="display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--border);cursor:pointer">
       <span style="min-width:90px;font-size:13px;font-weight:700;color:var(--text)">${escapeHtml(name)}</span>
-      <span style="background:rgba(248,113,113,.15);color:#E06A63;border-radius:7px;padding:2px 9px;font-size:12px;font-weight:700">${info.count}건</span>
+      <span style="background:rgba(248,113,113,.15);color:#E06A63;border-radius:8px;padding:2px 9px;font-size:12px;font-weight:700">${info.count}건</span>
       <span style="flex:1;text-align:right">${fieldChips}</span>
     </div>`;
   }).join('');
@@ -341,8 +341,8 @@ function caseBallBadge(key){
   const r=respByKey(key); if(!r||!r.ball)return '';
   const days=r.last_comm!=null?` · ${Math.round(r.last_comm)}일 전`:'';
   const tip=escapeHtml(r.ball_note||'');
-  if(r.ball==='team')return `<span title="${tip}" style="background:rgba(248,113,113,.14);color:#E06A63;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">🔴 팀 회신 필요${days}</span>`;
-  return `<span title="${tip}" style="background:rgba(63,163,196,.12);color:#3F8FC4;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">⏳ 제조사 대기${days}</span>`;
+  if(r.ball==='team')return `<span title="${tip}" style="background:rgba(248,113,113,.14);color:#E06A63;border-radius:8px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">🔴 팀 회신 필요${days}</span>`;
+  return `<span title="${tip}" style="background:rgba(63,163,196,.12);color:#3F8FC4;border-radius:8px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">⏳ 제조사 대기${days}</span>`;
 }
 function respSpeedRows(){
   // 코멘트 기반 (스케줄 분석 산출): avg_resp = 최초응답+코멘트 간격+현재까지 무응답 구간의 평균
@@ -369,7 +369,7 @@ function respSpeedRows(){
       return `<div style="padding:7px 2px;border-bottom:1px solid var(--border);cursor:pointer" onclick="setCaseNavigationFilter({assignee:${jsAttr(a)}})">
         <div style="display:grid;grid-template-columns:minmax(0,1fr) 46px 64px;gap:8px;align-items:center">
           <span style="font-weight:700;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(a)}</span>
-          <span style="background:rgba(239,131,84,.14);color:var(--accent3);border-radius:7px;padding:2px 0;font-size:11px;font-weight:700;text-align:center;white-space:nowrap">${v.n}건</span>
+          <span style="background:rgba(239,131,84,.14);color:var(--accent3);border-radius:8px;padding:2px 0;font-size:11px;font-weight:700;text-align:center;white-space:nowrap">${v.n}건</span>
           <b style="color:${col};white-space:nowrap;text-align:right;font-size:12.5px">${avg===null?'-':avg+'일'}</b>
         </div>
         <div style="height:4px;background:rgba(255,255,255,.06);border-radius:99px;margin-top:5px"><div style="height:4px;width:${pct}%;background:${col};border-radius:99px"></div></div>

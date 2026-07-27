@@ -140,7 +140,7 @@ function injectV158Style(){
       .sb-brand,.sb-bottom{display:none!important}
       .sb-nav{height:100%!important;display:flex!important;align-items:stretch!important;gap:0!important;margin:0!important;padding:0 6px!important;overflow-x:auto!important;overflow-y:hidden!important;scroll-snap-type:x proximity!important;-webkit-overflow-scrolling:touch!important}
       .sb-nav::-webkit-scrollbar{height:0!important}
-      .sb-btn{flex:0 0 68px!important;width:68px!important;min-width:68px!important;height:58px!important;margin:4px 2px!important;padding:6px 4px!important;border-radius:14px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;color:#8A7B62!important;background:transparent!important;border:0!important;font-size:10px!important;font-weight:800!important;text-align:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;scroll-snap-align:start!important}
+      .sb-btn{flex:0 0 68px!important;width:68px!important;min-width:68px!important;height:58px!important;margin:4px 2px!important;padding:6px 4px!important;border-radius:16px!important;display:flex!important;flex-direction:column!important;align-items:center!important;justify-content:center!important;gap:4px!important;color:#8A7B62!important;background:transparent!important;border:0!important;font-size:10px!important;font-weight:800!important;text-align:center!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;scroll-snap-align:start!important}
       .sb-btn svg{width:18px!important;height:18px!important;flex:0 0 18px!important}
       .sb-btn.active{color:#1E9E6A!important;background:#D8F0E4!important}
       .sb-btn:hover{background:#F1EFE6!important;color:#2E7FB8!important}
@@ -150,7 +150,7 @@ function injectV158Style(){
       .card,.panel,.admin-card{border-radius:16px!important}
       .sec-title{font-size:13px!important;color:#41372A!important;margin:8px 0 10px!important}
       .sec-title::after{background:#E7D8C4!important}
-      .alert,.sync-banner{background:#EAF5EF!important;border-color:#BFE0EC!important;color:#2E7FB8!important;border-radius:14px!important}
+      .alert,.sync-banner{background:#EAF5EF!important;border-color:#BFE0EC!important;color:#2E7FB8!important;border-radius:16px!important}
       .kpi-val{color:#211D22!important}
       .kpi-label,.kpi-sub,.imeta,.rank-stat,.link-desc,.link-url,.storage-note{color:#8A7B62!important}
       .ititle,.rank-name,.link-title,.admin-card h3,.rp-title{color:#211D22!important}

@@ -333,11 +333,11 @@ async function loadSettings(){
           <span style="font-weight:700;color:var(--text)">${escapeHtml(userLabel(name))}</span>
         </div>
         ${name!==SUPER_ADMIN?`<div style="display:flex;gap:6px">
-          <select onchange="changeRole('${escapeHtml(name)}',this.value)" style="background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-size:11px;outline:none">
+          <select onchange="changeRole('${escapeHtml(name)}',this.value)" style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:4px 8px;color:var(--text);font-size:11px;outline:none">
             <option value="admin" ${role==='admin'?'selected':''}>일반 관리자</option>
             <option value="super" ${role==='super'?'selected':''}>최상위 관리자</option>
           </select>
-          <button onclick="removeAdmin('${escapeHtml(name)}')" class="btn btn-red u-btn-xxs">회수</button>
+          <button onclick="removeAdmin('${escapeHtml(name)}')" class="btn btn-danger u-btn-xxs">회수</button>
         </div>`:'<span class="u-muted-11">변경 불가</span>'}
       </div>`;
     }).join('');
@@ -388,8 +388,8 @@ function renderUserAccounts(users=[]){
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
       <button class="btn btn-ghost u-btn-xxs" onclick="fillUserForm(${jsAttr(u.id)},${jsAttr(u.displayName||'')},${jsAttr(u.role||'user')})">수정</button>
-      ${u.id!==SUPER_ADMIN&&u.active!==false?`<button class="btn btn-red u-btn-xxs" onclick="deleteUserAccount('${escapeHtml(u.id)}')">로그인 차단</button>`:''}
-      ${u.id!==SUPER_ADMIN?`<button class="btn btn-red" onclick="purgeUserAccount('${escapeHtml(u.id)}')" style="width:auto;padding:4px 12px;font-size:11px;opacity:.7">계정 삭제</button>`:''}
+      ${u.id!==SUPER_ADMIN&&u.active!==false?`<button class="btn btn-danger u-btn-xxs" onclick="deleteUserAccount('${escapeHtml(u.id)}')">로그인 차단</button>`:''}
+      ${u.id!==SUPER_ADMIN?`<button class="btn btn-danger" onclick="purgeUserAccount('${escapeHtml(u.id)}')" style="width:auto;padding:4px 12px;font-size:11px;opacity:.7">계정 삭제</button>`:''}
     </div>
   </div>`).join('')||'<div class="empty">등록된 사용자가 없습니다.</div>';
 }

@@ -87,7 +87,7 @@ function renderSalesPage(){
           <select id="se-status-${i}" class="admin-input" style="max-width:130px">${SALES_STATUS.map(s=>`<option${(n.status||'미착수')===s?' selected':''}>${s}</option>`).join('')}</select>
           <input id="se-body-${i}" class="admin-input" style="flex:1;min-width:200px" placeholder="영업 메모" value="${escapeHtml(n.body||'')}">
           <input id="se-next-${i}" type="date" class="admin-input" style="max-width:150px" value="${escapeHtml(n.next_contact||'')}">
-          <button class="btn btn-indigo u-btn-xs" onclick="saveSalesNoteUI(${i},${jsAttr(r.customer)},${jsAttr(r.product)})">저장</button>
+          <button class="btn btn-primary u-btn-xs" onclick="saveSalesNoteUI(${i},${jsAttr(r.customer)},${jsAttr(r.product)})">저장</button>
         </div>
       </td></tr>`:''}`;
     }).join('')||'<tr><td colspan="7" class="u-empty">라이선스 데이터가 없습니다</td></tr>'}</tbody>

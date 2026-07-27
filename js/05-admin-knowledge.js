@@ -55,7 +55,7 @@ function forcePinChange(){   // H-1: 공유 PIN 폴백 로그인 시 개인 PIN 
     <div class="full"><label>새 PIN 확인</label><input id="pin-new2" type="password" autocomplete="new-password"></div>
   </div>`,
   `<button class="btn btn-ghost u-btn-inline" onclick="window.__pinLock=false;forceLogout()">로그아웃</button>
-   <button class="btn btn-indigo u-btn-inline" onclick="changeMyPin()">개인 PIN 설정하고 계속</button>`);
+   <button class="btn btn-primary u-btn-inline" onclick="changeMyPin()">개인 PIN 설정하고 계속</button>`);
 }
 function openChangePinModal(){
   openGenModal('내 PIN 변경',`
@@ -65,7 +65,7 @@ function openChangePinModal(){
     <div class="full"><label>새 PIN 확인</label><input id="pin-new2" type="password" autocomplete="new-password"></div>
   </div>`,
   `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">취소</button>
-   <button class="btn btn-indigo u-btn-inline" onclick="changeMyPin()">변경</button>`);
+   <button class="btn btn-primary u-btn-inline" onclick="changeMyPin()">변경</button>`);
 }
 async function changeMyPin(){
   const oldPin=document.getElementById('pin-old').value;
@@ -101,7 +101,7 @@ function resetAllHubData(){
       <input id="reset-pin-input" type="password" placeholder="PIN 입력" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-size:14px;box-sizing:border-box;margin-bottom:12px" autocomplete="current-password">
       <div style="display:flex;gap:8px">
         <button id="reset-pin-cancel" class="btn btn-ghost u-flex-1">취소</button>
-        <button id="reset-pin-ok" class="btn btn-red u-flex-1">초기화</button>
+        <button id="reset-pin-ok" class="btn btn-danger u-flex-1">초기화</button>
       </div>
     </div>`;
     document.body.appendChild(p);
@@ -248,7 +248,7 @@ function openKnowledgeDetail(id){
     <div style="font-size:10px;color:var(--text3);margin-top:16px">${escapeHtml(k.createdBy||'-')} · ${k.updatedAt?'수정 '+fd(k.updatedAt):fd(k.createdAt)}</div>
     ${itemCommentsHtml('knowledge',k)}`,
     `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">닫기</button>
-     <button class="btn btn-indigo u-btn-inline" onclick="openKnowledgeModal('${id}')">수정</button>`);
+     <button class="btn btn-primary u-btn-inline" onclick="openKnowledgeModal('${id}')">수정</button>`);
 }
 
 function openKnowledgeModal(id){
@@ -266,7 +266,7 @@ function openKnowledgeModal(id){
     <div class="full"><label>KB/참고 링크</label><input id="know-form-link" value="${escapeHtml(ex?.link||"")}" placeholder="https://knowledge.broadcom.com/..."></div>
   </div>`,
   `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">취소</button>
-   <button class="btn btn-indigo u-btn-inline" onclick="${ex?`updateKnowledge('${id}')`:"saveKnowledge()"}">저장</button>`);
+   <button class="btn btn-primary u-btn-inline" onclick="${ex?`updateKnowledge('${id}')`:"saveKnowledge()"}">저장</button>`);
 }
 async function saveKnowledge(){
   const title=document.getElementById("know-form-title").value.trim();
