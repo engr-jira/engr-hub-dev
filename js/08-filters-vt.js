@@ -293,13 +293,13 @@ function renderDash(){
 function renderMetaIncomplete(){
   const wrap=document.getElementById('meta-incomplete-wrap');
   if(!wrap)return;
-  const inc=getGeneralIssues().filter(i=>isOpenStatus(i.status)&&isMetaIncomplete(i));
-  if(!inc.length){wrap.innerHTML=`<div class="chart-card u-mb-16px"><div class="chart-title">📋 주요 항목 미기입 점검</div><div style="font-size:12px;color:var(--success);padding:8px 2px">✓ 미완료 일반 이슈의 핵심 항목(고객사·레이블·범주·기한)이 모두 입력되어 있습니다.</div></div>`;return;}
-  // 담당자별 집계
+  const inc=getGeneralIssues().filter(i=>isOpenStatus(i.status)&&isMetaOrOverdue(i));
+  if(!inc.length){wrap.innerHTML=`<div class="chart-card u-mb-16px"><div class="chart-title">📋 주요 항목 미기입 점검</div><div style="font-size:12px;color:var(--success);padding:8px 2px">✓ 미완료 일반 이슈의 핵심 항목(고객사·레이블·범주·기한)이 모두 입력됐고 기한 초과 건도 없습니다.</div></div>`;return;}
+  // 담당자별 집계 (미기입 항목 + 기한 초과)
   const byAss={};
-  inc.forEach(i=>{const a=i.assignee||'(미지정)';if(!byAss[a])byAss[a]={count:0,fields:{}};byAss[a].count++;metaMissingFields(i).forEach(f=>{byAss[a].fields[f]=(byAss[a].fields[f]||0)+1;});});
+  inc.forEach(i=>{const a=i.assignee||'(미지정)';if(!byAss[a])byAss[a]={count:0,fields:{}};byAss[a].count++;const flags=[...metaMissingFields(i),...(isOverdueIssue(i)?['기한초과']:[])];flags.forEach(f=>{byAss[a].fields[f]=(byAss[a].fields[f]||0)+1;});});
   const rows=Object.entries(byAss).sort((a,b)=>b[1].count-a[1].count).map(([name,info])=>{
-    const fieldChips=Object.entries(info.fields).sort((a,b)=>b[1]-a[1]).map(([f,n])=>`<span style="display:inline-block;background:rgba(251,191,36,.12);color:var(--warn);border-radius:8px;padding:1px 7px;font-size:10px;margin:1px">${f} ${n}</span>`).join(' ');
+    const fieldChips=Object.entries(info.fields).sort((a,b)=>b[1]-a[1]).map(([f,n])=>{const od=f==='기한초과';return `<span style="display:inline-block;background:${od?'rgba(248,113,113,.15)':'rgba(251,191,36,.12)'};color:${od?'var(--danger)':'var(--warn)'};border-radius:8px;padding:1px 7px;font-size:10px;margin:1px">${f} ${n}</span>`;}).join(' ');
     return `<div onclick="setIssueNavigationFilter({assignee:${jsAttr(name==='(미지정)'?'':name)},preset:{kind:'incomplete',label:${jsAttr('메타 미완성 · '+name)}}})" style="display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--border);cursor:pointer">
       <span style="min-width:90px;font-size:13px;font-weight:700;color:var(--text)">${escapeHtml(name)}</span>
       <span style="background:rgba(248,113,113,.15);color:var(--danger);border-radius:8px;padding:2px 9px;font-size:12px;font-weight:700">${info.count}건</span>
@@ -311,7 +311,7 @@ function renderMetaIncomplete(){
       <span>📋 주요 항목 미기입 점검 — 담당자별 (${inc.length}건)</span>
       <button onclick="setIssueNavigationFilter({preset:{kind:'incomplete',label:'메타 미완성 일반 이슈'}})" class="btn btn-ghost u-btn-xxs">전체 보기 →</button>
     </div>
-    <div class="u-fs11px-ctext3-mb6px">미완료 일반 이슈 중 고객사·레이블·범주·기한이 빠진 건. 담당자 클릭 시 해당 미기입 이슈로 이동합니다.</div>
+    <div class="u-fs11px-ctext3-mb6px">미완료 일반 이슈 중 고객사·레이블·범주·기한 미기입 또는 <b style="color:var(--danger)">기한 초과</b> 건. 담당자 클릭 시 해당 이슈로 이동합니다.</div>
     ${rows}
   </div>`;
 }
@@ -547,7 +547,7 @@ function renderCustomerRight(){
   const nearLic=licDday.length?licDday[0]:null;
   const row=(i,kind)=>`<div class="customer-work-row" onclick="${kind==='case'?`v154GoCaseExact('${escapeAttr(i.key)}')`:`v154GoIssueExact('${escapeAttr(i.key)}')`}"><div><div class="k">${escapeHtml(kind==='case'?(i.caseNum||getCasePrefixNum(i.title)||i.key):i.key)}</div><div class="t">${escapeHtml(cleanTitle(i.title||i.summary||''))}</div></div><div class="m">${escapeHtml(i.status||'')} · ${fd(i.date||i.created)}</div></div>`;
   right.innerHTML=`<div class="rpanel">
-    <div style="font-size:16px;font-weight:800;color:var(--text-strong);margin-bottom:14px">${escapeHtml(c.name)}${(typeof salesOwnerChip==='function')?salesOwnerChip(c.name):''}${(typeof isOwnerInactive==='function'&&isOwnerInactive(c.name))?` <span class="badge" style="font-size:10px;vertical-align:middle;background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger)">계약종료</span>`:''}</div>
+    <div style="font-size:16px;font-weight:800;color:var(--text-strong);margin-bottom:14px">${escapeHtml(c.name)}${(typeof isOwnerInactive==='function'&&isOwnerInactive(c.name))?` <span class="badge" style="font-size:10px;vertical-align:middle;background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger)">계약종료</span>`:''}</div>
     <div class="rp-meta">
       <div class="rp-row"><span>제품</span><span style="flex-wrap:wrap;display:flex;gap:4px">${[...(c.products||[])].map(p=>`<span class="badge" style="background:${(LC_MAP[p]||'#A2917A')}22;color:${(LC_MAP[p]||'#A2917A')}">${escapeHtml(p)}</span>`).join('')||'-'}</span></div>
       <div class="rp-row"><span>영업 담당자</span><span>${(typeof salesOwnerOf==='function'&&salesOwnerOf(c.name))?escapeHtml(salesOwnerOf(c.name)):'<span class="u-muted-11">미지정</span>'}</span></div>

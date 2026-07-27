@@ -74,6 +74,8 @@ function metaMissingFields(i){
 }
 function isHandsOn(i){return /hands[\s\-]?on/i.test((i&&i.title)||'');}
 function isMetaIncomplete(i){ if(isHandsOn(i))return false; return metaMissingFields(i).length>0;}
+function isOverdueIssue(i){ return !!(i&&i.due&&typeof isOpenStatus==='function'&&isOpenStatus(i.status)&&typeof daysUntil==='function'&&daysUntil(i.due)<0);}
+function isMetaOrOverdue(i){ return isMetaIncomplete(i)||(isOverdueIssue(i)&&!isHandsOn(i));}
 function filterByPreset(list,preset){
   if(!preset)return list;
   let out=list;
@@ -84,7 +86,7 @@ function filterByPreset(list,preset){
   if(preset.kind==='high')out=out.filter(i=>isOpenStatus(i.status)&&String(i.pri||'').toLowerCase().includes('high'));
   if(preset.kind==='customer')out=out.filter(i=>isCaseIssue(i)?caseCustomerName(i)===preset.customer:(i.customer||'')===preset.customer);
   if(preset.kind==='priority')out=out.filter(i=>String(i.pri||'').toLowerCase().includes('high'));
-  if(preset.kind==='incomplete')out=out.filter(i=>isOpenStatus(i.status)&&isMetaIncomplete(i));
+  if(preset.kind==='incomplete')out=out.filter(i=>isOpenStatus(i.status)&&isMetaOrOverdue(i));
   return out;
 }
 function renderTopbarStatus(){

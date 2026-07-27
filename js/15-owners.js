@@ -32,7 +32,22 @@ function ownerOf(name){
   const c=(typeof canonCustomer==='function'?canonCustomer(name):name);
   return OWNER_MAP[c]||OWNER_MAP[name]||null;
 }
-function salesOwnerOf(name){ const o=ownerOf(name); return o?(o.sales_owner||''):''; }
+// Jira 범주(customfield_10036 → ISSUES[].category)가 영업담당자명. 고객사별 최빈 범주로 자동 도출.
+function salesRepFromIssues(name){
+  if(typeof ISSUES==='undefined'||!ISSUES||!ISSUES.length||!name)return '';
+  const canon=(typeof canonCustomer==='function'?canonCustomer(name):name);
+  const counts={};
+  for(const i of ISSUES){
+    const cat=(i.category||'').trim(); if(!cat||cat==='N/A')continue;
+    const custs=(i.customers&&i.customers.length?i.customers:[i.customer]).filter(Boolean);
+    if(!custs.some(c=>(typeof canonCustomer==='function'?canonCustomer(c):c)===canon))continue;
+    counts[cat]=(counts[cat]||0)+1;
+  }
+  let best='',bn=0; for(const k in counts)if(counts[k]>bn){bn=counts[k];best=k;}
+  return best;
+}
+// 명시 저장값(관리자 지정) 우선, 없으면 Jira 범주에서 자동 도출
+function salesOwnerOf(name){ const o=ownerOf(name); const explicit=o?(o.sales_owner||''):''; return explicit||salesRepFromIssues(name); }
 function isOwnerInactive(name){ const o=ownerOf(name); return !!(o&&(o.active===0||o.active===false)); }
 // 정/부 담당 배지 (고객사 프로필/영업에 자동 반영)
 function ownerMetaHtml(name){
@@ -62,9 +77,10 @@ function renderOwners(){
     <thead><tr><th>고객사</th><th>영업 담당</th><th>제품</th><th>지원</th><th>정 담당</th><th>부 담당</th><th>계약</th>${isAdm?'<th></th>':''}</tr></thead>
     <tbody>${rows.map(r=>{
       const inactive=r.active===0;
+      const so=r.sales_owner||salesRepFromIssues(r.customer);
       return `<tr style="${inactive?'opacity:.6':''}">
         <td class="u-ws-nowrap"><b>${escapeHtml(r.customer)}</b></td>
-        <td>${r.sales_owner?`<span class="badge" style="background:color-mix(in srgb,var(--cyan) 15%,transparent);color:var(--cyan)">${escapeHtml(r.sales_owner)}</span>`:'<span class="u-muted-11">-</span>'}</td>
+        <td class="u-ws-nowrap">${so?`<span class="badge" style="background:color-mix(in srgb,var(--cyan) 15%,transparent);color:var(--cyan)">${escapeHtml(so)}</span>${!r.sales_owner?' <span class="u-muted-11" title="Jira 범주에서 자동 도출">·자동</span>':''}`:'<span class="u-muted-11">-</span>'}</td>
         <td class="u-muted-11">${escapeHtml(r.products||'-')}</td>
         <td class="u-muted-11">${escapeHtml(r.support||'-')}</td>
         <td>${escapeHtml(r.primary_owner||'-')}</td>
@@ -91,7 +107,7 @@ async function editOwner(customer){
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end">
       <label class="u-muted-10">제품<br><input id="ow-products" class="admin-input" value="${escapeHtml(r.products||'')}" placeholder="예: DLP, SEP"></label>
       <label class="u-muted-10">지원<br><input id="ow-support" class="admin-input" value="${escapeHtml(r.support||'')}" placeholder="예: Onsite / Remote"></label>
-      <label class="u-muted-10">영업 담당<br><select id="ow-sales" class="admin-input">${personOptions(r.sales_owner)}</select></label>
+      <label class="u-muted-10">영업 담당<br><select id="ow-sales" class="admin-input">${personOptions(r.sales_owner||salesRepFromIssues(customer))}</select></label>
       <label class="u-muted-10">정 담당<br><select id="ow-primary" class="admin-input">${personOptions(r.primary_owner)}</select></label>
       <label class="u-muted-10">부 담당<br><select id="ow-secondary" class="admin-input">${personOptions(r.secondary_owner)}</select></label>
       <label class="u-muted-10">계약 상태<br><select id="ow-active" class="admin-input"><option value="1"${r.active!==0?' selected':''}>계약중</option><option value="0"${r.active===0?' selected':''}>계약 종료</option></select></label>
