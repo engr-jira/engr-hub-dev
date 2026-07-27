@@ -96,6 +96,8 @@ function kstDayParts(date=new Date()){
 function updateSyncMeta(meta=SYNC_META){
   SYNC_META=meta||SYNC_META||{};
   const range=SYNC_META.rangeMonths||localStorage.getItem('jira_range_months')||'-';
+  // 상단 조회기간 칩 즉시 갱신(탭 전환 없이 표시) — #1
+  try{ const _rc=document.getElementById('top-range'),_rt=document.getElementById('top-range-text'); if(_rc&&_rt){ if(range&&range!=='-'){_rt.textContent=`최근 ${range}개월`;_rc.style.display='';}else{_rc.style.display='none';} } }catch(_){}
   const count=SYNC_META.count!=null?`${SYNC_META.count}건`:(ISSUES.length?`${ISSUES.length}건`:'-');
   const when=SYNC_META.syncedAt?fdt(SYNC_META.syncedAt):'-';
   const by=SYNC_META.syncedBy||'';

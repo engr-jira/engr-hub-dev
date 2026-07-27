@@ -110,10 +110,11 @@ function renderTopbarStatusV159(){
   const manualHref=(IS_ADMIN||IS_SUPER)?'manual.html':'manual-user.html';
   const role=IS_SUPER?'슈퍼관리자':(IS_ADMIN?'관리자':'팀원');
   const uname=escapeHtml(CURRENT_DISPLAY||CURRENT_USER||'-');
+  const _rngM=(typeof SYNC_META!=='undefined'&&SYNC_META&&SYNC_META.rangeMonths)||localStorage.getItem('jira_range_months')||'';
   right.innerHTML=`<div class="top-status">
-    <div class="top-clock" id="top-range" style="display:none" title="Jira 데이터 조회 기준 기간">
+    <div class="top-clock" id="top-range" style="${_rngM?'':'display:none'}" title="Jira 데이터 조회 기준 기간">
       <svg class="tc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4.5" width="18" height="17" rx="2.5"/><path d="M16 2.5v4M8 2.5v4M3 10h18"/></svg>
-      <span class="tc-date" id="top-range-text"></span>
+      <span class="tc-time" id="top-range-text">${_rngM?`최근 ${_rngM}개월`:''}</span>
     </div>
     <div class="top-clock" id="top-clock">
       <svg class="tc-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 1.8"/></svg>

@@ -110,6 +110,7 @@ function renderSalesPage(){
     const top=(c.issues||[])[0];
     return `<details class="sales-cust"><summary style="display:flex;gap:12px;align-items:center;cursor:pointer;padding:11px 14px">
       <b style="min-width:130px;font-size:14px">${escapeHtml(c.name)}</b>
+      ${(typeof salesOwnerChip==='function')?salesOwnerChip(c.name):''}
       ${(typeof ownerMetaHtml==='function'&&ownerMetaHtml(c.name))?`<span class="u-ws-nowrap" style="font-size:11px">${ownerMetaHtml(c.name)}</span>`:''}
       <span style="font-size:12.5px;color:var(--text2)" class="u-ws-nowrap">진행 <b>${c.open}</b></span>
       <span class="u-ws-nowrap" style="font-size:12.5px;color:${c.overdue?'var(--danger)':'var(--text3)'}">기한초과 <b>${c.overdue}</b></span>
