@@ -15,7 +15,7 @@ function renderEosList(){
   tbody.innerHTML=pageList.map(it=>{
     const hasEnd=!!it.expireDate;
     const days=hasEnd?daysUntil(it.expireDate):null;
-    let rowClass='',badgeBg='rgba(148,163,184,.15)',badgeColor='var(--text3)',badgeText='—';
+    let rowClass='',badgeBg='rgba(162,145,122,.15)',badgeColor='var(--text3)',badgeText='—';
     if(hasEnd){
       const wd=(typeof EOS_WARN_DAYS!=='undefined'&&EOS_WARN_DAYS.length?[...EOS_WARN_DAYS].map(Number).filter(n=>n>0).sort((a,b)=>a-b):[7,30,60]);
       const w0=wd[0]||7, w1=wd[1]||w0, w2=wd[2]||w1;
@@ -23,7 +23,7 @@ function renderEosList(){
       else if(days<=w0){rowClass='eos-warn';badgeBg='rgba(248,113,113,.2)';badgeColor='#E06A63';badgeText='D-'+days;}
       else if(days<=w1){rowClass='eos-warn-near';badgeBg='rgba(251,191,36,.2)';badgeColor='#E0A32E';badgeText='D-'+days;}
       else if(days<=w2){badgeBg='rgba(251,191,36,.12)';badgeColor='#E0A32E';badgeText='D-'+days;}
-      else {badgeBg='rgba(34,211,165,.15)';badgeColor='#2FB085';badgeText='D-'+days;}
+      else {badgeBg='rgba(63,190,146,.15)';badgeColor='#2FB085';badgeText='D-'+days;}
     }
     const pd=it.productDesc||it.product||'-';
     const period=[it.startDate,it.expireDate].filter(Boolean).join(' ~ ')||'-';

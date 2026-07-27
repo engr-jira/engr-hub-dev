@@ -4,7 +4,7 @@
     var saved = localStorage.getItem('engr_theme');
     var isMob = false; try{ isMob = window.matchMedia('(max-width:700px)').matches; }catch(e){}
     // 모바일은 항상 다크로 렌더(라이트 누수로 인한 글자 안보임/레이아웃 깨짐 방지). 데스크톱만 사용자 설정 적용.
-    document.documentElement.setAttribute('data-theme', isMob ? 'dark' : (saved === 'dark' ? 'dark' : 'light'));
+    document.documentElement.setAttribute('data-theme', saved === 'dark' ? 'dark' : 'light');
   } catch (_) {
     document.documentElement.setAttribute('data-theme', 'dark');
   }

@@ -29,7 +29,7 @@ function isMobileViewport(){try{return window.matchMedia('(max-width:700px)').ma
 function applyTheme(theme, opts={}){
   UI_THEME=normalizeTheme(theme);
   // 모바일은 항상 다크로 렌더(라이트 누수 방지). 사용자 설정값(UI_THEME)은 그대로 저장되어 데스크톱에 적용됨.
-  document.documentElement.setAttribute('data-theme', isMobileViewport()?'dark':UI_THEME);
+  document.documentElement.setAttribute('data-theme', UI_THEME);
   if(opts.persist!==false){
     try{localStorage.setItem(THEME_KEY,UI_THEME);}catch(_){}
   }
@@ -45,7 +45,7 @@ function syncMobileThemeSheets(){
 }
 try{
   const _mq=window.matchMedia('(max-width:700px)');
-  const _onMq=()=>{document.documentElement.setAttribute('data-theme', isMobileViewport()?'dark':UI_THEME);};
+  const _onMq=()=>{document.documentElement.setAttribute('data-theme', UI_THEME);};
   if(_mq.addEventListener)_mq.addEventListener('change',_onMq); else if(_mq.addListener)_mq.addListener(_onMq);
 }catch(_){}
 function toggleTheme(){applyTheme(UI_THEME==='light'?'dark':'light');}

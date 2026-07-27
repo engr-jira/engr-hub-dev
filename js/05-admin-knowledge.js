@@ -192,7 +192,7 @@ function renderCustomers(){
     return `<div onclick="selectCustomer(${idx},this.dataset.name)" data-name="${escapeHtml(c.name)}" style="background:#332D34;border:1.5px solid ${isSel?"var(--accent)":"var(--border)"};border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
         <span style="font-size:13px;font-weight:700;color:#FBEFE6">${escapeHtml(c.name)}</span>
-        <span style="font-size:10px;background:rgba(196,206,255,.15);color:#F6C7B0;padding:2px 9px;border-radius:20px;font-weight:700">일반 ${c.general.length} · 케이스 ${c.cases.length}</span>
+        <span style="font-size:10px;background:rgba(246,199,176,.15);color:#F6C7B0;padding:2px 9px;border-radius:20px;font-weight:700">일반 ${c.general.length} · 케이스 ${c.cases.length}</span>
       </div>
       <div class="u-fs11px-ctext3-mb6px">${escapeHtml(prods)}</div>
       <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap">

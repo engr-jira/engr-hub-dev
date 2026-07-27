@@ -221,9 +221,9 @@ async function loadAudit(){
     const items=await r.json();
     document.getElementById('audit-count').textContent=items.length+'건';
     const ts={
-      LOGIN:{bg:'rgba(34,211,165,.12)',color:'#2FB085',label:'LOGIN'},
-      AI_REQUEST:{bg:'rgba(167,139,250,.12)',color:'#9F6BB5',label:'AI'},
-      AI_CALL:{bg:'rgba(167,139,250,.12)',color:'#9F6BB5',label:'AI'},
+      LOGIN:{bg:'rgba(63,190,146,.12)',color:'#2FB085',label:'LOGIN'},
+      AI_REQUEST:{bg:'rgba(159,107,181,.12)',color:'#9F6BB5',label:'AI'},
+      AI_CALL:{bg:'rgba(159,107,181,.12)',color:'#9F6BB5',label:'AI'},
       VT_LOOKUP:{bg:'rgba(248,113,113,.12)',color:'#E06A63',label:'VT'},
       ADMIN_CHANGE:{bg:'rgba(248,113,113,.12)',color:'#E06A63',label:'권한'},
       CONFIG_CHANGE:{bg:'rgba(217,96,59,.12)',color:'#E88A5E',label:'설정'},
@@ -234,17 +234,17 @@ async function loadAudit(){
       PUSH_SEND:{bg:'rgba(63,190,146,.12)',color:'#2FB085',label:'알림'},
       EOS_DELETE:{bg:'rgba(248,113,113,.12)',color:'#E06A63',label:'라이선스-'},
       EOS_UPDATE:{bg:'rgba(251,191,36,.12)',color:'#E0A32E',label:'라이선스✎'},
-      MATRIX_ADD:{bg:'rgba(96,165,250,.12)',color:'#3F8FC4',label:'매트릭스+'},
-      MATRIX_UPDATE:{bg:'rgba(96,165,250,.12)',color:'#3F8FC4',label:'매트릭스✎'},
-      MATRIX_CONFIRM:{bg:'rgba(52,211,153,.12)',color:'#3FBE92',label:'매트릭스✓'},
+      MATRIX_ADD:{bg:'rgba(63,163,196,.12)',color:'#3F8FC4',label:'매트릭스+'},
+      MATRIX_UPDATE:{bg:'rgba(63,163,196,.12)',color:'#3F8FC4',label:'매트릭스✎'},
+      MATRIX_CONFIRM:{bg:'rgba(63,190,146,.12)',color:'#3FBE92',label:'매트릭스✓'},
       MATRIX_DELETE:{bg:'rgba(248,113,113,.12)',color:'#E06A63',label:'매트릭스-'},
-      HIST_VIEW:{bg:'rgba(148,163,184,.12)',color:'#A2917A',label:'이력조회'},
-      MON_VIEW:{bg:'rgba(148,163,184,.12)',color:'#A2917A',label:'팀모니터'},
+      HIST_VIEW:{bg:'rgba(162,145,122,.12)',color:'#A2917A',label:'이력조회'},
+      MON_VIEW:{bg:'rgba(162,145,122,.12)',color:'#A2917A',label:'팀모니터'},
       FEATURE_TOGGLE:{bg:'rgba(217,96,59,.12)',color:'#E88A5E',label:'기능토글'},
       AUDIT_MIGRATE:{bg:'rgba(217,96,59,.12)',color:'#E88A5E',label:'감사이전'},
     };
     tbody.innerHTML=items.map(a=>{
-      const t=ts[a.type]||{bg:'rgba(148,163,184,.12)',color:'#A2917A',label:a.type};
+      const t=ts[a.type]||{bg:'rgba(162,145,122,.12)',color:'#A2917A',label:a.type};
       let target='', detail='';
       if(a.type==='AI_REQUEST'||a.type==='AI_CALL'){
         target=a.mode||'-';
@@ -382,7 +382,7 @@ function renderUserAccounts(users=[]){
   const wrap=document.getElementById('user-list-wrap');if(!wrap)return;
   wrap.innerHTML=users.map(u=>`<div class="admin-list-item">
     <div style="display:flex;align-items:center;gap:10px;min-width:0">
-      <span style="font-size:10px;padding:2px 9px;border-radius:20px;background:${u.active===false?'rgba(148,163,184,.14)':u.role==='super'?'rgba(248,113,113,.15)':u.role==='admin'?'rgba(217,96,59,.15)':'rgba(63,190,146,.12)'};color:${u.active===false?'var(--text3)':u.role==='super'?'#E06A63':u.role==='admin'?'var(--accent3)':'var(--accent2)'};font-weight:800">${u.active===false?'비활성':u.role==='super'?'SUPER':u.role==='admin'?'ADMIN':'USER'}</span>
+      <span style="font-size:10px;padding:2px 9px;border-radius:20px;background:${u.active===false?'rgba(162,145,122,.14)':u.role==='super'?'rgba(248,113,113,.15)':u.role==='admin'?'rgba(217,96,59,.15)':'rgba(63,190,146,.12)'};color:${u.active===false?'var(--text3)':u.role==='super'?'#E06A63':u.role==='admin'?'var(--accent3)':'var(--accent2)'};font-weight:800">${u.active===false?'비활성':u.role==='super'?'SUPER':u.role==='admin'?'ADMIN':'USER'}</span>
       <span style="font-weight:800;color:var(--text)">${escapeHtml(u.displayName||u.id)}</span>
       <span class="u-muted-11">${escapeHtml(u.id)}</span>
     </div>

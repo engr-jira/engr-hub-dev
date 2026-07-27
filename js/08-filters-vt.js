@@ -102,7 +102,7 @@ function injectV155Style(){
     .issue-sub .badge{font-size:9px;border-radius:6px;padding:2px 6px;font-weight:800}
     .case-chip-wrap{grid-column:1/-1;display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px;min-width:0}
     .case-chip{display:inline-flex;align-items:center;gap:4px;max-width:100%;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:800;line-height:1.2;white-space:nowrap;border:1px solid rgba(255,255,255,.1);cursor:pointer}
-    .case-chip.open{background:rgba(45,212,191,.16);border-color:rgba(45,212,191,.34);color:#3FBE92}
+    .case-chip.open{background:rgba(63,190,146,.16);border-color:rgba(63,190,146,.34);color:#3FBE92}
     .case-chip.done{background:rgba(217,96,59,.16);border-color:rgba(239,131,84,.36);color:#B79AD0}
     input[type="date"]{color-scheme:dark}
     input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer}
@@ -154,7 +154,7 @@ function injectV155Style(){
       .issue-main .title{grid-column:1/-1;white-space:normal!important;overflow:visible!important;text-overflow:clip!important;line-height:1.45}
       .issue-main .date{grid-column:1/-1}.issue-sub{flex-wrap:wrap;gap:6px}
       .link-url,.link-title,.link-desc{word-break:break-all;overflow-wrap:anywhere}
-      aside{position:sticky;top:0;z-index:80;background:rgba(22,27,39,.98);box-shadow:0 8px 24px rgba(0,0,0,.28);max-width:100%;overflow:hidden}
+      aside{position:sticky;top:0;z-index:80;background:rgba(33,29,34,.98);box-shadow:0 8px 24px rgba(0,0,0,.28);max-width:100%;overflow:hidden}
       .sb-top{padding:10px 10px 8px}
       .sb-brand{margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.08)}
       .sb-logo{width:32px;height:32px;border-radius:10px}.sb-logo svg{width:17px;height:17px}.sb-name{font-size:14px}.sb-sub{font-size:9px}
@@ -342,7 +342,7 @@ function caseBallBadge(key){
   const days=r.last_comm!=null?` · ${Math.round(r.last_comm)}일 전`:'';
   const tip=escapeHtml(r.ball_note||'');
   if(r.ball==='team')return `<span title="${tip}" style="background:rgba(248,113,113,.14);color:#E06A63;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">🔴 팀 회신 필요${days}</span>`;
-  return `<span title="${tip}" style="background:rgba(96,165,250,.12);color:#3F8FC4;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">⏳ 제조사 대기${days}</span>`;
+  return `<span title="${tip}" style="background:rgba(63,163,196,.12);color:#3F8FC4;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">⏳ 제조사 대기${days}</span>`;
 }
 function respSpeedRows(){
   // 코멘트 기반 (스케줄 분석 산출): avg_resp = 최초응답+코멘트 간격+현재까지 무응답 구간의 평균
