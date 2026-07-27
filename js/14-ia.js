@@ -24,11 +24,10 @@ function iaSubtabVisible(page){
 function renderIASubtabs(current){
   // 조회 기간 칩 — 모든 화면 상단에 데이터 기준 표시
   try{
-    const rc=document.getElementById('range-chip');
-    if(rc){
-      const m=(typeof SYNC_META!=='undefined'&&SYNC_META&&SYNC_META.rangeMonths)||localStorage.getItem('jira_range_months');
-      if(m){rc.textContent=`📅 데이터 기준: 최근 ${m}개월`;rc.style.display='inline-block';}
-    }
+    // 조회 기준 기간을 상단 시계 좌측에 시계와 동일 형태로 표시
+    const m=(typeof SYNC_META!=='undefined'&&SYNC_META&&SYNC_META.rangeMonths)||localStorage.getItem('jira_range_months');
+    const rc=document.getElementById('top-range'), rt=document.getElementById('top-range-text');
+    if(rc&&rt){ if(m){rt.textContent=`최근 ${m}개월`;rc.style.display='';}else{rc.style.display='none';} }
   }catch(_){}
   const bar=document.getElementById('ia-subtabs');
   if(!bar)return;
