@@ -13,12 +13,12 @@ function renderDash_legacy_v1(){
   const myDone=myIssues.filter(i=>i.status==='완료').length;
   const myRate=myIssues.length?Math.round(myDone/myIssues.length*100):0;
   document.getElementById('kpi-wrap').innerHTML=`
-    <div class="kpi" style="--kpi-c1:#4f46e5;--kpi-c2:#818cf8"><div class="kpi-val">${total}</div><div class="kpi-label">전체 이슈</div><div class="kpi-sub">팀 전체</div></div>
-    <div class="kpi" style="--kpi-c1:#059669;--kpi-c2:#22d3a5"><div class="kpi-val">${done}</div><div class="kpi-label">완료</div><div class="kpi-sub">${total?Math.round(done/total*100):0}% 완료율</div></div>
-    <div class="kpi" style="--kpi-c1:#2563eb;--kpi-c2:#60a5fa"><div class="kpi-val">${prog}</div><div class="kpi-label">진행중</div><div class="kpi-sub">처리 중</div></div>
-    <div class="kpi" style="--kpi-c1:#d97706;--kpi-c2:#fbbf24"><div class="kpi-val">${high}</div><div class="kpi-label">High+</div><div class="kpi-sub">우선처리</div></div>
-    <div class="kpi" style="--kpi-c1:#7c3aed;--kpi-c2:#a78bfa"><div class="kpi-val">${myIssues.length}</div><div class="kpi-label">내 담당</div><div class="kpi-sub">${escapeHtml(CURRENT_USER)}</div></div>
-    <div class="kpi" style="--kpi-c1:#be185d;--kpi-c2:#f472b6"><div class="kpi-val">${myRate}%</div><div class="kpi-label">내 완료율</div><div class="kpi-sub">${myDone}/${myIssues.length}건</div></div>`;
+    <div class="kpi" style="--kpi-c1:#C24E2C;--kpi-c2:#E88A5E"><div class="kpi-val">${total}</div><div class="kpi-label">전체 이슈</div><div class="kpi-sub">팀 전체</div></div>
+    <div class="kpi" style="--kpi-c1:#1E9E6A;--kpi-c2:#2FB085"><div class="kpi-val">${done}</div><div class="kpi-label">완료</div><div class="kpi-sub">${total?Math.round(done/total*100):0}% 완료율</div></div>
+    <div class="kpi" style="--kpi-c1:#2E7FB8;--kpi-c2:#3F8FC4"><div class="kpi-val">${prog}</div><div class="kpi-label">진행중</div><div class="kpi-sub">처리 중</div></div>
+    <div class="kpi" style="--kpi-c1:#C07A10;--kpi-c2:#E0A32E"><div class="kpi-val">${high}</div><div class="kpi-label">High+</div><div class="kpi-sub">우선처리</div></div>
+    <div class="kpi" style="--kpi-c1:#B8482A;--kpi-c2:#9F6BB5"><div class="kpi-val">${myIssues.length}</div><div class="kpi-label">내 담당</div><div class="kpi-sub">${escapeHtml(CURRENT_USER)}</div></div>
+    <div class="kpi" style="--kpi-c1:#be185d;--kpi-c2:#E27299"><div class="kpi-val">${myRate}%</div><div class="kpi-label">내 완료율</div><div class="kpi-sub">${myDone}/${myIssues.length}건</div></div>`;
 
   const cusCnt={},labCnt={},priCnt={};
   ISSUES.forEach(i=>{
@@ -33,7 +33,7 @@ function renderDash_legacy_v1(){
   <div class="chart-card"><h4>고객사별 분포 TOP 8</h4>
   ${Object.entries(cusCnt).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([k,v])=>`
   <div class="bar-row"><div class="bar-lbl" title="${escapeHtml(k)}">${escapeHtml(k)}</div>
-  <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxC*100)}%;background:linear-gradient(90deg,#4f46e5,#6366f1)"><span class="bar-n">${v}</span></div></div></div>`).join('')||noData}
+  <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxC*100)}%;background:linear-gradient(90deg,#C24E2C,#D9603B)"><span class="bar-n">${v}</span></div></div></div>`).join('')||noData}
   </div>
   <div class="chart-card"><h4>레이블별 분포</h4>
   ${Object.entries(labCnt).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([k,v])=>`
@@ -43,7 +43,7 @@ function renderDash_legacy_v1(){
   <div class="chart-card"><h4>우선순위별</h4>
   ${['Highest','High','Medium','Low'].map(p=>{const v=priCnt[p]||0;const mx=Math.max(1,...Object.values(priCnt));return`
   <div class="bar-row"><div class="bar-lbl">${p}</div>
-  <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/mx*100)}%;background:${PC[p]||'#94a3b8'}aa"><span class="bar-n">${v}</span></div></div></div>`;}).join('')}
+  <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/mx*100)}%;background:${PC[p]||'#A2917A'}aa"><span class="bar-n">${v}</span></div></div></div>`;}).join('')}
   </div>`;
 
   // 팀원 랭킹
@@ -88,17 +88,17 @@ function renderDash_legacy_v1(){
     const yD=H-P-(monthCnt[k].d/maxM)*(H-P*2);
     pathC+=(idx===0?'M':'L')+x+','+yC+' ';
     pathD+=(idx===0?'M':'L')+x+','+yD+' ';
-    pts+=`<text x="${x}" y="${H-5}" fill="#94a3b8" font-size="9" text-anchor="middle">${k.slice(2,7)}</text>`;
-    pts+=`<circle cx="${x}" cy="${yC}" r="3" fill="#818cf8"/>`;
-    pts+=`<circle cx="${x}" cy="${yD}" r="3" fill="#22d3a5"/>`;
-    pts+=`<text x="${x}" y="${yC-6}" fill="#a5b4fc" font-size="9" text-anchor="middle">${monthCnt[k].c}</text>`;
+    pts+=`<text x="${x}" y="${H-5}" fill="#A2917A" font-size="9" text-anchor="middle">${k.slice(2,7)}</text>`;
+    pts+=`<circle cx="${x}" cy="${yC}" r="3" fill="#E88A5E"/>`;
+    pts+=`<circle cx="${x}" cy="${yD}" r="3" fill="#2FB085"/>`;
+    pts+=`<text x="${x}" y="${yC-6}" fill="#EFA07E" font-size="9" text-anchor="middle">${monthCnt[k].c}</text>`;
   });
   document.getElementById('trend-chart').innerHTML=`
-    <path d="${pathC}" stroke="#818cf8" stroke-width="2" fill="none"/>
-    <path d="${pathD}" stroke="#22d3a5" stroke-width="2" fill="none" stroke-dasharray="3,3"/>
+    <path d="${pathC}" stroke="#E88A5E" stroke-width="2" fill="none"/>
+    <path d="${pathD}" stroke="#2FB085" stroke-width="2" fill="none" stroke-dasharray="3,3"/>
     ${pts}
-    <text x="${W-10}" y="15" fill="#818cf8" font-size="10" text-anchor="end">전체</text>
-    <text x="${W-10}" y="30" fill="#22d3a5" font-size="10" text-anchor="end">완료</text>`;
+    <text x="${W-10}" y="15" fill="#E88A5E" font-size="10" text-anchor="end">전체</text>
+    <text x="${W-10}" y="30" fill="#2FB085" font-size="10" text-anchor="end">완료</text>`;
 
   const dl=document.getElementById('dash-list');
   dl.innerHTML=ISSUES.slice(0,10).map(i=>issueRowHTML(i,false)).join('');
@@ -125,7 +125,7 @@ function renderIssues_legacy_v1(){
   if(!nav)return;
   if(fi.length<=pgSize){nav.innerHTML='';return;}
   const bs='background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:var(--text2);font-size:12px;cursor:pointer;font-family:inherit;min-width:34px';
-  const as='background:linear-gradient(135deg,#4f46e5,#7c3aed);border:1px solid var(--accent);color:#fff;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;min-width:34px';
+  const as='background:linear-gradient(135deg,#C24E2C,#B8482A);border:1px solid var(--accent);color:#FFFDF9;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;min-width:34px';
   let html=`<button style="${bs}" ${PAGE===1?'disabled':''} onclick="PAGE=1;renderIssues()">«</button><button style="${bs}" ${PAGE===1?'disabled':''} onclick="PAGE--;renderIssues()">‹</button>`;
   const pStart=Math.max(1,PAGE-2),pEnd=Math.min(totalPages,PAGE+2);
   for(let p=pStart;p<=pEnd;p++)html+=`<button style="${p===PAGE?as:bs}" onclick="PAGE=${p};renderIssues()">${p}</button>`;
@@ -134,7 +134,7 @@ function renderIssues_legacy_v1(){
 }
 function renderRightPanel(){
   if(!SEL)return;
-  const i=SEL,sc=SC[i.status]||'#94a3b8',pc=PC[i.pri]||'#94a3b8';
+  const i=SEL,sc=SC[i.status]||'#A2917A',pc=PC[i.pri]||'#A2917A';
   document.getElementById('right-panel').innerHTML=`
   <div class="rpanel">
     <div class="rp-title">${escapeHtml(cleanTitle(i.title))}</div>
@@ -147,7 +147,7 @@ function renderRightPanel(){
     </div>
     <div class="rp-meta">
       ${(()=>{const na='<span class="u-cfbbf24-fw700">미입력</span>';
-        const dueCell=i.due?(()=>{const d=daysUntil(i.due);const col=d<0?'#fc8181':d<=7?'#fbbf24':'var(--text)';return `<span style="color:${col}">${i.due} ${d<0?'(기한초과 '+Math.abs(d)+'일)':'(D-'+d+')'}</span>`;})():na;
+        const dueCell=i.due?(()=>{const d=daysUntil(i.due);const col=d<0?'#E06A63':d<=7?'#E0A32E':'var(--text)';return `<span style="color:${col}">${i.due} ${d<0?'(기한초과 '+Math.abs(d)+'일)':'(D-'+d+')'}</span>`;})():na;
         const custCell=(i.customers&&i.customers.length)?escapeHtml(i.customers.join(', ')):(i.customer?`<span>${escapeHtml(i.customer)} <span style="color:var(--text3);font-size:10px">(제목 추정)</span></span>`:na);
         const divCell=(i.division&&i.division.length)?escapeHtml(i.division.join(', ')):'<span class="u-muted">-</span>';
         const catCell=(i.category&&i.category!=='N/A')?escapeHtml(i.category):na;
@@ -208,13 +208,13 @@ let _loadingTimer=null;
 function openFullIssue(){
   if(!SEL)return;
   const i=SEL;
-  const sc=SC[i.status]||'#94a3b8';
-  const pc=PC[i.pri]||'#94a3b8';
+  const sc=SC[i.status]||'#A2917A';
+  const pc=PC[i.pri]||'#A2917A';
   const commentHtml=i.comments.map(c=>`<div style="padding:12px 14px;background:rgba(255,255,255,.02);border-left:3px solid var(--accent2);border-radius:0 8px 8px 0;margin-bottom:8px">
     <div style="font-size:10px;color:var(--accent3);font-weight:700;margin-bottom:5px">${escapeHtml(c.author)} · ${fdt(c.created)}</div>
     <div style="font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap">${adfToHtml(c.body)}</div>
   </div>`).join('');
-  const attachHtml=i.attachments.map(a=>`<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);color:var(--cyan);border-radius:8px;padding:4px 10px;font-size:11px">📄 ${escapeHtml(a.name)} <span class="u-muted">${(a.size/1024).toFixed(1)}KB</span></span>`).join(' ');
+  const attachHtml=i.attachments.map(a=>`<span style="display:inline-flex;align-items:center;gap:5px;background:rgba(63,163,196,.08);border:1px solid rgba(63,163,196,.2);color:var(--cyan);border-radius:8px;padding:4px 10px;font-size:11px">📄 ${escapeHtml(a.name)} <span class="u-muted">${(a.size/1024).toFixed(1)}KB</span></span>`).join(' ');
   openGenModal(`${i.key} — ${cleanTitle(i.title)}`,`
     <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px">
       <span class="badge" style="background:${sc}22;color:${sc}">${i.status}</span>
@@ -268,7 +268,7 @@ function renderCases_legacy_v1(){
   const pageCases=sliceForPage(cases,'cases');
   document.getElementById('case-count').textContent=pageCountText('cases',cases.length);
   if(!pageCases.length){wrap.innerHTML=`<div class="u-empty">케이스 번호가 포함된 이슈가 없습니다</div>`;renderPager('case-pager','cases',cases.length,'renderCases');return;}
-  wrap.innerHTML=pageCases.map((c,idx)=>{const days=daysSince(c.date);const slaBg=days>=7?'rgba(248,113,113,.2)':days>=5?'rgba(251,191,36,.2)':days>=3?'rgba(251,191,36,.12)':'rgba(34,211,165,.15)';const slaColor=days>=7?'#f87171':days>=5?'#fbbf24':days>=3?'#fbbf24':'#22d3a5';const sc=SC[c.status]||'#94a3b8';let t=c.title.replace(new RegExp('\[?\s*'+c.caseNum+'\s*\]?'),'').replace(/\[\s*\]/g,'').replace(/\s+/g,' ').trim();return `<div class="case-card${CASE_SEL&&CASE_SEL.caseNum===c.caseNum&&CASE_SEL.key===c.key?' selected':''}" style="--lc:${sc}" data-idx="${idx}"><div class="irow-top"><span class="case-num">📦 ${c.caseNum}</span><span class="badge" style="background:${sc}22;color:${sc}">${c.status}</span><span class="sla-badge" style="background:${slaBg};color:${slaColor}">${days}일 경과</span><span class="ititle">${escapeHtml(t)}</span><span class="imeta">${escapeHtml(c.customer||'-')}</span></div><div class="irow-bot">${c.labels.map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join('')}<span class="imeta">@${escapeHtml(c.assignee)}</span><span class="imeta">${fd(c.date)}</span></div></div>`;}).join('');
+  wrap.innerHTML=pageCases.map((c,idx)=>{const days=daysSince(c.date);const slaBg=days>=7?'rgba(248,113,113,.2)':days>=5?'rgba(251,191,36,.2)':days>=3?'rgba(251,191,36,.12)':'rgba(34,211,165,.15)';const slaColor=days>=7?'#E06A63':days>=5?'#E0A32E':days>=3?'#E0A32E':'#2FB085';const sc=SC[c.status]||'#A2917A';let t=c.title.replace(new RegExp('\[?\s*'+c.caseNum+'\s*\]?'),'').replace(/\[\s*\]/g,'').replace(/\s+/g,' ').trim();return `<div class="case-card${CASE_SEL&&CASE_SEL.caseNum===c.caseNum&&CASE_SEL.key===c.key?' selected':''}" style="--lc:${sc}" data-idx="${idx}"><div class="irow-top"><span class="case-num">📦 ${c.caseNum}</span><span class="badge" style="background:${sc}22;color:${sc}">${c.status}</span><span class="sla-badge" style="background:${slaBg};color:${slaColor}">${days}일 경과</span><span class="ititle">${escapeHtml(t)}</span><span class="imeta">${escapeHtml(c.customer||'-')}</span></div><div class="irow-bot">${c.labels.map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join('')}<span class="imeta">@${escapeHtml(c.assignee)}</span><span class="imeta">${fd(c.date)}</span></div></div>`;}).join('');
   wrap.querySelectorAll('.case-card').forEach((el,idx)=>{el.onclick=()=>{CASE_SEL=pageCases[idx];renderCases();renderCaseRight();};});
   renderPager('case-pager','cases',cases.length,'renderCases');
 }

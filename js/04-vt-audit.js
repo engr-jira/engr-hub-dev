@@ -7,7 +7,7 @@ function vtUpdateCount(){
   const parts=Object.entries(by).map(([t,n])=>`${VT_TYPE_LABEL[t]} ${n}`);
   el.textContent=(parts.length?parts.join(' · '):'입력 0')+(invalid.length?` · 형식오류 ${invalid.length}`:'');
 }
-function vtRiskColor(mal){return mal>=5?'#f87171':mal>=1?'#fbbf24':'#22d3a5';}
+function vtRiskColor(mal){return mal>=5?'#E06A63':mal>=1?'#E0A32E':'#2FB085';}
 async function vtLookupOne(item, noAudit){
   const value=typeof item==='string'?item:item.value;
   try{
@@ -83,7 +83,7 @@ async function vtFileScan(file){
       if(status==='completed'){an=ad;break;}
       await new Promise(r=>setTimeout(r,3000));
     }
-    if(!an){st.innerHTML=`<span style="color:var(--warn,#fbbf24);font-size:12px">분석이 아직 진행 중입니다. 잠시 후 해시로 다시 조회해 주세요.</span>`;return;}
+    if(!an){st.innerHTML=`<span style="color:var(--warn,#E0A32E);font-size:12px">분석이 아직 진행 중입니다. 잠시 후 해시로 다시 조회해 주세요.</span>`;return;}
     const at=an.data.attributes||{};
     const stats=at.stats||{};
     const total=(stats.malicious||0)+(stats.undetected||0)+(stats.harmless||0)+(stats.suspicious||0);
@@ -94,7 +94,7 @@ async function vtFileScan(file){
     const detections=Object.entries(eng).filter(([,v])=>v.category==='malicious'||v.category==='suspicious').map(([k,v])=>`${k}: ${v.result||v.category}`);
     const attrs={last_analysis_results:eng,last_analysis_stats:stats,size:fi.size||file.size,type_description:fi.type_description||'',meaningful_name:file.name};
     const rec={value:sha||file.name,hash:sha,ok:true,vtType:'hash',mal,total,name:file.name,size:attrs.size,info:attrs.type_description,stats,attrs,detections,link:sha?`https://www.virustotal.com/gui/file/${sha}`:'https://www.virustotal.com/'};
-    st.innerHTML=`<span style="font-size:12px;color:var(--ok,#22d3a5)">✓ 분석 완료 · <b>${escapeHtml(file.name)}</b></span>`;
+    st.innerHTML=`<span style="font-size:12px;color:var(--ok,#2FB085)">✓ 분석 완료 · <b>${escapeHtml(file.name)}</b></span>`;
     res.innerHTML=renderVtRich(rec);
     if(sha){VT_HISTORY=VT_HISTORY.filter(h=>h.hash!==sha.toLowerCase());VT_HISTORY.unshift({hash:sha.toLowerCase(),mal,total,name:file.name,size:attrs.size,type:attrs.type_description,user:(typeof CURRENT_USER!=='undefined'?CURRENT_USER:''),ts:Date.now()});if(VT_HISTORY.length>50)VT_HISTORY=VT_HISTORY.slice(0,50);try{localStorage.setItem('vt_history',JSON.stringify(VT_HISTORY));}catch(_){}renderVTHistory();}
     const fin=document.getElementById('vt-file-input'); if(fin)fin.value='';
@@ -109,7 +109,7 @@ function vtTableHtml(results,total,done){
     const dets=r.detections||[];
     const detShort=dets.length?escapeHtml(dets.slice(0,2).join(' · '))+(dets.length>2?` <span class="u-muted">외 ${dets.length-2}</span>`:''):(r.info?escapeHtml(String(r.info).slice(0,60)):'<span class="u-muted">-</span>');
     return `<tr>
-      <td><span class="badge" style="background:var(--accent-soft,rgba(99,102,241,.14));color:var(--accent3)">${VT_TYPE_LABEL[r.vtType]||r.vtType}</span></td>
+      <td><span class="badge" style="background:var(--accent-soft,rgba(217,96,59,.14));color:var(--accent3)">${VT_TYPE_LABEL[r.vtType]||r.vtType}</span></td>
       <td style="font-family:monospace;font-size:11px;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(r.value)}">${escapeHtml(String(r.value).slice(0,30))}${String(r.value).length>30?'…':''}</td>
       <td style="font-weight:800;color:${col};white-space:nowrap">${r.mal}/${r.total}</td>
       <td><span class="badge" style="background:${col}22;color:${col}">${label}</span></td>
@@ -182,7 +182,7 @@ function renderVtRich(rec){
   const aiArg=encodeURIComponent(JSON.stringify({value,vtType:t,mal,total}));
   return `<div class="vt-result">
       <div style="text-align:center;margin-bottom:14px">
-        <span class="badge" style="background:var(--accent-soft,rgba(99,102,241,.14));color:var(--accent3);margin-bottom:8px">${VT_TYPE_LABEL[t]||t}</span>
+        <span class="badge" style="background:var(--accent-soft,rgba(217,96,59,.14));color:var(--accent3);margin-bottom:8px">${VT_TYPE_LABEL[t]||t}</span>
         <div style="font-size:11px;color:var(--text3);margin:6px 0 4px;word-break:break-all">${escapeHtml(value)}</div>
         <div class="vt-score" style="color:${riskColor}">${mal} / ${total}</div>
         <span class="badge" style="background:${riskColor}22;color:${riskColor};font-size:13px;padding:5px 16px">${riskLabel}</span>
@@ -190,7 +190,7 @@ function renderVtRich(rec){
       <div class="vt-grid">
         <div class="vt-cell"><div class="vt-cell-label">악성</div><div class="vt-cell-val u-c-f87171">${stats.malicious||0}</div></div>
         <div class="vt-cell"><div class="vt-cell-label">의심</div><div class="vt-cell-val u-c-fbbf24">${stats.suspicious||0}</div></div>
-        <div class="vt-cell"><div class="vt-cell-label">안전</div><div class="vt-cell-val" style="color:#22d3a5">${stats.harmless||0}</div></div>
+        <div class="vt-cell"><div class="vt-cell-label">안전</div><div class="vt-cell-val" style="color:#2FB085">${stats.harmless||0}</div></div>
         <div class="vt-cell"><div class="vt-cell-label">미탐지</div><div class="vt-cell-val">${stats.undetected||0}</div></div>
         ${metaCells}
       </div>
@@ -221,30 +221,30 @@ async function loadAudit(){
     const items=await r.json();
     document.getElementById('audit-count').textContent=items.length+'건';
     const ts={
-      LOGIN:{bg:'rgba(34,211,165,.12)',color:'#22d3a5',label:'LOGIN'},
-      AI_REQUEST:{bg:'rgba(167,139,250,.12)',color:'#a78bfa',label:'AI'},
-      AI_CALL:{bg:'rgba(167,139,250,.12)',color:'#a78bfa',label:'AI'},
-      VT_LOOKUP:{bg:'rgba(248,113,113,.12)',color:'#f87171',label:'VT'},
-      ADMIN_CHANGE:{bg:'rgba(248,113,113,.12)',color:'#f87171',label:'권한'},
-      CONFIG_CHANGE:{bg:'rgba(99,102,241,.12)',color:'#818cf8',label:'설정'},
-      LINK_ADD:{bg:'rgba(34,211,238,.12)',color:'#22d3ee',label:'링크+'},
-      LINK_DELETE:{bg:'rgba(248,113,113,.12)',color:'#f87171',label:'링크-'},
-      EOS_ADD:{bg:'rgba(251,191,36,.12)',color:'#fbbf24',label:'라이선스+'},
-      EOS_ADD_BULK:{bg:'rgba(251,191,36,.12)',color:'#fbbf24',label:'라이선스+'},
-      PUSH_SEND:{bg:'rgba(45,230,184,.12)',color:'#22d3a5',label:'알림'},
-      EOS_DELETE:{bg:'rgba(248,113,113,.12)',color:'#f87171',label:'라이선스-'},
-      EOS_UPDATE:{bg:'rgba(251,191,36,.12)',color:'#fbbf24',label:'라이선스✎'},
-      MATRIX_ADD:{bg:'rgba(96,165,250,.12)',color:'#60a5fa',label:'매트릭스+'},
-      MATRIX_UPDATE:{bg:'rgba(96,165,250,.12)',color:'#60a5fa',label:'매트릭스✎'},
-      MATRIX_CONFIRM:{bg:'rgba(52,211,153,.12)',color:'#34d399',label:'매트릭스✓'},
-      MATRIX_DELETE:{bg:'rgba(248,113,113,.12)',color:'#f87171',label:'매트릭스-'},
-      HIST_VIEW:{bg:'rgba(148,163,184,.12)',color:'#94a3b8',label:'이력조회'},
-      MON_VIEW:{bg:'rgba(148,163,184,.12)',color:'#94a3b8',label:'팀모니터'},
-      FEATURE_TOGGLE:{bg:'rgba(99,102,241,.12)',color:'#818cf8',label:'기능토글'},
-      AUDIT_MIGRATE:{bg:'rgba(99,102,241,.12)',color:'#818cf8',label:'감사이전'},
+      LOGIN:{bg:'rgba(34,211,165,.12)',color:'#2FB085',label:'LOGIN'},
+      AI_REQUEST:{bg:'rgba(167,139,250,.12)',color:'#9F6BB5',label:'AI'},
+      AI_CALL:{bg:'rgba(167,139,250,.12)',color:'#9F6BB5',label:'AI'},
+      VT_LOOKUP:{bg:'rgba(248,113,113,.12)',color:'#E06A63',label:'VT'},
+      ADMIN_CHANGE:{bg:'rgba(248,113,113,.12)',color:'#E06A63',label:'권한'},
+      CONFIG_CHANGE:{bg:'rgba(217,96,59,.12)',color:'#E88A5E',label:'설정'},
+      LINK_ADD:{bg:'rgba(63,163,196,.12)',color:'#3FA3C4',label:'링크+'},
+      LINK_DELETE:{bg:'rgba(248,113,113,.12)',color:'#E06A63',label:'링크-'},
+      EOS_ADD:{bg:'rgba(251,191,36,.12)',color:'#E0A32E',label:'라이선스+'},
+      EOS_ADD_BULK:{bg:'rgba(251,191,36,.12)',color:'#E0A32E',label:'라이선스+'},
+      PUSH_SEND:{bg:'rgba(63,190,146,.12)',color:'#2FB085',label:'알림'},
+      EOS_DELETE:{bg:'rgba(248,113,113,.12)',color:'#E06A63',label:'라이선스-'},
+      EOS_UPDATE:{bg:'rgba(251,191,36,.12)',color:'#E0A32E',label:'라이선스✎'},
+      MATRIX_ADD:{bg:'rgba(96,165,250,.12)',color:'#3F8FC4',label:'매트릭스+'},
+      MATRIX_UPDATE:{bg:'rgba(96,165,250,.12)',color:'#3F8FC4',label:'매트릭스✎'},
+      MATRIX_CONFIRM:{bg:'rgba(52,211,153,.12)',color:'#3FBE92',label:'매트릭스✓'},
+      MATRIX_DELETE:{bg:'rgba(248,113,113,.12)',color:'#E06A63',label:'매트릭스-'},
+      HIST_VIEW:{bg:'rgba(148,163,184,.12)',color:'#A2917A',label:'이력조회'},
+      MON_VIEW:{bg:'rgba(148,163,184,.12)',color:'#A2917A',label:'팀모니터'},
+      FEATURE_TOGGLE:{bg:'rgba(217,96,59,.12)',color:'#E88A5E',label:'기능토글'},
+      AUDIT_MIGRATE:{bg:'rgba(217,96,59,.12)',color:'#E88A5E',label:'감사이전'},
     };
     tbody.innerHTML=items.map(a=>{
-      const t=ts[a.type]||{bg:'rgba(148,163,184,.12)',color:'#94a3b8',label:a.type};
+      const t=ts[a.type]||{bg:'rgba(148,163,184,.12)',color:'#A2917A',label:a.type};
       let target='', detail='';
       if(a.type==='AI_REQUEST'||a.type==='AI_CALL'){
         target=a.mode||'-';
@@ -329,7 +329,7 @@ async function loadSettings(){
       const isSuperRole=role==='super';
       return `<div class="admin-list-item">
         <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:10px;padding:2px 9px;border-radius:20px;background:${isSuperRole?'rgba(248,113,113,.15)':'rgba(99,102,241,.15)'};color:${isSuperRole?'#f87171':'var(--accent3)'};font-weight:700">${isSuperRole?'최상위':'관리자'}</span>
+          <span style="font-size:10px;padding:2px 9px;border-radius:20px;background:${isSuperRole?'rgba(248,113,113,.15)':'rgba(217,96,59,.15)'};color:${isSuperRole?'#E06A63':'var(--accent3)'};font-weight:700">${isSuperRole?'최상위':'관리자'}</span>
           <span style="font-weight:700;color:var(--text)">${escapeHtml(userLabel(name))}</span>
         </div>
         ${name!==SUPER_ADMIN?`<div style="display:flex;gap:6px">
@@ -370,7 +370,7 @@ async function loadUsageStats(){
     const now=Date.now();
     const rows=Object.entries(feat).map(([name,v])=>({name,...v})).sort((a,b)=>a.count-b.count||b.last-a.last);
     const fmtLast=ts=>{ if(!ts)return '—'; const dd=Math.floor((now-ts)/86400000); return dd<=0?'오늘':(dd+'일 전'); };
-    const badge=v=>{ if(v.count===0)return '<span style="color:#f87171;font-weight:700">🔴 컷후보</span>'; if(v.users<=1)return '<span class="u-cfbbf24-fw700">🟡 1인</span>'; return ''; };
+    const badge=v=>{ if(v.count===0)return '<span style="color:#E06A63;font-weight:700">🔴 컷후보</span>'; if(v.users<=1)return '<span class="u-cfbbf24-fw700">🟡 1인</span>'; return ''; };
     wrap.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:12px">
       <thead><tr style="color:var(--text3);text-align:left;border-bottom:1px solid var(--border)"><th class="u-p-6px4px">기능</th><th class="u-p6px4px-taright">호출수</th><th class="u-p6px4px-taright">사용자</th><th class="u-p6px4px-taright">최근</th><th class="u-p-6px4px">판정</th></tr></thead>
       <tbody>${rows.map(v=>`<tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 4px;color:var(--text)">${escapeHtml(v.name)}</td><td style="padding:6px 4px;text-align:right;color:var(--text)">${v.count}</td><td class="u-p6px4px-taright-ctext3">${v.users?('≥'+v.users):'—'}</td><td class="u-p6px4px-taright-ctext3">${fmtLast(v.last)}</td><td class="u-p-6px4px">${badge(v)}</td></tr>`).join('')}</tbody></table>`;
@@ -382,7 +382,7 @@ function renderUserAccounts(users=[]){
   const wrap=document.getElementById('user-list-wrap');if(!wrap)return;
   wrap.innerHTML=users.map(u=>`<div class="admin-list-item">
     <div style="display:flex;align-items:center;gap:10px;min-width:0">
-      <span style="font-size:10px;padding:2px 9px;border-radius:20px;background:${u.active===false?'rgba(148,163,184,.14)':u.role==='super'?'rgba(248,113,113,.15)':u.role==='admin'?'rgba(99,102,241,.15)':'rgba(45,230,184,.12)'};color:${u.active===false?'var(--text3)':u.role==='super'?'#f87171':u.role==='admin'?'var(--accent3)':'var(--accent2)'};font-weight:800">${u.active===false?'비활성':u.role==='super'?'SUPER':u.role==='admin'?'ADMIN':'USER'}</span>
+      <span style="font-size:10px;padding:2px 9px;border-radius:20px;background:${u.active===false?'rgba(148,163,184,.14)':u.role==='super'?'rgba(248,113,113,.15)':u.role==='admin'?'rgba(217,96,59,.15)':'rgba(63,190,146,.12)'};color:${u.active===false?'var(--text3)':u.role==='super'?'#E06A63':u.role==='admin'?'var(--accent3)':'var(--accent2)'};font-weight:800">${u.active===false?'비활성':u.role==='super'?'SUPER':u.role==='admin'?'ADMIN':'USER'}</span>
       <span style="font-weight:800;color:var(--text)">${escapeHtml(u.displayName||u.id)}</span>
       <span class="u-muted-11">${escapeHtml(u.id)}</span>
     </div>

@@ -1,8 +1,8 @@
 
 function issueRowHTML(i){
-  const col=SC[i.status]||'#94a3b8';
-  const priCol=i.pri==='High'?'#fc8181':i.pri==='Medium'?'#fcd34d':'#a5b4fc';
-  const labels=(i.labels||[]).slice(0,3).map(l=>`<span class="badge" style="background:${(LC_MAP[l]||'#818cf8')}22;color:${(LC_MAP[l]||'#818cf8')}">${escapeHtml(l)}</span>`).join('');
+  const col=SC[i.status]||'#A2917A';
+  const priCol=i.pri==='High'?'#E06A63':i.pri==='Medium'?'#E8B23D':'#EFA07E';
+  const labels=(i.labels||[]).slice(0,3).map(l=>`<span class="badge" style="background:${(LC_MAP[l]||'#E88A5E')}22;color:${(LC_MAP[l]||'#E88A5E')}">${escapeHtml(l)}</span>`).join('');
   return `<div class="issue-card ${SEL&&SEL.key===i.key?'sel':''}" onclick="selectIssue(ISSUES.find(x=>x.key===${jsAttr(i.key)}))">
     <div class="issue-main">
       <span class="key">${escapeHtml(i.key)}</span>
@@ -208,7 +208,7 @@ function renderCases(){
   const rows=arr.slice((PAGE_STATE.cases-1)*size,PAGE_STATE.cases*size);
   wrap.innerHTML=v154FilterNoteHtml(v154ActiveCaseFilterText())+
     (rows.length?rows.map(c=>{
-      const col=SC[c.status]||'#94a3b8';
+      const col=SC[c.status]||'#A2917A';
       return `<div class="issue-card ${CASE_SEL&&CASE_SEL.key===c.key?'sel':''}" onclick="selectCase(v154GetCaseByKey(${jsAttr(c.key)}))">
         <div class="issue-main">
           <span class="key">${escapeHtml(c.caseNum||c.key)}</span>
@@ -248,7 +248,7 @@ function hubJumpKey(key){
 }
 function briefLinkify(s){
   // 클릭 가능 이슈키 = 청록 칩으로 명확히 구분
-  return escapeHtml(String(s)).replace(/ENGR-\d+/g,m=>`<a style="background:rgba(34,211,238,.14);color:#22d3ee;font-weight:800;cursor:pointer;text-decoration:none;padding:0 6px;border-radius:6px;border-bottom:1px dashed rgba(34,211,238,.55);white-space:nowrap" onclick="hubJumpKey('${m}')">${m}</a>`);
+  return escapeHtml(String(s)).replace(/ENGR-\d+/g,m=>`<a style="background:rgba(63,163,196,.14);color:#3FA3C4;font-weight:800;cursor:pointer;text-decoration:none;padding:0 6px;border-radius:6px;border-bottom:1px dashed rgba(63,163,196,.55);white-space:nowrap" onclick="hubJumpKey('${m}')">${m}</a>`);
 }
 function briefList(text,mode,accent){
   // mode 'line'=줄 단위(포커스), 'sent'=문장 단위(동향·패턴)
@@ -263,9 +263,9 @@ function renderAIBriefing(d){
   title.style.display=''; wrap.style.display='';
   const t=d.team||{};
   const secs=[];
-  if(t.focus)secs.push(`<div class="chart-card"><h4>🎯 오늘의 포커스</h4>${briefList(t.focus,'line','#f87171')}</div>`);
-  if(t.patterns)secs.push(`<div class="chart-card"><h4>🏢 고객사 패턴</h4>${briefList(t.patterns,'sent','#a78bfa')}</div>`);
-  if(t.monthly)secs.push(`<div class="chart-card"><h4>📈 월간 동향</h4>${briefList(t.monthly,'sent','#67e8f9')}</div>`);
+  if(t.focus)secs.push(`<div class="chart-card"><h4>🎯 오늘의 포커스</h4>${briefList(t.focus,'line','#E06A63')}</div>`);
+  if(t.patterns)secs.push(`<div class="chart-card"><h4>🏢 고객사 패턴</h4>${briefList(t.patterns,'sent','#9F6BB5')}</div>`);
+  if(t.monthly)secs.push(`<div class="chart-card"><h4>📈 월간 동향</h4>${briefList(t.monthly,'sent','#3FA3C4')}</div>`);
   wrap.innerHTML=`<div class="u-fs11px-ctext3-mb8px">🕐 ${fmtBuiltAt(d.built_at)} 기준 · 스케줄 분석(일 2회 07:00/15:30) · 이슈 분석 ${(d.issueKeys||[]).length}건 · 이슈키 클릭 시 해당 건으로 이동</div><div class="chart-grid u-gridtemplatecolumns-repeatautofi">${secs.join('')||'<div class="chart-card"><div class="u-fs12px-ctext3">팀 리포트가 아직 없습니다</div></div>'}</div>`;
 }
 async function renderIssueAnalysis(key,secId){
@@ -279,14 +279,14 @@ async function renderIssueAnalysis(key,secId){
     if(!a){sec.innerHTML=`<div class="u-fs10px-ctext3-fw700-m4px06p">🤖 AI 분석 (스케줄)</div><div style="font-size:11.5px;color:var(--text3);background:rgba(255,255,255,.03);border:1px dashed var(--border);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>이 이슈는 최근 분석 대상에 포함되지 않았습니다. 다음 주기(07:00/15:30)에 변경된 이슈 위주로 분석됩니다.</span>${btn}</div>`;return;}
     const rows=[];
     if(a.summary)rows.push(`<div class="u-mb-8px"><b style="color:var(--text)">📋 내용 요약</b><div class="u-ws-prewrap">${escapeHtml(String(a.summary))}</div></div>`);
-    if(a.tech_analysis)rows.push(`<div class="u-mb-8px"><b style="color:#a78bfa">🧪 기술 분석</b><div class="u-ws-prewrap">${escapeHtml(String(a.tech_analysis))}</div></div>`);
+    if(a.tech_analysis)rows.push(`<div class="u-mb-8px"><b style="color:#9F6BB5">🧪 기술 분석</b><div class="u-ws-prewrap">${escapeHtml(String(a.tech_analysis))}</div></div>`);
     if(a.stall_reason)rows.push(`<div class="u-mb-8px"><b class="u-c-fbbf24">⏸ 정체 사유</b><div class="u-ws-prewrap">${escapeHtml(String(a.stall_reason))}</div></div>`);
     const dirArr=Array.isArray(a.direction)?a.direction:(a.direction?[a.direction]:(Array.isArray(a.next_actions)?a.next_actions:[]));
     if(dirArr.length)rows.push(`<div class="u-mb-8px"><b class="u-c-34d399">🧭 추천 진행 방향</b><ol style="margin:4px 0 0 18px;padding:0">${dirArr.map(x=>`<li style="margin-bottom:3px">${escapeHtml(String(x))}</li>`).join('')}</ol></div>`);
-    if(a.reply_draft){const rid=(secId||'ai-analysis-sec')+'-reply';rows.push(`<div class="u-mb-8px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="color:#22d3ee">✉️ 고객사 회신 멘트</b><button class="btn btn-ghost" style="width:auto;padding:2px 9px;font-size:10px" onclick="copyText(document.getElementById('${rid}').innerText)">📋 복사</button></div><div id="${rid}" style="white-space:pre-wrap;background:rgba(34,211,238,.06);border:1px solid rgba(34,211,238,.2);border-radius:8px;padding:9px 11px;margin-top:5px">${escapeHtml(String(a.reply_draft))}</div></div>`);}
-    if(a.log_findings)rows.push(`<div style="margin-bottom:8px"><b style="color:#22d3ee">📎 첨부 로그 분석</b><div style="white-space:pre-wrap">${escapeHtml(String(a.log_findings))}</div></div>`);
+    if(a.reply_draft){const rid=(secId||'ai-analysis-sec')+'-reply';rows.push(`<div class="u-mb-8px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="color:#3FA3C4">✉️ 고객사 회신 멘트</b><button class="btn btn-ghost" style="width:auto;padding:2px 9px;font-size:10px" onclick="copyText(document.getElementById('${rid}').innerText)">📋 복사</button></div><div id="${rid}" style="white-space:pre-wrap;background:rgba(63,163,196,.06);border:1px solid rgba(63,163,196,.2);border-radius:8px;padding:9px 11px;margin-top:5px">${escapeHtml(String(a.reply_draft))}</div></div>`);}
+    if(a.log_findings)rows.push(`<div style="margin-bottom:8px"><b style="color:#3FA3C4">📎 첨부 로그 분석</b><div style="white-space:pre-wrap">${escapeHtml(String(a.log_findings))}</div></div>`);
     if(a.due_risk)rows.push(`<div><b class="u-c-f87171">⏰ 기한 리스크</b><div class="u-ws-prewrap">${escapeHtml(String(a.due_risk))}</div></div>`);
-    sec.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 6px"><span style="font-size:10px;color:var(--text3);font-weight:700">🤖 AI 분석 · ${fmtBuiltAt(a.built_at)} 기준</span>${btn}</div><div style="font-size:12px;line-height:1.65;color:var(--text2);background:rgba(129,140,248,.06);border:1px solid rgba(129,140,248,.22);border-radius:10px;padding:12px 14px">${rows.join('')||'<span class="u-muted">내용 없음</span>'}</div>`;
+    sec.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 6px"><span style="font-size:10px;color:var(--text3);font-weight:700">🤖 AI 분석 · ${fmtBuiltAt(a.built_at)} 기준</span>${btn}</div><div style="font-size:12px;line-height:1.65;color:var(--text2);background:rgba(239,131,84,.06);border:1px solid rgba(239,131,84,.22);border-radius:10px;padding:12px 14px">${rows.join('')||'<span class="u-muted">내용 없음</span>'}</div>`;
   }catch(e){sec.innerHTML=`<div class="u-muted-11">AI 분석 조회 실패: ${escapeHtml(e.message)}</div>`;}
 }
 async function requestReanalysis(key){
@@ -323,7 +323,7 @@ function showPage(name,btn){
 }
 /* ── §1 호환성·EOS 매트릭스 ─────────────────────────── */
 let COMPAT_ROWS=[];
-const CMB='font-size:11px;padding:3px 7px;margin:0 1px;background:var(--card2,#1e293b);border:1px solid var(--border);border-radius:6px;color:var(--text,#e2e8f0);cursor:pointer';
+const CMB='font-size:11px;padding:3px 7px;margin:0 1px;background:var(--card2,#2A252B);border:1px solid var(--border);border-radius:6px;color:var(--text,#E7D8C4);cursor:pointer';
 function compatDday(d){ if(!d)return null; const t=new Date(d+'T00:00:00'); if(isNaN(t))return null; const today=new Date(); today.setHours(0,0,0,0); return Math.round((t-today)/86400000); }
 function compatDdayHtml(d){ const n=compatDday(d); if(n===null)return ''; const col=n<0?'var(--danger)':n<=90?'var(--warn)':'var(--text3)'; const lab=n<0?`D+${-n}`:`D-${n}`; return `<br><span style="color:${col};font-weight:600;font-size:11px;white-space:nowrap">${lab}</span>`; }
 async function loadCompat(){
@@ -343,7 +343,7 @@ function renderCompat(){
   const sum=document.getElementById('compat-summary');
   if(sum)sum.textContent=`총 ${rows.length}행 · 확정 ${rows.filter(r=>r.status==='confirmed').length} · 초안 ${rows.filter(r=>r.status!=='confirmed').length}`;
   if(!rows.length){ wrap.innerHTML='<div class="muted u-p-20px">데이터가 없습니다.'+(admin?' “+ 행 추가” 또는 “AI 후보”로 등록하세요.':'')+'</div>'; return; }
-  const supBadge=s=>{ s=s||''; const c=/미지원|불가|no/i.test(s)?'var(--danger)':/조건|부분|partial/i.test(s)?'var(--warn)':/지원|ok|yes/i.test(s)?'#34d399':'var(--text3)'; return `<span style="color:${c};font-weight:600">${escapeHtml(s||'-')}</span>`; };
+  const supBadge=s=>{ s=s||''; const c=/미지원|불가|no/i.test(s)?'var(--danger)':/조건|부분|partial/i.test(s)?'var(--warn)':/지원|ok|yes/i.test(s)?'#3FBE92':'var(--text3)'; return `<span style="color:${c};font-weight:600">${escapeHtml(s||'-')}</span>`; };
   const head=`<tr>${admin?`<th class="nosort u-w-26px"><input type="checkbox" onclick="bulkSelectAll(this,'.cmp-pick')" title="전체 선택"></th>`:''}<th>제품</th><th>버전</th><th>OS</th><th>OS버전</th><th>지원</th><th>EOS</th><th>EOL</th><th>비고</th><th>상태</th>${admin?'<th>작업</th>':''}</tr>`;
   const body=rows.map(r=>`<tr>
     ${admin?`<td><input type="checkbox" class="cmp-pick" data-id="${r.id}"></td>`:''}<td><strong>${escapeHtml(r.product||'-')}</strong></td><td>${escapeHtml(r.product_version||'')}</td>
@@ -352,7 +352,7 @@ function renderCompat(){
     <td class="u-ws-nowrap">${r.eos_date?escapeHtml(r.eos_date)+compatDdayHtml(r.eos_date):'-'}</td>
     <td>${r.eol_date?escapeHtml(r.eol_date):'-'}</td>
     <td class="c-note">${escapeHtml(r.note||'')}${r.source?`<span class="cmp-src">출처: ${/^https?:\/\//.test(r.source)?`<a href="${escapeHtml(r.source)}" target="_blank" rel="noopener">${escapeHtml(r.source)}</a>`:escapeHtml(r.source)}</span>`:''}</td>
-    <td>${r.status==='confirmed'?'<span style="color:#34d399;white-space:nowrap">✓ 확정</span>':'<span style="background:rgba(251,191,36,.15);color:#fbbf24;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap">초안</span>'}</td>
+    <td>${r.status==='confirmed'?'<span style="color:#3FBE92;white-space:nowrap">✓ 확정</span>':'<span style="background:rgba(251,191,36,.15);color:#E0A32E;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap">초안</span>'}</td>
     ${admin?`<td class="u-ws-nowrap">${r.status!=='confirmed'?`<button style="${CMB}" onclick="confirmCompat(${r.id})">확정</button>`:''}<button style="${CMB}" onclick="openCompatModal(${r.id})">수정</button><button style="${CMB};color:var(--danger)" onclick="deleteCompat(${r.id})">삭제</button></td>`:''}
   </tr>`).join('');
   wrap.innerHTML=`<table class="data-tbl srt">${head}${body}</table>`;

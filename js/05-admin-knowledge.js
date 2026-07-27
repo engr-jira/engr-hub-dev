@@ -189,15 +189,15 @@ function renderCustomers(){
     const rate=c.general.length?Math.round(done/c.general.length*100):0;
     const prods=[...c.products].join(", ")||"-";
     const isSel=CUST_SEL&&CUST_SEL.name===c.name;
-    return `<div onclick="selectCustomer(${idx},this.dataset.name)" data-name="${escapeHtml(c.name)}" style="background:#262d47;border:1.5px solid ${isSel?"var(--accent)":"var(--border)"};border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s">
+    return `<div onclick="selectCustomer(${idx},this.dataset.name)" data-name="${escapeHtml(c.name)}" style="background:#332D34;border:1.5px solid ${isSel?"var(--accent)":"var(--border)"};border-radius:12px;padding:14px 16px;cursor:pointer;transition:all .15s">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:13px;font-weight:700;color:#f0f4ff">${escapeHtml(c.name)}</span>
-        <span style="font-size:10px;background:rgba(196,206,255,.15);color:#c4ceff;padding:2px 9px;border-radius:20px;font-weight:700">일반 ${c.general.length} · 케이스 ${c.cases.length}</span>
+        <span style="font-size:13px;font-weight:700;color:#FBEFE6">${escapeHtml(c.name)}</span>
+        <span style="font-size:10px;background:rgba(196,206,255,.15);color:#F6C7B0;padding:2px 9px;border-radius:20px;font-weight:700">일반 ${c.general.length} · 케이스 ${c.cases.length}</span>
       </div>
       <div class="u-fs11px-ctext3-mb6px">${escapeHtml(prods)}</div>
       <div style="display:flex;gap:10px;font-size:11px;flex-wrap:wrap">
-        <span style="color:#2de6b8">일반 완료 ${done}</span>
-        <span style="color:#fc8181">일반 미완료 ${open}</span>
+        <span style="color:#3FBE92">일반 완료 ${done}</span>
+        <span style="color:#E06A63">일반 미완료 ${open}</span>
         <span class="u-c-fcd34d">케이스 미완료 ${caseOpen}</span>
         <span class="u-ctext3-mlauto">완료율 ${rate}%</span>
       </div>
@@ -229,7 +229,7 @@ function renderKnowledge(){
     const href=normalizeExternalUrl(k.link||'');
     const commentCount=(k.comments||[]).length;
     const canEdit=(k.createdBy===CURRENT_USER||IS_ADMIN||IS_SUPER);
-    return `<div class="card knowledge-card" onclick="openKnowledgeDetail('${k.id}')" style="padding:14px;position:relative;cursor:pointer"><div style="position:absolute;top:10px;right:10px;display:flex;gap:4px;align-items:center">${canEdit?`<input type="checkbox" class="kno-pick" data-id="${k.id}" onclick="event.stopPropagation()" style="width:15px;height:15px;cursor:pointer">`:''}<button onclick="event.stopPropagation();openKnowledgeDetail('${k.id}')" style="background:transparent;border:0;color:var(--text3);cursor:pointer;font-size:11px">댓글 ${commentCount}</button>${canEdit?`<button onclick="event.stopPropagation();openKnowledgeModal('${k.id}')" style="background:transparent;border:0;color:var(--text3);cursor:pointer">✎</button><button onclick="event.stopPropagation();deleteKnowledge('${k.id}')" style="background:transparent;border:0;color:var(--danger);cursor:pointer">×</button>`:''}</div><div style="display:flex;gap:6px;margin-bottom:8px"><span class="badge" style="background:${labelColor(k.product||'기타')}22;color:${labelColor(k.product||'기타')}">${escapeHtml(k.product||'기타')}</span><span class="badge u-bgrgba19-cc4ceff">${escapeHtml(k.category||'')}</span></div><div style="font-size:14px;font-weight:800;color:#f0f4ff;margin-bottom:8px;padding-right:70px">${escapeHtml(k.title||'')}</div>${k.content?`<div class="knowledge-excerpt" style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;margin-bottom:10px">${escapeHtml(k.content)}</div>`:''}${href?`<a onclick="event.stopPropagation()" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:var(--cyan);text-decoration:none">참고 링크 ↗</a>`:''}<div style="font-size:10px;color:var(--text3);margin-top:10px">${escapeHtml(k.createdBy||'-')} · ${k.updatedAt?'수정 '+fd(k.updatedAt):fd(k.createdAt)}</div></div>`;
+    return `<div class="card knowledge-card" onclick="openKnowledgeDetail('${k.id}')" style="padding:14px;position:relative;cursor:pointer"><div style="position:absolute;top:10px;right:10px;display:flex;gap:4px;align-items:center">${canEdit?`<input type="checkbox" class="kno-pick" data-id="${k.id}" onclick="event.stopPropagation()" style="width:15px;height:15px;cursor:pointer">`:''}<button onclick="event.stopPropagation();openKnowledgeDetail('${k.id}')" style="background:transparent;border:0;color:var(--text3);cursor:pointer;font-size:11px">댓글 ${commentCount}</button>${canEdit?`<button onclick="event.stopPropagation();openKnowledgeModal('${k.id}')" style="background:transparent;border:0;color:var(--text3);cursor:pointer">✎</button><button onclick="event.stopPropagation();deleteKnowledge('${k.id}')" style="background:transparent;border:0;color:var(--danger);cursor:pointer">×</button>`:''}</div><div style="display:flex;gap:6px;margin-bottom:8px"><span class="badge" style="background:${labelColor(k.product||'기타')}22;color:${labelColor(k.product||'기타')}">${escapeHtml(k.product||'기타')}</span><span class="badge u-bgrgba19-cc4ceff">${escapeHtml(k.category||'')}</span></div><div style="font-size:14px;font-weight:800;color:#FBEFE6;margin-bottom:8px;padding-right:70px">${escapeHtml(k.title||'')}</div>${k.content?`<div class="knowledge-excerpt" style="font-size:12px;color:var(--text2);line-height:1.6;white-space:pre-wrap;margin-bottom:10px">${escapeHtml(k.content)}</div>`:''}${href?`<a onclick="event.stopPropagation()" href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:var(--cyan);text-decoration:none">참고 링크 ↗</a>`:''}<div style="font-size:10px;color:var(--text3);margin-top:10px">${escapeHtml(k.createdBy||'-')} · ${k.updatedAt?'수정 '+fd(k.updatedAt):fd(k.createdAt)}</div></div>`;
   }).join("");
   renderPager('know-pager','knowledge',list.length,'renderKnowledge');
 }

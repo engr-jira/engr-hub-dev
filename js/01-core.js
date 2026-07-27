@@ -22,7 +22,7 @@ let VT_HISTORY=JSON.parse(localStorage.getItem('vt_history')||'[]');
 let LINKS=[],EOS_ITEMS=[],TEAM_NAMES=[];
 let EOS_WARN_DAYS=[60,30,7];
 const THEME_KEY='engr_theme';
-let UI_THEME=normalizeTheme((function(){try{return localStorage.getItem(THEME_KEY)}catch(_){return null}})()||document.documentElement.getAttribute('data-theme')||'dark');
+let UI_THEME=normalizeTheme((function(){try{return localStorage.getItem(THEME_KEY)}catch(_){return null}})()||document.documentElement.getAttribute('data-theme')||'light');
 
 function normalizeTheme(theme){return theme==='light'?'light':'dark';}
 function isMobileViewport(){try{return window.matchMedia('(max-width:700px)').matches;}catch(_){return false;}}
@@ -109,10 +109,10 @@ async function loadSyncMeta(){
   updateSyncMeta();
 }
 
-const SC={'완료':'#22d3a5','진행 중':'#818cf8','미해결':'#94a3b8','보류':'#fbbf24'};
-const PC={'Highest':'#f87171','High':'#fb923c','Medium':'#fbbf24','Low':'#4ade80'};
-const LC_MAP={'DLP':'#f87171','PP':'#f472b6','SEP':'#22d3a5','SEPM':'#22d3a5','ProxySG':'#22d3ee','CloudSWG':'#818cf8','CASB':'#a78bfa'};
-function labelColor(l){return LC_MAP[l]||'#94a3b8';}
+const SC={'완료':'#2FB085','진행 중':'#E88A5E','미해결':'#A2917A','보류':'#E0A32E'};
+const PC={'Highest':'#E06A63','High':'#fb923c','Medium':'#E0A32E','Low':'#5FC088'};
+const LC_MAP={'DLP':'#E06A63','PP':'#E27299','SEP':'#2FB085','SEPM':'#2FB085','ProxySG':'#3FA3C4','CloudSWG':'#E88A5E','CASB':'#9F6BB5'};
+function labelColor(l){return LC_MAP[l]||'#A2917A';}
 
 function fd(d){return d?new Date(d).toLocaleDateString('ko-KR',{year:'2-digit',month:'2-digit',day:'2-digit'}):'-';}
 function fdt(d){if(!d)return '-';const dd=(typeof d==='number')?new Date(d):new Date(d);return dd.toLocaleString('ko-KR',{year:'2-digit',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});}

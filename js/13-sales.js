@@ -4,7 +4,7 @@
 
 let SALES_DATA=null, SALES_LOADING=false;
 const SALES_STATUS=['미착수','협의중','견적발송','계약완료','실패'];
-const SALES_STATUS_COLOR={'미착수':'#94a3b8','협의중':'#fbbf24','견적발송':'#34d399','계약완료':'#2de6b8','실패':'#f87171'};
+const SALES_STATUS_COLOR={'미착수':'#A2917A','협의중':'#E0A32E','견적발송':'#3FBE92','계약완료':'#3FBE92','실패':'#E06A63'};
 
 function salesNoteKey(c,p){return String(c||'')+'||'+String(p||'').slice(0,120);}  // 서버가 product를 120자 절단 저장 — 키 규칙 일치 필수
 
@@ -36,14 +36,14 @@ function salesRenewalRows(d){
 }
 
 function salesDDayBadge(dd){
-  if(dd<0)return `<span class="badge" style="background:rgba(248,113,113,.15);color:#f87171">만료 ${-dd}일 경과</span>`;
+  if(dd<0)return `<span class="badge" style="background:rgba(248,113,113,.15);color:#E06A63">만료 ${-dd}일 경과</span>`;
   if(dd<=30)return `<span class="badge" style="background:rgba(248,113,113,.12);color:#fb923c">D-${dd}</span>`;
-  if(dd<=90)return `<span class="badge" style="background:rgba(251,191,36,.13);color:#fbbf24">D-${dd}</span>`;
-  return `<span class="badge" style="background:rgba(52,211,153,.12);color:#34d399">D-${dd}</span>`;
+  if(dd<=90)return `<span class="badge" style="background:rgba(251,191,36,.13);color:#E0A32E">D-${dd}</span>`;
+  return `<span class="badge" style="background:rgba(52,211,153,.12);color:#3FBE92">D-${dd}</span>`;
 }
 
 function salesStatusBadge(st){
-  const c=SALES_STATUS_COLOR[st]||'#94a3b8';
+  const c=SALES_STATUS_COLOR[st]||'#A2917A';
   return `<span class="badge" style="background:${c}22;color:${c}">${escapeHtml(st||'미착수')}</span>`;
 }
 
@@ -61,8 +61,8 @@ function renderSalesPage(){
   const stale=d.staleDays||14;
 
   const kpi=`<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px">
-    <div class="kpi"><div class="kpi-val" style="color:#fbbf24">${near}</div><div class="kpi-label">90일 내 만료</div></div>
-    <div class="kpi"><div class="kpi-val" style="color:#f87171">${past}</div><div class="kpi-label">만료 경과</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:#E0A32E">${near}</div><div class="kpi-label">90일 내 만료</div></div>
+    <div class="kpi"><div class="kpi-val" style="color:#E06A63">${past}</div><div class="kpi-label">만료 경과</div></div>
     <div class="kpi"><div class="kpi-val">${(d.customers||[]).length}</div><div class="kpi-label">대응 중 고객사</div></div>
     <div class="kpi"><div class="kpi-val">${openTotal}</div><div class="kpi-label">진행중 이슈</div></div>
   </div>`;
@@ -82,7 +82,7 @@ function renderSalesPage(){
         <td class="u-ws-nowrap">${escapeHtml(n.next_contact||'—')}</td>
         ${canEdit?`<td><button class="btn btn-ghost u-btn-xxs" onclick="toggleSalesEdit(${i})">✏️</button></td>`:''}
       </tr>
-      ${canEdit?`<tr id="sales-edit-${i}" style="display:none"><td colspan="7" style="background:rgba(129,140,248,.05);padding:10px 12px">
+      ${canEdit?`<tr id="sales-edit-${i}" style="display:none"><td colspan="7" style="background:rgba(239,131,84,.05);padding:10px 12px">
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <select id="se-status-${i}" class="admin-input" style="max-width:130px">${SALES_STATUS.map(s=>`<option${(n.status||'미착수')===s?' selected':''}>${s}</option>`).join('')}</select>
           <input id="se-body-${i}" class="admin-input" style="flex:1;min-width:200px" placeholder="영업 메모" value="${escapeHtml(n.body||'')}">
@@ -95,23 +95,23 @@ function renderSalesPage(){
 
   const custRows=(d.customers||[]).filter(c=>c.name&&c.name!=='None').map(c=>{
     const days=c.lastActivity?daysSince(c.lastActivity.slice(0,10)):999;
-    const judge = days>=stale?`<span class="badge" style="background:rgba(248,113,113,.13);color:#f87171;font-size:11.5px">정체 ${days}일</span>`
-      : days>=Math.ceil(stale/2)?`<span class="badge" style="background:rgba(251,191,36,.13);color:#fbbf24;font-size:11.5px">주의</span>`
-      : `<span class="badge" style="background:rgba(52,211,153,.12);color:#34d399;font-size:11.5px">활발</span>`;
+    const judge = days>=stale?`<span class="badge" style="background:rgba(248,113,113,.13);color:#E06A63;font-size:11.5px">정체 ${days}일</span>`
+      : days>=Math.ceil(stale/2)?`<span class="badge" style="background:rgba(251,191,36,.13);color:#E0A32E;font-size:11.5px">주의</span>`
+      : `<span class="badge" style="background:rgba(52,211,153,.12);color:#3FBE92;font-size:11.5px">활발</span>`;
     const issues=(c.issues||[]).map(i=>{
       const od=i.due&&daysUntil(i.due)<0;
       return `<div style="display:flex;gap:8px;align-items:center;padding:5px 0;border-bottom:1px solid rgba(44,55,87,.35)">
         <span style="color:var(--accent3);font-weight:700;font-size:12px" class="u-ws-nowrap">${escapeHtml(i.key)}</span>
         <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px">${escapeHtml(i.title)}</span>
         <span class="u-ws-nowrap" style="font-size:11.5px;color:var(--text3)">${escapeHtml(i.status)}</span>
-        ${i.due?`<span class="u-ws-nowrap" style="font-size:11px;color:${od?'#f87171':'var(--text3)'}">${od?'기한초과 ':''}${escapeHtml(i.due)}</span>`:''}
+        ${i.due?`<span class="u-ws-nowrap" style="font-size:11px;color:${od?'#E06A63':'var(--text3)'}">${od?'기한초과 ':''}${escapeHtml(i.due)}</span>`:''}
       </div>`;
     }).join('');
     const top=(c.issues||[])[0];
     return `<details class="sales-cust"><summary style="display:flex;gap:12px;align-items:center;cursor:pointer;padding:11px 14px">
       <b style="min-width:130px;font-size:14px">${escapeHtml(c.name)}</b>
       <span style="font-size:12.5px;color:var(--text2)" class="u-ws-nowrap">진행 <b>${c.open}</b></span>
-      <span class="u-ws-nowrap" style="font-size:12.5px;color:${c.overdue?'#f87171':'var(--text3)'}">기한초과 <b>${c.overdue}</b></span>
+      <span class="u-ws-nowrap" style="font-size:12.5px;color:${c.overdue?'#E06A63':'var(--text3)'}">기한초과 <b>${c.overdue}</b></span>
       <span class="u-ws-nowrap" style="font-size:12.5px;color:var(--text3)">최근 ${days>=999?'—':days===0?'오늘':days+'일 전'}</span>
       ${top?`<span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--text3)">└ ${escapeHtml(top.title)}</span>`:'<span style="flex:1"></span>'}
       <span style="margin-left:auto">${judge}</span>

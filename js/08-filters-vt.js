@@ -76,38 +76,38 @@ function injectV155Style(){
   const st=document.createElement('style');
   st.id='v155-style';
   st.textContent=`
-    .usage-card.ai-usage-v155{border:1px solid rgba(103,232,249,.18);background:linear-gradient(180deg,rgba(103,232,249,.08),rgba(45,230,184,.045));box-shadow:0 10px 28px rgba(0,0,0,.16)}
-    .ai-usage-v155 .u-head{margin-bottom:8px!important}.ai-usage-v155 .u-title{display:flex;align-items:center;gap:7px;color:#c7f9ff!important;letter-spacing:0}
-    .ai-usage-v155 .u-dot{width:8px;height:8px;border-radius:50%;background:#2de6b8;box-shadow:0 0 0 4px rgba(45,230,184,.1)}
-    .ai-usage-v155 .pill-btn{border-radius:8px!important;border:1px solid rgba(103,232,249,.28)!important;background:rgba(103,232,249,.1)!important;color:#dffbff!important;padding:4px 8px!important;font-size:9px!important}
+    .usage-card.ai-usage-v155{border:1px solid rgba(63,163,196,.18);background:linear-gradient(180deg,rgba(63,163,196,.08),rgba(63,190,146,.045));box-shadow:0 10px 28px rgba(0,0,0,.16)}
+    .ai-usage-v155 .u-head{margin-bottom:8px!important}.ai-usage-v155 .u-title{display:flex;align-items:center;gap:7px;color:#BFE0EC!important;letter-spacing:0}
+    .ai-usage-v155 .u-dot{width:8px;height:8px;border-radius:50%;background:#3FBE92;box-shadow:0 0 0 4px rgba(63,190,146,.1)}
+    .ai-usage-v155 .pill-btn{border-radius:8px!important;border:1px solid rgba(63,163,196,.28)!important;background:rgba(63,163,196,.1)!important;color:#BFE0EC!important;padding:4px 8px!important;font-size:9px!important}
     .ai-usage-v155 .usage-total{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px}
-    .ai-usage-v155 .usage-total span{font-size:9px;color:var(--text3);font-weight:700}.ai-usage-v155 .usage-total b{font-size:18px;color:#f8faff;line-height:1}
+    .ai-usage-v155 .usage-total span{font-size:9px;color:var(--text3);font-weight:700}.ai-usage-v155 .usage-total b{font-size:18px;color:#FBF4EA;line-height:1}
     .ai-usage-v155 .usage-meter{height:6px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden;margin:7px 0 9px}
-    .ai-usage-v155 .usage-meter>div{height:100%;border-radius:999px;background:linear-gradient(90deg,#2de6b8,#67e8f9);transition:width .25s ease}
+    .ai-usage-v155 .usage-meter>div{height:100%;border-radius:999px;background:linear-gradient(90deg,#3FBE92,#3FA3C4);transition:width .25s ease}
     .ai-usage-v155 .u-grid{grid-template-columns:1fr auto!important;gap:5px 10px!important}.ai-usage-v155 .u-muted{font-size:10px}.ai-usage-v155 .u-val{font-size:10px}
     .ai-usage-v155 .u-split{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
     .ai-usage-v155 .u-mini{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.035);border-radius:8px;padding:6px}
-    .ai-usage-v155 .u-mini span{display:block;font-size:9px;color:var(--text3);margin-bottom:3px}.ai-usage-v155 .u-mini b{font-size:11px;color:#f4f7ff}
+    .ai-usage-v155 .u-mini span{display:block;font-size:9px;color:var(--text3);margin-bottom:3px}.ai-usage-v155 .u-mini b{font-size:11px;color:#FBF4EA}
     .ai-usage-v155 .u-foot{border-top:1px solid rgba(255,255,255,.08);padding-top:6px;text-align:left!important}
-    .health-card .sync-mini{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.18)!important;color:#e8edff!important}
+    .health-card .sync-mini{background:rgba(255,255,255,.08)!important;border-color:rgba(255,255,255,.18)!important;color:#F7E7DA!important}
     .issue-list{display:flex;flex-direction:column;gap:8px}
-    .issue-card{background:rgba(255,255,255,.035);border:1px solid rgba(129,140,248,.18);border-left:3px solid rgba(103,232,249,.42);border-radius:8px;padding:11px 13px;cursor:pointer;transition:background .12s ease,border-color .12s ease,transform .12s ease}
-    .issue-card:hover,.issue-card.sel{background:rgba(99,102,241,.12);border-color:rgba(129,140,248,.48);transform:translateY(-1px)}
+    .issue-card{background:rgba(255,255,255,.035);border:1px solid rgba(239,131,84,.18);border-left:3px solid rgba(63,163,196,.42);border-radius:8px;padding:11px 13px;cursor:pointer;transition:background .12s ease,border-color .12s ease,transform .12s ease}
+    .issue-card:hover,.issue-card.sel{background:rgba(217,96,59,.12);border-color:rgba(239,131,84,.48);transform:translateY(-1px)}
     .issue-main{display:grid;grid-template-columns:auto auto auto minmax(0,1fr) auto;gap:7px;align-items:center;min-width:0}
-    .issue-main .key{font-size:12px;font-weight:900;color:#cfe1ff;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+    .issue-main .key{font-size:12px;font-weight:900;color:#BFE0EC;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
     .issue-main .st,.issue-main .pri{font-size:10px;font-weight:800;border-radius:6px;padding:3px 6px;white-space:nowrap}
-    .issue-main .title{font-size:13px;font-weight:700;color:#f8faff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+    .issue-main .title{font-size:13px;font-weight:700;color:#FBF4EA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
     .issue-main .date{font-size:11px;color:var(--text3);white-space:nowrap}
     .issue-sub{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:7px;font-size:11px;color:var(--text3)}
     .issue-sub .badge{font-size:9px;border-radius:6px;padding:2px 6px;font-weight:800}
     .case-chip-wrap{grid-column:1/-1;display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:2px;min-width:0}
     .case-chip{display:inline-flex;align-items:center;gap:4px;max-width:100%;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:900;line-height:1.2;white-space:nowrap;border:1px solid rgba(255,255,255,.1);cursor:pointer}
-    .case-chip.open{background:rgba(45,212,191,.16);border-color:rgba(45,212,191,.34);color:#5eead4}
-    .case-chip.done{background:rgba(99,102,241,.16);border-color:rgba(129,140,248,.36);color:#c4b5fd}
+    .case-chip.open{background:rgba(45,212,191,.16);border-color:rgba(45,212,191,.34);color:#3FBE92}
+    .case-chip.done{background:rgba(217,96,59,.16);border-color:rgba(239,131,84,.36);color:#B79AD0}
     input[type="date"]{color-scheme:dark}
     input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer}
-    .date-open-btn{height:36px;min-width:48px;border-radius:8px;border:1px solid rgba(103,232,249,.45);background:#dff8ff;color:#0f172a;font-size:11px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 0 12px rgba(103,232,249,.22);padding:0 10px}
-    .date-open-btn:hover{background:#f2fdff;border-color:#a5f3fc}
+    .date-open-btn{height:36px;min-width:48px;border-radius:8px;border:1px solid rgba(63,163,196,.45);background:#BFE0EC;color:#211D22;font-size:11px;font-weight:900;font-family:inherit;cursor:pointer;box-shadow:0 0 12px rgba(63,163,196,.22);padding:0 10px}
+    .date-open-btn:hover{background:#FBF4EA;border-color:#BFE0EC}
     .modal-form input[type="date"]{width:calc(100% - 62px)!important;display:inline-block!important;vertical-align:middle;margin-right:8px}
     .modal-form input[type="date"]+.date-open-btn,.private-editor input[type="date"]+.date-open-btn{vertical-align:middle}
     .private-editor .filter-row{display:grid!important;grid-template-columns:1fr 1fr minmax(130px,1fr) 48px;align-items:center;gap:8px}
@@ -127,18 +127,18 @@ function injectV155Style(){
     .top-status-card{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:7px 10px;min-height:34px}
     .top-status-card .label{font-size:9px;color:var(--text3);font-weight:800;letter-spacing:.2px}
     .top-status-card .value{font-size:11px;color:#f5f8ff;font-weight:900;white-space:nowrap}
-    .top-status-card .ok{color:#2de6b8}.top-status-card .warn{color:#fcd34d}
-    .top-refresh,.top-logout,.top-pin{height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#eaf0ff;font-family:inherit;font-size:11px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px}
-    .top-pin{color:#dffbff;border-color:rgba(103,232,249,.28);background:rgba(103,232,249,.08)}
-    .top-refresh{width:36px;padding:0}.top-refresh svg{width:15px;height:15px}.top-refresh:hover,.top-logout:hover,.top-pin:hover{background:rgba(129,140,248,.2);border-color:rgba(129,140,248,.42)}
+    .top-status-card .ok{color:#3FBE92}.top-status-card .warn{color:#E8B23D}
+    .top-refresh,.top-logout,.top-pin{height:34px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#F7E7DA;font-family:inherit;font-size:11px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px}
+    .top-pin{color:#BFE0EC;border-color:rgba(63,163,196,.28);background:rgba(63,163,196,.08)}
+    .top-refresh{width:36px;padding:0}.top-refresh svg{width:15px;height:15px}.top-refresh:hover,.top-logout:hover,.top-pin:hover{background:rgba(239,131,84,.2);border-color:rgba(239,131,84,.42)}
     #page-nav,#case-pager{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:6px!important;background:transparent!important;border:0!important;padding:8px 0!important}
-    #page-nav button,#case-pager button{background:#262d47;border:1px solid rgba(129,140,248,.25);color:#dfe6ff;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer}
-    #page-nav button.active,#case-pager button.active{background:#6366f1;border-color:#818cf8;color:#fff}
+    #page-nav button,#case-pager button{background:#332D34;border:1px solid rgba(239,131,84,.25);color:#F6D4C2;border-radius:7px;padding:6px 10px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer}
+    #page-nav button.active,#case-pager button.active{background:#D9603B;border-color:#E88A5E;color:#FFFDF9}
     #page-nav button:disabled,#case-pager button:disabled{opacity:.38;cursor:not-allowed}
     .private-layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px}
     .private-editor{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;align-self:start}
     .private-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.private-head strong{font-size:13px}.private-head span{font-size:10px;color:var(--text3)}
-    .private-editor input,.private-editor textarea{width:100%;background:#1b2034;border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:10px 11px;margin-bottom:8px;font-family:inherit;font-size:12px}
+    .private-editor input,.private-editor textarea{width:100%;background:#242027;border:1px solid var(--border2);border-radius:8px;color:var(--text);padding:10px 11px;margin-bottom:8px;font-family:inherit;font-size:12px}
     .private-editor textarea{min-height:140px;resize:vertical;line-height:1.5}
     .private-actions{display:flex;gap:6px;margin-top:8px}.private-actions button{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:var(--text2);border-radius:7px;padding:5px 8px;font-size:10px;cursor:pointer}
     .private-done{opacity:.65}.private-done .title{text-decoration:line-through;color:var(--text3)}
@@ -299,10 +299,10 @@ function renderMetaIncomplete(){
   const byAss={};
   inc.forEach(i=>{const a=i.assignee||'(미지정)';if(!byAss[a])byAss[a]={count:0,fields:{}};byAss[a].count++;metaMissingFields(i).forEach(f=>{byAss[a].fields[f]=(byAss[a].fields[f]||0)+1;});});
   const rows=Object.entries(byAss).sort((a,b)=>b[1].count-a[1].count).map(([name,info])=>{
-    const fieldChips=Object.entries(info.fields).sort((a,b)=>b[1]-a[1]).map(([f,n])=>`<span style="display:inline-block;background:rgba(251,191,36,.12);color:#fbbf24;border-radius:6px;padding:1px 7px;font-size:10px;margin:1px">${f} ${n}</span>`).join(' ');
+    const fieldChips=Object.entries(info.fields).sort((a,b)=>b[1]-a[1]).map(([f,n])=>`<span style="display:inline-block;background:rgba(251,191,36,.12);color:#E0A32E;border-radius:6px;padding:1px 7px;font-size:10px;margin:1px">${f} ${n}</span>`).join(' ');
     return `<div onclick="setIssueNavigationFilter({assignee:${jsAttr(name==='(미지정)'?'':name)},preset:{kind:'incomplete',label:${jsAttr('메타 미완성 · '+name)}}})" style="display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--border);cursor:pointer">
       <span style="min-width:90px;font-size:13px;font-weight:700;color:var(--text)">${escapeHtml(name)}</span>
-      <span style="background:rgba(248,113,113,.15);color:#f87171;border-radius:7px;padding:2px 9px;font-size:12px;font-weight:700">${info.count}건</span>
+      <span style="background:rgba(248,113,113,.15);color:#E06A63;border-radius:7px;padding:2px 9px;font-size:12px;font-weight:700">${info.count}건</span>
       <span style="flex:1;text-align:right">${fieldChips}</span>
     </div>`;
   }).join('');
@@ -341,8 +341,8 @@ function caseBallBadge(key){
   const r=respByKey(key); if(!r||!r.ball)return '';
   const days=r.last_comm!=null?` · ${Math.round(r.last_comm)}일 전`:'';
   const tip=escapeHtml(r.ball_note||'');
-  if(r.ball==='team')return `<span title="${tip}" style="background:rgba(248,113,113,.14);color:#f87171;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">🔴 팀 회신 필요${days}</span>`;
-  return `<span title="${tip}" style="background:rgba(96,165,250,.12);color:#60a5fa;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">⏳ 제조사 대기${days}</span>`;
+  if(r.ball==='team')return `<span title="${tip}" style="background:rgba(248,113,113,.14);color:#E06A63;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">🔴 팀 회신 필요${days}</span>`;
+  return `<span title="${tip}" style="background:rgba(96,165,250,.12);color:#3F8FC4;border-radius:6px;padding:1px 7px;font-size:10px;font-weight:700;white-space:nowrap">⏳ 제조사 대기${days}</span>`;
 }
 function respSpeedRows(){
   // 코멘트 기반 (스케줄 분석 산출): avg_resp = 최초응답+코멘트 간격+현재까지 무응답 구간의 평균
@@ -363,13 +363,13 @@ function respSpeedRows(){
   const maxAvg=Math.max(1,...list.map(x=>x.avg||0));
   return list.map(({a,v,avg})=>{
       const first=v.firstN?Math.round(v.firstSum/v.firstN*10)/10:null;
-      const col=avg===null?'var(--text3)':avg>=7?'#f87171':avg>=4?'#fbbf24':'#2de6b8';
+      const col=avg===null?'var(--text3)':avg>=7?'#E06A63':avg>=4?'#E0A32E':'#3FBE92';
       const pct=avg===null?0:Math.max(4,Math.round(avg/maxAvg*100));
-      const sub=[`진행 ${v.open} · 완료 ${v.n-v.open}`,v.needReply?`<span style="color:#f87171;font-weight:700">팀 회신 필요 ${v.needReply}건</span>`:'',first!==null?`접수→첫 기록 평균 ${first}일`:''].filter(Boolean).join(' · ');
+      const sub=[`진행 ${v.open} · 완료 ${v.n-v.open}`,v.needReply?`<span style="color:#E06A63;font-weight:700">팀 회신 필요 ${v.needReply}건</span>`:'',first!==null?`접수→첫 기록 평균 ${first}일`:''].filter(Boolean).join(' · ');
       return `<div style="padding:7px 2px;border-bottom:1px solid var(--border);cursor:pointer" onclick="setCaseNavigationFilter({assignee:${jsAttr(a)}})">
         <div style="display:grid;grid-template-columns:minmax(0,1fr) 46px 64px;gap:8px;align-items:center">
           <span style="font-weight:700;font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(a)}</span>
-          <span style="background:rgba(129,140,248,.14);color:var(--accent3);border-radius:7px;padding:2px 0;font-size:11px;font-weight:700;text-align:center;white-space:nowrap">${v.n}건</span>
+          <span style="background:rgba(239,131,84,.14);color:var(--accent3);border-radius:7px;padding:2px 0;font-size:11px;font-weight:700;text-align:center;white-space:nowrap">${v.n}건</span>
           <b style="color:${col};white-space:nowrap;text-align:right;font-size:12.5px">${avg===null?'-':avg+'일'}</b>
         </div>
         <div style="height:4px;background:rgba(255,255,255,.06);border-radius:99px;margin-top:5px"><div style="height:4px;width:${pct}%;background:${col};border-radius:99px"></div></div>
@@ -386,7 +386,7 @@ function needReplyRows(){
       const c=cases.find(x=>x.key===r.key);
       const label=c?`<b>${escapeHtml(c.caseNum||c.key)}</b> ${escapeHtml(caseCustomerName(c)||'')} @${escapeHtml(c.assignee||r.assignee)}`:`<b>${escapeHtml(r.key)}</b> @${escapeHtml(r.assignee)}`;
       const days=r.last_comm!=null?Math.round(r.last_comm):null;
-      return `<div class="dash-list-row" onclick="v154GoCaseExact(${jsAttr(r.key)})" title="${escapeHtml(r.ball_note||'')}"><span class="title">${label}</span><b style="color:#f87171;white-space:nowrap">${days===null?'-':days+'일 전'}</b></div>`;
+      return `<div class="dash-list-row" onclick="v154GoCaseExact(${jsAttr(r.key)})" title="${escapeHtml(r.ball_note||'')}"><span class="title">${label}</span><b style="color:#E06A63;white-space:nowrap">${days===null?'-':days+'일 전'}</b></div>`;
     });
   return rows.join('')||'<div style="font-size:12px;color:var(--success);padding:8px 2px">✓ 팀 응답 대기 케이스 없음</div>';
 }
@@ -419,7 +419,7 @@ function caseSpeedRows(list){
     .map(([a,v])=>{
       const avgIdle=v.open?Math.round(v.idleSum/v.open):null;
       const avgDone=v.doneN?Math.round(v.doneSum/v.doneN):null;
-      const col=avgIdle===null?'var(--text3)':avgIdle>=7?'#f87171':avgIdle>=4?'#fbbf24':'#2de6b8';
+      const col=avgIdle===null?'var(--text3)':avgIdle>=7?'#E06A63':avgIdle>=4?'#E0A32E':'#3FBE92';
       const sub=[v.open?`진행 ${v.open}건`:'',v.open&&v.idleMax>=7?`최장 ${v.idleMax}일(${v.idleKey})`:'',avgDone!==null?`완료평균 ${avgDone}일`:''].filter(Boolean).join(' · ');
       return `<div class="dash-list-row" onclick="setCaseNavigationFilter({assignee:${jsAttr(a)},status:'미해결'})"><span class="title">${escapeHtml(a)}<br><small style="color:var(--text3);font-size:10px">${escapeHtml(sub)}</small></span><b style="color:${col};white-space:nowrap">${avgIdle===null?'진행 없음':avgIdle+'일'}</b></div>`;
     });
@@ -434,7 +434,7 @@ function trendSvg(g,c){
   const y=n=>118-n/max*90;
   const x=idx=>30+idx*68;
   const line=(sel,color)=>`<polyline points="${vals.map((v,i)=>`${x(i)},${y(sel(v))}`).join(' ')}" fill="none" stroke="${color}" stroke-width="2.5"/>`+vals.map((v,i)=>`<circle cx="${x(i)}" cy="${y(sel(v))}" r="3.5" fill="${color}"/><text x="${x(i)}" y="${y(sel(v))-7}" text-anchor="middle" fill="${color}" font-size="9">${sel(v)}</text>`).join('');
-  return line(v=>v.g,'#67e8f9')+line(v=>v.c,'#a78bfa')+`<g>${vals.map((v,i)=>`<text x="${x(i)}" y="135" text-anchor="middle" fill="#7b89aa" font-size="9">${v.k.slice(5)}</text>`).join('')}</g>`;
+  return line(v=>v.g,'#3FA3C4')+line(v=>v.c,'#9F6BB5')+`<g>${vals.map((v,i)=>`<text x="${x(i)}" y="135" text-anchor="middle" fill="#8B7A62" font-size="9">${v.k.slice(5)}</text>`).join('')}</g>`;
 }
 function renderCurrent(){
   normalizeAllIssueAliases();
@@ -485,7 +485,7 @@ function renderCases_legacy_v4(){
   const rows=arr.slice((PAGE_STATE.cases-1)*size,PAGE_STATE.cases*size);
   wrap.innerHTML=v154FilterNoteHtml(v154ActiveCaseFilterText())+
     (rows.length?rows.map(c=>{
-      const col=SC[c.status]||'#94a3b8';
+      const col=SC[c.status]||'#A2917A';
       return `<div class="issue-card ${CASE_SEL&&CASE_SEL.key===c.key?'sel':''}" onclick="selectCase(v154GetCaseByKey('${escapeAttr(c.key)}'))">
         <div class="issue-main">
           <span class="key">${escapeHtml(c.caseNum||c.key)}</span>
@@ -547,14 +547,14 @@ function renderCustomerRight(){
   const nearLic=licDday.length?licDday[0]:null;
   const row=(i,kind)=>`<div class="customer-work-row" onclick="${kind==='case'?`v154GoCaseExact('${escapeAttr(i.key)}')`:`v154GoIssueExact('${escapeAttr(i.key)}')`}"><div><div class="k">${escapeHtml(kind==='case'?(i.caseNum||getCasePrefixNum(i.title)||i.key):i.key)}</div><div class="t">${escapeHtml(cleanTitle(i.title||i.summary||''))}</div></div><div class="m">${escapeHtml(i.status||'')} · ${fd(i.date||i.created)}</div></div>`;
   right.innerHTML=`<div class="rpanel">
-    <div style="font-size:16px;font-weight:800;color:#f0f4ff;margin-bottom:14px">${escapeHtml(c.name)}</div>
+    <div style="font-size:16px;font-weight:800;color:#FBEFE6;margin-bottom:14px">${escapeHtml(c.name)}</div>
     <div class="rp-meta">
-      <div class="rp-row"><span>제품</span><span style="flex-wrap:wrap;display:flex;gap:4px">${[...(c.products||[])].map(p=>`<span class="badge" style="background:${(LC_MAP[p]||'#94a3b8')}22;color:${(LC_MAP[p]||'#94a3b8')}">${escapeHtml(p)}</span>`).join('')||'-'}</span></div>
+      <div class="rp-row"><span>제품</span><span style="flex-wrap:wrap;display:flex;gap:4px">${[...(c.products||[])].map(p=>`<span class="badge" style="background:${(LC_MAP[p]||'#A2917A')}22;color:${(LC_MAP[p]||'#A2917A')}">${escapeHtml(p)}</span>`).join('')||'-'}</span></div>
       <div class="rp-row"><span>담당자</span><span>${escapeHtml([...(c.assignees||[])].join(', ')||'-')}</span></div>
       <div class="rp-row"><span>일반 이슈</span><span>${general.length}건 (완료 ${done.length} / 미완료 ${open.length})</span></div>
       <div class="rp-row"><span>케이스</span><span>${cases.length}건 (완료 ${caseDone.length} / 미완료 ${caseOpen.length})</span></div>
-      <div class="rp-row"><span>일반 이슈 완료율</span><span style="color:${rate>=80?'#2de6b8':rate>=50?'#fcd34d':'#fc8181'};font-weight:700">${rate}%</span></div>
-      <div class="rp-row"><span>라이선스</span><span>${eosForCust.length}건${nearLic!==null?` · 최단 <b style="color:${nearLic<0?'#f87171':nearLic<=30?'#fbbf24':'#22d3a5'}">${nearLic<0?'만료':'D-'+nearLic}</b>`:''}</span></div>
+      <div class="rp-row"><span>일반 이슈 완료율</span><span style="color:${rate>=80?'#3FBE92':rate>=50?'#E8B23D':'#E06A63'};font-weight:700">${rate}%</span></div>
+      <div class="rp-row"><span>라이선스</span><span>${eosForCust.length}건${nearLic!==null?` · 최단 <b style="color:${nearLic<0?'#E06A63':nearLic<=30?'#E0A32E':'#2FB085'}">${nearLic<0?'만료':'D-'+nearLic}</b>`:''}</span></div>
     </div>
     <div class="jump-row"><button class="btn btn-ghost" onclick="setIssueNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사: '+c.name)}}})">일반 이슈 보기</button><button class="btn btn-ghost" onclick="setCaseNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사 케이스: '+c.name)}}})">케이스 보기</button></div>
     <div style="font-size:10px;color:var(--text3);font-weight:700;margin:12px 0 8px;text-transform:uppercase">최근 일반 이슈</div>${recent.map(i=>row(i,'issue')).join('')||'<div class="empty">최근 일반 이슈 없음</div>'}

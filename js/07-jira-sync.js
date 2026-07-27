@@ -187,7 +187,7 @@ function renderDash_legacy_v2(){
     <div class="mini-card"><div class="u-fs12px-ca5b4fc-fw800-mb8px">월별 추이 (최근 6개월)</div>${monthTrendRows(g,c)}</div>
   </div></div>`;
   const recent=document.getElementById('recent');
-  if(recent)recent.innerHTML=`<div class="dash-section"><div class="sec-title">최근 일반 이슈 (10건)</div>${g.sort((a,b)=>issueDateValue(b)-issueDateValue(a)).slice(0,10).map(i=>`<div class="issue-card" onclick="setIssueNavigationFilter({q:${jsAttr(i.key)}})"><div class="issue-main"><span class="key">${escapeHtml(i.key)}</span><span class="st" style="background:${(SC[i.status]||'#94a3b8')}22;color:${SC[i.status]||'#94a3b8'}">${escapeHtml(i.status)}</span><span class="title">${escapeHtml(cleanTitle(i.title))}</span>${caseChipsForIssue(i)}<span class="date">${fd(i.date)}</span></div><div class="issue-sub"><span>@${escapeHtml(i.assignee||'-')}</span><span>${escapeHtml(i.customer||'-')}</span></div></div>`).join('')||'<div class="empty">최근 일반 이슈 없음</div>'}</div>`;
+  if(recent)recent.innerHTML=`<div class="dash-section"><div class="sec-title">최근 일반 이슈 (10건)</div>${g.sort((a,b)=>issueDateValue(b)-issueDateValue(a)).slice(0,10).map(i=>`<div class="issue-card" onclick="setIssueNavigationFilter({q:${jsAttr(i.key)}})"><div class="issue-main"><span class="key">${escapeHtml(i.key)}</span><span class="st" style="background:${(SC[i.status]||'#A2917A')}22;color:${SC[i.status]||'#A2917A'}">${escapeHtml(i.status)}</span><span class="title">${escapeHtml(cleanTitle(i.title))}</span>${caseChipsForIssue(i)}<span class="date">${fd(i.date)}</span></div><div class="issue-sub"><span>@${escapeHtml(i.assignee||'-')}</span><span>${escapeHtml(i.customer||'-')}</span></div></div>`).join('')||'<div class="empty">최근 일반 이슈 없음</div>'}</div>`;
 }
 function topAssigneeRows(list){
   const rows=Object.entries(list.reduce((m,i)=>(m[i.assignee||'-']=(m[i.assignee||'-']||0)+1,m),{})).sort((a,b)=>b[1]-a[1]).slice(0,6);
@@ -459,12 +459,12 @@ function injectV154Style(){
   st.id='v154-style';
   st.textContent=`
     .mini-filter-note{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px 0}
-    .mini-filter-note .tag{border:1px solid rgba(129,140,248,.35);background:rgba(99,102,241,.12);color:#dfe6ff;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700}
+    .mini-filter-note .tag{border:1px solid rgba(239,131,84,.35);background:rgba(217,96,59,.12);color:#F6D4C2;border-radius:999px;padding:5px 9px;font-size:11px;font-weight:700}
     .customer-work-row{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;padding:9px 10px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.025);cursor:pointer;margin-bottom:7px;transition:.12s ease}
-    .customer-work-row:hover{border-color:rgba(129,140,248,.55);background:rgba(129,140,248,.09);transform:translateY(-1px)}
-    .customer-work-row .k{font-weight:800;color:#cfe1ff;font-size:12px}.customer-work-row .t{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.35}.customer-work-row .m{font-size:10px;color:var(--text3);white-space:nowrap}
+    .customer-work-row:hover{border-color:rgba(239,131,84,.55);background:rgba(239,131,84,.09);transform:translateY(-1px)}
+    .customer-work-row .k{font-weight:800;color:#BFE0EC;font-size:12px}.customer-work-row .t{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.35}.customer-work-row .m{font-size:10px;color:var(--text3);white-space:nowrap}
     .vt-history-item{display:grid;grid-template-columns:minmax(150px,1fr) 70px 76px 84px;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.08);font-size:11px}
-    .vt-history-item:last-child{border-bottom:0}.vt-history-hash{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#cfe1ff;overflow:hidden;text-overflow:ellipsis}.vt-history-meta{color:var(--text3);font-size:10px}
+    .vt-history-item:last-child{border-bottom:0}.vt-history-hash{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#BFE0EC;overflow:hidden;text-overflow:ellipsis}.vt-history-meta{color:var(--text3);font-size:10px}
     @media(max-width:1200px){.vt-history-item{grid-template-columns:1fr 62px 66px}.vt-history-item .hide-narrow{display:none}}
   `;
   document.head.appendChild(st);

@@ -64,17 +64,17 @@ async function runCustomerHistory(){
 }
 function histClsBadge(cls){
   if(!cls)return '';
-  if(cls.customer)return ` <span class="badge" style="background:#34d39922;color:#34d399">${escapeHtml(cls.customer)}</span>`;
-  if(cls.kind==='vendorcase')return ' <span class="badge" style="background:#60a5fa22;color:#60a5fa">벤더케이스</span>';
-  if(cls.kind==='unclassified')return ` <span class="badge" style="background:#fbbf2422;color:#fbbf24" title="${escapeAttr(cls.bracket||'')}">미분류 ⚑</span>`;
-  if(cls.kind==='internal')return ' <span class="badge" style="background:#94a3b822;color:#94a3b8">내부</span>';
+  if(cls.customer)return ` <span class="badge" style="background:#34d39922;color:#3FBE92">${escapeHtml(cls.customer)}</span>`;
+  if(cls.kind==='vendorcase')return ' <span class="badge" style="background:#60a5fa22;color:#3F8FC4">벤더케이스</span>';
+  if(cls.kind==='unclassified')return ` <span class="badge" style="background:#fbbf2422;color:#E0A32E" title="${escapeAttr(cls.bracket||'')}">미분류 ⚑</span>`;
+  if(cls.kind==='internal')return ' <span class="badge" style="background:#94a3b822;color:#A2917A">내부</span>';
   return '';
 }
 function renderHistoryResults(){
   const res=document.getElementById('ch-results'); if(!res)return;
   if(!HISTORY_ITEMS.length){ res.innerHTML='<div class="muted" style="padding:16px">결과가 없습니다.</div>'; return; }
   const rows=HISTORY_ITEMS.map(i=>`<tr>
-    <td><a href="https://escare-engr.atlassian.net/browse/${escapeAttr(i.key)}" target="_blank" rel="noopener" style="color:#60a5fa;white-space:nowrap">${escapeHtml(i.key)}</a></td>
+    <td><a href="https://escare-engr.atlassian.net/browse/${escapeAttr(i.key)}" target="_blank" rel="noopener" style="color:#3F8FC4;white-space:nowrap">${escapeHtml(i.key)}</a></td>
     <td style="max-width:340px">${escapeHtml(i.summary||'')}${histClsBadge(i.cls)}</td>
     <td>${escapeHtml(i.status||'')}</td><td>${escapeHtml(i.assignee||'-')}</td>
     <td class="u-fs-11px">${(i.labels||[]).map(l=>escapeHtml(l)).join(', ')}</td>
@@ -115,7 +115,7 @@ function renderMonitor(items, caption){
   const order=Object.keys(byA).sort((a,b)=>byA[b].length-byA[a].length);
   const unclassified=(items||[]).filter(i=>i.cls&&i.cls.kind==='unclassified');
   const flag=unclassified.length?`<div style="background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--warn)">⚑ 미분류 브래킷 ${unclassified.length}건 — 검토 필요(자동 추가 안 함): ${unclassified.slice(0,10).map(i=>escapeHtml(i.cls.bracket||'')).join(', ')}${unclassified.length>10?' …':''}</div>`:'';
-  const cards=order.map(a=>`<div class="chart-card soft u-mb-8px"><div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-bottom:6px"><span>${escapeHtml(a)}</span><span class="u-muted">${byA[a].length}건</span></div>${byA[a].map(i=>`<div style="font-size:11.5px;padding:3px 0;border-bottom:1px solid var(--border)"><a href="https://escare-engr.atlassian.net/browse/${escapeAttr(i.key)}" target="_blank" rel="noopener" style="color:#60a5fa">${escapeHtml(i.key)}</a> <span class="u-muted">${escapeHtml(i.status||'')}</span> ${escapeHtml(i.summary||'')}${histClsBadge(i.cls)}</div>`).join('')}</div>`).join('');
+  const cards=order.map(a=>`<div class="chart-card soft u-mb-8px"><div style="display:flex;justify-content:space-between;font-weight:700;font-size:13px;margin-bottom:6px"><span>${escapeHtml(a)}</span><span class="u-muted">${byA[a].length}건</span></div>${byA[a].map(i=>`<div style="font-size:11.5px;padding:3px 0;border-bottom:1px solid var(--border)"><a href="https://escare-engr.atlassian.net/browse/${escapeAttr(i.key)}" target="_blank" rel="noopener" style="color:#3F8FC4">${escapeHtml(i.key)}</a> <span class="u-muted">${escapeHtml(i.status||'')}</span> ${escapeHtml(i.summary||'')}${histClsBadge(i.cls)}</div>`).join('')}</div>`).join('');
   body.innerHTML=`<div class="muted u-fs115px-mb8px">${escapeHtml(caption)} · 담당 ${order.length}명</div>${flag}${cards||'<div class="muted">결과 없음</div>'}`;
 }
 /* ── §4 NSIS 설치 스크립트 분석기 ───────────────────── */
@@ -134,7 +134,7 @@ function renderMonitor(items, caption){
 /* ── §H 감사로그 마이그레이션 (슈퍼) ─────────────── */
 async function loadAuditMigStatus(){
   const el=document.getElementById('audit-mig-status'); if(!el)return;
-  try{ const d=await hubApi('/admin/migrate/audit-status'); el.innerHTML=`D1 적재 <b>${d.d1Count}</b>건 · 읽기 소스 <b style="color:${d.readD1?'#34d399':'#fbbf24'}">${d.readD1?'D1':'KV(기존)'}</b>`; }
+  try{ const d=await hubApi('/admin/migrate/audit-status'); el.innerHTML=`D1 적재 <b>${d.d1Count}</b>건 · 읽기 소스 <b style="color:${d.readD1?'#3FBE92':'#E0A32E'}">${d.readD1?'D1':'KV(기존)'}</b>`; }
   catch(e){ el.textContent='상태 조회 실패: '+e.message; }
 }
 async function auditMigBackfill(){

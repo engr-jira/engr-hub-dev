@@ -19,11 +19,11 @@ function renderEosList(){
     if(hasEnd){
       const wd=(typeof EOS_WARN_DAYS!=='undefined'&&EOS_WARN_DAYS.length?[...EOS_WARN_DAYS].map(Number).filter(n=>n>0).sort((a,b)=>a-b):[7,30,60]);
       const w0=wd[0]||7, w1=wd[1]||w0, w2=wd[2]||w1;
-      if(days<0){rowClass='eos-warn';badgeBg='rgba(248,113,113,.2)';badgeColor='#f87171';badgeText='만료';}
-      else if(days<=w0){rowClass='eos-warn';badgeBg='rgba(248,113,113,.2)';badgeColor='#f87171';badgeText='D-'+days;}
-      else if(days<=w1){rowClass='eos-warn-near';badgeBg='rgba(251,191,36,.2)';badgeColor='#fbbf24';badgeText='D-'+days;}
-      else if(days<=w2){badgeBg='rgba(251,191,36,.12)';badgeColor='#fbbf24';badgeText='D-'+days;}
-      else {badgeBg='rgba(34,211,165,.15)';badgeColor='#22d3a5';badgeText='D-'+days;}
+      if(days<0){rowClass='eos-warn';badgeBg='rgba(248,113,113,.2)';badgeColor='#E06A63';badgeText='만료';}
+      else if(days<=w0){rowClass='eos-warn';badgeBg='rgba(248,113,113,.2)';badgeColor='#E06A63';badgeText='D-'+days;}
+      else if(days<=w1){rowClass='eos-warn-near';badgeBg='rgba(251,191,36,.2)';badgeColor='#E0A32E';badgeText='D-'+days;}
+      else if(days<=w2){badgeBg='rgba(251,191,36,.12)';badgeColor='#E0A32E';badgeText='D-'+days;}
+      else {badgeBg='rgba(34,211,165,.15)';badgeColor='#2FB085';badgeText='D-'+days;}
     }
     const pd=it.productDesc||it.product||'-';
     const period=[it.startDate,it.expireDate].filter(Boolean).join(' ~ ')||'-';
@@ -49,7 +49,7 @@ function openEosDetailModal(id){
   if(!it){toast('항목을 찾을 수 없습니다',true);return;}
   const hasEnd=!!it.expireDate;
   const d=hasEnd?daysUntil(it.expireDate):null;
-  const color=!hasEnd?'var(--text3)':d<0?'#f87171':d<=30?'#fbbf24':'#22d3a5';
+  const color=!hasEnd?'var(--text3)':d<0?'#E06A63':d<=30?'#E0A32E':'#2FB085';
   const pd=it.productDesc||it.product||'-';
   openGenModal('라이선스 상세',`
   <div class="rp-meta">
@@ -226,7 +226,7 @@ function renderLinks(){
     const url=escapeHtml(l.url||'');
     const meta=`by ${escapeHtml(l.createdBy||'-')}${l.createdAt?' · '+fd(l.createdAt):''}`;
     const canEdit=(l.createdBy===CURRENT_USER||IS_ADMIN||IS_SUPER);
-    return `<div class="link-card" style="position:relative" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')">${canEdit?`<input type="checkbox" class="lnk-pick" data-id="${escapeAttr(l.id)}" onclick="event.stopPropagation()" style="position:absolute;top:7px;left:7px;z-index:3;width:15px;height:15px;cursor:pointer">`:''}<span class="link-cat">${cat}</span>${l.aiSuggested?'<span class="link-cat" style="background:rgba(34,211,238,.14);color:#22d3ee">🤖 AI 추천</span>':''}<div class="link-info"><div class="link-title">${title}</div><div class="link-meta">${meta}</div></div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${url}</div><div class="link-actions" style="flex-shrink:0;display:flex;gap:4px;opacity:0;transition:opacity .15s"><button class="u-bgcard2-bor1pxsol-br6px-ctext3-curpointe" onclick="event.stopPropagation();openLinkDetail('${escapeAttr(l.id)}')">댓글 ${commentCount}</button>${canEdit?`<button class="u-bgcard2-bor1pxsol-br6px-ctext3-curpointe" onclick="event.stopPropagation();openLinkEditModal('${escapeAttr(l.id)}')">✎</button><button onclick="event.stopPropagation();deleteLink('${escapeAttr(l.id)}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button>`:''}</div></div>`;
+    return `<div class="link-card" style="position:relative" onclick="window.open('${escapeHtml(normalizeExternalUrl(l.url))}','_blank')">${canEdit?`<input type="checkbox" class="lnk-pick" data-id="${escapeAttr(l.id)}" onclick="event.stopPropagation()" style="position:absolute;top:7px;left:7px;z-index:3;width:15px;height:15px;cursor:pointer">`:''}<span class="link-cat">${cat}</span>${l.aiSuggested?'<span class="link-cat" style="background:rgba(63,163,196,.14);color:#3FA3C4">🤖 AI 추천</span>':''}<div class="link-info"><div class="link-title">${title}</div><div class="link-meta">${meta}</div></div>${l.desc?`<div class="link-desc">${escapeHtml(l.desc)}</div>`:''}<div class="link-url">${url}</div><div class="link-actions" style="flex-shrink:0;display:flex;gap:4px;opacity:0;transition:opacity .15s"><button class="u-bgcard2-bor1pxsol-br6px-ctext3-curpointe" onclick="event.stopPropagation();openLinkDetail('${escapeAttr(l.id)}')">댓글 ${commentCount}</button>${canEdit?`<button class="u-bgcard2-bor1pxsol-br6px-ctext3-curpointe" onclick="event.stopPropagation();openLinkEditModal('${escapeAttr(l.id)}')">✎</button><button onclick="event.stopPropagation();deleteLink('${escapeAttr(l.id)}')" style="background:var(--card2);border:1px solid var(--border2);border-radius:6px;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 7px;font-family:inherit">×</button>`:''}</div></div>`;
   }).join('');
   renderPager('links-pager','links',list.length,'renderLinks');
 }
