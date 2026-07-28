@@ -365,31 +365,67 @@ function updateNavGroups(){
 }
 
 /* ── A안: 팀 다이제스트 (조회+미리보기+복사만 — 외부 발송 코드 없음) ── */
+// 플레인 텍스트 → Teams용 서식 HTML(인라인 스타일만, emoji·bold·색·CTA 링크)
+function digestToHtml(text){
+  const esc=s=>escapeHtml(String(s||''));
+  const A='#D9603B';
+  const rows=[];
+  String(text||'').split('\n').forEach(raw=>{
+    const line=raw.replace(/\s+$/,'');
+    if(!line.trim())return;
+    if(/^📋/.test(line)){ rows.push(`<div style="font-size:18px;font-weight:800;color:${A};letter-spacing:-.2px">${esc(line)}</div>`); return; }
+    if(/^⚡/.test(line)){ rows.push(`<div style="display:inline-block;background:#FBEFE6;color:#8A3417;font-weight:700;font-size:12.5px;padding:5px 12px;border-radius:20px;margin:7px 0 3px">${esc(line)}</div>`); return; }
+    if(/^🎉/.test(line)){ rows.push(`<div style="font-size:14px;color:#1E9E6A;font-weight:700;margin:8px 0">${esc(line)}</div>`); return; }
+    if(/^🔗/.test(line)){
+      const m=line.match(/(https?:\/\/[^\s]+)/); const url=m?m[1]:'#';
+      rows.push(`<div style="margin:15px 0 2px"><a href="${esc(url)}" style="display:inline-block;background:${A};color:#ffffff;font-weight:800;font-size:13px;text-decoration:none;padding:10px 20px;border-radius:8px">👉 HUB에서 전체 보기</a></div>`);
+      return;
+    }
+    if(/^(⏰|🔴|📄)/.test(line)){
+      const col=/^🔴/.test(line)?'#C94540':(/^📄/.test(line)?'#B27E00':'#1E9E6A');
+      rows.push(`<div style="font-size:13.5px;font-weight:800;color:${col};margin:13px 0 5px;border-bottom:1px solid #EEE4D5;padding-bottom:3px">${esc(line)}</div>`);
+      return;
+    }
+    if(/^·/.test(line)){
+      let b=esc(line.replace(/^·\s*/,''));
+      b=b.replace(/(\[[^\]]+\])/,'<b style="color:#5C4E3A">$1</b>');
+      b=b.replace(/(\((?:D\+\d+,\s*)?ENGR-\d+\))/g,'<span style="color:#9A8C79;font-size:12px">$1</span>');
+      rows.push(`<div style="font-size:13px;line-height:1.55;margin:3px 0 3px 2px;color:#2A2420">• ${b}</div>`);
+      return;
+    }
+    rows.push(`<div style="font-size:13px;color:#2A2420;margin:2px 0">${esc(line)}</div>`);
+  });
+  return `<div style="font-family:'Segoe UI',Roboto,system-ui,sans-serif;max-width:580px;border:1px solid #E7DFD2;border-left:4px solid ${A};border-radius:12px;padding:16px 20px;background:#FFFFFF;color:#2A2420">${rows.join('')}</div>`;
+}
+function renderDigestPreview(){
+  const ta=document.getElementById('digest-text'), pv=document.getElementById('digest-preview');
+  if(pv&&ta)pv.innerHTML=digestToHtml(ta.value);
+}
 async function openDigest(){
   const modal=document.getElementById('digest-modal'); if(!modal)return;
   const ta=document.getElementById('digest-text'), st=document.getElementById('digest-status');
-  modal.style.display='flex'; if(st){st.textContent='';st.style.color='';} if(ta)ta.value='생성 중...';
+  modal.style.display='flex'; if(st){st.textContent='';st.style.color='';} if(ta)ta.value='생성 중...'; renderDigestPreview();
   try{
     const d=await hubApi('/team/digest');
     const text=String(d.text||'').replace('{HUB_URL}', location.origin+location.pathname);
-    if(ta)ta.value=text;
+    if(ta)ta.value=text; renderDigestPreview();
     if(st)st.textContent=`오늘 마감 ${d.sections?.dueToday?.length||0} · 지연 ${d.sections?.overdue?.length||0} · 라이선스 ${d.sections?.licenseSoon?.length||0}`;
-  }catch(e){ if(ta)ta.value=''; if(st){st.textContent='생성 실패: '+e.message;st.style.color='var(--danger)';} }
+  }catch(e){ if(ta)ta.value=''; renderDigestPreview(); if(st){st.textContent='생성 실패: '+e.message;st.style.color='var(--danger)';} }
 }
 async function copyDigest(){
   const ta=document.getElementById('digest-text'), st=document.getElementById('digest-status');
   const text=((ta&&ta.value)||'').trim();
   if(!text){ if(st){st.textContent='내용이 없습니다';st.style.color='var(--danger)';} return; }
-  const html=escapeHtml(text).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1">$1</a>').replace(/\n/g,'<br>');
+  const html=digestToHtml(text);
   try{
     if(navigator.clipboard&&window.ClipboardItem){
       await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([text],{type:'text/plain'})})]);
     }else{ await navigator.clipboard.writeText(text); }
-    if(st){st.textContent='✓ 복사됨 — Teams에 붙여넣기';st.style.color='var(--success)';}
-    if(typeof toast==='function')toast('다이제스트 복사됨');
+    if(st){st.textContent='✓ 서식 복사됨 — Teams에 붙여넣기';st.style.color='var(--success)';}
+    if(typeof toast==='function')toast('다이제스트 복사됨 — Teams에 붙여넣기');
   }catch(e){
     try{ await navigator.clipboard.writeText(text); if(st){st.textContent='✓ 복사됨(텍스트)';st.style.color='var(--success)';} }
     catch(_){ if(st){st.textContent='복사 실패 — 직접 선택해 복사하세요';st.style.color='var(--danger)';} }
   }
 }
-window.openDigest=openDigest; window.copyDigest=copyDigest;
+window.openDigest=openDigest; window.copyDigest=copyDigest; window.renderDigestPreview=renderDigestPreview;

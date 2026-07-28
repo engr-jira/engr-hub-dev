@@ -1144,12 +1144,18 @@ export default {
         const dateLabel = `${dObj.getUTCMonth() + 1}/${dObj.getUTCDate()}(${WD[dObj.getUTCDay()]})`;
         const esc = s => String(s || '').replace(/\s+/g, ' ').trim();
         const head = `📋 보안기술팀 데일리 브리핑 — ${dateLabel}`;
-        const lines = [head];
-        if (dueToday.length) { lines.push('', `⏰ 오늘 마감 (${dueToday.length}건)`); dueToday.forEach(r => lines.push(`· ${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (${r.key})`)); }
-        if (overdue.length) { lines.push('', `🔴 지연 중 (${overdue.length}건)`); overdue.forEach(r => lines.push(`· ${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (D+${r.overdueDays}, ${r.key})`)); }
-        if (licenseSoon.length) { lines.push('', '📄 라이선스 만료 임박'); licenseSoon.forEach(r => lines.push(`· ${r.customer} ${esc(r.product)} — D-${r.dday} (${r.expireDate})`)); }
         const empty = !dueToday.length && !overdue.length && !licenseSoon.length;
-        const text = empty ? `${head}\n\n오늘은 마감/지연/만료 임박 항목이 없습니다 ✅` : lines.join('\n') + `\n\n🔗 자세히: {HUB_URL}`;
+        const lines = [head];
+        if (empty) {
+          lines.push('', '🎉 오늘은 마감·지연·만료 임박 항목이 없습니다 — 깔끔한 하루 되세요!');
+        } else {
+          lines.push(`⚡ 오늘 챙길 것 — 마감 ${dueToday.length} · 지연 ${overdue.length} · 만료임박 ${licenseSoon.length}`);
+          if (dueToday.length) { lines.push('', `⏰ 오늘 마감 (${dueToday.length}건)`); dueToday.forEach(r => lines.push(`· ${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (${r.key})`)); }
+          if (overdue.length) { lines.push('', `🔴 지연 중 (${overdue.length}건)`); overdue.forEach(r => lines.push(`· ${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (D+${r.overdueDays}, ${r.key})`)); }
+          if (licenseSoon.length) { lines.push('', '📄 라이선스 만료 임박'); licenseSoon.forEach(r => lines.push(`· ${r.customer} ${esc(r.product)} — D-${r.dday} (${r.expireDate})`)); }
+        }
+        lines.push('', '🔗 HUB에서 전체 보기 → {HUB_URL}');
+        const text = lines.join('\n');
         await auditLog(env, user, 'DIGEST_GEN', { digDate: day, digCounts: { due: dueToday.length, overdue: overdue.length, lic: licenseSoon.length } });
         return corsResponse({ ok: true, date: day, sections: { dueToday, overdue, licenseSoon }, text });
       }
