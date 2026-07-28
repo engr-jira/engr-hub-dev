@@ -365,7 +365,7 @@ async function initPushOnLogin(){
   if(!pushSupported())return;
   await registerPushSW();
   try{ navigator.serviceWorker.addEventListener('message',ev=>{ if(ev.data&&ev.data.type==='navigate'&&ev.data.page){ try{ showPage(ev.data.page); }catch(_){} } }); }catch(_){}
-  try{ const go=new URLSearchParams(location.search).get('go'); if(go){ try{ showPage(go); }catch(_){} } }catch(_){}
+  try{ const go=new URLSearchParams(location.search).get('go'); if(go){ if(/^[A-Z][A-Z0-9]*-\d+$/.test(go)){ try{ if(typeof hubJumpKey==='function')hubJumpKey(go); else showPage('issues'); }catch(_){ try{ showPage('issues'); }catch(__){} } } else { try{ showPage(go); }catch(_){} } } }catch(_){}
   await refreshPushState();
   // 권한이 이미 허용 + 사용자가 끄지 않았으면 조용히 구독 갱신(자동 권한요청은 하지 않음)
   if(Notification.permission==='granted' && __pushState.enabled){

@@ -50,6 +50,104 @@ async function buildArchiveUpdates(env, days = 7) {
   return { days, counts, items: out.slice(0, 8) };
 }
 
+// ── 다이제스트 데이터 집계 (텍스트/카드 공용) — 주 쿼리 실패 시 throw ──
+async function buildDigestData(env) {
+  const day = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);  // KST 오늘
+  const dayMs = new Date(day + 'T00:00:00Z').getTime();
+  const issues = await jiraSearchJql(env, `project = ENGR AND statusCategory != Done AND duedate <= "${day}" ORDER BY duedate ASC`, TEAM_FIELDS, 5);
+  const custList = await getCustomersD1(env);
+  const mapped = issues.map(it => mapJiraIssue(it, custList)).filter(i => !/hands[\s-]?on/i.test(i.summary || ''));
+  const dueToday = [], overdue = [];
+  for (const i of mapped) {
+    const dd = (i.duedate || '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dd)) continue;
+    const cust = (i.cls && (i.cls.customer || i.cls.bracket)) || '';
+    const row = { key: i.key, assignee: i.assignee || '-', customer: cust, summary: (i.summary || '').replace(/^\s*\[[^\]]*\]\s*/, ''), duedate: dd };
+    if (dd === day) dueToday.push(row);
+    else if (dd < day) { row.overdueDays = Math.round((dayMs - new Date(dd + 'T00:00:00Z').getTime()) / 86400000); overdue.push(row); }
+  }
+  let eosItems = [];
+  try { const raw = await env.ENGR_KV.get('config:eos'); if (raw) eosItems = JSON.parse(raw); } catch (_) {}
+  const licenseSoon = [];
+  for (const e of (Array.isArray(eosItems) ? eosItems : [])) {
+    const exp = (e.expireDate || '').slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(exp)) continue;
+    const dday = Math.ceil((new Date(exp + 'T00:00:00Z').getTime() - dayMs) / 86400000);
+    if (dday >= 0 && dday <= 30) licenseSoon.push({ customer: e.customer || '', product: e.productDesc || e.product || '', dday, expireDate: exp });
+  }
+  licenseSoon.sort((a, b) => a.dday - b.dday);
+  let metaIssues = [];
+  try { metaIssues = await jiraSearchJql(env, `project = ENGR AND statusCategory != Done ORDER BY updated DESC`, [...TEAM_FIELDS, 'customfield_10036'], 5); } catch (_) {}
+  const metaByA = {};
+  for (const it of metaIssues) {
+    const f = it.fields || {};
+    if (/hands[\s-]?on/i.test(f.summary || '')) continue;
+    const miss = [];
+    if (!(Array.isArray(f.customfield_10134) && f.customfield_10134.length)) miss.push('고객사');
+    if (!((f.labels || []).length)) miss.push('레이블');
+    const cat = f.customfield_10036 && f.customfield_10036.value;
+    if (!cat || cat === 'N/A') miss.push('범주');
+    if (!f.duedate) miss.push('기한');
+    if (!miss.length) continue;
+    const a = (f.assignee && f.assignee.displayName) || '(미지정)';
+    const g = metaByA[a] || (metaByA[a] = { count: 0, fields: {} });
+    g.count++; miss.forEach(m => g.fields[m] = (g.fields[m] || 0) + 1);
+  }
+  const metaRows = Object.entries(metaByA).sort((a, b) => b[1].count - a[1].count).map(([assignee, v]) => ({ assignee, count: v.count, fields: v.fields }));
+  const metaTotal = metaRows.reduce((s, r) => s + r.count, 0);
+  let team = null;
+  try { const ts = await env.DB.prepare("SELECT payload_json FROM analysis_snapshot WHERE kind='team' ORDER BY built_at DESC LIMIT 1").first(); if (ts) team = JSON.parse(ts.payload_json); } catch (_) {}
+  let archive = null;
+  try { archive = await buildArchiveUpdates(env, 7); } catch (_) {}
+  const ydayMs = dayMs - 86400000;
+  const yday = new Date(ydayMs).toISOString().slice(0, 10);
+  let doneY = [];
+  try {
+    const di = await jiraSearchJql(env, `project = ENGR AND resolved >= "${yday}" AND resolved < "${day}" ORDER BY resolved DESC`, TEAM_FIELDS, 3);
+    doneY = di.map(it => mapJiraIssue(it, custList)).filter(i => !/hands[\s-]?on/i.test(i.summary || '')).map(i => ({ key: i.key, assignee: i.assignee || '-', customer: (i.cls && (i.cls.customer || i.cls.bracket)) || '', summary: (i.summary || '').replace(/^\s*\[[^\]]*\]\s*/, '') }));
+  } catch (_) {}
+  const WD = ['일', '월', '화', '수', '목', '금', '토'];
+  const dObj = new Date(day + 'T00:00:00Z');
+  const dateLabel = `${dObj.getUTCMonth() + 1}/${dObj.getUTCDate()}(${WD[dObj.getUTCDay()]})`;
+  const sents = (txt, n) => String(txt || '').split(/(?<=다\.)\s+/).map(s => s.trim()).filter(Boolean).slice(0, n);
+  const mgmtTotal = dueToday.length + overdue.length + metaTotal + licenseSoon.length;
+  const headline = team ? [...sents(team.monthly, 2), ...sents(team.patterns, 1)].filter(Boolean).slice(0, 3) : [];
+  const patternLines = team ? sents(team.patterns, 3) : [];
+  const archItems = (archive && archive.items) || [];
+  return { day, dateLabel, dueToday, overdue, metaRows, metaTotal, licenseSoon, doneY, archItems, archiveDays: (archive && archive.days) || 7, headline, patternLines, mgmtTotal };
+}
+
+// ── 다이제스트 → Teams Adaptive Card (Power Automate flow가 GET해서 채널에 게시) ──
+function buildDigestCard(D, hubUrl) {
+  const esc = s => String(s || '').replace(/\s+/g, ' ').trim();
+  const body = [{ type: 'TextBlock', text: `📰 보안기술팀 브리핑 — ${D.dateLabel}`, weight: 'Bolder', size: 'Large', color: 'Accent', wrap: true }];
+  const empty = !D.mgmtTotal && !D.headline.length && !D.patternLines.length && !D.archItems.length && !D.doneY.length;
+  if (empty) {
+    body.push({ type: 'TextBlock', text: '🎉 오늘은 관리 필요·신규 소식이 없습니다 — 깔끔한 하루 되세요!', color: 'Good', wrap: true });
+  } else {
+    body.push({ type: 'TextBlock', text: `⚡ 관리 필요 ${D.mgmtTotal} — 마감 ${D.dueToday.length} · 지연 ${D.overdue.length} · 미기입 ${D.metaTotal} · 만료임박 ${D.licenseSoon.length}`, wrap: true, spacing: 'Small', isSubtle: true });
+    const sec = (title, color) => body.push({ type: 'TextBlock', text: title, weight: 'Bolder', color: color || 'Accent', size: 'Medium', separator: true, spacing: 'Medium', wrap: true });
+    const bullet = t => body.push({ type: 'TextBlock', text: '• ' + t, wrap: true, spacing: 'None' });
+    if (D.headline.length) { sec('🗞 헤드라인'); D.headline.forEach(s => bullet(esc(s))); }
+    if (D.doneY.length) { sec(`📌 어제의 성과 (완료 ${D.doneY.length}건)`, 'Good'); D.doneY.slice(0, 6).forEach(r => bullet(`**${r.assignee}**: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)}`)); if (D.doneY.length > 6) bullet(`…외 ${D.doneY.length - 6}건`); }
+    if (D.mgmtTotal) {
+      sec('🚨 지금 관리 필요', 'Warning');
+      if (D.dueToday.length) { bullet(`**⏰ 오늘 마감 ${D.dueToday.length}**`); D.dueToday.forEach(r => bullet(`${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (${r.key})`)); }
+      if (D.overdue.length) { bullet(`**🔴 지연 ${D.overdue.length}**`); D.overdue.forEach(r => bullet(`${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (D+${r.overdueDays}, ${r.key})`)); }
+      if (D.metaTotal) { bullet(`**📝 메타 미기입 ${D.metaTotal}**`); D.metaRows.forEach(r => { const fs = Object.entries(r.fields).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(' · '); bullet(`${r.assignee}: ${r.count}건 (${fs})`); }); }
+      if (D.licenseSoon.length) { bullet(`**📄 라이선스 만료 임박 ${D.licenseSoon.length}**`); D.licenseSoon.forEach(r => bullet(`${r.customer} ${esc(r.product)} — D-${r.dday} (${r.expireDate})`)); }
+    }
+    if (D.patternLines.length) { sec('🏢 고객사 패턴'); D.patternLines.forEach(s => bullet(esc(s))); }
+    if (D.archItems.length) { sec('📚 자료실 업데이트'); D.archItems.forEach(a => bullet(`${a.icon} **${a.label}** · ${esc(a.title)}${a.ai ? ' (AI추천)' : ''}`)); }
+  }
+  const base = String(hubUrl || 'https://engr-jira.github.io/engr-hub-dev/').replace(/\/+$/, '');
+  const actions = [{ type: 'Action.OpenUrl', title: '🔗 HUB 열기', url: base + '/' }];
+  if (D.mgmtTotal) actions.push({ type: 'Action.OpenUrl', title: '🚨 이슈 관리', url: base + '/?go=issues' });
+  if (D.licenseSoon.length) actions.push({ type: 'Action.OpenUrl', title: '📄 라이선스', url: base + '/?go=eos' });
+  actions.push({ type: 'Action.OpenUrl', title: '📚 자료실', url: base + '/?go=links' });
+  return { type: 'AdaptiveCard', $schema: 'http://adaptivecards.io/schemas/adaptive-card.json', version: '1.4', body, actions };
+}
+
 export default {
   async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') return new Response(null, { headers: getCorsHeaders(request) });
@@ -1145,77 +1243,9 @@ export default {
         if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
         if (!(await getFeatureFlags(env)).digest) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);
         if (!await isMonitorAllowed(env, user)) { await auditLog(env, user, 'DIGEST_GEN', { digDate: '', denied: true }); return corsResponse({ ok: false, message: '접근 권한이 없습니다(팀 모니터 허용목록).' }, 403); }
-        const day = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);  // KST 오늘
-        const dayMs = new Date(day + 'T00:00:00Z').getTime();
-        // 오늘 마감 + 지연(미완료, 기한 오늘 이하)
-        let issues = [];
-        try { issues = await jiraSearchJql(env, `project = ENGR AND statusCategory != Done AND duedate <= "${day}" ORDER BY duedate ASC`, TEAM_FIELDS, 5); }
-        catch (e) { return corsResponse({ ok: false, message: 'Jira 조회 실패: ' + e.message }, 502); }
-        const custList = await getCustomersD1(env);
-        const mapped = issues.map(it => mapJiraIssue(it, custList)).filter(i => !/hands[\s-]?on/i.test(i.summary || ''));
-        const dueToday = [], overdue = [];
-        for (const i of mapped) {
-          const dd = (i.duedate || '').slice(0, 10);
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(dd)) continue;
-          const cust = (i.cls && (i.cls.customer || i.cls.bracket)) || '';
-          const row = { key: i.key, assignee: i.assignee || '-', customer: cust, summary: (i.summary || '').replace(/^\s*\[[^\]]*\]\s*/, ''), duedate: dd };
-          if (dd === day) dueToday.push(row);
-          else if (dd < day) { row.overdueDays = Math.round((dayMs - new Date(dd + 'T00:00:00Z').getTime()) / 86400000); overdue.push(row); }
-        }
-        // 라이선스 D-30 이내
-        let eosItems = [];
-        try { const raw = await env.ENGR_KV.get('config:eos'); if (raw) eosItems = JSON.parse(raw); } catch (_) {}
-        const licenseSoon = [];
-        for (const e of (Array.isArray(eosItems) ? eosItems : [])) {
-          const exp = (e.expireDate || '').slice(0, 10);
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(exp)) continue;
-          const dday = Math.ceil((new Date(exp + 'T00:00:00Z').getTime() - dayMs) / 86400000);
-          if (dday >= 0 && dday <= 30) licenseSoon.push({ customer: e.customer || '', product: e.productDesc || e.product || '', dday, expireDate: exp });
-        }
-        licenseSoon.sort((a, b) => a.dday - b.dday);
-        // 메타 미기입 (미완료·Hands-on 제외 · 고객사/레이블/범주/기한 누락) — 관리 필요, 최근 업데이트순
-        let metaIssues = [];
-        try { metaIssues = await jiraSearchJql(env, `project = ENGR AND statusCategory != Done ORDER BY updated DESC`, [...TEAM_FIELDS, 'customfield_10036'], 5); } catch (_) {}
-        const metaByA = {};
-        for (const it of metaIssues) {
-          const f = it.fields || {};
-          if (/hands[\s-]?on/i.test(f.summary || '')) continue;
-          const miss = [];
-          if (!(Array.isArray(f.customfield_10134) && f.customfield_10134.length)) miss.push('고객사');
-          if (!((f.labels || []).length)) miss.push('레이블');
-          const cat = f.customfield_10036 && f.customfield_10036.value;
-          if (!cat || cat === 'N/A') miss.push('범주');
-          if (!f.duedate) miss.push('기한');
-          if (!miss.length) continue;
-          const a = (f.assignee && f.assignee.displayName) || '(미지정)';
-          const g = metaByA[a] || (metaByA[a] = { count: 0, fields: {} });
-          g.count++; miss.forEach(m => g.fields[m] = (g.fields[m] || 0) + 1);
-        }
-        const metaRows = Object.entries(metaByA).sort((a, b) => b[1].count - a[1].count).map(([assignee, v]) => ({ assignee, count: v.count, fields: v.fields }));
-        const metaTotal = metaRows.reduce((s, r) => s + r.count, 0);
-        // 최신 AI 팀 리포트(뉴스룸) + 자료실 업데이트 — 풀 뉴스레터 소스
-        let team = null;
-        try { const ts = await env.DB.prepare("SELECT payload_json FROM analysis_snapshot WHERE kind='team' ORDER BY built_at DESC LIMIT 1").first(); if (ts) team = JSON.parse(ts.payload_json); } catch (_) {}
-        let archive = null;
-        try { archive = await buildArchiveUpdates(env, 7); } catch (_) {}
-        // 전일 recap — 어제(KST) 완료된 건 (성과)
-        const ydayMs = dayMs - 86400000;
-        const yday = new Date(ydayMs).toISOString().slice(0, 10);
-        let doneY = [];
-        try {
-          const di = await jiraSearchJql(env, `project = ENGR AND resolved >= "${yday}" AND resolved < "${day}" ORDER BY resolved DESC`, TEAM_FIELDS, 3);
-          doneY = di.map(it => mapJiraIssue(it, custList)).filter(i => !/hands[\s-]?on/i.test(i.summary || '')).map(i => ({ key: i.key, assignee: i.assignee || '-', customer: (i.cls && (i.cls.customer || i.cls.bracket)) || '', summary: (i.summary || '').replace(/^\s*\[[^\]]*\]\s*/, '') }));
-        } catch (_) {}
-        // 텍스트 조립 (결정적·비용0) — 사내 보안뉴스레터
-        const WD = ['일', '월', '화', '수', '목', '금', '토'];
-        const dObj = new Date(day + 'T00:00:00Z');
-        const dateLabel = `${dObj.getUTCMonth() + 1}/${dObj.getUTCDate()}(${WD[dObj.getUTCDay()]})`;
+        let D; try { D = await buildDigestData(env); } catch (e) { return corsResponse({ ok: false, message: 'Jira 조회 실패: ' + e.message }, 502); }
+        const { day, dateLabel, dueToday, overdue, metaRows, metaTotal, licenseSoon, doneY, archItems, archiveDays, headline, patternLines, mgmtTotal } = D;
         const esc = s => String(s || '').replace(/\s+/g, ' ').trim();
-        const sents = (txt, n) => String(txt || '').split(/(?<=다\.)\s+/).map(s => s.trim()).filter(Boolean).slice(0, n);
-        const mgmtTotal = dueToday.length + overdue.length + metaTotal + licenseSoon.length;
-        const headline = team ? [...sents(team.monthly, 2), ...sents(team.patterns, 1)].filter(Boolean).slice(0, 3) : [];
-        const patternLines = team ? sents(team.patterns, 3) : [];
-        const archItems = (archive && archive.items) || [];
         const empty = !mgmtTotal && !headline.length && !patternLines.length && !archItems.length && !doneY.length;
         const lines = [`📰 보안기술팀 브리핑 — ${dateLabel}`];
         if (empty) {
@@ -1232,12 +1262,24 @@ export default {
             if (licenseSoon.length) { lines.push(`📄 라이선스 만료 임박 (${licenseSoon.length}건)`); licenseSoon.forEach(r => lines.push(`· ${r.customer} ${esc(r.product)} — D-${r.dday} (${r.expireDate})`)); }
           }
           if (patternLines.length) { lines.push('', '🏢 고객사 패턴'); patternLines.forEach(s => lines.push(`· ${esc(s)}`)); }
-          if (archItems.length) { lines.push('', `📚 자료실 업데이트 (최근 ${archive.days}일)`); archItems.forEach(a => lines.push(`· ${a.icon} ${a.label}: ${esc(a.title)}${a.ai ? ' (AI추천)' : ''}${a.by ? ' — ' + a.by : ''}`)); }
+          if (archItems.length) { lines.push('', `📚 자료실 업데이트 (최근 ${archiveDays}일)`); archItems.forEach(a => lines.push(`· ${a.icon} ${a.label}: ${esc(a.title)}${a.ai ? ' (AI추천)' : ''}${a.by ? ' — ' + a.by : ''}`)); }
         }
         lines.push('', '🔗 HUB에서 전체 보기 → {HUB_URL}');
         const text = lines.join('\n');
         await auditLog(env, user, 'DIGEST_GEN', { digDate: day, digCounts: { due: dueToday.length, overdue: overdue.length, meta: metaTotal, lic: licenseSoon.length, arch: archItems.length, hl: headline.length, rec: doneY.length } });
         return corsResponse({ ok: true, date: day, sections: { dueToday, overdue, metaIncomplete: metaRows, licenseSoon, archive: archItems, headline, patterns: patternLines, doneYesterday: doneY }, text });
+      }
+
+      // ── 다이제스트 Adaptive Card (x-analysis-token 게이트) — Power Automate flow가 GET해 채널에 게시. 워커는 외부 발송 없음, 카드 JSON만 서빙 ──
+      if (path === '/team/digest/card' && request.method === 'GET') {
+        const tok = request.headers.get('x-analysis-token') || '';
+        if (!env.ANALYSIS_WRITE_TOKEN || tok !== env.ANALYSIS_WRITE_TOKEN) return corsResponse({ ok: false, message: '인증 실패' }, 401);
+        if (!(await getFeatureFlags(env)).digest) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);
+        const hubUrl = url.searchParams.get('hub') || 'https://engr-jira.github.io/engr-hub-dev/';
+        let D; try { D = await buildDigestData(env); } catch (e) { return corsResponse({ ok: false, message: 'Jira 조회 실패: ' + e.message }, 502); }
+        const card = buildDigestCard(D, hubUrl);
+        await auditLog(env, 'teams-flow', 'DIGEST_GEN', { digDate: D.day, via: 'card', mgmt: D.mgmtTotal });
+        return corsResponse({ ok: true, card, attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: card }] });
       }
 
       // \u2500\u2500 \uC2A4\uCF00\uC904 \uBD84\uC11D \uC5D4\uC9C4(B\uC548) \uACB0\uACFC \uC800\uC7A5/\uC870\uD68C : Claude \uC5D0\uC774\uC804\uD2B8\uAC00 \uC4F0\uACE0 \uD300\uC6D0\uC740 \uBDF0\uB9CC \u2500\u2500
