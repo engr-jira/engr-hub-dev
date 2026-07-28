@@ -1138,26 +1138,47 @@ export default {
           if (dday >= 0 && dday <= 30) licenseSoon.push({ customer: e.customer || '', product: e.productDesc || e.product || '', dday, expireDate: exp });
         }
         licenseSoon.sort((a, b) => a.dday - b.dday);
-        // 텍스트 조립 (결정적·비용0)
+        // 메타 미기입 (미완료·Hands-on 제외 · 고객사/레이블/범주/기한 누락) — 관리 필요, 최근 업데이트순
+        let metaIssues = [];
+        try { metaIssues = await jiraSearchJql(env, `project = ENGR AND statusCategory != Done ORDER BY updated DESC`, [...TEAM_FIELDS, 'customfield_10036'], 5); } catch (_) {}
+        const metaByA = {};
+        for (const it of metaIssues) {
+          const f = it.fields || {};
+          if (/hands[\s-]?on/i.test(f.summary || '')) continue;
+          const miss = [];
+          if (!(Array.isArray(f.customfield_10134) && f.customfield_10134.length)) miss.push('고객사');
+          if (!((f.labels || []).length)) miss.push('레이블');
+          const cat = f.customfield_10036 && f.customfield_10036.value;
+          if (!cat || cat === 'N/A') miss.push('범주');
+          if (!f.duedate) miss.push('기한');
+          if (!miss.length) continue;
+          const a = (f.assignee && f.assignee.displayName) || '(미지정)';
+          const g = metaByA[a] || (metaByA[a] = { count: 0, fields: {} });
+          g.count++; miss.forEach(m => g.fields[m] = (g.fields[m] || 0) + 1);
+        }
+        const metaRows = Object.entries(metaByA).sort((a, b) => b[1].count - a[1].count).map(([assignee, v]) => ({ assignee, count: v.count, fields: v.fields }));
+        const metaTotal = metaRows.reduce((s, r) => s + r.count, 0);
+        // 텍스트 조립 (결정적·비용0) — 관리 필요 브리핑
         const WD = ['일', '월', '화', '수', '목', '금', '토'];
         const dObj = new Date(day + 'T00:00:00Z');
         const dateLabel = `${dObj.getUTCMonth() + 1}/${dObj.getUTCDate()}(${WD[dObj.getUTCDay()]})`;
         const esc = s => String(s || '').replace(/\s+/g, ' ').trim();
         const head = `📋 보안기술팀 데일리 브리핑 — ${dateLabel}`;
-        const empty = !dueToday.length && !overdue.length && !licenseSoon.length;
+        const empty = !dueToday.length && !overdue.length && !metaTotal && !licenseSoon.length;
         const lines = [head];
         if (empty) {
-          lines.push('', '🎉 오늘은 마감·지연·만료 임박 항목이 없습니다 — 깔끔한 하루 되세요!');
+          lines.push('', '🎉 오늘은 마감·지연·미기입·만료 임박 항목이 없습니다 — 깔끔한 하루 되세요!');
         } else {
-          lines.push(`⚡ 오늘 챙길 것 — 마감 ${dueToday.length} · 지연 ${overdue.length} · 만료임박 ${licenseSoon.length}`);
+          lines.push(`⚡ 관리 필요 — 마감 ${dueToday.length} · 지연 ${overdue.length} · 미기입 ${metaTotal} · 만료임박 ${licenseSoon.length}`);
           if (dueToday.length) { lines.push('', `⏰ 오늘 마감 (${dueToday.length}건)`); dueToday.forEach(r => lines.push(`· ${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (${r.key})`)); }
           if (overdue.length) { lines.push('', `🔴 지연 중 (${overdue.length}건)`); overdue.forEach(r => lines.push(`· ${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (D+${r.overdueDays}, ${r.key})`)); }
-          if (licenseSoon.length) { lines.push('', '📄 라이선스 만료 임박'); licenseSoon.forEach(r => lines.push(`· ${r.customer} ${esc(r.product)} — D-${r.dday} (${r.expireDate})`)); }
+          if (metaTotal) { lines.push('', `📝 메타 미기입 (${metaTotal}건) — 고객사·레이블·범주·기한 누락`); metaRows.forEach(r => { const fs = Object.entries(r.fields).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(' · '); lines.push(`· ${r.assignee}: ${r.count}건 (${fs})`); }); }
+          if (licenseSoon.length) { lines.push('', `📄 라이선스 만료 임박 (${licenseSoon.length}건)`); licenseSoon.forEach(r => lines.push(`· ${r.customer} ${esc(r.product)} — D-${r.dday} (${r.expireDate})`)); }
         }
         lines.push('', '🔗 HUB에서 전체 보기 → {HUB_URL}');
         const text = lines.join('\n');
-        await auditLog(env, user, 'DIGEST_GEN', { digDate: day, digCounts: { due: dueToday.length, overdue: overdue.length, lic: licenseSoon.length } });
-        return corsResponse({ ok: true, date: day, sections: { dueToday, overdue, licenseSoon }, text });
+        await auditLog(env, user, 'DIGEST_GEN', { digDate: day, digCounts: { due: dueToday.length, overdue: overdue.length, meta: metaTotal, lic: licenseSoon.length } });
+        return corsResponse({ ok: true, date: day, sections: { dueToday, overdue, metaIncomplete: metaRows, licenseSoon }, text });
       }
 
       // \u2500\u2500 \uC2A4\uCF00\uC904 \uBD84\uC11D \uC5D4\uC9C4(B\uC548) \uACB0\uACFC \uC800\uC7A5/\uC870\uD68C : Claude \uC5D0\uC774\uC804\uD2B8\uAC00 \uC4F0\uACE0 \uD300\uC6D0\uC740 \uBDF0\uB9CC \u2500\u2500

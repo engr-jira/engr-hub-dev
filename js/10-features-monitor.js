@@ -381,8 +381,8 @@ function digestToHtml(text){
       rows.push(`<div style="margin:15px 0 2px"><a href="${esc(url)}" style="display:inline-block;background:${A};color:#ffffff;font-weight:800;font-size:13px;text-decoration:none;padding:10px 20px;border-radius:8px">👉 HUB에서 전체 보기</a></div>`);
       return;
     }
-    if(/^(⏰|🔴|📄)/.test(line)){
-      const col=/^🔴/.test(line)?'#C94540':(/^📄/.test(line)?'#B27E00':'#1E9E6A');
+    if(/^(⏰|🔴|📄|📝)/.test(line)){
+      const col=/^🔴/.test(line)?'#C94540':(/^📄/.test(line)?'#B27E00':(/^📝/.test(line)?'#8A5CC4':'#1E9E6A'));
       rows.push(`<div style="font-size:13.5px;font-weight:800;color:${col};margin:13px 0 5px;border-bottom:1px solid #EEE4D5;padding-bottom:3px">${esc(line)}</div>`);
       return;
     }
@@ -390,6 +390,7 @@ function digestToHtml(text){
       let b=esc(line.replace(/^·\s*/,''));
       b=b.replace(/(\[[^\]]+\])/,'<b style="color:#5C4E3A">$1</b>');
       b=b.replace(/(\((?:D\+\d+,\s*)?ENGR-\d+\))/g,'<span style="color:#9A8C79;font-size:12px">$1</span>');
+      b=b.replace(/(\([^)]*(?:고객사|레이블|범주|기한)[^)]*\))/,'<span style="color:#9A8C79;font-size:12px">$1</span>');
       rows.push(`<div style="font-size:13px;line-height:1.55;margin:3px 0 3px 2px;color:#2A2420">• ${b}</div>`);
       return;
     }
@@ -409,7 +410,7 @@ async function openDigest(){
     const d=await hubApi('/team/digest');
     const text=String(d.text||'').replace('{HUB_URL}', location.origin+location.pathname);
     if(ta)ta.value=text; renderDigestPreview();
-    if(st)st.textContent=`오늘 마감 ${d.sections?.dueToday?.length||0} · 지연 ${d.sections?.overdue?.length||0} · 라이선스 ${d.sections?.licenseSoon?.length||0}`;
+    if(st){const mi=(d.sections?.metaIncomplete||[]).reduce((s,r)=>s+(r.count||0),0);st.textContent=`마감 ${d.sections?.dueToday?.length||0} · 지연 ${d.sections?.overdue?.length||0} · 미기입 ${mi} · 라이선스 ${d.sections?.licenseSoon?.length||0}`;}
   }catch(e){ if(ta)ta.value=''; renderDigestPreview(); if(st){st.textContent='생성 실패: '+e.message;st.style.color='var(--danger)';} }
 }
 async function copyDigest(){
