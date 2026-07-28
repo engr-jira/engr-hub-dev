@@ -132,7 +132,7 @@ function injectV155Style(){
     .top-pin{color:#BFE0EC;border-color:rgba(63,163,196,.28);background:rgba(63,163,196,.08)}
     .top-refresh{width:36px;padding:0}.top-refresh svg{width:15px;height:15px}.top-refresh:hover,.top-logout:hover,.top-pin:hover{background:rgba(239,131,84,.2);border-color:rgba(239,131,84,.42)}
     #page-nav,#case-pager{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:6px!important;background:transparent!important;border:0!important;padding:8px 0!important}
-    #page-nav button,#case-pager button{background:#332D34;border:1px solid rgba(239,131,84,.25);color:#F6D4C2;border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer}
+    #page-nav button,#case-pager button{background:var(--card);border:1px solid var(--border2);color:var(--text2);border-radius:8px;padding:6px 10px;font-size:11px;font-weight:800;font-family:inherit;cursor:pointer}
     #page-nav button.active,#case-pager button.active{background:#D9603B;border-color:#E88A5E;color:#FFFDF9}
     #page-nav button:disabled,#case-pager button:disabled{opacity:.38;cursor:not-allowed}
     .private-layout{display:grid;grid-template-columns:360px minmax(0,1fr);gap:16px}
