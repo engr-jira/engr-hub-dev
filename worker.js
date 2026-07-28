@@ -1105,6 +1105,55 @@ export default {
         return corsResponse({ ok: true, snapshot: snap });
       }
 
+      // ── A안: 팀 데일리 다이제스트 생성 (mj.park 전용, 조회 전용·외부발송 없음) ──
+      if (path === '/team/digest' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        if (!(await getFeatureFlags(env)).digest) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);
+        if (!await isMonitorAllowed(env, user)) { await auditLog(env, user, 'DIGEST_GEN', { digDate: '', denied: true }); return corsResponse({ ok: false, message: '접근 권한이 없습니다(팀 모니터 허용목록).' }, 403); }
+        const day = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);  // KST 오늘
+        const dayMs = new Date(day + 'T00:00:00Z').getTime();
+        // 오늘 마감 + 지연(미완료, 기한 오늘 이하)
+        let issues = [];
+        try { issues = await jiraSearchJql(env, `project = ENGR AND statusCategory != Done AND duedate <= "${day}" ORDER BY duedate ASC`, TEAM_FIELDS, 5); }
+        catch (e) { return corsResponse({ ok: false, message: 'Jira 조회 실패: ' + e.message }, 502); }
+        const custList = await getCustomersD1(env);
+        const mapped = issues.map(it => mapJiraIssue(it, custList)).filter(i => !/hands[\s-]?on/i.test(i.summary || ''));
+        const dueToday = [], overdue = [];
+        for (const i of mapped) {
+          const dd = (i.duedate || '').slice(0, 10);
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(dd)) continue;
+          const cust = (i.cls && (i.cls.customer || i.cls.bracket)) || '';
+          const row = { key: i.key, assignee: i.assignee || '-', customer: cust, summary: (i.summary || '').replace(/^\s*\[[^\]]*\]\s*/, ''), duedate: dd };
+          if (dd === day) dueToday.push(row);
+          else if (dd < day) { row.overdueDays = Math.round((dayMs - new Date(dd + 'T00:00:00Z').getTime()) / 86400000); overdue.push(row); }
+        }
+        // 라이선스 D-30 이내
+        let eosItems = [];
+        try { const raw = await env.ENGR_KV.get('config:eos'); if (raw) eosItems = JSON.parse(raw); } catch (_) {}
+        const licenseSoon = [];
+        for (const e of (Array.isArray(eosItems) ? eosItems : [])) {
+          const exp = (e.expireDate || '').slice(0, 10);
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(exp)) continue;
+          const dday = Math.ceil((new Date(exp + 'T00:00:00Z').getTime() - dayMs) / 86400000);
+          if (dday >= 0 && dday <= 30) licenseSoon.push({ customer: e.customer || '', product: e.productDesc || e.product || '', dday, expireDate: exp });
+        }
+        licenseSoon.sort((a, b) => a.dday - b.dday);
+        // 텍스트 조립 (결정적·비용0)
+        const WD = ['일', '월', '화', '수', '목', '금', '토'];
+        const dObj = new Date(day + 'T00:00:00Z');
+        const dateLabel = `${dObj.getUTCMonth() + 1}/${dObj.getUTCDate()}(${WD[dObj.getUTCDay()]})`;
+        const esc = s => String(s || '').replace(/\s+/g, ' ').trim();
+        const head = `📋 보안기술팀 데일리 브리핑 — ${dateLabel}`;
+        const lines = [head];
+        if (dueToday.length) { lines.push('', `⏰ 오늘 마감 (${dueToday.length}건)`); dueToday.forEach(r => lines.push(`· ${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (${r.key})`)); }
+        if (overdue.length) { lines.push('', `🔴 지연 중 (${overdue.length}건)`); overdue.forEach(r => lines.push(`· ${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (D+${r.overdueDays}, ${r.key})`)); }
+        if (licenseSoon.length) { lines.push('', '📄 라이선스 만료 임박'); licenseSoon.forEach(r => lines.push(`· ${r.customer} ${esc(r.product)} — D-${r.dday} (${r.expireDate})`)); }
+        const empty = !dueToday.length && !overdue.length && !licenseSoon.length;
+        const text = empty ? `${head}\n\n오늘은 마감/지연/만료 임박 항목이 없습니다 ✅` : lines.join('\n') + `\n\n🔗 자세히: {HUB_URL}`;
+        await auditLog(env, user, 'DIGEST_GEN', { digDate: day, digCounts: { due: dueToday.length, overdue: overdue.length, lic: licenseSoon.length } });
+        return corsResponse({ ok: true, date: day, sections: { dueToday, overdue, licenseSoon }, text });
+      }
+
       // \u2500\u2500 \uC2A4\uCF00\uC904 \uBD84\uC11D \uC5D4\uC9C4(B\uC548) \uACB0\uACFC \uC800\uC7A5/\uC870\uD68C : Claude \uC5D0\uC774\uC804\uD2B8\uAC00 \uC4F0\uACE0 \uD300\uC6D0\uC740 \uBDF0\uB9CC \u2500\u2500
       if (path === '/analysis' && request.method === 'PUT') {
         const tok = request.headers.get('x-analysis-token') || '';

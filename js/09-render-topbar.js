@@ -518,6 +518,6 @@ function copyCompatTable(){
 }
 /* ── §5 기능 토글 ───────────────────────────────────── */
 let FEATURE_FLAGS={compat:true,history:true,monitor:true};
-const FEATURE_SPECIAL=[['history','고객사 업무 이력']];
+const FEATURE_SPECIAL=[['history','고객사 업무 이력'],['digest','팀 다이제스트(대시보드 버튼)']];
 const FEATURE_PROTECTED={settings:1,dash:1};
 const FEATURE_WARN={audit:'끄면 감사 로그 메뉴가 숨겨집니다(역할 권한은 그대로).'};

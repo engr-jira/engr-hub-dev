@@ -1845,6 +1845,21 @@ body.is-sales #nav-sales{display:flex!important}
     <div id="ia-subtabs"></div>
 
     <div class="page active" id="page-dash">
+      <div id="digest-btn-row" style="display:none;justify-content:flex-end;margin-bottom:10px"><button class="btn btn-primary" style="width:auto;padding:8px 16px" onclick="openDigest()">📤 팀 다이제스트</button></div>
+      <div id="digest-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99999;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto">
+        <div style="background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:22px;width:min(680px,96vw)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h3 style="margin:0;font-size:16px">📤 팀 다이제스트 <span class="u-muted-11" style="font-weight:400">— 미리보기·수정 후 복사 → Teams 붙여넣기</span></h3>
+            <button class="btn btn-ghost u-btn-xs" onclick="document.getElementById('digest-modal').style.display='none'">닫기</button>
+          </div>
+          <textarea id="digest-text" spellcheck="false" style="width:100%;min-height:320px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:12px 14px;font-family:var(--mono,monospace);font-size:12.5px;line-height:1.6;box-sizing:border-box;resize:vertical" placeholder="생성 중..."></textarea>
+          <div style="display:flex;gap:8px;margin-top:12px;align-items:center;flex-wrap:wrap">
+            <button class="btn btn-primary u-btn-xs" onclick="copyDigest()">📋 복사</button>
+            <button class="btn btn-ghost u-btn-xs" onclick="openDigest()">🔄 다시 생성</button>
+            <span id="digest-status" class="u-muted-11" style="margin-left:auto"></span>
+          </div>
+        </div>
+      </div>
       <div id="overdue-banner-wrap"></div>
       <div id="eos-banner-wrap"></div>
       <div class="sec-title">현황 요약</div>

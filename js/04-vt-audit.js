@@ -240,6 +240,7 @@ async function loadAudit(){
       MATRIX_DELETE:{bg:'rgba(248,113,113,.12)',color:'#E06A63',label:'매트릭스-'},
       HIST_VIEW:{bg:'rgba(162,145,122,.12)',color:'#A2917A',label:'이력조회'},
       MON_VIEW:{bg:'rgba(162,145,122,.12)',color:'#A2917A',label:'팀모니터'},
+      DIGEST_GEN:{bg:'rgba(63,163,196,.12)',color:'#3F8FC4',label:'다이제스트'},
       FEATURE_TOGGLE:{bg:'rgba(217,96,59,.12)',color:'#E88A5E',label:'기능토글'},
       AUDIT_MIGRATE:{bg:'rgba(217,96,59,.12)',color:'#E88A5E',label:'감사이전'},
     };

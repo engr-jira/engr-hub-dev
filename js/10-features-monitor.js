@@ -35,7 +35,7 @@ function renderFeatureFlagsAdmin(){
 async function saveFeatureFlags(){
   const flags={}; document.querySelectorAll('#feature-flags-wrap input[data-ff]').forEach(c=>{flags[c.dataset.ff]=c.checked;});
   flags.settings=true;  // 락아웃 방지
-  try{ const d=await hubApi('/features',{method:'POST',body:JSON.stringify({flags})}); FEATURE_FLAGS={...FEATURE_FLAGS,...(d.flags||{})}; applyFeatureFlags(); renderFeatureFlagsAdmin(); toast('기능 토글을 저장했습니다'); }
+  try{ const d=await hubApi('/features',{method:'POST',body:JSON.stringify({flags})}); FEATURE_FLAGS={...FEATURE_FLAGS,...(d.flags||{})}; applyFeatureFlags(); renderFeatureFlagsAdmin(); if(typeof applyMonitorVisibility==='function')applyMonitorVisibility(); toast('기능 토글을 저장했습니다'); }
   catch(e){ toast('저장 실패: '+e.message); }
 }
 /* ── §2 고객사 업무 이력 (Jira /team/history) ─────────── */
@@ -123,6 +123,9 @@ let MONITOR_ALLOWED=false;
 function applyMonitorVisibility(){
   const nav=document.getElementById('nav-monitor');
   if(nav)nav.style.display=(MONITOR_ALLOWED && FEATURE_FLAGS.monitor!==false)?'':'none';
+  // A안 팀 다이제스트 버튼: mj.park(monAllowed) + digest 토글 on 일 때만
+  const dr=document.getElementById('digest-btn-row');
+  if(dr)dr.style.display=(MONITOR_ALLOWED && FEATURE_FLAGS.digest!==false)?'flex':'none';
 }
 async function loadMonitor(kind){
   const st=document.getElementById('monitor-status'), body=document.getElementById('monitor-body');
@@ -360,3 +363,33 @@ function updateNavGroups(){
     g.style.display=hasVisible?'':'none';
   });
 }
+
+/* ── A안: 팀 다이제스트 (조회+미리보기+복사만 — 외부 발송 코드 없음) ── */
+async function openDigest(){
+  const modal=document.getElementById('digest-modal'); if(!modal)return;
+  const ta=document.getElementById('digest-text'), st=document.getElementById('digest-status');
+  modal.style.display='flex'; if(st){st.textContent='';st.style.color='';} if(ta)ta.value='생성 중...';
+  try{
+    const d=await hubApi('/team/digest');
+    const text=String(d.text||'').replace('{HUB_URL}', location.origin+location.pathname);
+    if(ta)ta.value=text;
+    if(st)st.textContent=`오늘 마감 ${d.sections?.dueToday?.length||0} · 지연 ${d.sections?.overdue?.length||0} · 라이선스 ${d.sections?.licenseSoon?.length||0}`;
+  }catch(e){ if(ta)ta.value=''; if(st){st.textContent='생성 실패: '+e.message;st.style.color='var(--danger)';} }
+}
+async function copyDigest(){
+  const ta=document.getElementById('digest-text'), st=document.getElementById('digest-status');
+  const text=((ta&&ta.value)||'').trim();
+  if(!text){ if(st){st.textContent='내용이 없습니다';st.style.color='var(--danger)';} return; }
+  const html=escapeHtml(text).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1">$1</a>').replace(/\n/g,'<br>');
+  try{
+    if(navigator.clipboard&&window.ClipboardItem){
+      await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([text],{type:'text/plain'})})]);
+    }else{ await navigator.clipboard.writeText(text); }
+    if(st){st.textContent='✓ 복사됨 — Teams에 붙여넣기';st.style.color='var(--success)';}
+    if(typeof toast==='function')toast('다이제스트 복사됨');
+  }catch(e){
+    try{ await navigator.clipboard.writeText(text); if(st){st.textContent='✓ 복사됨(텍스트)';st.style.color='var(--success)';} }
+    catch(_){ if(st){st.textContent='복사 실패 — 직접 선택해 복사하세요';st.style.color='var(--danger)';} }
+  }
+}
+window.openDigest=openDigest; window.copyDigest=copyDigest;
