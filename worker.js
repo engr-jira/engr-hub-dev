@@ -1198,6 +1198,14 @@ export default {
         try { const ts = await env.DB.prepare("SELECT payload_json FROM analysis_snapshot WHERE kind='team' ORDER BY built_at DESC LIMIT 1").first(); if (ts) team = JSON.parse(ts.payload_json); } catch (_) {}
         let archive = null;
         try { archive = await buildArchiveUpdates(env, 7); } catch (_) {}
+        // 전일 recap — 어제(KST) 완료된 건 (성과)
+        const ydayMs = dayMs - 86400000;
+        const yday = new Date(ydayMs).toISOString().slice(0, 10);
+        let doneY = [];
+        try {
+          const di = await jiraSearchJql(env, `project = ENGR AND resolved >= "${yday}" AND resolved < "${day}" ORDER BY resolved DESC`, TEAM_FIELDS, 3);
+          doneY = di.map(it => mapJiraIssue(it, custList)).filter(i => !/hands[\s-]?on/i.test(i.summary || '')).map(i => ({ key: i.key, assignee: i.assignee || '-', customer: (i.cls && (i.cls.customer || i.cls.bracket)) || '', summary: (i.summary || '').replace(/^\s*\[[^\]]*\]\s*/, '') }));
+        } catch (_) {}
         // 텍스트 조립 (결정적·비용0) — 사내 보안뉴스레터
         const WD = ['일', '월', '화', '수', '목', '금', '토'];
         const dObj = new Date(day + 'T00:00:00Z');
@@ -1208,13 +1216,14 @@ export default {
         const headline = team ? [...sents(team.monthly, 2), ...sents(team.patterns, 1)].filter(Boolean).slice(0, 3) : [];
         const patternLines = team ? sents(team.patterns, 3) : [];
         const archItems = (archive && archive.items) || [];
-        const empty = !mgmtTotal && !headline.length && !patternLines.length && !archItems.length;
+        const empty = !mgmtTotal && !headline.length && !patternLines.length && !archItems.length && !doneY.length;
         const lines = [`📰 보안기술팀 브리핑 — ${dateLabel}`];
         if (empty) {
           lines.push('', '🎉 오늘은 관리 필요·신규 소식이 없습니다 — 깔끔한 하루 되세요!');
         } else {
           lines.push(`⚡ 관리 필요 ${mgmtTotal} — 마감 ${dueToday.length} · 지연 ${overdue.length} · 미기입 ${metaTotal} · 만료임박 ${licenseSoon.length}`);
           if (headline.length) { lines.push('', '🗞 헤드라인'); headline.forEach(s => lines.push(`· ${esc(s)}`)); }
+          if (doneY.length) { lines.push('', `📌 어제의 성과 (완료 ${doneY.length}건)`); doneY.slice(0, 8).forEach(r => lines.push(`· ${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (${r.key})`)); if (doneY.length > 8) lines.push(`· …외 ${doneY.length - 8}건`); }
           if (mgmtTotal) {
             lines.push('', '🚨 지금 관리 필요');
             if (dueToday.length) { lines.push(`⏰ 오늘 마감 (${dueToday.length}건)`); dueToday.forEach(r => lines.push(`· ${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (${r.key})`)); }
@@ -1227,8 +1236,8 @@ export default {
         }
         lines.push('', '🔗 HUB에서 전체 보기 → {HUB_URL}');
         const text = lines.join('\n');
-        await auditLog(env, user, 'DIGEST_GEN', { digDate: day, digCounts: { due: dueToday.length, overdue: overdue.length, meta: metaTotal, lic: licenseSoon.length, arch: archItems.length, hl: headline.length } });
-        return corsResponse({ ok: true, date: day, sections: { dueToday, overdue, metaIncomplete: metaRows, licenseSoon, archive: archItems, headline, patterns: patternLines }, text });
+        await auditLog(env, user, 'DIGEST_GEN', { digDate: day, digCounts: { due: dueToday.length, overdue: overdue.length, meta: metaTotal, lic: licenseSoon.length, arch: archItems.length, hl: headline.length, rec: doneY.length } });
+        return corsResponse({ ok: true, date: day, sections: { dueToday, overdue, metaIncomplete: metaRows, licenseSoon, archive: archItems, headline, patterns: patternLines, doneYesterday: doneY }, text });
       }
 
       // \u2500\u2500 \uC2A4\uCF00\uC904 \uBD84\uC11D \uC5D4\uC9C4(B\uC548) \uACB0\uACFC \uC800\uC7A5/\uC870\uD68C : Claude \uC5D0\uC774\uC804\uD2B8\uAC00 \uC4F0\uACE0 \uD300\uC6D0\uC740 \uBDF0\uB9CC \u2500\u2500

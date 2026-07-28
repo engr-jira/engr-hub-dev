@@ -380,7 +380,7 @@ function digestToHtml(text){
       rows.push(`<div style="margin:15px 0 2px"><a href="${esc(url)}" style="display:inline-block;background:${A};color:#ffffff;font-weight:800;font-size:13px;text-decoration:none;padding:10px 20px;border-radius:8px">👉 HUB에서 전체 보기</a></div>`);
       return;
     }
-    if(/^(🗞|🚨|🏢|📚)/.test(line)){ rows.push(`<div style="font-size:14px;font-weight:800;color:#8A3417;background:linear-gradient(90deg,#FBEFE6,rgba(251,239,230,0));border-left:4px solid ${A};padding:8px 12px;border-radius:0 8px 8px 0;margin:16px 0 7px">${esc(line)}</div>`); return; }
+    if(/^(🗞|🚨|🏢|📚|📌)/.test(line)){ rows.push(`<div style="font-size:14px;font-weight:800;color:#8A3417;background:linear-gradient(90deg,#FBEFE6,rgba(251,239,230,0));border-left:4px solid ${A};padding:8px 12px;border-radius:0 8px 8px 0;margin:16px 0 7px">${esc(line)}</div>`); return; }
     if(/^(⏰|🔴|📄|📝)/.test(line)){
       const col=/^🔴/.test(line)?'#C94540':(/^📄/.test(line)?'#B27E00':(/^📝/.test(line)?'#8A5CC4':'#1E9E6A'));
       rows.push(`<div style="font-size:13.5px;font-weight:800;color:${col};margin:13px 0 5px;border-bottom:1px solid #EEE4D5;padding-bottom:3px">${esc(line)}</div>`);
@@ -410,7 +410,7 @@ async function openDigest(){
     const d=await hubApi('/team/digest');
     const text=String(d.text||'').replace('{HUB_URL}', location.origin+location.pathname);
     if(ta)ta.value=text; renderDigestPreview();
-    if(st){const s=d.sections||{};const mi=(s.metaIncomplete||[]).reduce((a,r)=>a+(r.count||0),0);st.textContent=`마감 ${s.dueToday?.length||0} · 지연 ${s.overdue?.length||0} · 미기입 ${mi} · 라이선스 ${s.licenseSoon?.length||0} · 자료실 ${(s.archive||[]).length}${(s.headline||[]).length?' · 헤드라인 '+s.headline.length:''}`;}
+    if(st){const s=d.sections||{};const mi=(s.metaIncomplete||[]).reduce((a,r)=>a+(r.count||0),0);st.textContent=`마감 ${s.dueToday?.length||0} · 지연 ${s.overdue?.length||0} · 미기입 ${mi} · 라이선스 ${s.licenseSoon?.length||0} · 자료실 ${(s.archive||[]).length}${(s.doneYesterday||[]).length?' · 어제완료 '+s.doneYesterday.length:''}${(s.headline||[]).length?' · 헤드라인 '+s.headline.length:''}`;}
   }catch(e){ if(ta)ta.value=''; renderDigestPreview(); if(st){st.textContent='생성 실패: '+e.message;st.style.color='var(--danger)';} }
 }
 async function copyDigest(){
