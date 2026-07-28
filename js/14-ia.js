@@ -42,8 +42,13 @@ function renderIASubtabs(current){
   if(rep)rep.classList.add('active');
   if(!tabs||tabs.filter(([p])=>iaSubtabVisible(p)).length<2){bar.style.display='none';bar.innerHTML='';return;}
   bar.style.display='flex';
-  bar.innerHTML=tabs.filter(([p])=>iaSubtabVisible(p)).map(([p,label])=>
+  let html=tabs.filter(([p])=>iaSubtabVisible(p)).map(([p,label])=>
     `<button class="ia-chip${p===current?' on':''}" onclick="showPage('${p}')">${label}</button>`).join('');
+  // 홈(대시보드/My Desk) 줄 우측에 팀 다이제스트 버튼 — 모니터 허용자 + digest 기능 on
+  if(group==='home'&&typeof MONITOR_ALLOWED!=='undefined'&&MONITOR_ALLOWED&&(typeof FEATURE_FLAGS==='undefined'||FEATURE_FLAGS.digest!==false)){
+    html+=`<button class="ia-chip" style="margin-left:auto;background:var(--accent);border-color:var(--accent);color:#FFFDF9;font-weight:700" onclick="openDigest()">📤 팀 다이제스트</button>`;
+  }
+  bar.innerHTML=html;
 }
 
 /* 고객사 환경/사용 솔루션 — 조회는 전 역할, 수정은 기술팀·관리자 */

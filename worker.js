@@ -15,6 +15,41 @@ import { getVtHistory, saveVtHistory, vtDetectType, vtPollAnalysis, vtUrlId } fr
 import { importRecentKBLinks } from './src/kb.js';
 import { buildSalesOverview, saveSalesNote, getSalesStaleDays } from './src/sales.js';
 
+// ── 자료실(newsroom) 최근 업데이트 집계 — /analysis/latest·/team/digest 공용, 결정적·비용0 ──
+async function buildArchiveUpdates(env, days = 7) {
+  const cutoff = Date.now() - days * 86400000;
+  const parseT = s => { const t = Date.parse(s || ''); return isNaN(t) ? 0 : t; };
+  const readArr = async k => { try { const raw = await env.ENGR_KV.get(k); const a = raw ? JSON.parse(raw) : []; return Array.isArray(a) ? a : []; } catch (_) { return []; } };
+  const out = [];
+  const counts = { links: 0, knowledge: 0, eos: 0, compat: 0 };
+  for (const it of await readArr('config:links')) {
+    const created = parseT(it.createdAt), t = Math.max(created, parseT(it.updatedAt));
+    if (t < cutoff) continue; counts.links++;
+    out.push({ kind: 'link', icon: '🔗', label: '링크', title: String(it.title || it.url || '').slice(0, 90), when: t, by: it.updatedBy || it.createdBy || '', ai: !!it.aiSuggested, isNew: created >= cutoff });
+  }
+  for (const it of await readArr('config:knowledge')) {
+    const created = parseT(it.createdAt), t = Math.max(created, parseT(it.updatedAt));
+    if (t < cutoff) continue; counts.knowledge++;
+    out.push({ kind: 'know', icon: '📘', label: '노하우', title: String(it.title || '').slice(0, 90), when: t, by: it.updatedBy || it.createdBy || '', isNew: created >= cutoff });
+  }
+  for (const it of await readArr('config:eos')) {
+    const created = parseT(it.createdAt);
+    if (created < cutoff) continue; counts.eos++;
+    out.push({ kind: 'eos', icon: '📄', label: '라이선스', title: `${it.customer || ''} ${it.productDesc || it.product || ''}`.trim().slice(0, 90), when: created, by: it.createdBy || '', isNew: true });
+  }
+  try {
+    const r = await env.DB.prepare("SELECT product, product_version, os, status, verified_by, verified_at, updated_at FROM compat_matrix").all();
+    for (const row of (r.results || [])) {
+      const vt = parseT(row.verified_at), t = Math.max(vt, parseT(row.updated_at));
+      if (t < cutoff) continue;
+      const confirmed = row.status === 'confirmed' && vt >= cutoff; counts.compat++;
+      out.push({ kind: 'compat', icon: '🧩', label: confirmed ? '매트릭스 확정' : '매트릭스 초안', title: `${row.product || ''} ${row.product_version || ''}/${row.os || ''}`.trim().slice(0, 90), when: t, by: (confirmed ? row.verified_by : '') || '', isNew: !confirmed });
+    }
+  } catch (_) {}
+  out.sort((a, b) => b.when - a.when);
+  return { days, counts, items: out.slice(0, 8) };
+}
+
 export default {
   async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') return new Response(null, { headers: getCorsHeaders(request) });
@@ -1158,27 +1193,42 @@ export default {
         }
         const metaRows = Object.entries(metaByA).sort((a, b) => b[1].count - a[1].count).map(([assignee, v]) => ({ assignee, count: v.count, fields: v.fields }));
         const metaTotal = metaRows.reduce((s, r) => s + r.count, 0);
-        // 텍스트 조립 (결정적·비용0) — 관리 필요 브리핑
+        // 최신 AI 팀 리포트(뉴스룸) + 자료실 업데이트 — 풀 뉴스레터 소스
+        let team = null;
+        try { const ts = await env.DB.prepare("SELECT payload_json FROM analysis_snapshot WHERE kind='team' ORDER BY built_at DESC LIMIT 1").first(); if (ts) team = JSON.parse(ts.payload_json); } catch (_) {}
+        let archive = null;
+        try { archive = await buildArchiveUpdates(env, 7); } catch (_) {}
+        // 텍스트 조립 (결정적·비용0) — 사내 보안뉴스레터
         const WD = ['일', '월', '화', '수', '목', '금', '토'];
         const dObj = new Date(day + 'T00:00:00Z');
         const dateLabel = `${dObj.getUTCMonth() + 1}/${dObj.getUTCDate()}(${WD[dObj.getUTCDay()]})`;
         const esc = s => String(s || '').replace(/\s+/g, ' ').trim();
-        const head = `📋 보안기술팀 데일리 브리핑 — ${dateLabel}`;
-        const empty = !dueToday.length && !overdue.length && !metaTotal && !licenseSoon.length;
-        const lines = [head];
+        const sents = (txt, n) => String(txt || '').split(/(?<=다\.)\s+/).map(s => s.trim()).filter(Boolean).slice(0, n);
+        const mgmtTotal = dueToday.length + overdue.length + metaTotal + licenseSoon.length;
+        const headline = team ? [...sents(team.monthly, 2), ...sents(team.patterns, 1)].filter(Boolean).slice(0, 3) : [];
+        const patternLines = team ? sents(team.patterns, 3) : [];
+        const archItems = (archive && archive.items) || [];
+        const empty = !mgmtTotal && !headline.length && !patternLines.length && !archItems.length;
+        const lines = [`📰 보안기술팀 브리핑 — ${dateLabel}`];
         if (empty) {
-          lines.push('', '🎉 오늘은 마감·지연·미기입·만료 임박 항목이 없습니다 — 깔끔한 하루 되세요!');
+          lines.push('', '🎉 오늘은 관리 필요·신규 소식이 없습니다 — 깔끔한 하루 되세요!');
         } else {
-          lines.push(`⚡ 관리 필요 — 마감 ${dueToday.length} · 지연 ${overdue.length} · 미기입 ${metaTotal} · 만료임박 ${licenseSoon.length}`);
-          if (dueToday.length) { lines.push('', `⏰ 오늘 마감 (${dueToday.length}건)`); dueToday.forEach(r => lines.push(`· ${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (${r.key})`)); }
-          if (overdue.length) { lines.push('', `🔴 지연 중 (${overdue.length}건)`); overdue.forEach(r => lines.push(`· ${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (D+${r.overdueDays}, ${r.key})`)); }
-          if (metaTotal) { lines.push('', `📝 메타 미기입 (${metaTotal}건) — 고객사·레이블·범주·기한 누락`); metaRows.forEach(r => { const fs = Object.entries(r.fields).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(' · '); lines.push(`· ${r.assignee}: ${r.count}건 (${fs})`); }); }
-          if (licenseSoon.length) { lines.push('', `📄 라이선스 만료 임박 (${licenseSoon.length}건)`); licenseSoon.forEach(r => lines.push(`· ${r.customer} ${esc(r.product)} — D-${r.dday} (${r.expireDate})`)); }
+          lines.push(`⚡ 관리 필요 ${mgmtTotal} — 마감 ${dueToday.length} · 지연 ${overdue.length} · 미기입 ${metaTotal} · 만료임박 ${licenseSoon.length}`);
+          if (headline.length) { lines.push('', '🗞 헤드라인'); headline.forEach(s => lines.push(`· ${esc(s)}`)); }
+          if (mgmtTotal) {
+            lines.push('', '🚨 지금 관리 필요');
+            if (dueToday.length) { lines.push(`⏰ 오늘 마감 (${dueToday.length}건)`); dueToday.forEach(r => lines.push(`· ${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (${r.key})`)); }
+            if (overdue.length) { lines.push(`🔴 지연 중 (${overdue.length}건)`); overdue.forEach(r => lines.push(`· ${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (D+${r.overdueDays}, ${r.key})`)); }
+            if (metaTotal) { lines.push(`📝 메타 미기입 (${metaTotal}건)`); metaRows.forEach(r => { const fs = Object.entries(r.fields).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(' · '); lines.push(`· ${r.assignee}: ${r.count}건 (${fs})`); }); }
+            if (licenseSoon.length) { lines.push(`📄 라이선스 만료 임박 (${licenseSoon.length}건)`); licenseSoon.forEach(r => lines.push(`· ${r.customer} ${esc(r.product)} — D-${r.dday} (${r.expireDate})`)); }
+          }
+          if (patternLines.length) { lines.push('', '🏢 고객사 패턴'); patternLines.forEach(s => lines.push(`· ${esc(s)}`)); }
+          if (archItems.length) { lines.push('', `📚 자료실 업데이트 (최근 ${archive.days}일)`); archItems.forEach(a => lines.push(`· ${a.icon} ${a.label}: ${esc(a.title)}${a.ai ? ' (AI추천)' : ''}${a.by ? ' — ' + a.by : ''}`)); }
         }
         lines.push('', '🔗 HUB에서 전체 보기 → {HUB_URL}');
         const text = lines.join('\n');
-        await auditLog(env, user, 'DIGEST_GEN', { digDate: day, digCounts: { due: dueToday.length, overdue: overdue.length, meta: metaTotal, lic: licenseSoon.length } });
-        return corsResponse({ ok: true, date: day, sections: { dueToday, overdue, metaIncomplete: metaRows, licenseSoon }, text });
+        await auditLog(env, user, 'DIGEST_GEN', { digDate: day, digCounts: { due: dueToday.length, overdue: overdue.length, meta: metaTotal, lic: licenseSoon.length, arch: archItems.length, hl: headline.length } });
+        return corsResponse({ ok: true, date: day, sections: { dueToday, overdue, metaIncomplete: metaRows, licenseSoon, archive: archItems, headline, patterns: patternLines }, text });
       }
 
       // \u2500\u2500 \uC2A4\uCF00\uC904 \uBD84\uC11D \uC5D4\uC9C4(B\uC548) \uACB0\uACFC \uC800\uC7A5/\uC870\uD68C : Claude \uC5D0\uC774\uC804\uD2B8\uAC00 \uC4F0\uACE0 \uD300\uC6D0\uC740 \uBDF0\uB9CC \u2500\u2500
@@ -1243,7 +1293,9 @@ export default {
             if (!builtAt) builtAt = last.b;
           }
         } catch (_) {}
-        return corsResponse({ ok: true, built_at: builtAt, team, issueKeys: keys });
+        let archive = null;
+        try { archive = await buildArchiveUpdates(env, 7); } catch (_) {}
+        return corsResponse({ ok: true, built_at: builtAt, team, issueKeys: keys, archive });
       }
       if (path === '/analysis/resp' && request.method === 'GET') {
         if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);

@@ -123,9 +123,8 @@ let MONITOR_ALLOWED=false;
 function applyMonitorVisibility(){
   const nav=document.getElementById('nav-monitor');
   if(nav)nav.style.display=(MONITOR_ALLOWED && FEATURE_FLAGS.monitor!==false)?'':'none';
-  // A안 팀 다이제스트 버튼: mj.park(monAllowed) + digest 토글 on 일 때만
-  const dr=document.getElementById('digest-btn-row');
-  if(dr)dr.style.display=(MONITOR_ALLOWED && FEATURE_FLAGS.digest!==false)?'flex':'none';
+  // 팀 다이제스트 버튼은 IA 서브탭(홈: 대시보드/My Desk) 줄에 인라인 렌더 → 허용/토글 변동 시 서브탭 재렌더
+  if(typeof renderIASubtabs==='function'){ try{ const cur=((document.querySelector('.page.active')||{}).id||'page-dash').replace('page-',''); renderIASubtabs(cur); }catch(_){} }
 }
 async function loadMonitor(kind){
   const st=document.getElementById('monitor-status'), body=document.getElementById('monitor-body');
@@ -373,7 +372,7 @@ function digestToHtml(text){
   String(text||'').split('\n').forEach(raw=>{
     const line=raw.replace(/\s+$/,'');
     if(!line.trim())return;
-    if(/^📋/.test(line)){ rows.push(`<div style="font-size:18px;font-weight:800;color:${A};letter-spacing:-.2px">${esc(line)}</div>`); return; }
+    if(/^(📋|📰)/.test(line)){ rows.push(`<div style="font-size:18px;font-weight:800;color:${A};letter-spacing:-.2px">${esc(line)}</div>`); return; }
     if(/^⚡/.test(line)){ rows.push(`<div style="display:inline-block;background:#FBEFE6;color:#8A3417;font-weight:700;font-size:12.5px;padding:5px 12px;border-radius:20px;margin:7px 0 3px">${esc(line)}</div>`); return; }
     if(/^🎉/.test(line)){ rows.push(`<div style="font-size:14px;color:#1E9E6A;font-weight:700;margin:8px 0">${esc(line)}</div>`); return; }
     if(/^🔗/.test(line)){
@@ -381,6 +380,7 @@ function digestToHtml(text){
       rows.push(`<div style="margin:15px 0 2px"><a href="${esc(url)}" style="display:inline-block;background:${A};color:#ffffff;font-weight:800;font-size:13px;text-decoration:none;padding:10px 20px;border-radius:8px">👉 HUB에서 전체 보기</a></div>`);
       return;
     }
+    if(/^(🗞|🚨|🏢|📚)/.test(line)){ rows.push(`<div style="font-size:14px;font-weight:800;color:#8A3417;background:linear-gradient(90deg,#FBEFE6,rgba(251,239,230,0));border-left:4px solid ${A};padding:8px 12px;border-radius:0 8px 8px 0;margin:16px 0 7px">${esc(line)}</div>`); return; }
     if(/^(⏰|🔴|📄|📝)/.test(line)){
       const col=/^🔴/.test(line)?'#C94540':(/^📄/.test(line)?'#B27E00':(/^📝/.test(line)?'#8A5CC4':'#1E9E6A'));
       rows.push(`<div style="font-size:13.5px;font-weight:800;color:${col};margin:13px 0 5px;border-bottom:1px solid #EEE4D5;padding-bottom:3px">${esc(line)}</div>`);
@@ -410,7 +410,7 @@ async function openDigest(){
     const d=await hubApi('/team/digest');
     const text=String(d.text||'').replace('{HUB_URL}', location.origin+location.pathname);
     if(ta)ta.value=text; renderDigestPreview();
-    if(st){const mi=(d.sections?.metaIncomplete||[]).reduce((s,r)=>s+(r.count||0),0);st.textContent=`마감 ${d.sections?.dueToday?.length||0} · 지연 ${d.sections?.overdue?.length||0} · 미기입 ${mi} · 라이선스 ${d.sections?.licenseSoon?.length||0}`;}
+    if(st){const s=d.sections||{};const mi=(s.metaIncomplete||[]).reduce((a,r)=>a+(r.count||0),0);st.textContent=`마감 ${s.dueToday?.length||0} · 지연 ${s.overdue?.length||0} · 미기입 ${mi} · 라이선스 ${s.licenseSoon?.length||0} · 자료실 ${(s.archive||[]).length}${(s.headline||[]).length?' · 헤드라인 '+s.headline.length:''}`;}
   }catch(e){ if(ta)ta.value=''; renderDigestPreview(); if(st){st.textContent='생성 실패: '+e.message;st.style.color='var(--danger)';} }
 }
 async function copyDigest(){

@@ -264,17 +264,24 @@ function briefList(text,mode,accent){
   if(parts.length<2)return `<div class="u-fs125px-lh17-ctext2-wsprewra">${briefLinkify(text)}</div>`;
   return parts.map(p=>`<div style="font-size:12.5px;line-height:1.6;color:var(--text2);padding:6px 10px;background:rgba(255,255,255,.03);border-left:2px solid ${accent};border-radius:0 8px 8px 0">${briefLinkify(p)}</div>`).join('<div style="height:6px"></div>');
 }
+function archiveBriefBlock(arch){
+  const items=(arch&&arch.items)||[];
+  if(!items.length)return '';
+  const rows=items.map(a=>`<div style="font-size:11.5px;line-height:1.5;color:var(--text2);padding:3px 0;display:flex;gap:6px"><span>${a.icon||'•'}</span><span><b style="color:var(--text2);font-weight:700">${escapeHtml(a.label||'')}</b> · ${escapeHtml(a.title||'')}${a.ai?' <span style="color:var(--cyan);font-size:10px;font-weight:700">AI추천</span>':''}${a.isNew===false?' <span style="color:var(--text3);font-size:10px">수정</span>':''}${a.by?` <span style="color:var(--text3);font-size:10px">${escapeHtml(a.by)}</span>`:''}</span></div>`).join('');
+  return `<div style="margin-top:11px;border-top:1px dashed var(--border2);padding-top:8px"><div style="font-size:10.5px;font-weight:800;color:var(--text3);margin-bottom:5px">📚 자료실 업데이트 <span style="font-weight:400">(최근 ${arch.days||7}일)</span></div>${rows}</div>`;
+}
 function renderAIBriefing(d){
   const wrap=document.getElementById('ai-brief-wrap'), title=document.getElementById('ai-brief-title');
   if(!wrap||!title)return;
-  if(!d||(!d.team&&!(d.issueKeys||[]).length)){wrap.style.display='none';title.style.display='none';return;}
+  const arch=d&&d.archive, hasArch=!!(((arch&&arch.items)||[]).length);
+  if(!d||(!d.team&&!(d.issueKeys||[]).length&&!hasArch)){wrap.style.display='none';title.style.display='none';return;}
   title.style.display=''; wrap.style.display='';
   const t=d.team||{};
   const secs=[];
-  if(t.focus)secs.push(`<div class="chart-card"><h4>🎯 오늘의 포커스</h4>${briefList(t.focus,'line','#E06A63')}</div>`);
-  if(t.patterns)secs.push(`<div class="chart-card"><h4>🏢 고객사 패턴</h4>${briefList(t.patterns,'sent','#9F6BB5')}</div>`);
-  if(t.monthly)secs.push(`<div class="chart-card"><h4>📈 월간 동향</h4>${briefList(t.monthly,'sent','#3FA3C4')}</div>`);
-  wrap.innerHTML=`<div class="u-fs11px-ctext3-mb8px">🕐 ${fmtBuiltAt(d.built_at)} 기준 · 스케줄 분석(일 2회 07:00/15:30) · 이슈 분석 ${(d.issueKeys||[]).length}건 · 이슈키 클릭 시 해당 건으로 이동</div><div class="chart-grid u-gridtemplatecolumns-repeatautofi">${secs.join('')||'<div class="chart-card"><div class="u-fs12px-ctext3">팀 리포트가 아직 없습니다</div></div>'}</div>`;
+  if(t.focus)secs.push(`<div class="chart-card"><h4>🚨 지금 관리 필요</h4>${briefList(t.focus,'line','#E06A63')}</div>`);
+  if(t.patterns)secs.push(`<div class="chart-card"><h4>🏢 고객사 이슈·응답 패턴</h4>${briefList(t.patterns,'sent','#9F6BB5')}</div>`);
+  if(t.monthly||hasArch)secs.push(`<div class="chart-card"><h4>📰 월간 헤드라인</h4>${t.monthly?briefList(t.monthly,'sent','#3FA3C4'):''}${archiveBriefBlock(arch)}</div>`);
+  wrap.innerHTML=`<div class="u-fs11px-ctext3-mb8px">🕐 ${fmtBuiltAt(d.built_at)} 기준 · 우리팀 보안 브리핑 · 스케줄 분석 일 2회(07:00/15:30) · 이슈 ${(d.issueKeys||[]).length}건 분석 · 이슈키 클릭 시 이동</div><div class="chart-grid u-gridtemplatecolumns-repeatautofi">${secs.join('')||'<div class="chart-card"><div class="u-fs12px-ctext3">팀 리포트가 아직 없습니다</div></div>'}</div>`;
 }
 async function renderIssueAnalysis(key,secId){
   const sec=document.getElementById(secId||'ai-analysis-sec'); if(!sec||!key)return;
