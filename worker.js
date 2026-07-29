@@ -1300,12 +1300,14 @@ export default {
       // ── 다이제스트를 Teams 채널로 즉시 전송 (수동/테스트, x-analysis-token 게이트) ──
       if (path === '/team/digest/push' && request.method === 'POST') {
         const tok = request.headers.get('x-analysis-token') || '';
-        if (!env.ANALYSIS_WRITE_TOKEN || tok !== env.ANALYSIS_WRITE_TOKEN) return corsResponse({ ok: false, message: '인증 실패' }, 401);
+        const viaToken = env.ANALYSIS_WRITE_TOKEN && tok === env.ANALYSIS_WRITE_TOKEN;
+        const viaSession = hasSession && await isMonitorAllowed(env, user);  // mj.park 수동 발사(모달 버튼)
+        if (!viaToken && !viaSession) return corsResponse({ ok: false, message: '권한이 없습니다(mj.park 또는 분석 토큰).' }, 401);
         if (!(await getFeatureFlags(env)).digest) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);
-        if (!env.TEAMS_WEBHOOK_URL) return corsResponse({ ok: false, message: 'TEAMS_WEBHOOK_URL 미설정' }, 400);
+        if (!env.TEAMS_WEBHOOK_URL) return corsResponse({ ok: false, message: 'Teams 웹훅이 설정되지 않았습니다.' }, 400);
         const hubUrl = url.searchParams.get('hub') || 'https://engr-jira.github.io/engr-hub-dev/';
         let r; try { r = await postDigestToTeams(env, hubUrl); } catch (e) { return corsResponse({ ok: false, message: '전송 실패: ' + e.message }, 502); }
-        await auditLog(env, 'teams-flow', 'DIGEST_GEN', { via: 'teams-manual', status: r.status, digDate: r.day });
+        await auditLog(env, viaSession ? user : 'teams-flow', 'DIGEST_GEN', { via: 'teams-manual', status: r.status, digDate: r.day });
         return corsResponse({ ok: r.ok, status: r.status, day: r.day });
       }
 

@@ -449,4 +449,17 @@ async function copyDigest(){
     catch(_){ if(st){st.textContent='복사 실패 — 직접 선택해 복사하세요';st.style.color='var(--danger)';} }
   }
 }
-window.openDigest=openDigest; window.copyDigest=copyDigest; window.renderDigestPreview=renderDigestPreview;
+async function pushDigestToTeams(){
+  if(!confirm('지금 팀 데스크 채널에 다이제스트 카드를 게시합니다.\n계속할까요?'))return;
+  const st=document.getElementById('digest-status');
+  if(st){st.textContent='🚀 발사 중...';st.style.color='';}
+  try{
+    const r=await hubApi('/team/digest/push',{method:'POST'});
+    if(st){st.textContent=`✓ 채널에 게시됨 (status ${r.status||'ok'})`;st.style.color='var(--success)';}
+    if(typeof toast==='function')toast('Teams 데스크 채널에 게시했습니다');
+  }catch(e){
+    if(st){st.textContent='발사 실패: '+e.message;st.style.color='var(--danger)';}
+    if(typeof toast==='function')toast('발사 실패: '+e.message,true);
+  }
+}
+window.openDigest=openDigest; window.copyDigest=copyDigest; window.renderDigestPreview=renderDigestPreview; window.pushDigestToTeams=pushDigestToTeams;
