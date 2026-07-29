@@ -126,10 +126,11 @@ function buildDigestCard(D, hubUrl, notice) {
   body.push({ type: 'Container', style: 'accent', bleed: true, items: [tb(`📰 보안기술팀 브리핑 — ${D.dateLabel}`, { weight: 'Bolder', size: 'Large' })] });
   if (notice && String(notice).trim()) {
     const nlines = String(notice).split('\n').map(x => x.trim()).filter(Boolean);
-    const nitems = nlines.map((ln, i) => tb((i === 0 ? '📢 ' : '• ') + esc(ln), Object.assign({ weight: 'Bolder' }, i ? { spacing: 'Small' } : {})));
+    const nitems = [tb('📢 공지사항', { weight: 'Bolder' })];
+    nlines.forEach(ln => nitems.push(tb('• ' + esc(ln), { weight: 'Bolder', spacing: 'Small' })));
     body.push({ type: 'Container', style: 'warning', spacing: 'Small', items: nitems });
   }
-  const empty = !D.mgmtTotal && !D.headline.length && !D.patternLines.length && !D.archItems.length && !D.doneY.length;
+  const empty = !D.mgmtTotal && !D.headline.length && !D.doneY.length;
   if (empty) {
     body.push({ type: 'Container', style: 'good', spacing: 'Medium', items: [tb('🎉 오늘은 관리 필요·신규 소식이 없습니다 — 깔끔한 하루 되세요!', { weight: 'Bolder', color: 'Good' })] });
   } else {
@@ -145,8 +146,6 @@ function buildDigestCard(D, hubUrl, notice) {
       if (D.metaTotal) { it.push(tb(`📝 메타 미기입 ${D.metaTotal}`, { weight: 'Bolder', spacing: 'Medium' })); D.metaRows.forEach(r => { const fs = Object.entries(r.fields).sort((a, b2) => b2[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(' · '); b(it, `${r.assignee}: ${r.count}건 (${fs})`); }); }
       if (D.licenseSoon.length) { it.push(tb(`📄 라이선스 만료 임박 ${D.licenseSoon.length}`, { weight: 'Bolder', spacing: 'Medium' })); D.licenseSoon.slice(0, 6).forEach(r => b(it, `${r.customer} ${clip(r.product, 38)} — D-${r.dday}`)); more(it, D.licenseSoon.length - 6); }
     });
-    if (D.patternLines.length) section('🏢 고객사 패턴', 'emphasis', 'Accent', (it, b) => D.patternLines.slice(0, 2).forEach(s => b(it, clip(s, 120))));
-    if (D.archItems.length) section('📚 자료실 업데이트', 'emphasis', 'Accent', (it, b) => { D.archItems.slice(0, 5).forEach(a => b(it, `${a.icon} **${a.label}** · ${clip(a.title, 48)}${a.ai ? ' (AI추천)' : ''}`)); more(it, D.archItems.length - 5); });
   }
   const base = String(hubUrl || 'https://engr-jira.github.io/engr-hub-dev/').replace(/\/+$/, '');
   const actions = [{ type: 'Action.OpenUrl', title: '🔗 HUB 열기', url: base + '/' }];
@@ -1267,7 +1266,7 @@ export default {
         let D; try { D = await buildDigestData(env); } catch (e) { return corsResponse({ ok: false, message: 'Jira 조회 실패: ' + e.message }, 502); }
         const { day, dateLabel, dueToday, overdue, metaRows, metaTotal, licenseSoon, doneY, archItems, archiveDays, headline, patternLines, mgmtTotal } = D;
         const esc = s => String(s || '').replace(/\s+/g, ' ').trim();
-        const empty = !mgmtTotal && !headline.length && !patternLines.length && !archItems.length && !doneY.length;
+        const empty = !mgmtTotal && !headline.length && !doneY.length;
         const lines = [`📰 보안기술팀 브리핑 — ${dateLabel}`];
         if (empty) {
           lines.push('', '🎉 오늘은 관리 필요·신규 소식이 없습니다 — 깔끔한 하루 되세요!');
@@ -1282,8 +1281,6 @@ export default {
             if (metaTotal) { lines.push(`📝 메타 미기입 (${metaTotal}건)`); metaRows.forEach(r => { const fs = Object.entries(r.fields).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(' · '); lines.push(`· ${r.assignee}: ${r.count}건 (${fs})`); }); }
             if (licenseSoon.length) { lines.push(`📄 라이선스 만료 임박 (${licenseSoon.length}건)`); licenseSoon.forEach(r => lines.push(`· ${r.customer} ${esc(r.product)} — D-${r.dday} (${r.expireDate})`)); }
           }
-          if (patternLines.length) { lines.push('', '🏢 고객사 패턴'); patternLines.forEach(s => lines.push(`· ${esc(s)}`)); }
-          if (archItems.length) { lines.push('', `📚 자료실 업데이트 (최근 ${archiveDays}일)`); archItems.forEach(a => lines.push(`· ${a.icon} ${a.label}: ${esc(a.title)}${a.ai ? ' (AI추천)' : ''}${a.by ? ' — ' + a.by : ''}`)); }
         }
         lines.push('', '🔗 HUB에서 전체 보기 → {HUB_URL}');
         const text = lines.join('\n');

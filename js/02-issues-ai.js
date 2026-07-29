@@ -145,7 +145,7 @@ function renderRightPanel(){
       <span class="badge" style="background:${pc}22;color:${pc}">${i.pri}</span>
       ${i.labels.map(l=>`<span class="badge" style="background:${labelColor(l)}22;color:${labelColor(l)}">${escapeHtml(l)}</span>`).join('')}
     </div>
-    <div class="rp-meta">
+    <div class="rp-meta two-col">
       ${(()=>{const na='<span class="u-cfbbf24-fw700">미입력</span>';
         const dueCell=i.due?(()=>{const d=daysUntil(i.due);const col=d<0?'#E06A63':d<=7?'#E0A32E':'var(--text)';return `<span style="color:${col}">${i.due} ${d<0?'(기한초과 '+Math.abs(d)+'일)':'(D-'+d+')'}</span>`;})():na;
         const custCell=(i.customers&&i.customers.length)?escapeHtml(i.customers.join(', ')):(i.customer?`<span>${escapeHtml(i.customer)} <span style="color:var(--text3);font-size:10px">(제목 추정)</span></span>`:na);
@@ -156,8 +156,8 @@ function renderRightPanel(){
         return `
       <div class="rp-row"><span>이슈키</span><span style="color:var(--accent3);font-weight:700;display:inline-flex;align-items:center;gap:7px">${i.key}<button onclick="copyText('${i.key}');event.stopPropagation()" title="이슈키 복사" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px;display:inline-flex;border-radius:8px" onmouseover="this.style.color='var(--accent3)'" onmouseout="this.style.color='var(--text3)'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></span></div>
       <div class="rp-row"><span>우선순위</span><span>${escapeHtml(i.pri)}</span></div>
-      <div class="rp-row"><span>고객사</span><span>${custCell}</span></div>
-      <div class="rp-row"><span>레이블</span><span>${labCell}</span></div>
+      <div class="rp-row rp-span2"><span>고객사</span><span>${custCell}</span></div>
+      <div class="rp-row rp-span2"><span>레이블</span><span>${labCell}</span></div>
       <div class="rp-row"><span>구분</span><span>${divCell}</span></div>
       <div class="rp-row"><span>범주</span><span>${catCell}</span></div>
       <div class="rp-row"><span>담당자</span><span>${escapeHtml(i.assignee||'-')}</span></div>

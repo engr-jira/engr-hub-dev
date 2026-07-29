@@ -406,7 +406,7 @@ function digestToTeamsHtml(text){
   String(text||'').split('\n').forEach(raw=>{
     const line=raw.replace(/\s+$/,'');
     if(!line.trim())return;
-    if(/^📢/.test(line)){ closeList(); rows.push(`<p><b>${esc(line)}</b></p><hr>`); return; }
+    if(/^📢/.test(line)){ closeList(); rows.push(`<p><b>${esc(line)}</b></p>`); return; }
     if(/^(📋|📰)/.test(line)){ closeList(); rows.push(`<h2>${esc(line)}</h2>`); return; }
     if(/^⚡/.test(line)){ closeList(); rows.push(`<p><b>${esc(line)}</b></p>`); return; }
     if(/^🎉/.test(line)){ closeList(); rows.push(`<p><b>${esc(line)}</b></p>`); return; }
@@ -421,9 +421,9 @@ function digestToTeamsHtml(text){
 }
 function digestFullText(){
   const ta=document.getElementById('digest-text'), nt=document.getElementById('digest-notice');
-  const notice=((nt&&nt.value)||'').split('\n').map(s=>s.trim()).filter(Boolean).join(' / ');
+  const nlines=((nt&&nt.value)||'').split('\n').map(s=>s.trim()).filter(Boolean);
   const base=(ta&&ta.value)||'';
-  return (notice?('📢 '+notice+'\n\n'):'')+base;
+  return (nlines.length?('📢 공지사항\n'+nlines.map(l=>'· '+l).join('\n')+'\n\n'):'')+base;
 }
 function renderDigestPreview(){
   const pv=document.getElementById('digest-preview');
@@ -437,7 +437,7 @@ async function openDigest(){
     const d=await hubApi('/team/digest');
     const text=String(d.text||'').replace('{HUB_URL}', location.origin+location.pathname);
     if(ta)ta.value=text; renderDigestPreview();
-    if(st){const s=d.sections||{};const mi=(s.metaIncomplete||[]).reduce((a,r)=>a+(r.count||0),0);st.textContent=`마감 ${s.dueToday?.length||0} · 지연 ${s.overdue?.length||0} · 미기입 ${mi} · 라이선스 ${s.licenseSoon?.length||0} · 자료실 ${(s.archive||[]).length}${(s.doneYesterday||[]).length?' · 어제완료 '+s.doneYesterday.length:''}${(s.headline||[]).length?' · 헤드라인 '+s.headline.length:''}`;}
+    if(st){const s=d.sections||{};const mi=(s.metaIncomplete||[]).reduce((a,r)=>a+(r.count||0),0);st.textContent=`마감 ${s.dueToday?.length||0} · 지연 ${s.overdue?.length||0} · 미기입 ${mi} · 라이선스 ${s.licenseSoon?.length||0}${(s.doneYesterday||[]).length?' · 어제완료 '+s.doneYesterday.length:''}${(s.headline||[]).length?' · 헤드라인 '+s.headline.length:''}`;}
   }catch(e){ if(ta)ta.value=''; renderDigestPreview(); if(st){st.textContent='생성 실패: '+e.message;st.style.color='var(--danger)';} }
 }
 async function copyDigest(){
