@@ -156,8 +156,8 @@ function renderRightPanel(){
         return `
       <div class="rp-row"><span>이슈키</span><span style="color:var(--accent3);font-weight:700;display:inline-flex;align-items:center;gap:7px">${i.key}<button onclick="copyText('${i.key}');event.stopPropagation()" title="이슈키 복사" style="background:none;border:none;color:var(--text3);cursor:pointer;padding:2px;display:inline-flex;border-radius:8px" onmouseover="this.style.color='var(--accent3)'" onmouseout="this.style.color='var(--text3)'"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></span></div>
       <div class="rp-row"><span>우선순위</span><span>${escapeHtml(i.pri)}</span></div>
-      <div class="rp-row rp-span2"><span>고객사</span><span>${custCell}</span></div>
-      <div class="rp-row rp-span2"><span>레이블</span><span>${labCell}</span></div>
+      <div class="rp-row"><span>고객사</span><span>${custCell}</span></div>
+      <div class="rp-row"><span>레이블</span><span>${labCell}</span></div>
       <div class="rp-row"><span>구분</span><span>${divCell}</span></div>
       <div class="rp-row"><span>범주</span><span>${catCell}</span></div>
       <div class="rp-row"><span>담당자</span><span>${escapeHtml(i.assignee||'-')}</span></div>
@@ -166,7 +166,7 @@ function renderRightPanel(){
       <div class="rp-row"><span>시작일</span><span>${i.startDate?fd(i.startDate):'<span class="u-muted">-</span>'}</span></div>
       <div class="rp-row"><span>기한</span><span>${dueCell}</span></div>
       <div class="rp-row"><span>접수일</span><span>${fd(i.date)}</span></div>
-      <div class="rp-row"><span>수정일</span><span>${fd(i.updated)}</span></div>`;})()}
+      <div class="rp-row rp-span2"><span>수정일</span><span>${fd(i.updated)}</span></div>`;})()}
     </div>
     ${i.attachments&&i.attachments.length?`
     <div class="u-mb-12px">
