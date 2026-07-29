@@ -148,6 +148,19 @@ function buildDigestCard(D, hubUrl) {
   return { type: 'AdaptiveCard', $schema: 'http://adaptivecards.io/schemas/adaptive-card.json', version: '1.4', body, actions };
 }
 
+// ── 다이제스트 카드를 Teams 채널로 전송 (TEAMS_WEBHOOK_URL 시크릿 설정 시에만; MJ의 Power Automate 웹훅 flow가 수신·게시) ──
+async function postDigestToTeams(env, hubUrl) {
+  if (!env.TEAMS_WEBHOOK_URL) return { ok: false, reason: 'no-webhook' };
+  const D = await buildDigestData(env);
+  const card = buildDigestCard(D, hubUrl || 'https://engr-jira.github.io/engr-hub-dev/');
+  const resp = await fetch(env.TEAMS_WEBHOOK_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'message', attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: card }] })
+  });
+  return { ok: resp.ok, status: resp.status, day: D.day, mgmt: D.mgmtTotal };
+}
+
 export default {
   async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') return new Response(null, { headers: getCorsHeaders(request) });
@@ -1284,6 +1297,18 @@ export default {
         return corsResponse({ ok: true, card, attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: card }] });
       }
 
+      // ── 다이제스트를 Teams 채널로 즉시 전송 (수동/테스트, x-analysis-token 게이트) ──
+      if (path === '/team/digest/push' && request.method === 'POST') {
+        const tok = request.headers.get('x-analysis-token') || '';
+        if (!env.ANALYSIS_WRITE_TOKEN || tok !== env.ANALYSIS_WRITE_TOKEN) return corsResponse({ ok: false, message: '인증 실패' }, 401);
+        if (!(await getFeatureFlags(env)).digest) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);
+        if (!env.TEAMS_WEBHOOK_URL) return corsResponse({ ok: false, message: 'TEAMS_WEBHOOK_URL 미설정' }, 400);
+        const hubUrl = url.searchParams.get('hub') || 'https://engr-jira.github.io/engr-hub-dev/';
+        let r; try { r = await postDigestToTeams(env, hubUrl); } catch (e) { return corsResponse({ ok: false, message: '전송 실패: ' + e.message }, 502); }
+        await auditLog(env, 'teams-flow', 'DIGEST_GEN', { via: 'teams-manual', status: r.status, digDate: r.day });
+        return corsResponse({ ok: r.ok, status: r.status, day: r.day });
+      }
+
       // \u2500\u2500 \uC2A4\uCF00\uC904 \uBD84\uC11D \uC5D4\uC9C4(B\uC548) \uACB0\uACFC \uC800\uC7A5/\uC870\uD68C : Claude \uC5D0\uC774\uC804\uD2B8\uAC00 \uC4F0\uACE0 \uD300\uC6D0\uC740 \uBDF0\uB9CC \u2500\u2500
       if (path === '/analysis' && request.method === 'PUT') {
         const tok = request.headers.get('x-analysis-token') || '';
@@ -1487,5 +1512,15 @@ export default {
     } catch (_) {}
     // 자료실 KB 증분 수집 (매일, 무료 모드: 시드+기존링크+Jira 참조 KB, 2년 컷오프·중복 자동 제거)
     try { ctx.waitUntil(importRecentKBLinks(env, 'system(cron)', 2, { limit: 120 })); } catch (_) {}
+    // 팀 다이제스트 카드를 Teams 채널로 자동 게시 (TEAMS_WEBHOOK_URL 시크릿 설정 시에만)
+    if (env.TEAMS_WEBHOOK_URL) {
+      ctx.waitUntil((async () => {
+        try {
+          if (!(await getFeatureFlags(env)).digest) return;
+          const r = await postDigestToTeams(env, 'https://engr-jira.github.io/engr-hub-dev/');
+          await auditLog(env, 'system(cron)', 'DIGEST_GEN', { via: 'teams', status: r.status, digDate: r.day });
+        } catch (_) {}
+      })());
+    }
   },
 };
