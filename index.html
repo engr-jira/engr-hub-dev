@@ -1851,6 +1851,7 @@ body.is-sales #nav-sales{display:flex!important}
             <h3 style="margin:0;font-size:16px">📤 팀 다이제스트 <span class="u-muted-11" style="font-weight:400">— 미리보기·수정 후 복사 → Teams 붙여넣기</span></h3>
             <button class="btn btn-ghost u-btn-xs" onclick="document.getElementById('digest-modal').style.display='none'">닫기</button>
           </div>
+          <input id="digest-notice" oninput="renderDigestPreview()" maxlength="300" placeholder="📢 공지/한마디 (선택) — 카드·복사 맨 위에 강조 표시" style="width:100%;box-sizing:border-box;margin-bottom:10px;background:var(--card2);border:1px solid var(--accent);border-radius:10px;color:var(--text);padding:9px 12px;font-size:12.5px">
           <div class="u-muted-10" style="margin-bottom:4px">✏️ 편집 — 수정하면 아래 미리보기·복사에 바로 반영됩니다</div>
           <textarea id="digest-text" spellcheck="false" oninput="renderDigestPreview()" style="width:100%;min-height:170px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 13px;font-family:var(--mono,monospace);font-size:12.5px;line-height:1.55;box-sizing:border-box;resize:vertical" placeholder="생성 중..."></textarea>
           <div class="u-muted-10" style="margin:12px 0 5px">👁 미리보기 — Teams에 붙이면 이렇게 보입니다</div>

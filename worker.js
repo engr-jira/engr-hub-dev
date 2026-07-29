@@ -118,27 +118,29 @@ async function buildDigestData(env) {
 }
 
 // ── 다이제스트 → Teams Adaptive Card (Power Automate flow가 GET해서 채널에 게시) ──
-function buildDigestCard(D, hubUrl) {
+function buildDigestCard(D, hubUrl, notice) {
   const esc = s => String(s || '').replace(/\s+/g, ' ').trim();
-  const body = [{ type: 'TextBlock', text: `📰 보안기술팀 브리핑 — ${D.dateLabel}`, weight: 'Bolder', size: 'Large', color: 'Accent', wrap: true }];
+  const tb = (text, opt) => Object.assign({ type: 'TextBlock', text, wrap: true }, opt || {});
+  const body = [];
+  body.push({ type: 'Container', style: 'accent', bleed: true, items: [tb(`📰 보안기술팀 브리핑 — ${D.dateLabel}`, { weight: 'Bolder', size: 'Large' })] });
+  if (notice && String(notice).trim()) body.push({ type: 'Container', style: 'warning', spacing: 'Small', items: [tb('📢 ' + esc(notice), { weight: 'Bolder' })] });
   const empty = !D.mgmtTotal && !D.headline.length && !D.patternLines.length && !D.archItems.length && !D.doneY.length;
   if (empty) {
-    body.push({ type: 'TextBlock', text: '🎉 오늘은 관리 필요·신규 소식이 없습니다 — 깔끔한 하루 되세요!', color: 'Good', wrap: true });
+    body.push({ type: 'Container', style: 'good', spacing: 'Medium', items: [tb('🎉 오늘은 관리 필요·신규 소식이 없습니다 — 깔끔한 하루 되세요!', { weight: 'Bolder', color: 'Good' })] });
   } else {
-    body.push({ type: 'TextBlock', text: `⚡ 관리 필요 ${D.mgmtTotal} — 마감 ${D.dueToday.length} · 지연 ${D.overdue.length} · 미기입 ${D.metaTotal} · 만료임박 ${D.licenseSoon.length}`, wrap: true, spacing: 'Small', isSubtle: true });
-    const sec = (title, color) => body.push({ type: 'TextBlock', text: title, weight: 'Bolder', color: color || 'Accent', size: 'Medium', separator: true, spacing: 'Medium', wrap: true });
-    const bullet = t => body.push({ type: 'TextBlock', text: '• ' + t, wrap: true, spacing: 'None' });
-    if (D.headline.length) { sec('🗞 헤드라인'); D.headline.forEach(s => bullet(esc(s))); }
-    if (D.doneY.length) { sec(`📌 어제의 성과 (완료 ${D.doneY.length}건)`, 'Good'); D.doneY.slice(0, 6).forEach(r => bullet(`**${r.assignee}**: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)}`)); if (D.doneY.length > 6) bullet(`…외 ${D.doneY.length - 6}건`); }
-    if (D.mgmtTotal) {
-      sec('🚨 지금 관리 필요', 'Warning');
-      if (D.dueToday.length) { bullet(`**⏰ 오늘 마감 ${D.dueToday.length}**`); D.dueToday.forEach(r => bullet(`${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (${r.key})`)); }
-      if (D.overdue.length) { bullet(`**🔴 지연 ${D.overdue.length}**`); D.overdue.forEach(r => bullet(`${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (D+${r.overdueDays}, ${r.key})`)); }
-      if (D.metaTotal) { bullet(`**📝 메타 미기입 ${D.metaTotal}**`); D.metaRows.forEach(r => { const fs = Object.entries(r.fields).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(' · '); bullet(`${r.assignee}: ${r.count}건 (${fs})`); }); }
-      if (D.licenseSoon.length) { bullet(`**📄 라이선스 만료 임박 ${D.licenseSoon.length}**`); D.licenseSoon.forEach(r => bullet(`${r.customer} ${esc(r.product)} — D-${r.dday} (${r.expireDate})`)); }
-    }
-    if (D.patternLines.length) { sec('🏢 고객사 패턴'); D.patternLines.forEach(s => bullet(esc(s))); }
-    if (D.archItems.length) { sec('📚 자료실 업데이트'); D.archItems.forEach(a => bullet(`${a.icon} **${a.label}** · ${esc(a.title)}${a.ai ? ' (AI추천)' : ''}`)); }
+    body.push(tb(`⚡ 관리 필요 ${D.mgmtTotal}   ·   마감 ${D.dueToday.length}   ·   지연 ${D.overdue.length}   ·   미기입 ${D.metaTotal}   ·   만료임박 ${D.licenseSoon.length}`, { isSubtle: true, spacing: 'Small' }));
+    const bullet = (it, t, opt) => it.push(tb('• ' + t, Object.assign({ spacing: 'Small' }, opt || {})));
+    const section = (title, style, headColor, build) => { const it = [tb(title, { weight: 'Bolder', size: 'Medium', color: headColor || 'Accent' })]; build(it, bullet); body.push({ type: 'Container', style: style || 'emphasis', spacing: 'Medium', separator: true, items: it }); };
+    if (D.headline.length) section('🗞 헤드라인', 'emphasis', 'Accent', (it, b) => D.headline.forEach(s => b(it, esc(s))));
+    if (D.doneY.length) section(`📌 어제의 성과 (완료 ${D.doneY.length}건)`, 'good', 'Good', (it, b) => { D.doneY.slice(0, 6).forEach(r => b(it, `**${r.assignee}**: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)}`)); if (D.doneY.length > 6) b(it, `…외 ${D.doneY.length - 6}건`); });
+    if (D.mgmtTotal) section('🚨 지금 관리 필요', 'attention', 'Attention', (it, b) => {
+      if (D.dueToday.length) { it.push(tb(`⏰ 오늘 마감 ${D.dueToday.length}`, { weight: 'Bolder', spacing: 'Medium' })); D.dueToday.forEach(r => b(it, `${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (${r.key})`)); }
+      if (D.overdue.length) { it.push(tb(`🔴 지연 ${D.overdue.length}`, { weight: 'Bolder', spacing: 'Medium' })); D.overdue.forEach(r => b(it, `${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (D+${r.overdueDays}, ${r.key})`)); }
+      if (D.metaTotal) { it.push(tb(`📝 메타 미기입 ${D.metaTotal}`, { weight: 'Bolder', spacing: 'Medium' })); D.metaRows.forEach(r => { const fs = Object.entries(r.fields).sort((a, b2) => b2[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(' · '); b(it, `${r.assignee}: ${r.count}건 (${fs})`); }); }
+      if (D.licenseSoon.length) { it.push(tb(`📄 라이선스 만료 임박 ${D.licenseSoon.length}`, { weight: 'Bolder', spacing: 'Medium' })); D.licenseSoon.forEach(r => b(it, `${r.customer} ${esc(r.product)} — D-${r.dday} (${r.expireDate})`)); }
+    });
+    if (D.patternLines.length) section('🏢 고객사 패턴', 'emphasis', 'Accent', (it, b) => D.patternLines.forEach(s => b(it, esc(s))));
+    if (D.archItems.length) section('📚 자료실 업데이트', 'emphasis', 'Accent', (it, b) => D.archItems.forEach(a => b(it, `${a.icon} **${a.label}** · ${esc(a.title)}${a.ai ? ' (AI추천)' : ''}`)));
   }
   const base = String(hubUrl || 'https://engr-jira.github.io/engr-hub-dev/').replace(/\/+$/, '');
   const actions = [{ type: 'Action.OpenUrl', title: '🔗 HUB 열기', url: base + '/' }];
@@ -149,10 +151,10 @@ function buildDigestCard(D, hubUrl) {
 }
 
 // ── 다이제스트 카드를 Teams 채널로 전송 (TEAMS_WEBHOOK_URL 시크릿 설정 시에만; MJ의 Power Automate 웹훅 flow가 수신·게시) ──
-async function postDigestToTeams(env, hubUrl) {
+async function postDigestToTeams(env, hubUrl, notice) {
   if (!env.TEAMS_WEBHOOK_URL) return { ok: false, reason: 'no-webhook' };
   const D = await buildDigestData(env);
-  const card = buildDigestCard(D, hubUrl || 'https://engr-jira.github.io/engr-hub-dev/');
+  const card = buildDigestCard(D, hubUrl || 'https://engr-jira.github.io/engr-hub-dev/', notice);
   const resp = await fetch(env.TEAMS_WEBHOOK_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1290,7 +1292,7 @@ export default {
         if (!(await getFeatureFlags(env)).digest) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);
         const hubUrl = url.searchParams.get('hub') || 'https://engr-jira.github.io/engr-hub-dev/';
         let D; try { D = await buildDigestData(env); } catch (e) { return corsResponse({ ok: false, message: 'Jira 조회 실패: ' + e.message }, 502); }
-        const card = buildDigestCard(D, hubUrl);
+        const card = buildDigestCard(D, hubUrl, url.searchParams.get('notice') || '');
         await auditLog(env, 'teams-flow', 'DIGEST_GEN', { digDate: D.day, via: 'card', mgmt: D.mgmtTotal });
         // ?raw=1 → 카드 JSON만 그대로 반환 (Power Automate '적응형 카드 게시'에 body 통째로 매핑 가능)
         if (url.searchParams.get('raw') === '1') return corsResponse(card);
@@ -1305,8 +1307,10 @@ export default {
         if (!viaToken && !viaSession) return corsResponse({ ok: false, message: '권한이 없습니다(mj.park 또는 분석 토큰).' }, 401);
         if (!(await getFeatureFlags(env)).digest) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);
         if (!env.TEAMS_WEBHOOK_URL) return corsResponse({ ok: false, message: 'Teams 웹훅이 설정되지 않았습니다.' }, 400);
+        const pushBody = await request.json().catch(() => ({}));
+        const notice = (pushBody && typeof pushBody.notice === 'string') ? pushBody.notice.slice(0, 300) : '';
         const hubUrl = url.searchParams.get('hub') || 'https://engr-jira.github.io/engr-hub-dev/';
-        let r; try { r = await postDigestToTeams(env, hubUrl); } catch (e) { return corsResponse({ ok: false, message: '전송 실패: ' + e.message }, 502); }
+        let r; try { r = await postDigestToTeams(env, hubUrl, notice); } catch (e) { return corsResponse({ ok: false, message: '전송 실패: ' + e.message }, 502); }
         await auditLog(env, viaSession ? user : 'teams-flow', 'DIGEST_GEN', { via: 'teams-manual', status: r.status, digDate: r.day });
         return corsResponse({ ok: r.ok, status: r.status, day: r.day });
       }

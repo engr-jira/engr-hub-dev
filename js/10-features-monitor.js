@@ -406,6 +406,7 @@ function digestToTeamsHtml(text){
   String(text||'').split('\n').forEach(raw=>{
     const line=raw.replace(/\s+$/,'');
     if(!line.trim())return;
+    if(/^📢/.test(line)){ closeList(); rows.push(`<p><b>${esc(line)}</b></p><hr>`); return; }
     if(/^(📋|📰)/.test(line)){ closeList(); rows.push(`<h2>${esc(line)}</h2>`); return; }
     if(/^⚡/.test(line)){ closeList(); rows.push(`<p><b>${esc(line)}</b></p>`); return; }
     if(/^🎉/.test(line)){ closeList(); rows.push(`<p><b>${esc(line)}</b></p>`); return; }
@@ -418,9 +419,14 @@ function digestToTeamsHtml(text){
   closeList();
   return `<div>${rows.join('')}</div>`;
 }
+function digestFullText(){
+  const ta=document.getElementById('digest-text'), nt=document.getElementById('digest-notice');
+  const notice=((nt&&nt.value)||'').trim(), base=(ta&&ta.value)||'';
+  return (notice?('📢 '+notice+'\n\n'):'')+base;
+}
 function renderDigestPreview(){
-  const ta=document.getElementById('digest-text'), pv=document.getElementById('digest-preview');
-  if(pv&&ta)pv.innerHTML=digestToTeamsHtml(ta.value);
+  const pv=document.getElementById('digest-preview');
+  if(pv)pv.innerHTML=digestToTeamsHtml(digestFullText());
 }
 async function openDigest(){
   const modal=document.getElementById('digest-modal'); if(!modal)return;
@@ -434,8 +440,8 @@ async function openDigest(){
   }catch(e){ if(ta)ta.value=''; renderDigestPreview(); if(st){st.textContent='생성 실패: '+e.message;st.style.color='var(--danger)';} }
 }
 async function copyDigest(){
-  const ta=document.getElementById('digest-text'), st=document.getElementById('digest-status');
-  const text=((ta&&ta.value)||'').trim();
+  const st=document.getElementById('digest-status');
+  const text=digestFullText().trim();
   if(!text){ if(st){st.textContent='내용이 없습니다';st.style.color='var(--danger)';} return; }
   const html=digestToTeamsHtml(text);
   try{
@@ -450,11 +456,12 @@ async function copyDigest(){
   }
 }
 async function pushDigestToTeams(){
-  if(!confirm('지금 팀 데스크 채널에 다이제스트 카드를 게시합니다.\n계속할까요?'))return;
+  const notice=((document.getElementById('digest-notice')||{}).value||'').trim();
+  if(!confirm((notice?('📢 공지 포함: '+notice+'\n\n'):'')+'지금 팀 데스크 채널에 다이제스트 카드를 게시합니다.\n계속할까요?'))return;
   const st=document.getElementById('digest-status');
   if(st){st.textContent='🚀 발사 중...';st.style.color='';}
   try{
-    const r=await hubApi('/team/digest/push',{method:'POST'});
+    const r=await hubApi('/team/digest/push',{method:'POST',body:JSON.stringify({notice})});
     if(st){st.textContent=`✓ 채널에 게시됨 (status ${r.status||'ok'})`;st.style.color='var(--success)';}
     if(typeof toast==='function')toast('Teams 데스크 채널에 게시했습니다');
   }catch(e){
