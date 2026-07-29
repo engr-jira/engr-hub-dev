@@ -51,33 +51,32 @@ function renderIASubtabs(current){
   bar.innerHTML=html;
 }
 
-/* 고객사 환경/사용 솔루션 — 조회는 전 역할, 수정은 기술팀·관리자 */
+/* 고객사 환경/사용 솔루션 — 상단 메타 테이블 행(솔루션·환경 메모)에 인라인. 조회 전 역할, 수정 기술팀·관리자 */
 async function loadCustomerEnv(name){
-  const sec=document.getElementById('cust-env-sec');
-  if(!sec||!name)return;
+  const solEl=document.getElementById('cust-sol-val'), envEl=document.getElementById('cust-env-val');
+  if(!name||(!solEl&&!envEl))return;
   const canEdit=(typeof USER_ROLE!=='undefined'&&USER_ROLE!=='sales');
+  const editWrap=document.getElementById('cust-env-edit'); if(editWrap){editWrap.style.display='none';editWrap.innerHTML='';}
   try{
     const d=await hubApi('/customer/env?name='+encodeURIComponent(name));
     const e=d.env||{};
-    const view=`<div style="font-size:10px;color:var(--text3);font-weight:700;margin:12px 0 6px">🖥 사용 솔루션 / 환경 ${canEdit?`<button class="btn btn-ghost u-btn-xxs" style="margin-left:6px" onclick="editCustomerEnv(${jsAttr(name)})">✏️ 편집</button>`:''}</div>
-      <div id="cust-env-view" style="font-size:12px;line-height:1.65;background:rgba(255,255,255,.04);border-radius:8px;padding:9px 11px">
-        <div><b style="color:var(--text3);font-size:10.5px">솔루션</b> <span>${escapeHtml(e.solutions||'미입력')}</span></div>
-        <div style="margin-top:4px;white-space:pre-wrap"><b style="color:var(--text3);font-size:10.5px">환경 메모</b> ${escapeHtml(e.env_note||'미입력')}</div>
-        ${e.updated_by?`<div class="u-muted-10" style="margin-top:5px">최근 수정: ${escapeHtml(e.updated_by)} · ${e.updated_at?new Date(e.updated_at).toLocaleDateString('ko-KR'):''}</div>`:''}
-      </div>`;
-    sec.innerHTML=view;
-    sec.dataset.solutions=e.solutions||'';
-    sec.dataset.envNote=e.env_note||'';
-  }catch(err){sec.innerHTML=`<div class="u-muted-10">환경 정보 조회 실패: ${escapeHtml(err.message)}</div>`;}
+    if(editWrap){editWrap.dataset.solutions=e.solutions||'';editWrap.dataset.envNote=e.env_note||'';editWrap.dataset.cust=name;}
+    // 중복 제거: 솔루션이 입력돼 있으면 자동집계 '제품' 행 숨김(솔루션이 상위)
+    const prodRow=document.getElementById('cust-prod-row'); if(prodRow)prodRow.style.display=e.solutions?'none':'';
+    if(solEl)solEl.innerHTML=e.solutions?escapeHtml(e.solutions):'<span class="u-muted-11">미입력</span>';
+    if(envEl)envEl.innerHTML=`<span style="white-space:pre-wrap">${e.env_note?escapeHtml(e.env_note):'<span class="u-muted-11">미입력</span>'}</span>`
+      +(canEdit?` <button class="btn btn-ghost u-btn-xxs" style="margin-left:6px" onclick="editCustomerEnv(${jsAttr(name)})">✏️</button>`:'')
+      +(e.updated_by?`<div class="u-muted-10" style="margin-top:3px">최근 수정: ${escapeHtml(e.updated_by)}${e.updated_at?' · '+new Date(e.updated_at).toLocaleDateString('ko-KR'):''}</div>`:'');
+  }catch(err){ if(solEl)solEl.innerHTML='<span class="u-muted-10">조회 실패</span>'; if(envEl)envEl.innerHTML='<span class="u-muted-10">조회 실패</span>'; }
 }
 
 function editCustomerEnv(name){
-  const sec=document.getElementById('cust-env-sec');
-  if(!sec)return;
-  const sol=sec.dataset.solutions||'', note=sec.dataset.envNote||'';
-  sec.innerHTML=`<div style="font-size:10px;color:var(--text3);font-weight:700;margin:12px 0 6px">🖥 사용 솔루션 / 환경 편집</div>
+  const editWrap=document.getElementById('cust-env-edit'); if(!editWrap)return;
+  const sol=editWrap.dataset.solutions||'', note=editWrap.dataset.envNote||'';
+  editWrap.style.display=''; editWrap.innerHTML=`
+    <div style="font-size:10px;color:var(--text3);font-weight:700;margin:4px 0 6px">🖥 사용 솔루션 / 환경 편집</div>
     <input id="cust-env-sol" class="admin-input" style="margin-bottom:6px" placeholder="사용 솔루션 (예: DLP 16.0.2, SEP 14.3 RU9)" value="${escapeHtml(sol)}">
-    <textarea id="cust-env-note" class="admin-textarea" style="min-height:90px" placeholder="환경 메모 — 서버 구성·OS·망 분리·특이사항 등">${escapeHtml(note)}</textarea>
+    <textarea id="cust-env-note" class="admin-textarea" style="min-height:80px" placeholder="환경 메모 — 서버 구성·OS·망 분리·특이사항 등">${escapeHtml(note)}</textarea>
     <div style="display:flex;gap:6px;margin-top:6px">
       <button class="btn btn-primary u-btn-xs" onclick="saveCustomerEnv(${jsAttr(name)})">저장</button>
       <button class="btn btn-ghost u-btn-xs" onclick="loadCustomerEnv(${jsAttr(name)})">취소</button>

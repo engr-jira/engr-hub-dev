@@ -228,6 +228,8 @@ function renderCases(){
       </div>`;
     }).join(''):'<div class="empty">조건에 맞는 케이스가 없습니다.</div>');
   renderCompactPager('case-pager',PAGE_STATE.cases,pages,'setCasePage');
+  // 필터↔상세 정합: 선택된 케이스가 현재 필터 결과에 없으면 상세 초기화
+  if(CASE_SEL && !arr.some(c=>c.key===CASE_SEL.key)){ CASE_SEL=null; const cr=document.getElementById('case-right'); if(cr)cr.innerHTML='<div class="rpanel"><div class="rp-empty"><p class="u-muted-13">케이스를 선택하세요</p></div></div>'; }
   renderCaseRight(false);
 }
 // ── 페이지 방문 비콘 : 세션당 페이지 1회만 전송(열람형 기능 사용 측정용) ──

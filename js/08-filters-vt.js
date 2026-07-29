@@ -468,6 +468,8 @@ function renderIssues(){
     (pageItems.length?pageItems.map(issueRowHTML).join(''):'<div class="empty">조건에 맞는 일반 이슈가 없습니다.</div>');
   renderCompactPager('page-nav',PAGE,pages,'setIssuePage');
   renderIssueFilterTags();
+  // 필터↔상세 정합: 선택된 이슈가 현재 필터 결과에 없으면 상세 초기화(리스트와 불일치 방지)
+  if(SEL && !arr.some(i=>i.key===SEL.key)){ SEL=null; const rp=document.getElementById('right-panel'); if(rp)rp.innerHTML='<div class="rpanel"><div class="rp-empty"><p class="u-muted-13">이슈를 선택하세요</p></div></div>'; }
   renderRightPanel(false);
 }
 function renderCases_legacy_v4(){
@@ -543,20 +545,22 @@ function renderCustomerRight(){
   const row=(i,kind)=>`<div class="customer-work-row" onclick="${kind==='case'?`v154GoCaseExact('${escapeAttr(i.key)}')`:`v154GoIssueExact('${escapeAttr(i.key)}')`}"><div><div class="k">${escapeHtml(kind==='case'?(i.caseNum||getCasePrefixNum(i.title)||i.key):i.key)}</div><div class="t">${escapeHtml(cleanTitle(i.title||i.summary||''))}</div></div><div class="m">${escapeHtml(i.status||'')} · ${fd(i.date||i.created)}</div></div>`;
   right.innerHTML=`<div class="rpanel">
     <div style="font-size:16px;font-weight:800;color:var(--text-strong);margin-bottom:14px">${escapeHtml(c.name)}${(typeof isOwnerInactive==='function'&&isOwnerInactive(c.name))?` <span class="badge" style="font-size:10px;vertical-align:middle;background:color-mix(in srgb,var(--danger) 15%,transparent);color:var(--danger)">계약종료</span>`:''}</div>
-    <div class="rp-meta">
-      <div class="rp-row"><span>제품</span><span style="flex-wrap:wrap;display:flex;gap:4px">${[...(c.products||[])].map(p=>`<span class="badge" style="background:${(LC_MAP[p]||'#A2917A')}22;color:${(LC_MAP[p]||'#A2917A')}">${escapeHtml(p)}</span>`).join('')||'-'}</span></div>
-      <div class="rp-row"><span>영업 담당자</span><span>${(typeof salesOwnerOf==='function'&&salesOwnerOf(c.name))?escapeHtml(salesOwnerOf(c.name)):'<span class="u-muted-11">미지정</span>'}</span></div>
-      ${(typeof ownerOf==='function'&&ownerOf(c.name))?`<div class="rp-row"><span>정/부 담당</span><span style="display:flex;flex-wrap:wrap;gap:4px">${ownerMetaHtml(c.name)}</span></div>`:''}
-      <div class="rp-row"><span>일반 이슈</span><span>${general.length}건 (완료 ${done.length} / 미완료 ${open.length})</span></div>
-      <div class="rp-row"><span>케이스</span><span>${cases.length}건 (완료 ${caseDone.length} / 미완료 ${caseOpen.length})</span></div>
-      <div class="rp-row"><span>일반 이슈 완료율</span><span style="color:${rate>=80?'var(--success)':rate>=50?'var(--warn)':'var(--danger)'};font-weight:700">${rate}%</span></div>
-      <div class="rp-row"><span>라이선스</span><span>${eosForCust.length}건${nearLic!==null?` · 최단 <b style="color:${nearLic<0?'var(--danger)':nearLic<=30?'var(--warn)':'var(--success)'}">${nearLic<0?'만료':'D-'+nearLic}</b>`:''}</span></div>
+    <div class="rp-meta two-col">
+      <div class="rp-row rp-span2" id="cust-prod-row"><span>제품</span><span style="flex-wrap:wrap;display:flex;gap:4px">${[...(c.products||[])].map(p=>`<span class="badge" style="background:${(LC_MAP[p]||'#A2917A')}22;color:${(LC_MAP[p]||'#A2917A')}">${escapeHtml(p)}</span>`).join('')||'-'}</span></div>
+      <div class="rp-row"><span>영업 담당</span><span>${(typeof salesOwnerOf==='function'&&salesOwnerOf(c.name))?escapeHtml(salesOwnerOf(c.name)):'<span class="u-muted-11">미지정</span>'}</span></div>
+      <div class="rp-row"><span>정/부 담당</span><span style="display:flex;flex-wrap:wrap;gap:4px">${(typeof ownerOf==='function'&&ownerOf(c.name))?ownerMetaHtml(c.name):'<span class="u-muted-11">미지정</span>'}</span></div>
+      <div class="rp-row"><span>일반 이슈</span><span>${general.length} · 완료 ${done.length}/미완 ${open.length}</span></div>
+      <div class="rp-row"><span>케이스</span><span>${cases.length} · 완료 ${caseDone.length}/미완 ${caseOpen.length}</span></div>
+      <div class="rp-row"><span>완료율</span><span style="color:${rate>=80?'var(--success)':rate>=50?'var(--warn)':'var(--danger)'};font-weight:700">${rate}%</span></div>
+      <div class="rp-row"><span>라이선스</span><span>${eosForCust.length}건${nearLic!==null?` · <b style="color:${nearLic<0?'var(--danger)':nearLic<=30?'var(--warn)':'var(--success)'}">${nearLic<0?'만료':'D-'+nearLic}</b>`:''}</span></div>
+      <div class="rp-row rp-span2"><span>솔루션</span><span id="cust-sol-val"><span class="u-muted-11">불러오는 중…</span></span></div>
+      <div class="rp-row rp-span2"><span>환경 메모</span><span id="cust-env-val"><span class="u-muted-11">불러오는 중…</span></span></div>
     </div>
+    <div id="cust-env-edit" style="display:none;margin:-4px 0 12px"></div>
     <div class="jump-row"><button class="btn btn-ghost" onclick="setIssueNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사: '+c.name)}}})">일반 이슈 보기</button><button class="btn btn-ghost" onclick="setCaseNavigationFilter({preset:{kind:'customer',customer:${jsAttr(c.name)},label:${jsAttr('고객사 케이스: '+c.name)}}})">케이스 보기</button></div>
     <div style="font-size:10px;color:var(--text3);font-weight:700;margin:12px 0 8px;text-transform:uppercase">최근 일반 이슈</div>${recent.map(i=>row(i,'issue')).join('')||'<div class="empty">최근 일반 이슈 없음</div>'}
     <div class="u-fs10px-ctext3-fw700-m14px08-ttupperc">최근 케이스</div>${recentCases.map(i=>row(i,'case')).join('')||'<div class="empty">최근 케이스 없음</div>'}
-    <div class="u-fs10px-ctext3-fw700-m14px08-ttupperc">🔑 라이선스</div>${eosForCust.length?eosForCust.map(e=>`<div class="customer-work-row" onclick="showPage('eos',document.getElementById('nav-eos'))"><div><div class="k">${escapeHtml(e.productDesc||e.product||'-')}</div><div class="t">${escapeHtml(e.serial||e.siteId||'')}</div></div><div class="m">${e.expireDate?'~ '+escapeHtml(e.expireDate):'-'}</div></div>`).join(''):'<div class="empty">등록된 라이선스 없음</div>'}
-    <div id="cust-env-sec"></div>
+    ${eosForCust.length?`<div class="u-fs10px-ctext3-fw700-m14px08-ttupperc">🔑 라이선스</div>${eosForCust.map(e=>`<div class="customer-work-row" onclick="showPage('eos',document.getElementById('nav-eos'))"><div><div class="k">${escapeHtml(e.productDesc||e.product||'-')}</div><div class="t">${escapeHtml(e.serial||e.siteId||'')}</div></div><div class="m">${e.expireDate?'~ '+escapeHtml(e.expireDate):'-'}</div></div>`).join('')}`:''}
   </div>`;
   if(typeof loadCustomerEnv==='function')loadCustomerEnv(c.name);
 }

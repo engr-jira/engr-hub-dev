@@ -178,6 +178,8 @@ function renderCustomers(){
   if(prod)custs=custs.filter(c=>c.products.has(prod));
   if(ass)custs=custs.filter(c=>c.assignees.has(ass));
   if(q)custs=custs.filter(c=>qMatch(q,[c.name,[...c.products].join(" "),[...c.assignees].join(" ")]));
+  // 필터↔상세 정합: 선택 고객사가 필터 결과에 없으면 상세 초기화(리스트와 불일치 방지)
+  if(CUST_SEL && !custs.some(c=>c.name===CUST_SEL.name)){ CUST_SEL=null; if(typeof renderCustomerRight==='function')renderCustomerRight(); }
   const wrap=document.getElementById("cust-list");
   const pageCusts=sliceForPage(custs,'customers');
   document.getElementById("cust-count").textContent=pageCountText('customers',custs.length,'개');
