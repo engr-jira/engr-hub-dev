@@ -1279,6 +1279,8 @@ export default {
         let D; try { D = await buildDigestData(env); } catch (e) { return corsResponse({ ok: false, message: 'Jira 조회 실패: ' + e.message }, 502); }
         const card = buildDigestCard(D, hubUrl);
         await auditLog(env, 'teams-flow', 'DIGEST_GEN', { digDate: D.day, via: 'card', mgmt: D.mgmtTotal });
+        // ?raw=1 → 카드 JSON만 그대로 반환 (Power Automate '적응형 카드 게시'에 body 통째로 매핑 가능)
+        if (url.searchParams.get('raw') === '1') return corsResponse(card);
         return corsResponse({ ok: true, card, attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: card }] });
       }
 
