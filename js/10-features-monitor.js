@@ -421,7 +421,8 @@ function digestToTeamsHtml(text){
 }
 function digestFullText(){
   const ta=document.getElementById('digest-text'), nt=document.getElementById('digest-notice');
-  const notice=((nt&&nt.value)||'').trim(), base=(ta&&ta.value)||'';
+  const notice=((nt&&nt.value)||'').split('\n').map(s=>s.trim()).filter(Boolean).join(' / ');
+  const base=(ta&&ta.value)||'';
   return (notice?('📢 '+notice+'\n\n'):'')+base;
 }
 function renderDigestPreview(){

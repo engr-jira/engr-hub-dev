@@ -575,9 +575,11 @@ input[type="date"]::-webkit-calendar-picker-indicator{opacity:.01;cursor:pointer
 .top-clock .tc-ic{width:15px;height:15px;align-self:center;color:var(--accent3);opacity:.85;flex:0 0 15px}
 .top-clock .tc-date{font-size:13.5px;font-weight:700;color:var(--text2);white-space:nowrap;letter-spacing:.2px}
 .top-clock .tc-time{font-size:19px;font-weight:800;color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:.6px;white-space:nowrap}
+#top-range{align-self:stretch}
+#top-range .tc-time{font-size:13.5px;font-weight:700;letter-spacing:.2px}
 /* 상단 그룹 메뉴 */
 .top-menu{position:relative}
-.top-menu-btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--text);font-family:inherit;font-size:12.5px;font-weight:800;cursor:pointer;transition:background .15s,border-color .15s}
+.top-menu-btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--text);font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;transition:background .15s,border-color .15s}
 .top-menu-btn:hover{background:rgba(239,131,84,.18);border-color:rgba(239,131,84,.42)}
 .top-menu-btn .tmb-av{width:17px;height:17px;opacity:.8;flex:0 0 17px}
 .top-menu-btn .tmb-user{white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis}
@@ -1851,7 +1853,7 @@ body.is-sales #nav-sales{display:flex!important}
             <h3 style="margin:0;font-size:16px">📤 팀 다이제스트 <span class="u-muted-11" style="font-weight:400">— 미리보기·수정 후 복사 → Teams 붙여넣기</span></h3>
             <button class="btn btn-ghost u-btn-xs" onclick="document.getElementById('digest-modal').style.display='none'">닫기</button>
           </div>
-          <input id="digest-notice" oninput="renderDigestPreview()" maxlength="300" placeholder="📢 공지/한마디 (선택) — 카드·복사 맨 위에 강조 표시" style="width:100%;box-sizing:border-box;margin-bottom:10px;background:var(--card2);border:1px solid var(--accent);border-radius:10px;color:var(--text);padding:9px 12px;font-size:12.5px">
+          <textarea id="digest-notice" oninput="renderDigestPreview()" maxlength="500" rows="2" placeholder="📢 공지/한마디 (선택, 여러 줄 가능) — 카드 맨 위에 강조 표시" style="width:100%;box-sizing:border-box;margin-bottom:10px;background:var(--card2);border:1px solid var(--accent);border-radius:10px;color:var(--text);padding:9px 12px;font-size:12.5px;resize:vertical;font-family:inherit;line-height:1.5"></textarea>
           <div class="u-muted-10" style="margin-bottom:4px">✏️ 편집 — 수정하면 아래 미리보기·복사에 바로 반영됩니다</div>
           <textarea id="digest-text" spellcheck="false" oninput="renderDigestPreview()" style="width:100%;min-height:170px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 13px;font-family:var(--mono,monospace);font-size:12.5px;line-height:1.55;box-sizing:border-box;resize:vertical" placeholder="생성 중..."></textarea>
           <div class="u-muted-10" style="margin:12px 0 5px">👁 미리보기 — Teams에 붙이면 이렇게 보입니다</div>

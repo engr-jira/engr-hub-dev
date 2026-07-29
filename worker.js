@@ -121,9 +121,14 @@ async function buildDigestData(env) {
 function buildDigestCard(D, hubUrl, notice) {
   const esc = s => String(s || '').replace(/\s+/g, ' ').trim();
   const tb = (text, opt) => Object.assign({ type: 'TextBlock', text, wrap: true }, opt || {});
+  const clip = (s, n) => { const x = esc(s); return x.length > n ? x.slice(0, n - 1) + '…' : x; };
   const body = [];
   body.push({ type: 'Container', style: 'accent', bleed: true, items: [tb(`📰 보안기술팀 브리핑 — ${D.dateLabel}`, { weight: 'Bolder', size: 'Large' })] });
-  if (notice && String(notice).trim()) body.push({ type: 'Container', style: 'warning', spacing: 'Small', items: [tb('📢 ' + esc(notice), { weight: 'Bolder' })] });
+  if (notice && String(notice).trim()) {
+    const nlines = String(notice).split('\n').map(x => x.trim()).filter(Boolean);
+    const nitems = nlines.map((ln, i) => tb((i === 0 ? '📢 ' : '• ') + esc(ln), Object.assign({ weight: 'Bolder' }, i ? { spacing: 'Small' } : {})));
+    body.push({ type: 'Container', style: 'warning', spacing: 'Small', items: nitems });
+  }
   const empty = !D.mgmtTotal && !D.headline.length && !D.patternLines.length && !D.archItems.length && !D.doneY.length;
   if (empty) {
     body.push({ type: 'Container', style: 'good', spacing: 'Medium', items: [tb('🎉 오늘은 관리 필요·신규 소식이 없습니다 — 깔끔한 하루 되세요!', { weight: 'Bolder', color: 'Good' })] });
@@ -131,23 +136,24 @@ function buildDigestCard(D, hubUrl, notice) {
     body.push(tb(`⚡ 관리 필요 ${D.mgmtTotal}   ·   마감 ${D.dueToday.length}   ·   지연 ${D.overdue.length}   ·   미기입 ${D.metaTotal}   ·   만료임박 ${D.licenseSoon.length}`, { isSubtle: true, spacing: 'Small' }));
     const bullet = (it, t, opt) => it.push(tb('• ' + t, Object.assign({ spacing: 'Small' }, opt || {})));
     const section = (title, style, headColor, build) => { const it = [tb(title, { weight: 'Bolder', size: 'Medium', color: headColor || 'Accent' })]; build(it, bullet); body.push({ type: 'Container', style: style || 'emphasis', spacing: 'Medium', separator: true, items: it }); };
-    if (D.headline.length) section('🗞 헤드라인', 'emphasis', 'Accent', (it, b) => D.headline.forEach(s => b(it, esc(s))));
-    if (D.doneY.length) section(`📌 어제의 성과 (완료 ${D.doneY.length}건)`, 'good', 'Good', (it, b) => { D.doneY.slice(0, 6).forEach(r => b(it, `**${r.assignee}**: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)}`)); if (D.doneY.length > 6) b(it, `…외 ${D.doneY.length - 6}건`); });
+    const more = (it, n) => { if (n > 0) it.push(tb(`…외 ${n}건 → HUB에서`, { isSubtle: true, size: 'Small', spacing: 'Small' })); };
+    if (D.headline.length) section('🗞 헤드라인', 'emphasis', 'Accent', (it, b) => D.headline.slice(0, 2).forEach(s => b(it, clip(s, 120))));
+    if (D.doneY.length) section(`📌 어제의 성과 (완료 ${D.doneY.length}건)`, 'good', 'Good', (it, b) => { D.doneY.slice(0, 5).forEach(r => b(it, `**${r.assignee}**: ${r.customer ? '[' + r.customer + '] ' : ''}${clip(r.summary, 48)}`)); more(it, D.doneY.length - 5); });
     if (D.mgmtTotal) section('🚨 지금 관리 필요', 'attention', 'Attention', (it, b) => {
-      if (D.dueToday.length) { it.push(tb(`⏰ 오늘 마감 ${D.dueToday.length}`, { weight: 'Bolder', spacing: 'Medium' })); D.dueToday.forEach(r => b(it, `${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (${r.key})`)); }
-      if (D.overdue.length) { it.push(tb(`🔴 지연 ${D.overdue.length}`, { weight: 'Bolder', spacing: 'Medium' })); D.overdue.forEach(r => b(it, `${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${esc(r.summary)} (D+${r.overdueDays}, ${r.key})`)); }
+      if (D.dueToday.length) { it.push(tb(`⏰ 오늘 마감 ${D.dueToday.length}`, { weight: 'Bolder', spacing: 'Medium' })); D.dueToday.slice(0, 6).forEach(r => b(it, `${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${clip(r.summary, 50)} (${r.key})`)); more(it, D.dueToday.length - 6); }
+      if (D.overdue.length) { it.push(tb(`🔴 지연 ${D.overdue.length}`, { weight: 'Bolder', spacing: 'Medium' })); D.overdue.slice(0, 6).forEach(r => b(it, `${r.assignee}: ${r.customer ? '[' + r.customer + '] ' : ''}${clip(r.summary, 50)} (D+${r.overdueDays}, ${r.key})`)); more(it, D.overdue.length - 6); }
       if (D.metaTotal) { it.push(tb(`📝 메타 미기입 ${D.metaTotal}`, { weight: 'Bolder', spacing: 'Medium' })); D.metaRows.forEach(r => { const fs = Object.entries(r.fields).sort((a, b2) => b2[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(' · '); b(it, `${r.assignee}: ${r.count}건 (${fs})`); }); }
-      if (D.licenseSoon.length) { it.push(tb(`📄 라이선스 만료 임박 ${D.licenseSoon.length}`, { weight: 'Bolder', spacing: 'Medium' })); D.licenseSoon.forEach(r => b(it, `${r.customer} ${esc(r.product)} — D-${r.dday} (${r.expireDate})`)); }
+      if (D.licenseSoon.length) { it.push(tb(`📄 라이선스 만료 임박 ${D.licenseSoon.length}`, { weight: 'Bolder', spacing: 'Medium' })); D.licenseSoon.slice(0, 6).forEach(r => b(it, `${r.customer} ${clip(r.product, 38)} — D-${r.dday}`)); more(it, D.licenseSoon.length - 6); }
     });
-    if (D.patternLines.length) section('🏢 고객사 패턴', 'emphasis', 'Accent', (it, b) => D.patternLines.forEach(s => b(it, esc(s))));
-    if (D.archItems.length) section('📚 자료실 업데이트', 'emphasis', 'Accent', (it, b) => D.archItems.forEach(a => b(it, `${a.icon} **${a.label}** · ${esc(a.title)}${a.ai ? ' (AI추천)' : ''}`)));
+    if (D.patternLines.length) section('🏢 고객사 패턴', 'emphasis', 'Accent', (it, b) => D.patternLines.slice(0, 2).forEach(s => b(it, clip(s, 120))));
+    if (D.archItems.length) section('📚 자료실 업데이트', 'emphasis', 'Accent', (it, b) => { D.archItems.slice(0, 5).forEach(a => b(it, `${a.icon} **${a.label}** · ${clip(a.title, 48)}${a.ai ? ' (AI추천)' : ''}`)); more(it, D.archItems.length - 5); });
   }
   const base = String(hubUrl || 'https://engr-jira.github.io/engr-hub-dev/').replace(/\/+$/, '');
   const actions = [{ type: 'Action.OpenUrl', title: '🔗 HUB 열기', url: base + '/' }];
   if (D.mgmtTotal) actions.push({ type: 'Action.OpenUrl', title: '🚨 이슈 관리', url: base + '/?go=issues' });
   if (D.licenseSoon.length) actions.push({ type: 'Action.OpenUrl', title: '📄 라이선스', url: base + '/?go=eos' });
   actions.push({ type: 'Action.OpenUrl', title: '📚 자료실', url: base + '/?go=links' });
-  return { type: 'AdaptiveCard', $schema: 'http://adaptivecards.io/schemas/adaptive-card.json', version: '1.4', body, actions };
+  return { type: 'AdaptiveCard', $schema: 'http://adaptivecards.io/schemas/adaptive-card.json', version: '1.4', body, actions, msteams: { width: 'Full' } };
 }
 
 // ── 다이제스트 카드를 Teams 채널로 전송 (TEAMS_WEBHOOK_URL 시크릿 설정 시에만; MJ의 Power Automate 웹훅 flow가 수신·게시) ──
@@ -1308,7 +1314,7 @@ export default {
         if (!(await getFeatureFlags(env)).digest) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);
         if (!env.TEAMS_WEBHOOK_URL) return corsResponse({ ok: false, message: 'Teams 웹훅이 설정되지 않았습니다.' }, 400);
         const pushBody = await request.json().catch(() => ({}));
-        const notice = (pushBody && typeof pushBody.notice === 'string') ? pushBody.notice.slice(0, 300) : '';
+        const notice = (pushBody && typeof pushBody.notice === 'string') ? pushBody.notice.slice(0, 500) : '';
         const hubUrl = url.searchParams.get('hub') || 'https://engr-jira.github.io/engr-hub-dev/';
         let r; try { r = await postDigestToTeams(env, hubUrl, notice); } catch (e) { return corsResponse({ ok: false, message: '전송 실패: ' + e.message }, 502); }
         await auditLog(env, viaSession ? user : 'teams-flow', 'DIGEST_GEN', { via: 'teams-manual', status: r.status, digDate: r.day });
@@ -1356,6 +1362,8 @@ export default {
             await env.DB.prepare("CREATE TABLE IF NOT EXISTS analysis_request (issue_key TEXT PRIMARY KEY, requested_at INTEGER, requested_by TEXT)").run();
             for (const it of (Array.isArray(body.issues) ? body.issues : [])) { if (it && it.key) await env.DB.prepare('DELETE FROM analysis_request WHERE issue_key = ?').bind(it.key).run(); }
           } catch (_) {}
+          // 실제 마지막 분석(증분) 실행 시각 기록 — team 갱신이 없어도 매 PUT마다
+          try { await env.DB.prepare("CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value TEXT)").run(); await env.DB.prepare("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('analysis_last_run', ?)").bind(String(builtAt)).run(); } catch (_) {}
           await auditLog(env, 'analysis-agent', 'ANALYSIS_RUN', { issues: issueN, hasTeam: !!body.team, day });
           return corsResponse({ ok: true, issues: issueN, team: !!body.team });
         } catch (e) {
@@ -1379,7 +1387,9 @@ export default {
         } catch (_) {}
         let archive = null;
         try { archive = await buildArchiveUpdates(env, 7); } catch (_) {}
-        return corsResponse({ ok: true, built_at: builtAt, team, issueKeys: keys, archive });
+        let lastRun = null;
+        try { const lr = await env.DB.prepare("SELECT value FROM app_settings WHERE key='analysis_last_run'").first(); if (lr && lr.value) lastRun = Number(lr.value); } catch (_) {}
+        return corsResponse({ ok: true, built_at: builtAt, last_run: lastRun, team, issueKeys: keys, archive });
       }
       if (path === '/analysis/resp' && request.method === 'GET') {
         if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);

@@ -281,7 +281,7 @@ function renderAIBriefing(d){
   if(t.focus)secs.push(`<div class="chart-card"><h4>🚨 지금 관리 필요</h4>${briefList(t.focus,'line','#E06A63')}</div>`);
   if(t.patterns)secs.push(`<div class="chart-card"><h4>🏢 고객사 이슈·응답 패턴</h4>${briefList(t.patterns,'sent','#9F6BB5')}</div>`);
   if(t.monthly||hasArch)secs.push(`<div class="chart-card"><h4>📰 월간 헤드라인</h4>${t.monthly?briefList(t.monthly,'sent','#3FA3C4'):''}${archiveBriefBlock(arch)}</div>`);
-  wrap.innerHTML=`<div class="u-fs11px-ctext3-mb8px">🕐 ${fmtBuiltAt(d.built_at)} 기준 · 우리팀 보안 브리핑 · 스케줄 분석 일 2회(07:00/15:30) · 이슈 ${(d.issueKeys||[]).length}건 분석 · 이슈키 클릭 시 이동</div><div class="chart-grid u-gridtemplatecolumns-repeatautofi">${secs.join('')||'<div class="chart-card"><div class="u-fs12px-ctext3">팀 리포트가 아직 없습니다</div></div>'}</div>`;
+  wrap.innerHTML=`<div class="u-fs11px-ctext3-mb8px">🕐 ${fmtBuiltAt(d.last_run||d.built_at)} 최근 분석 · 우리팀 보안 브리핑 · 매일 오전 자동 분석 · 이슈 ${(d.issueKeys||[]).length}건 · 이슈키 클릭 시 이동</div><div class="chart-grid u-gridtemplatecolumns-repeatautofi">${secs.join('')||'<div class="chart-card"><div class="u-fs12px-ctext3">팀 리포트가 아직 없습니다</div></div>'}</div>`;
 }
 async function renderIssueAnalysis(key,secId){
   const sec=document.getElementById(secId||'ai-analysis-sec'); if(!sec||!key)return;
