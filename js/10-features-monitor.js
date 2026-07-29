@@ -398,9 +398,29 @@ function digestToHtml(text){
   });
   return `<div style="font-family:'Segoe UI',Roboto,system-ui,sans-serif;max-width:580px;border:1px solid #E7DFD2;border-left:4px solid ${A};border-radius:12px;padding:16px 20px;background:#FFFFFF;color:#2A2420">${rows.join('')}</div>`;
 }
+function digestToTeamsHtml(text){
+  // Teams 입력창은 인라인 CSS(색·배경·테두리)를 벗겨내므로, 붙여넣기 때 보존되는 시맨틱 태그(h2/h3/ul/li/hr/b/a)로 조립
+  const esc=s=>escapeHtml(String(s||''));
+  const rows=[]; let inList=false;
+  const closeList=()=>{ if(inList){ rows.push('</ul>'); inList=false; } };
+  String(text||'').split('\n').forEach(raw=>{
+    const line=raw.replace(/\s+$/,'');
+    if(!line.trim())return;
+    if(/^(📋|📰)/.test(line)){ closeList(); rows.push(`<h2>${esc(line)}</h2>`); return; }
+    if(/^⚡/.test(line)){ closeList(); rows.push(`<p><b>${esc(line)}</b></p>`); return; }
+    if(/^🎉/.test(line)){ closeList(); rows.push(`<p><b>${esc(line)}</b></p>`); return; }
+    if(/^🔗/.test(line)){ closeList(); const m=line.match(/(https?:\/\/[^\s]+)/); const url=m?m[1]:'#'; rows.push(`<p><a href="${esc(url)}"><b>👉 HUB에서 전체 보기</b></a></p>`); return; }
+    if(/^(🗞|🚨|🏢|📚|📌)/.test(line)){ closeList(); rows.push('<hr><h3>'+esc(line)+'</h3>'); return; }
+    if(/^(⏰|🔴|📄|📝)/.test(line)){ closeList(); rows.push(`<p><b>${esc(line)}</b></p>`); return; }
+    if(/^·/.test(line)){ if(!inList){ rows.push('<ul>'); inList=true; } let b=esc(line.replace(/^·\s*/,'')); b=b.replace(/(\[[^\]]+\])/,'<b>$1</b>'); rows.push(`<li>${b}</li>`); return; }
+    closeList(); rows.push(`<p>${esc(line)}</p>`);
+  });
+  closeList();
+  return `<div>${rows.join('')}</div>`;
+}
 function renderDigestPreview(){
   const ta=document.getElementById('digest-text'), pv=document.getElementById('digest-preview');
-  if(pv&&ta)pv.innerHTML=digestToHtml(ta.value);
+  if(pv&&ta)pv.innerHTML=digestToTeamsHtml(ta.value);
 }
 async function openDigest(){
   const modal=document.getElementById('digest-modal'); if(!modal)return;
@@ -417,7 +437,7 @@ async function copyDigest(){
   const ta=document.getElementById('digest-text'), st=document.getElementById('digest-status');
   const text=((ta&&ta.value)||'').trim();
   if(!text){ if(st){st.textContent='내용이 없습니다';st.style.color='var(--danger)';} return; }
-  const html=digestToHtml(text);
+  const html=digestToTeamsHtml(text);
   try{
     if(navigator.clipboard&&window.ClipboardItem){
       await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([html],{type:'text/html'}),'text/plain':new Blob([text],{type:'text/plain'})})]);
