@@ -358,7 +358,7 @@ async function loadSettings(){
 }
 // ── 기능 사용 현황(컷 판단용) : audit_log 집계 렌더 ──
 const USAGE_FEATURE_MAP={AI_CALL:'로그/이슈 AI분석',AI_DEBUG:'AI 디버그',VT_LOOKUP:'VirusTotal 조회',VT_UPLOAD:'VirusTotal 파일',MON_VIEW:'팀 업무 모니터',HIST_VIEW:'고객사 이력',MATRIX_ADD:'호환성 매트릭스',MATRIX_UPDATE:'호환성 매트릭스',MATRIX_DELETE:'호환성 매트릭스',MATRIX_CONFIRM:'호환성 매트릭스',LINK_ADD:'업무 링크',LINK_UPDATE:'업무 링크',LINK_DELETE:'업무 링크',KNOWLEDGE_ADD:'팀 노하우',KNOWLEDGE_UPDATE:'팀 노하우',KNOWLEDGE_DELETE:'팀 노하우',EOS_ADD:'라이선스',EOS_ADD_BULK:'라이선스',EOS_UPDATE:'라이선스',EOS_DELETE:'라이선스',PUSH_SEND:'푸시 발송',PUSH_SETTINGS_CHANGE:'푸시 설정',LOGIN:'로그인',PIN_CHANGE:'PIN 변경',PIN_RESET:'PIN 초기화'};
-const USAGE_PAGE_LABEL={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',monitor:'팀 업무 모니터',quiz:'주간 퀴즈'};
+const USAGE_PAGE_LABEL={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',eos:'라이선스',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',monitor:'팀 업무 모니터',quiz:'주간 퀴즈',quizadmin:'퀴즈 관리'};
 async function loadUsageStats(){
   const wrap=document.getElementById('usage-stats-wrap'); if(!wrap)return;
   const days=parseInt((document.getElementById('usage-days')||{}).value||'90',10)||90;

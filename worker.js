@@ -1394,7 +1394,9 @@ export default {
 
       // ══ 🧠 팀 퀴즈 (P1) — 문제은행·주간출제(관리자) / 응시·채점·순위(세션) ══
       if (path === '/quiz/questions' && request.method === 'GET') {
-        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 접근할 수 있습니다.' }, 403);
+        const qTok = request.headers.get('x-analysis-token') || '';
+        const qViaEngine = env.ANALYSIS_WRITE_TOKEN && qTok === env.ANALYSIS_WRITE_TOKEN;   // 분석 엔진(초안 중복·수량 확인용)
+        if (!qViaEngine && (!hasSession || !await isAdmin(env, user))) return corsResponse({ ok: false, message: '관리자만 접근할 수 있습니다.' }, 403);
         await quizEnsureTables(env);
         const prod = url.searchParams.get('product') || '', st = url.searchParams.get('status') || '';
         let sql = 'SELECT * FROM quiz_question', cond = [], bind = [];
@@ -1406,9 +1408,16 @@ export default {
         return corsResponse({ ok: true, items: (r.results || []) });
       }
       if (path === '/quiz/question' && (request.method === 'POST' || request.method === 'PUT')) {
-        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 접근할 수 있습니다.' }, 403);
+        const qTok = request.headers.get('x-analysis-token') || '';
+        const qViaEngine = request.method === 'POST' && env.ANALYSIS_WRITE_TOKEN && qTok === env.ANALYSIS_WRITE_TOKEN;   // 엔진 자동 초안(POST만, 수정 불가)
+        if (!qViaEngine && (!hasSession || !await isAdmin(env, user))) return corsResponse({ ok: false, message: '관리자만 접근할 수 있습니다.' }, 403);
         await quizEnsureTables(env);
         const b = await request.json().catch(() => ({}));
+        if (qViaEngine) {
+          b.status = 'draft';   // 엔진 초안은 무조건 초안 — 승인은 관리자만
+          const cnt = await env.DB.prepare("SELECT COUNT(*) AS n FROM quiz_question WHERE status='draft' AND created_by='engine'").first();
+          if (Number(cnt && cnt.n) >= 30) return corsResponse({ ok: false, message: '엔진 초안 상한(30) 도달 — 관리자 검토 후 재적재' }, 429);
+        }
         const now = Date.now();
         const F = { product: String(b.product || '').slice(0, 20), type: ['mc', 'ox', 'short'].includes(b.type) ? b.type : 'mc', difficulty: Math.max(1, Math.min(3, parseInt(b.difficulty) || 1)), question: String(b.question || '').slice(0, 2000), choices: JSON.stringify(Array.isArray(b.choices) ? b.choices.slice(0, 8) : []), answer: String(b.answer || '').slice(0, 500), accepts: JSON.stringify(Array.isArray(b.accepts) ? b.accepts.slice(0, 20) : []), keywords: JSON.stringify(Array.isArray(b.keywords) ? b.keywords.slice(0, 20) : []), explanation: String(b.explanation || '').slice(0, 3000), source: String(b.source || '').slice(0, 300), tags: String(b.tags || '').slice(0, 200), status: ['draft', 'approved', 'archived'].includes(b.status) ? b.status : 'draft', credit: String(b.credit || '').slice(0, 60) };
         if (request.method === 'PUT' && b.id) {
@@ -1416,8 +1425,8 @@ export default {
           await auditLog(env, user, 'QUIZ_Q', { quizAct: 'update', qid: parseInt(b.id) });
           return corsResponse({ ok: true, id: parseInt(b.id) });
         }
-        const ins = await env.DB.prepare("INSERT INTO quiz_question (product,type,difficulty,question,choices,answer,accepts,keywords,explanation,source,tags,status,credit,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(F.product, F.type, F.difficulty, F.question, F.choices, F.answer, F.accepts, F.keywords, F.explanation, F.source, F.tags, F.status, F.credit, user, now, now).run();
-        await auditLog(env, user, 'QUIZ_Q', { quizAct: 'create' });
+        const ins = await env.DB.prepare("INSERT INTO quiz_question (product,type,difficulty,question,choices,answer,accepts,keywords,explanation,source,tags,status,credit,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(F.product, F.type, F.difficulty, F.question, F.choices, F.answer, F.accepts, F.keywords, F.explanation, F.source, F.tags, F.status, F.credit, qViaEngine ? 'engine' : user, now, now).run();
+        await auditLog(env, qViaEngine ? 'analysis-agent' : user, 'QUIZ_Q', { quizAct: qViaEngine ? 'engine-draft' : 'create' });
         return corsResponse({ ok: true, id: ins.meta && ins.meta.last_row_id });
       }
       if (path === '/quiz/question' && request.method === 'DELETE') {
@@ -1454,7 +1463,12 @@ export default {
         await quizEnsureTables(env);
         const now = Date.now();
         const w = await env.DB.prepare("SELECT * FROM quiz_week WHERE opens_at<=? AND closes_at>=? ORDER BY opens_at DESC LIMIT 1").bind(now, now).first();
-        if (!w) return corsResponse({ ok: true, week: null });
+        if (!w) {
+          const S0 = await quizGetSettings(env);
+          let x0 = 0; try { const x = await env.DB.prepare("SELECT SUM(xp) AS s FROM quiz_answer WHERE user=?").bind(user).first(); x0 = Number(x && x.s) || 0; } catch (_) {}
+          const bd0 = await quizBadges(env, user);
+          return corsResponse({ ok: true, week: null, intro: S0.intro, prize: S0.prize, levels: S0.levels, me: { xp: x0, level: quizLevelOf(x0, S0.levels), badges: bd0.badges, streak: bd0.streak } });
+        }
         let ids = []; try { ids = JSON.parse(w.question_ids || '[]'); } catch (_) {}
         let questions = [];
         if (ids.length) { const r = await env.DB.prepare(`SELECT id,product,type,difficulty,question,choices FROM quiz_question WHERE id IN (${ids.map(() => '?').join(',')})`).bind(...ids).all(); const map = {}; (r.results || []).forEach(q => map[q.id] = q); questions = ids.map(id => map[id]).filter(Boolean); }
@@ -1462,7 +1476,7 @@ export default {
         const S = await quizGetSettings(env);
         let myXp = 0; try { const x = await env.DB.prepare("SELECT SUM(xp) AS s FROM quiz_answer WHERE user=?").bind(user).first(); myXp = Number(x && x.s) || 0; } catch (_) {}
         const bd = await quizBadges(env, user);
-        return corsResponse({ ok: true, week: w.week, opens_at: w.opens_at, closes_at: w.closes_at, questions, submitted: (mine.results || []).length > 0, myAnswers: (mine.results || []), intro: S.intro, prize: S.prize, me: { xp: myXp, level: quizLevelOf(myXp, S.levels), badges: bd.badges, streak: bd.streak } });
+        return corsResponse({ ok: true, week: w.week, opens_at: w.opens_at, closes_at: w.closes_at, questions, submitted: (mine.results || []).length > 0, myAnswers: (mine.results || []), intro: S.intro, prize: S.prize, levels: S.levels, me: { xp: myXp, level: quizLevelOf(myXp, S.levels), badges: bd.badges, streak: bd.streak } });
       }
       if (path === '/quiz/submit' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);

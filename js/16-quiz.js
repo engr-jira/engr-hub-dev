@@ -5,25 +5,28 @@ let QUIZ_CUR=null, QUIZ_ANS={};
 
 function quizProdBadge(p){ const c=(typeof LC_MAP!=='undefined'&&LC_MAP[p])||'#9F6BB5'; return p?`<span class="badge" style="background:${c}22;color:${c}">${escapeHtml(p)}</span>`:''; }
 function quizDiffStars(d){ return '<span style="color:var(--warn);letter-spacing:1px">'+'★'.repeat(Math.max(1,Math.min(3,d||1)))+'</span>'; }
-function quizXpBar(me){
-  if(!me)return '';
-  const lv=me.level||{}; const next=lv.next;
-  const pct=next?Math.max(4,Math.min(100,Math.round(100-((next.need)/(next.need+1)*0)))):100; // 진행률은 아래에서 계산
-  return '';
+function quizLadderHtml(levels,curName){
+  const ls=Array.isArray(levels)&&levels.length?levels:[{xp:0,name:'🥉 새싹'},{xp:100,name:'🥈 견습'},{xp:300,name:'🥇 숙련'},{xp:700,name:'💎 마스터'},{xp:1500,name:'👑 전설'}];
+  return ls.map(l=>{
+    const cur=l.name===curName;
+    return `<span style="display:inline-flex;flex-direction:column;align-items:center;gap:1px;padding:3px 9px;border-radius:9px;${cur?'background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid var(--accent)':'opacity:.55'}">
+      <span style="font-size:12px;font-weight:${cur?'800':'600'};color:${cur?'var(--accent)':'var(--text2)'};white-space:nowrap">${escapeHtml(l.name)}${cur?' ◂':''}</span>
+      <span style="font-size:9.5px;color:var(--text3)">${l.xp}+</span>
+    </span>`;
+  }).join('<span style="color:var(--text3);opacity:.5">›</span>');
 }
 function quizHeroHtml(d){
   const me=d.me||{}; const lv=me.level||{name:'🥉 새싹',next:null};
-  const nextTxt=lv.next?`다음 레벨 <b>${escapeHtml(lv.next.name)}</b>까지 <b style="color:var(--accent)">${lv.next.need} XP</b>`:'최고 레벨!';
   const badges=(me.badges||[]).map(b=>`<span class="badge" style="background:rgba(159,107,181,.14);color:#9F6BB5;font-weight:700">${escapeHtml(b)}</span>`).join(' ');
-  return `<div class="chart-card" style="margin-bottom:14px">
-    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
-      <div style="font-size:14.5px;font-weight:800;color:var(--text-strong)">${escapeHtml(d.intro||'🧠 이번 주 보안 퀴즈')}</div>
+  return `<div class="chart-card" style="margin-bottom:10px;padding:12px 16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span style="font-size:13.5px;font-weight:800;color:var(--text-strong)">${escapeHtml(d.intro||'🧠 이번 주 보안 퀴즈')}</span>
       ${d.prize?`<span class="badge" style="background:rgba(224,163,46,.14);color:#B27E00;font-weight:800">🎁 ${escapeHtml(d.prize)}</span>`:''}
     </div>
-    <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-top:10px;font-size:12.5px;color:var(--text2)">
-      <span><b style="font-size:15px;color:var(--text-strong)">${escapeHtml(lv.name)}</b> · <b style="color:var(--accent)">${me.xp||0} XP</b></span>
-      <span>${nextTxt}</span>
-      ${me.streak>=2?`<span class="badge" style="background:rgba(224,106,99,.14);color:#E06A63;font-weight:800">🔥 ${me.streak}주 연속</span>`:''}
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:9px">
+      <span style="display:inline-flex;gap:4px;align-items:center;flex-wrap:wrap">${quizLadderHtml(d.levels,lv.name)}</span>
+      <span style="font-size:12px;color:var(--text2)">내 XP <b style="color:var(--accent)">${me.xp||0}</b>${lv.next?` · ${escapeHtml(lv.next.name)}까지 <b>${lv.next.need}</b>`:''}</span>
+      ${me.streak>=2?`<span class="badge" style="background:rgba(224,106,99,.14);color:#E06A63;font-weight:800">🔥 ${me.streak}주</span>`:''}
       ${badges}
     </div>
   </div>`;
@@ -41,9 +44,6 @@ async function loadQuizPage(){
     else renderQuizForm(d);
   }catch(e){ hero.innerHTML=`<div class="chart-card"><div class="u-cdanger-p20px">퀴즈 조회 실패: ${escapeHtml(e.message)}</div></div>`; }
   loadQuizBoard('week');
-  const adm=document.getElementById('quiz-admin-wrap');
-  const isAdm=(typeof IS_ADMIN!=='undefined'&&IS_ADMIN)||(typeof IS_SUPER!=='undefined'&&IS_SUPER);
-  if(adm){ adm.style.display=isAdm?'':'none'; if(isAdm)loadQuizAdmin(); }
 }
 function quizDdayTxt(closes){ const left=closes-Date.now(); if(left<=0)return '마감'; const d=Math.floor(left/86400000),h=Math.floor(left%86400000/3600000); return d>0?`마감까지 ${d}일 ${h}시간`:`마감까지 ${h}시간`; }
 function renderQuizForm(d){
@@ -139,9 +139,8 @@ function renderQuizResult(r){
   }).join('');
   const badges=(r.badges||[]).map(b=>`<span class="badge" style="background:rgba(159,107,181,.14);color:#9F6BB5;font-weight:800">${escapeHtml(b)}</span>`).join(' ');
   body.innerHTML=`
-    <div class="chart-card" style="margin-bottom:14px;text-align:center;padding:22px">
-      <div style="font-size:38px;font-weight:900;color:${quizScoreColor(r.avg)}">${r.avg}점</div>
-      <div style="font-size:14px;font-weight:800;color:var(--text-strong);margin-top:6px">${escapeHtml(r.msg||'')}</div>
+    <div class="chart-card" style="margin-bottom:10px;text-align:center;padding:14px">
+      <div style="font-size:30px;font-weight:900;color:${quizScoreColor(r.avg)}">${r.avg}점 <span style="font-size:13px;font-weight:800;color:var(--text-strong)">${escapeHtml(r.msg||'')}</span></div>
       ${r.comboMsg?`<div style="font-size:13px;font-weight:800;color:#E06A63;margin-top:4px">${escapeHtml(r.comboMsg)}</div>`:''}
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--text2)">
         <span class="badge" style="background:rgba(217,96,59,.12);color:var(--accent);font-weight:800;font-size:13px">⚡ +${r.xpGained} XP</span>
@@ -173,27 +172,25 @@ async function loadQuizBoard(scope){
   try{
     const d=await hubApi('/quiz/leaderboard?scope='+(scope||'week'));
     const meU=(typeof CURRENT_USER!=='undefined'&&CURRENT_USER)||'';
-    const nameOf=u=>{ try{ if(typeof window.__userMap==='object'&&window.__userMap&&window.__userMap[u])return window.__userMap[u]; }catch(_){} return u; };
-    const hl=u=>u===meU?'style="background:color-mix(in srgb,var(--accent) 7%,transparent);border-radius:8px"':'';
-    let weekCard='';
+    const nameOf=u=>{ try{ const v=window.__userMap&&window.__userMap[u]; if(typeof v==='string')return v; if(v&&typeof v==='object')return String(v.name||v.display||v.displayName||u); }catch(_){} return String(u==null?'':u); };
+    const chip=(r,i,val)=>`<span style="white-space:nowrap;${r.user===meU?'font-weight:800;color:var(--accent)':''}">${['🥇','🥈','🥉'][i]||(i+1)+'.'} ${escapeHtml(nameOf(r.user))} ${val}</span>`;
+    const line=(label,inner)=>`<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:4px 0;font-size:12px;color:var(--text2)"><span style="font-weight:800;color:var(--text3);width:58px;flex-shrink:0">${label}</span>${inner}</div>`;
+    let rankLine;
     if(d.scope==='month'){
-      const rows=(d.rows||[]).sort((a,b)=>b.acc-a.acc).map((r,i)=>`<div ${hl(r.user)} class="u-fs12px" style="display:flex;justify-content:space-between;padding:5px 8px"><span>${['🥇','🥈','🥉'][i]||(i+1)+'.'} <b>${escapeHtml(nameOf(r.user))}</b></span><span>${Math.round(r.acc)}점 · ${r.answered}답 · ${r.weeks}주</span></div>`).join('');
-      weekCard=`<div class="chart-card"><h4>📅 이번 달 종합</h4>${rows||'<div class="empty">이번 달 기록이 아직 없어요</div>'}<div style="margin-top:8px"><button class="btn btn-ghost u-btn-xxs" onclick="loadQuizBoard('week')">← 주간 보기</button></div></div>`;
+      const rows=(d.rows||[]).sort((a,b)=>b.acc-a.acc).slice(0,5);
+      rankLine=line('📅 월간',(rows.map((r,i)=>chip(r,i,`${Math.round(r.acc)}점·${r.weeks}주`)).join('<span style="color:var(--border2)">|</span>')||'<span class="u-muted-11">기록 없음</span>')+` <button class="btn btn-ghost u-btn-xxs" onclick="loadQuizBoard('week')">주간</button>`);
     }else{
-      const rows=(d.rows||[]).sort((a,b)=>b.acc-a.acc).map((r,i)=>`<div ${hl(r.user)} class="u-fs12px" style="display:flex;justify-content:space-between;padding:5px 8px"><span>${['🥇','🥈','🥉'][i]||(i+1)+'.'} <b>${escapeHtml(nameOf(r.user))}</b></span><span>${Math.round(r.acc)}점 · ${r.answered}${d.totalQ?'/'+d.totalQ:''}답</span></div>`).join('');
-      weekCard=`<div class="chart-card"><h4>🎯 이번 주 (${escapeHtml(d.week||'')})</h4>${rows||'<div class="empty">아직 아무도 도전 안 했어요 — 1등 찬스! 🏁</div>'}<div style="margin-top:8px"><button class="btn btn-ghost u-btn-xxs" onclick="loadQuizBoard('month')">📅 월간 보기</button></div></div>`;
+      const rows=(d.rows||[]).sort((a,b)=>b.acc-a.acc).slice(0,5);
+      rankLine=line('🎯 주간',(rows.map((r,i)=>chip(r,i,`${Math.round(r.acc)}점`)).join('<span style="color:var(--border2)">|</span>')||'<span class="u-muted-11">아직 아무도 도전 안 함 — 1등 찬스! 🏁</span>')+` <button class="btn btn-ghost u-btn-xxs" onclick="loadQuizBoard('month')">월간</button>`);
     }
-    const xpRows=(d.xpRows||[]).slice(0,10).map((r,i)=>`<div ${hl(r.user)} class="u-fs12px" style="display:flex;justify-content:space-between;padding:5px 8px"><span>${['🥇','🥈','🥉'][i]||(i+1)+'.'} <b>${escapeHtml(nameOf(r.user))}</b></span><span>${escapeHtml(r.level)} · ${r.xp} XP</span></div>`).join('');
-    let goalCard='';
+    const xpTop=(d.xpRows||[]).slice(0,5);
+    const xpLine=line('⚡ XP',xpTop.map((r,i)=>chip(r,i,`${escapeHtml(String(r.level||''))} ${r.xp}`)).join('<span style="color:var(--border2)">|</span>')||'<span class="u-muted-11">아직 XP 없음</span>');
+    let goalLine='';
     if(d.teamGoal){
       const pct=Math.min(100,Math.round(d.teamGoal.current/d.teamGoal.goal*100));
-      goalCard=`<div class="chart-card"><h4>🤝 팀 공동 목표</h4>
-        <div class="u-fs12px" style="color:var(--text2);margin-bottom:8px">이달 팀 평균 <b>${d.teamGoal.goal}점</b> 달성 시 ${d.teamGoal.prize?`<b style="color:#B27E00">🎁 ${escapeHtml(d.teamGoal.prize)}</b>`:'전원 보상!'}</div>
-        <div style="background:var(--card2);border-radius:20px;height:18px;overflow:hidden;border:1px solid var(--border)"><div style="width:${pct}%;height:100%;background:linear-gradient(90deg,var(--accent),#E0A32E);border-radius:20px;transition:width .5s"></div></div>
-        <div class="u-fs11px-ctext3-mb6px" style="margin-top:5px;text-align:right">현재 ${d.teamGoal.current}점 / ${d.teamGoal.goal}점 (${pct}%)</div>
-      </div>`;
+      goalLine=line('🤝 목표',`<span style="flex:1;min-width:120px;max-width:260px;background:var(--card2);border-radius:20px;height:12px;overflow:hidden;border:1px solid var(--border);display:inline-block"><span style="display:block;width:${pct}%;height:100%;background:linear-gradient(90deg,var(--accent),#E0A32E)"></span></span><span>${d.teamGoal.current}/${d.teamGoal.goal}점${d.teamGoal.prize?` → 🎁 ${escapeHtml(d.teamGoal.prize)}`:''}</span>`);
     }
-    board.innerHTML=`<div class="chart-grid" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">${weekCard}<div class="chart-card"><h4>⚡ 성장 랭킹 (누적 XP)</h4>${xpRows||'<div class="empty">아직 XP가 없어요</div>'}</div>${goalCard}</div>`;
+    board.innerHTML=`<div class="chart-card" style="margin-bottom:12px;padding:8px 16px">${rankLine}${xpLine}${goalLine}</div>`;
   }catch(e){ board.innerHTML=`<div class="u-muted-11">리더보드 조회 실패: ${escapeHtml(e.message)}</div>`; }
 }
 /* ── 🛠 관리자: 문제은행·주간 출제·설정 (퀴즈 페이지 내, IS_ADMIN 게이트) ── */
@@ -232,9 +229,11 @@ async function loadQuizBank(){
     const stBadge=s=>s==='approved'?'<span class="badge" style="background:rgba(30,158,106,.14);color:var(--success)">승인</span>':s==='archived'?'<span class="badge" style="background:rgba(255,255,255,.08);color:var(--text3)">보관</span>':'<span class="badge" style="background:rgba(224,163,46,.14);color:#B27E00">초안</span>';
     box.innerHTML=QUIZ_BANK.map(q=>`<div style="display:flex;gap:8px;align-items:center;padding:8px 6px;border-bottom:1px solid var(--border);font-size:12px">
       <span class="u-muted-10" style="width:34px">#${q.id}</span>
+      ${q.created_by==='engine'?'<span class="badge" style="background:rgba(63,163,196,.14);color:#3F8FC4;font-weight:800" title="분석 엔진이 자동 생성한 초안">🤖</span>':''}
       ${quizProdBadge(q.product)}<span style="width:44px;color:var(--text3)">${QUIZ_TYPE_LABEL[q.type]||q.type}</span>${quizDiffStars(q.difficulty)}
       <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2)">${escapeHtml(q.question||'')}</span>
       ${stBadge(q.status)}
+      <button class="btn btn-ghost u-btn-xxs" title="팀원에게 보이는 모습 미리보기" onclick="quizPreviewQ(${q.id})">👁</button>
       <button class="btn btn-ghost u-btn-xxs" onclick="quizEditQ(${q.id})">✏️</button>
       ${q.status!=='approved'?`<button class="btn btn-ghost u-btn-xxs" style="color:var(--success)" onclick="quizSetStatus(${q.id},'approved')">✔ 승인</button>`:`<button class="btn btn-ghost u-btn-xxs" onclick="quizSetStatus(${q.id},'archived')">보관</button>`}
       <button class="btn btn-ghost u-btn-xxs" style="color:var(--danger)" onclick="quizDelQ(${q.id})">✕</button>
@@ -365,5 +364,26 @@ async function quizSaveSettings(){
     if(typeof toast==='function')toast('설정 저장됨'); loadQuizPage();
   }catch(e){ if(typeof toast==='function')toast('저장 실패: '+e.message,true); }
 }
+function quizPreviewQ(id){
+  const q=QUIZ_BANK.find(x=>x.id===id); if(!q)return;
+  let choices=[],accepts=[],keywords=[]; try{choices=JSON.parse(q.choices||'[]');accepts=JSON.parse(q.accepts||'[]');keywords=JSON.parse(q.keywords||'[]');}catch(_){}
+  let input='';
+  if(q.type==='mc'&&choices.length){ input=choices.map((c,ci)=>`<div style="margin-top:6px;padding:9px 13px;border-radius:10px;border:1.5px solid ${quizNormEq(c,q.answer)?'var(--success)':'var(--border)'};background:var(--card2);color:var(--text);font-size:12.5px">${String.fromCharCode(65+ci)}. ${escapeHtml(c)}${quizNormEq(c,q.answer)?' <b style="color:var(--success)">✔ 정답</b>':''}</div>`).join(''); }
+  else if(q.type==='ox'){ input=`<div style="display:flex;gap:8px;margin-top:6px"><div style="flex:1;padding:12px;text-align:center;border-radius:10px;border:1.5px solid ${/^o$/i.test(q.answer)?'var(--success)':'var(--border)'};background:var(--card2);color:var(--success);font-size:17px;font-weight:800">⭕ O${/^o$/i.test(q.answer)?' ✔':''}</div><div style="flex:1;padding:12px;text-align:center;border-radius:10px;border:1.5px solid ${/^x$/i.test(q.answer)?'var(--success)':'var(--border)'};background:var(--card2);color:var(--danger);font-size:17px;font-weight:800">❌ X${/^x$/i.test(q.answer)?' ✔':''}</div></div>`; }
+  else{ input=`<div style="margin-top:6px;padding:10px 13px;border-radius:10px;border:1.5px dashed var(--border);color:var(--text3);font-size:12px">단답 입력란 — 정답 <b style="color:var(--success)">${escapeHtml(q.answer)}</b>${accepts.length?` · 인정: ${escapeHtml(accepts.join(', '))}`:''}${keywords.length?` · 부분점수 키워드: ${escapeHtml(keywords.join(', '))}`:''}</div>`; }
+  const m=document.getElementById('quiz-q-modal'); if(!m)return;
+  m.style.display='flex';
+  m.innerHTML=`<div style="background:var(--card);border:1px solid var(--border2);border-radius:16px;padding:20px;width:min(600px,96vw)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="margin:0;font-size:15px">👁 미리보기 #${q.id} <span class="u-muted-11" style="font-weight:400">— 팀원에게 보이는 모습 (+정답 표시)</span></h3><button class="btn btn-ghost u-btn-xs" onclick="document.getElementById('quiz-q-modal').style.display='none'">닫기</button></div>
+    <div class="chart-card">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-size:11px;font-weight:800;color:var(--text3)">Q1 / 10</span><span style="display:flex;gap:6px;align-items:center">${quizProdBadge(q.product)}${quizDiffStars(q.difficulty)}</span></div>
+      <div style="font-size:13.5px;font-weight:700;color:var(--text-strong);margin:8px 0 2px;line-height:1.6;white-space:pre-wrap">${escapeHtml(q.question)}</div>
+      ${input}
+      ${q.explanation?`<div style="font-size:12px;color:var(--text2);background:rgba(255,255,255,.04);border-radius:8px;padding:8px 11px;margin-top:10px;line-height:1.6">💡 ${escapeHtml(q.explanation)}${quizSourceHtml(q.source)}${q.credit?` <span class="u-muted-10">— 제보: ${escapeHtml(q.credit)} 🙌</span>`:''}</div>`:''}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ghost u-btn-xs" onclick="document.getElementById('quiz-q-modal').style.display='none';quizEditQ(${q.id})">✏️ 수정</button>${q.status!=='approved'?`<button class="btn btn-primary u-btn-xs" onclick="quizSetStatus(${q.id},'approved');document.getElementById('quiz-q-modal').style.display='none'">✔ 승인</button>`:''}</div>
+  </div>`;
+}
+function quizNormEq(a,b){ const n=s=>String(s==null?'':s).toLowerCase().replace(/[\s.,·\-_/()]+/g,''); return n(a)===n(b); }
 window.loadQuizPage=loadQuizPage; window.submitQuiz=submitQuiz; window.quizPick=quizPick; window.quizShort=quizShort; window.loadQuizBoard=loadQuizBoard; window.quizRetake=quizRetake;
-window.loadQuizAdmin=loadQuizAdmin; window.loadQuizBank=loadQuizBank; window.quizEditQ=quizEditQ; window.quizEditTypeSync=quizEditTypeSync; window.quizSaveQ=quizSaveQ; window.quizSetStatus=quizSetStatus; window.quizDelQ=quizDelQ; window.quizSuggest=quizSuggest; window.quizSwapPick=quizSwapPick; window.quizPublishWeek=quizPublishWeek; window.quizSaveSettings=quizSaveSettings;
+window.loadQuizAdmin=loadQuizAdmin; window.loadQuizBank=loadQuizBank; window.quizEditQ=quizEditQ; window.quizEditTypeSync=quizEditTypeSync; window.quizSaveQ=quizSaveQ; window.quizSetStatus=quizSetStatus; window.quizDelQ=quizDelQ; window.quizSuggest=quizSuggest; window.quizSwapPick=quizSwapPick; window.quizPublishWeek=quizPublishWeek; window.quizSaveSettings=quizSaveSettings; window.quizPreviewQ=quizPreviewQ;
