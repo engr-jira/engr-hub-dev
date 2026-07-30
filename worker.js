@@ -183,6 +183,27 @@ function gradeQuiz(q, userAns) {
   const na = quizNorm(q.answer);
   return { score: (na && (nu.includes(na) || na.includes(nu))) ? 60 : 0 };
 }
+// 출제 확정 시 Teams 오픈 알림 카드 (+지난주 TOP3) — TEAMS_WEBHOOK_URL 설정 시에만
+async function quizNotifyTeams(env, week, count, closesAt) {
+  if (!env.TEAMS_WEBHOOK_URL) return;
+  const tb = (text, opt) => Object.assign({ type: 'TextBlock', text, wrap: true }, opt || {});
+  const body = [
+    { type: 'Container', style: 'accent', bleed: true, items: [tb('🧠 이번 주 보안 퀴즈 오픈!', { weight: 'Bolder', size: 'Large' })] },
+    tb(`${week} · ${count}문제 · 마감 ${new Date(closesAt + 9 * 3600e3).toISOString().slice(5, 10).replace('-', '/')} — 제출 즉시 채점·XP 지급! ⚡`, { spacing: 'Small' })
+  ];
+  try {
+    const prevWeek = quizWeekId(Date.now() + 9 * 3600e3 - 7 * 86400000);
+    const r = await env.DB.prepare("SELECT user, AVG(score) AS acc, SUM(xp) AS wxp FROM quiz_answer WHERE week=? GROUP BY user ORDER BY acc DESC LIMIT 3").bind(prevWeek).all();
+    const tops = (r.results || []);
+    if (tops.length) {
+      const it = [tb('🏆 지난 주 TOP', { weight: 'Bolder', color: 'Good' })];
+      tops.forEach((t, i) => it.push(tb(`${['🥇', '🥈', '🥉'][i]} ${t.user} — ${Math.round(t.acc)}점 · +${t.wxp || 0} XP`, { spacing: 'Small' })));
+      body.push({ type: 'Container', style: 'good', spacing: 'Medium', items: it });
+    }
+  } catch (_) {}
+  const card = { type: 'AdaptiveCard', $schema: 'http://adaptivecards.io/schemas/adaptive-card.json', version: '1.4', body, actions: [{ type: 'Action.OpenUrl', title: '🚀 지금 도전하기', url: 'https://engr-jira.github.io/engr-hub-dev/?go=quiz' }], msteams: { width: 'Full' } };
+  try { await fetch(env.TEAMS_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'message', attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: card }] }) }); } catch (_) {}
+}
 async function quizEnsureTables(env) {
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS quiz_question (id INTEGER PRIMARY KEY AUTOINCREMENT, product TEXT, type TEXT, difficulty INTEGER DEFAULT 1, question TEXT, choices TEXT, answer TEXT, accepts TEXT, keywords TEXT, explanation TEXT, source TEXT, tags TEXT, status TEXT DEFAULT 'draft', created_by TEXT, created_at INTEGER, updated_at INTEGER)").run();
   await env.DB.prepare("CREATE TABLE IF NOT EXISTS quiz_week (week TEXT PRIMARY KEY, question_ids TEXT, opens_at INTEGER, closes_at INTEGER, published_by TEXT, published_at INTEGER)").run();
@@ -1425,6 +1446,7 @@ export default {
         const closes = Number(b.closes_at) || (opens + 7 * 86400000);
         await env.DB.prepare("INSERT OR REPLACE INTO quiz_week (week,question_ids,opens_at,closes_at,published_by,published_at) VALUES (?,?,?,?,?,?)").bind(week, JSON.stringify(ids), opens, closes, user, Date.now()).run();
         await auditLog(env, user, 'QUIZ_WEEK', { week, n: ids.length });
+        try { ctx.waitUntil(quizNotifyTeams(env, week, ids.length, closes)); } catch (_) {}
         return corsResponse({ ok: true, week, count: ids.length });
       }
       if (path === '/quiz/current' && request.method === 'GET') {
