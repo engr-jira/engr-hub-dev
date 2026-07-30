@@ -155,11 +155,31 @@ function buildDigestCard(D, hubUrl, notice) {
   return { type: 'AdaptiveCard', $schema: 'http://adaptivecards.io/schemas/adaptive-card.json', version: '1.4', body, actions, msteams: { width: 'Full' } };
 }
 
+// ── 다이제스트 공지사항 (app_settings digest_notice) — 지정 날짜까지 유지, 만료 시 자동 제외 ──
+async function digestGetNotice(env) {
+  try {
+    const r = await env.DB.prepare("SELECT value FROM app_settings WHERE key='digest_notice'").first();
+    if (!r || !r.value) return { text: '', until: '', expired: false };
+    const n = JSON.parse(r.value);
+    const today = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);   // KST
+    const expired = !!(n.until && n.until < today);
+    return { text: expired ? '' : String(n.text || ''), until: String(n.until || ''), by: n.by || '', expired, rawText: String(n.text || '') };
+  } catch (_) { return { text: '', until: '', expired: false }; }
+}
+async function digestSaveNotice(env, text, until, by) {
+  try {
+    await env.DB.prepare("CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value TEXT)").run();
+    await env.DB.prepare("INSERT INTO app_settings (key,value) VALUES ('digest_notice',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value")
+      .bind(JSON.stringify({ text: String(text || '').slice(0, 500), until: String(until || '').slice(0, 10), by: String(by || ''), at: Date.now() })).run();
+    return true;
+  } catch (_) { return false; }
+}
 // ── 다이제스트 카드를 Teams 채널로 전송 (TEAMS_WEBHOOK_URL 시크릿 설정 시에만; MJ의 Power Automate 웹훅 flow가 수신·게시) ──
 async function postDigestToTeams(env, hubUrl, notice) {
   if (!env.TEAMS_WEBHOOK_URL) return { ok: false, reason: 'no-webhook' };
   const D = await buildDigestData(env);
-  const card = buildDigestCard(D, hubUrl || 'https://engr-jira.github.io/engr-hub-dev/', notice);
+  const noti = (notice === undefined || notice === null) ? (await digestGetNotice(env)).text : notice;   // 미지정(cron 등)이면 저장된 공지 사용
+  const card = buildDigestCard(D, hubUrl || 'https://engr-jira.github.io/engr-hub-dev/', noti);
   const resp = await fetch(env.TEAMS_WEBHOOK_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1358,8 +1378,9 @@ export default {
         }
         lines.push('', '🔗 HUB에서 전체 보기 → {HUB_URL}');
         const text = lines.join('\n');
+        const noti = await digestGetNotice(env);
         await auditLog(env, user, 'DIGEST_GEN', { digDate: day, digCounts: { due: dueToday.length, overdue: overdue.length, meta: metaTotal, lic: licenseSoon.length, arch: archItems.length, hl: headline.length, rec: doneY.length } });
-        return corsResponse({ ok: true, date: day, sections: { dueToday, overdue, metaIncomplete: metaRows, licenseSoon, archive: archItems, headline, patterns: patternLines, doneYesterday: doneY }, text });
+        return corsResponse({ ok: true, date: day, notice: noti.text, noticeUntil: noti.until, noticeExpired: noti.expired, sections: { dueToday, overdue, metaIncomplete: metaRows, licenseSoon, archive: archItems, headline, patterns: patternLines, doneYesterday: doneY }, text });
       }
 
       // ── 다이제스트 Adaptive Card (x-analysis-token 게이트) — Power Automate flow가 GET해 채널에 게시. 워커는 외부 발송 없음, 카드 JSON만 서빙 ──
@@ -1369,7 +1390,8 @@ export default {
         if (!(await getFeatureFlags(env)).digest) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);
         const hubUrl = url.searchParams.get('hub') || 'https://engr-jira.github.io/engr-hub-dev/';
         let D; try { D = await buildDigestData(env); } catch (e) { return corsResponse({ ok: false, message: 'Jira 조회 실패: ' + e.message }, 502); }
-        const card = buildDigestCard(D, hubUrl, url.searchParams.get('notice') || '');
+        const cardNotice = url.searchParams.has('notice') ? (url.searchParams.get('notice') || '') : (await digestGetNotice(env)).text;
+        const card = buildDigestCard(D, hubUrl, cardNotice);
         await auditLog(env, 'teams-flow', 'DIGEST_GEN', { digDate: D.day, via: 'card', mgmt: D.mgmtTotal });
         // ?raw=1 → 카드 JSON만 그대로 반환 (Power Automate '적응형 카드 게시'에 body 통째로 매핑 가능)
         if (url.searchParams.get('raw') === '1') return corsResponse(card);
@@ -1385,11 +1407,33 @@ export default {
         if (!(await getFeatureFlags(env)).digest) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);
         if (!env.TEAMS_WEBHOOK_URL) return corsResponse({ ok: false, message: 'Teams 웹훅이 설정되지 않았습니다.' }, 400);
         const pushBody = await request.json().catch(() => ({}));
-        const notice = (pushBody && typeof pushBody.notice === 'string') ? pushBody.notice.slice(0, 500) : '';
+        const notice = (pushBody && typeof pushBody.notice === 'string') ? pushBody.notice.slice(0, 500) : undefined;   // 미지정이면 저장된 공지 사용
         const hubUrl = url.searchParams.get('hub') || 'https://engr-jira.github.io/engr-hub-dev/';
         let r; try { r = await postDigestToTeams(env, hubUrl, notice); } catch (e) { return corsResponse({ ok: false, message: '전송 실패: ' + e.message }, 502); }
         await auditLog(env, viaSession ? user : 'teams-flow', 'DIGEST_GEN', { via: 'teams-manual', status: r.status, digDate: r.day });
         return corsResponse({ ok: r.ok, status: r.status, day: r.day });
+      }
+
+      // ── 다이제스트 공지사항 저장/조회 (mj.park) — 지정 날짜까지 유지되어 cron 자동 게시에도 포함 ──
+      if (path === '/team/digest/notice' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        if (!await isMonitorAllowed(env, user)) return corsResponse({ ok: false, message: '접근 권한이 없습니다.' }, 403);
+        const n = await digestGetNotice(env);
+        return corsResponse({ ok: true, notice: n.text, until: n.until, expired: n.expired, rawText: n.rawText || '' });
+      }
+      if (path === '/team/digest/notice' && request.method === 'POST') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        if (!await isMonitorAllowed(env, user)) return corsResponse({ ok: false, message: '접근 권한이 없습니다.' }, 403);
+        const b = await request.json().catch(() => ({}));
+        const text = String(b.text || '').slice(0, 500);
+        let until = '';
+        if (text.trim()) {
+          if (/^\d{4}-\d{2}-\d{2}$/.test(b.until || '')) until = b.until;
+          else { const d = Math.max(0, Math.min(60, parseInt(b.days) || 0)); if (b.days !== -1 && b.days !== '-1') until = new Date(Date.now() + 9 * 3600e3 + d * 86400000).toISOString().slice(0, 10); }
+        }
+        await digestSaveNotice(env, text, until, user);
+        await auditLog(env, user, 'DIGEST_NOTICE', { until: until || 'none', len: text.length });
+        return corsResponse({ ok: true, notice: text, until });
       }
 
       // ══ 🧠 팀 퀴즈 (P1) — 문제은행·주간출제(관리자) / 응시·채점·순위(세션) ══

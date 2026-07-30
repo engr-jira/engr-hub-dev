@@ -436,7 +436,12 @@ async function openDigest(){
   try{
     const d=await hubApi('/team/digest');
     const text=String(d.text||'').replace('{HUB_URL}', location.origin+location.pathname);
-    if(ta)ta.value=text; renderDigestPreview();
+    if(ta)ta.value=text;
+    // 저장된 공지 복원(지정 날짜까지 유지 — cron 자동 게시에도 동일 적용)
+    const nt=document.getElementById('digest-notice'), ns=document.getElementById('digest-notice-state');
+    if(nt)nt.value=String(d.notice||'');
+    if(ns)ns.innerHTML=d.noticeExpired?'<span style="color:var(--warn)">⚠️ 이전 공지 만료됨(미게시)</span>':(d.notice?`<span style="color:var(--success)">✓ 저장됨${d.noticeUntil?' · '+escapeHtml(d.noticeUntil)+'까지':' · 무기한'}</span>`:'');
+    renderDigestPreview();
     if(st){const s=d.sections||{};const mi=(s.metaIncomplete||[]).reduce((a,r)=>a+(r.count||0),0);st.textContent=`마감 ${s.dueToday?.length||0} · 지연 ${s.overdue?.length||0} · 미기입 ${mi} · 라이선스 ${s.licenseSoon?.length||0}${(s.doneYesterday||[]).length?' · 어제완료 '+s.doneYesterday.length:''}${(s.headline||[]).length?' · 헤드라인 '+s.headline.length:''}`;}
   }catch(e){ if(ta)ta.value=''; renderDigestPreview(); if(st){st.textContent='생성 실패: '+e.message;st.style.color='var(--danger)';} }
 }
@@ -456,6 +461,27 @@ async function copyDigest(){
     catch(_){ if(st){st.textContent='복사 실패 — 직접 선택해 복사하세요';st.style.color='var(--danger)';} }
   }
 }
+async function saveDigestNotice(){
+  const nt=document.getElementById('digest-notice'), ns=document.getElementById('digest-notice-state');
+  const text=((nt&&nt.value)||'').trim();
+  const days=parseInt((document.getElementById('digest-notice-days')||{}).value||'6');
+  if(!text){ if(ns)ns.innerHTML='<span style="color:var(--danger)">공지 내용이 비어 있습니다</span>'; return; }
+  try{
+    const r=await hubApi('/team/digest/notice',{method:'POST',body:JSON.stringify({text,days})});
+    if(ns)ns.innerHTML=`<span style="color:var(--success)">✓ 저장됨${r.until?' · '+escapeHtml(r.until)+'까지 유지':' · 무기한'}</span>`;
+    if(typeof toast==='function')toast('공지 저장됨 — 자동 게시에도 포함됩니다');
+  }catch(e){ if(ns)ns.innerHTML=`<span style="color:var(--danger)">저장 실패: ${escapeHtml(e.message)}</span>`; }
+}
+async function clearDigestNotice(){
+  if(!confirm('저장된 공지를 삭제합니다. 계속할까요?'))return;
+  const nt=document.getElementById('digest-notice'), ns=document.getElementById('digest-notice-state');
+  try{
+    await hubApi('/team/digest/notice',{method:'POST',body:JSON.stringify({text:''})});
+    if(nt)nt.value=''; if(ns)ns.innerHTML='<span class="u-muted-10">공지 없음</span>';
+    renderDigestPreview();
+    if(typeof toast==='function')toast('공지 삭제됨');
+  }catch(e){ if(ns)ns.innerHTML=`<span style="color:var(--danger)">삭제 실패: ${escapeHtml(e.message)}</span>`; }
+}
 async function pushDigestToTeams(){
   const notice=((document.getElementById('digest-notice')||{}).value||'').trim();
   if(!confirm((notice?('📢 공지 포함: '+notice+'\n\n'):'')+'지금 팀 데스크 채널에 다이제스트 카드를 게시합니다.\n계속할까요?'))return;
@@ -470,4 +496,4 @@ async function pushDigestToTeams(){
     if(typeof toast==='function')toast('발사 실패: '+e.message,true);
   }
 }
-window.openDigest=openDigest; window.copyDigest=copyDigest; window.renderDigestPreview=renderDigestPreview; window.pushDigestToTeams=pushDigestToTeams;
+window.openDigest=openDigest; window.copyDigest=copyDigest; window.renderDigestPreview=renderDigestPreview; window.pushDigestToTeams=pushDigestToTeams; window.saveDigestNotice=saveDigestNotice; window.clearDigestNotice=clearDigestNotice;
