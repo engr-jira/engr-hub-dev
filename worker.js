@@ -1498,6 +1498,8 @@ export default {
         const opens = Number(b.opens_at) || Date.now();
         const closes = Number(b.closes_at) || (opens + 7 * 86400000);
         await env.DB.prepare("INSERT OR REPLACE INTO quiz_week (week,question_ids,opens_at,closes_at,published_by,published_at) VALUES (?,?,?,?,?,?)").bind(week, JSON.stringify(ids), opens, closes, user, Date.now()).run();
+        // 재출제로 빠진 문제의 옛 답변 정리 (통계 왜곡·용량 낭비 방지)
+        try { if (ids.length) await env.DB.prepare(`DELETE FROM quiz_answer WHERE week=? AND question_id NOT IN (${ids.map(() => '?').join(',')})`).bind(week, ...ids).run(); } catch (_) {}
         await auditLog(env, user, 'QUIZ_WEEK', { week, n: ids.length });
         try { ctx.waitUntil(quizNotifyTeams(env, week, ids.length, closes)); } catch (_) {}
         return corsResponse({ ok: true, week, count: ids.length });
@@ -1516,11 +1518,16 @@ export default {
         let ids = []; try { ids = JSON.parse(w.question_ids || '[]'); } catch (_) {}
         let questions = [];
         if (ids.length) { const r = await env.DB.prepare(`SELECT id,product,type,difficulty,question,choices FROM quiz_question WHERE id IN (${ids.map(() => '?').join(',')})`).bind(...ids).all(); const map = {}; (r.results || []).forEach(q => map[q.id] = q); questions = ids.map(id => map[id]).filter(Boolean); }
-        const mine = await env.DB.prepare("SELECT question_id,answer,score FROM quiz_answer WHERE week=? AND user=?").bind(w.week, user).all();
+        // 내 답변은 '현재 출제된 문제셋'에 한해서만 집계 — 재출제로 문제가 바뀌면 옛 답변은 제외(리스트↔결과 불일치 방지)
+        const mineAll = await env.DB.prepare("SELECT question_id,answer,score,xp FROM quiz_answer WHERE week=? AND user=?").bind(w.week, user).all();
+        const idSet = new Set(ids);
+        const mine = { results: (mineAll.results || []).filter(r => idSet.has(r.question_id)) };
+        const answeredIds = (mine.results || []).map(r => r.question_id);
         const S = await quizGetSettings(env);
         let myXp = 0; try { const x = await env.DB.prepare("SELECT SUM(xp) AS s FROM quiz_answer WHERE user=?").bind(user).first(); myXp = Number(x && x.s) || 0; } catch (_) {}
         const bd = await quizBadges(env, user);
-        return corsResponse({ ok: true, week: w.week, opens_at: w.opens_at, closes_at: w.closes_at, questions, submitted: (mine.results || []).length > 0, myAnswers: (mine.results || []), intro: S.intro, prize: S.prize, levels: S.levels, me: { xp: myXp, level: quizLevelOf(myXp, S.levels), badges: bd.badges, streak: bd.streak } });
+        const nAns = (mine.results || []).length, nQ = questions.length;
+        return corsResponse({ ok: true, week: w.week, opens_at: w.opens_at, closes_at: w.closes_at, questions, totalQ: nQ, answeredCount: nAns, answeredIds, submitted: nAns > 0, complete: nQ > 0 && nAns >= nQ, myAnswers: (mine.results || []), intro: S.intro, prize: S.prize, levels: S.levels, me: { xp: myXp, level: quizLevelOf(myXp, S.levels), badges: bd.badges, streak: bd.streak } });
       }
       if (path === '/quiz/submit' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
@@ -1567,6 +1574,15 @@ export default {
         let review = null;
         if (closed) { let ids = []; try { ids = JSON.parse(w.question_ids || '[]'); } catch (_) {} if (ids.length) { const r = await env.DB.prepare(`SELECT id,question,type,choices,answer,explanation,source FROM quiz_question WHERE id IN (${ids.map(() => '?').join(',')})`).bind(...ids).all(); review = (r.results || []); } }
         return corsResponse({ ok: true, week, closed, myAnswers: (mine.results || []), review });
+      }
+      if (path === '/quiz/history' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        await quizEnsureTables(env);
+        const lim = Math.max(1, Math.min(20, parseInt(url.searchParams.get('limit') || '5')));
+        const r = await env.DB.prepare("SELECT a.week, AVG(a.score) AS acc, COUNT(*) AS answered, SUM(a.xp) AS xp, MAX(a.submitted_at) AS last, w.question_ids, w.closes_at FROM quiz_answer a LEFT JOIN quiz_week w ON w.week=a.week WHERE a.user=? GROUP BY a.week ORDER BY a.week DESC LIMIT ?").bind(user, lim).all();
+        const now = Date.now();
+        const rows = (r.results || []).map(x => { let tq = 0; try { tq = JSON.parse(x.question_ids || '[]').length; } catch (_) {} return { week: x.week, acc: Math.round(Number(x.acc) || 0), answered: Number(x.answered) || 0, totalQ: tq, xp: Number(x.xp) || 0, last: x.last, closed: !!(x.closes_at && now > x.closes_at) }; });
+        return corsResponse({ ok: true, rows });
       }
       if (path === '/quiz/leaderboard' && request.method === 'GET') {
         if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);

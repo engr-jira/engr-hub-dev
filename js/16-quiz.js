@@ -44,6 +44,7 @@ async function loadQuizPage(){
     else renderQuizForm(d);
   }catch(e){ hero.innerHTML=`<div class="chart-card"><div class="u-cdanger-p20px">퀴즈 조회 실패: ${escapeHtml(e.message)}</div></div>`; }
   loadQuizBoard('week');
+  loadQuizHistory();
 }
 function quizDdayTxt(closes){ const left=closes-Date.now(); if(left<=0)return '마감'; const d=Math.floor(left/86400000),h=Math.floor(left%86400000/3600000); return d>0?`마감까지 ${d}일 ${h}시간`:`마감까지 ${h}시간`; }
 function renderQuizForm(d){
@@ -103,7 +104,8 @@ async function submitQuiz(){
   try{
     const r=await hubApi('/quiz/submit',{method:'POST',body:JSON.stringify({week:QUIZ_CUR.week,answers:QUIZ_ANS})});
     renderQuizResult(r);
-    loadQuizBoard('week');
+    if(QUIZ_CUR){ QUIZ_CUR.answeredCount=r.answered||0; QUIZ_CUR.totalQ=(QUIZ_CUR.questions||[]).length; }
+    loadQuizBoard('week'); loadQuizHistory();
     if(typeof toast==='function')toast('채점 완료!');
   }catch(e){ if(typeof toast==='function')toast('제출 실패: '+e.message,true); }
 }
@@ -155,18 +157,36 @@ function renderQuizResult(r){
 }
 function renderQuizSubmitted(d){
   const body=document.getElementById('quiz-body'); if(!body)return;
-  const n=(d.myAnswers||[]).length;
+  const n=d.answeredCount||0, tq=d.totalQ||(d.questions||[]).length;
   const avg=n?Math.round((d.myAnswers||[]).reduce((s,a)=>s+(a.score||0),0)/n):0;
-  body.innerHTML=`<div class="chart-card" style="text-align:center;padding:22px">
-    <div style="font-size:15px;font-weight:800;color:var(--text-strong)">✅ 이번 주 퀴즈 제출 완료</div>
-    <div style="font-size:30px;font-weight:900;color:${quizScoreColor(avg)};margin-top:8px">${avg}점</div>
-    <div class="u-muted-11" style="margin-top:6px">답변 ${n}건 · 마감(${new Date(d.closes_at).toLocaleDateString('ko-KR')}) 후 전체 해설이 공개됩니다</div>
-    <div style="display:flex;gap:8px;justify-content:center;margin-top:14px">
-      <button class="btn btn-ghost u-btn-xs" onclick="quizRetake()">✏️ 다시 풀기 (점수 갱신)</button>
+  const partial=n>0&&n<tq;
+  body.innerHTML=`<div class="chart-card" style="padding:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:13.5px;font-weight:800;color:var(--text-strong)">${partial?`⏳ 진행 중 — ${n}/${tq}문제 답변`:`✅ ${escapeHtml(d.week||'')} 제출 완료 (${n}/${tq})`}</div>
+        <div class="u-muted-11" style="margin-top:3px">마감 ${new Date(d.closes_at).toLocaleDateString('ko-KR')} · ${quizDdayTxt(d.closes_at)} · 마감 후 전체 해설 공개</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span style="font-size:26px;font-weight:900;color:${quizScoreColor(avg)}">${avg}점</span>
+        <button class="btn u-btn-xs" style="background:var(--accent);color:#FFFDF9;border-color:var(--accent);font-weight:700" onclick="quizRetake()">${partial?'▶ 이어서 풀기':'✏️ 다시 풀기'}</button>
+      </div>
     </div>
   </div>`;
 }
-function quizRetake(){ if(!QUIZ_CUR)return; if(!confirm('다시 제출하면 이전 점수를 덮어씁니다. 계속할까요?'))return; QUIZ_ANS={}; renderQuizForm(QUIZ_CUR); }
+function quizRetake(){ if(!QUIZ_CUR)return; const done=(QUIZ_CUR.answeredCount||0)>=(QUIZ_CUR.totalQ||0); if(done&&!confirm('다시 제출하면 이번 주 점수를 덮어씁니다. 계속할까요?'))return; QUIZ_ANS={}; renderQuizForm(QUIZ_CUR); }
+async function loadQuizHistory(){
+  const el=document.getElementById('quiz-history'); if(!el)return;
+  try{
+    const d=await hubApi('/quiz/history?limit=5');
+    const rows=d.rows||[];
+    if(!rows.length){ el.innerHTML=''; return; }
+    el.innerHTML=`<div class="chart-card" style="margin-bottom:12px;padding:8px 16px">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--text2)">
+        <span style="font-weight:800;color:var(--text3);width:58px;flex-shrink:0">🗂 내 이력</span>
+        ${rows.map(r=>`<span style="white-space:nowrap">${escapeHtml(r.week)} <b style="color:${quizScoreColor(r.acc)}">${r.acc}점</b> <span class="u-muted-10">${r.answered}${r.totalQ?'/'+r.totalQ:''}·${r.xp}XP${r.closed?'·마감':''}</span></span>`).join('<span style="color:var(--border2)">|</span>')}
+      </div></div>`;
+  }catch(_){ el.innerHTML=''; }
+}
 async function loadQuizBoard(scope){
   const board=document.getElementById('quiz-board'); if(!board)return;
   try{
@@ -385,5 +405,5 @@ function quizPreviewQ(id){
   </div>`;
 }
 function quizNormEq(a,b){ const n=s=>String(s==null?'':s).toLowerCase().replace(/[\s.,·\-_/()]+/g,''); return n(a)===n(b); }
-window.loadQuizPage=loadQuizPage; window.submitQuiz=submitQuiz; window.quizPick=quizPick; window.quizShort=quizShort; window.loadQuizBoard=loadQuizBoard; window.quizRetake=quizRetake;
+window.loadQuizPage=loadQuizPage; window.submitQuiz=submitQuiz; window.quizPick=quizPick; window.quizShort=quizShort; window.loadQuizBoard=loadQuizBoard; window.quizRetake=quizRetake; window.loadQuizHistory=loadQuizHistory;
 window.loadQuizAdmin=loadQuizAdmin; window.loadQuizBank=loadQuizBank; window.quizEditQ=quizEditQ; window.quizEditTypeSync=quizEditTypeSync; window.quizSaveQ=quizSaveQ; window.quizSetStatus=quizSetStatus; window.quizDelQ=quizDelQ; window.quizSuggest=quizSuggest; window.quizSwapPick=quizSwapPick; window.quizPublishWeek=quizPublishWeek; window.quizSaveSettings=quizSaveSettings; window.quizPreviewQ=quizPreviewQ;
