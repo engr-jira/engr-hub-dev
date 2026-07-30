@@ -320,8 +320,8 @@ function showPage(name,btn){
   const page=document.getElementById('page-'+name); if(page)page.classList.add('active');
   document.querySelectorAll('.sb-btn').forEach(b=>b.classList.remove('active'));
   const nav=btn||document.getElementById('nav-'+name); if(nav)nav.classList.add('active');
-  const titleMap={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',owners:'담당자 관리',sales:'영업 현황',eos:'라이선스',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',monitor:'팀 업무 모니터'};
-  const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',owners:'고객사별 정/부 담당 · 계약 상태 관리',sales:'고객사 계약·갱신 기회 · 규칙 기반 실시간 집계',eos:'고객사 라이선스 만료 관리',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',audit:'사용자 작업 이력',settings:'초기 데이터 및 저장소 관리',compat:'제품·OS 호환성 / EOS·EOL 매트릭스',monitor:'일/주 단위 팀 업무 갱신 현황'};
+  const titleMap={dash:'대시보드',issues:'이슈 관리',cases:'케이스 트래커',customers:'고객사 프로필',owners:'담당자 관리',sales:'영업 현황',eos:'라이선스',vt:'VirusTotal 조회',links:'업무 링크',knowledge:'팀 노하우',audit:'감사 로그',settings:'관리자 설정',mydesk:'My Desk',compat:'호환성 매트릭스',monitor:'팀 업무 모니터',quiz:'주간 퀴즈'};
+  const descMap={dash:'이슈 기반 보안기술팀 허브',issues:'Jira 일반 이슈 조회 및 AI 요약',cases:'제조사 케이스 번호 기준 추적',customers:'고객사별 이슈/케이스 현황',owners:'고객사별 정/부 담당 · 계약 상태 관리',sales:'고객사 계약·갱신 기회 · 규칙 기반 실시간 집계',eos:'고객사 라이선스 만료 관리',vt:'해시 조회 및 제조사 신고',links:'업무 참고 링크 모음',knowledge:'팀 내부 노하우 문서',audit:'사용자 작업 이력',settings:'초기 데이터 및 저장소 관리',compat:'제품·OS 호환성 / EOS·EOL 매트릭스',monitor:'일/주 단위 팀 업무 갱신 현황',quiz:'DLP·SEP·S1·PP 실전 지식 게임 — XP·레벨·뱃지'};
   const title=document.getElementById('page-title'); if(title)title.textContent=titleMap[name]||'HUB';
   const desc=document.getElementById('page-desc'); if(desc)desc.textContent=descMap[name]||'';
   expandActiveNavGroup(name);
@@ -333,6 +333,7 @@ function showPage(name,btn){
   }
   if(name==='compat')loadCompat();
   if(name==='monitor')loadMonitor('daily');
+  if(name==='quiz'&&typeof loadQuizPage==='function')loadQuizPage();
   renderCurrent();
   ensureRelativeDateOptions();
   setTimeout(enhanceDateButtons,0);

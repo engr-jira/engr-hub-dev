@@ -3,10 +3,10 @@
    최상위 7탭 + 서브탭 칩. 기존 점프 경로(showPage('cases') 등)는 전부 유효 —
    어떤 페이지로 가든 이 래퍼가 소속 그룹을 찾아 nav·서브탭을 동기화한다. */
 
-const IA_GROUPS={dash:'home',mydesk:'home',customers:'customers',owners:'customers',issues:'issues',cases:'issues',sales:'sales',eos:'sales',vt:'tools',links:'archive',knowledge:'archive',compat:'archive',audit:'admin',monitor:'admin',settings:'admin'};
+const IA_GROUPS={dash:'home',mydesk:'home',quiz:'home',customers:'customers',owners:'customers',issues:'issues',cases:'issues',sales:'sales',eos:'sales',vt:'tools',links:'archive',knowledge:'archive',compat:'archive',audit:'admin',monitor:'admin',settings:'admin'};
 const IA_NAV={home:'nav-dash',customers:'nav-customers',issues:'nav-issues',sales:'nav-sales',tools:'nav-vt',archive:'nav-links',admin:'nav-audit'};
 const IA_SUBTABS={
-  home:[['dash','대시보드'],['mydesk','My Desk']],
+  home:[['dash','대시보드'],['mydesk','My Desk'],['quiz','🧠 퀴즈']],
   customers:[['customers','고객사'],['owners','담당자 관리']],
   issues:[['issues','일반 이슈'],['cases','벤더 케이스']],
   sales:[['sales','영업 현황'],['eos','라이선스']],
