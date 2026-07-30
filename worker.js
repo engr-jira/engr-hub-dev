@@ -168,6 +168,27 @@ async function postDigestToTeams(env, hubUrl, notice) {
   return { ok: resp.ok, status: resp.status, day: D.day, mgmt: D.mgmtTotal };
 }
 
+// ══ 🧠 팀 퀴즈 헬퍼 (P1) ══
+function quizWeekId(ms) { const d = new Date(ms); d.setUTCHours(0, 0, 0, 0); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); const ys = new Date(Date.UTC(d.getUTCFullYear(), 0, 1)); const wn = Math.ceil(((d - ys) / 86400000 + 1) / 7); return d.getUTCFullYear() + '-W' + String(wn).padStart(2, '0'); }
+function quizNorm(s) { return String(s == null ? '' : s).toLowerCase().replace(/[\s.,·\-_/()]+/g, ''); }
+function gradeQuiz(q, userAns) {
+  const ua = String(userAns == null ? '' : userAns).trim();
+  if (!ua) return { score: 0 };
+  if (q.type === 'mc' || q.type === 'ox') return { score: quizNorm(ua) === quizNorm(q.answer) ? 100 : 0 };
+  const nu = quizNorm(ua);
+  let accepts = []; try { accepts = JSON.parse(q.accepts || '[]'); } catch (_) {}
+  if ([q.answer, ...accepts].filter(Boolean).some(t => quizNorm(t) === nu)) return { score: 100 };
+  let kws = []; try { kws = JSON.parse(q.keywords || '[]'); } catch (_) {}
+  if (kws.length) { const hit = kws.filter(k => k && nu.includes(quizNorm(k))).length; return { score: Math.round(hit / kws.length * 100), note: `키워드 ${hit}/${kws.length}` }; }
+  const na = quizNorm(q.answer);
+  return { score: (na && (nu.includes(na) || na.includes(nu))) ? 60 : 0 };
+}
+async function quizEnsureTables(env) {
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS quiz_question (id INTEGER PRIMARY KEY AUTOINCREMENT, product TEXT, type TEXT, difficulty INTEGER DEFAULT 1, question TEXT, choices TEXT, answer TEXT, accepts TEXT, keywords TEXT, explanation TEXT, source TEXT, tags TEXT, status TEXT DEFAULT 'draft', created_by TEXT, created_at INTEGER, updated_at INTEGER)").run();
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS quiz_week (week TEXT PRIMARY KEY, question_ids TEXT, opens_at INTEGER, closes_at INTEGER, published_by TEXT, published_at INTEGER)").run();
+  await env.DB.prepare("CREATE TABLE IF NOT EXISTS quiz_answer (week TEXT, user TEXT, question_id INTEGER, answer TEXT, score REAL, graded_by TEXT, note TEXT, submitted_at INTEGER, PRIMARY KEY (week, user, question_id))").run();
+}
+
 export default {
   async fetch(request, env, ctx) {
     if (request.method === 'OPTIONS') return new Response(null, { headers: getCorsHeaders(request) });
@@ -1316,6 +1337,120 @@ export default {
         let r; try { r = await postDigestToTeams(env, hubUrl, notice); } catch (e) { return corsResponse({ ok: false, message: '전송 실패: ' + e.message }, 502); }
         await auditLog(env, viaSession ? user : 'teams-flow', 'DIGEST_GEN', { via: 'teams-manual', status: r.status, digDate: r.day });
         return corsResponse({ ok: r.ok, status: r.status, day: r.day });
+      }
+
+      // ══ 🧠 팀 퀴즈 (P1) — 문제은행·주간출제(관리자) / 응시·채점·순위(세션) ══
+      if (path === '/quiz/questions' && request.method === 'GET') {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 접근할 수 있습니다.' }, 403);
+        await quizEnsureTables(env);
+        const prod = url.searchParams.get('product') || '', st = url.searchParams.get('status') || '';
+        let sql = 'SELECT * FROM quiz_question', cond = [], bind = [];
+        if (prod) { cond.push('product=?'); bind.push(prod); }
+        if (st) { cond.push('status=?'); bind.push(st); }
+        if (cond.length) sql += ' WHERE ' + cond.join(' AND ');
+        sql += ' ORDER BY (status=\'approved\') DESC, updated_at DESC LIMIT 500';
+        const r = await env.DB.prepare(sql).bind(...bind).all();
+        return corsResponse({ ok: true, items: (r.results || []) });
+      }
+      if (path === '/quiz/question' && (request.method === 'POST' || request.method === 'PUT')) {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 접근할 수 있습니다.' }, 403);
+        await quizEnsureTables(env);
+        const b = await request.json().catch(() => ({}));
+        const now = Date.now();
+        const F = { product: String(b.product || '').slice(0, 20), type: ['mc', 'ox', 'short'].includes(b.type) ? b.type : 'mc', difficulty: Math.max(1, Math.min(3, parseInt(b.difficulty) || 1)), question: String(b.question || '').slice(0, 2000), choices: JSON.stringify(Array.isArray(b.choices) ? b.choices.slice(0, 8) : []), answer: String(b.answer || '').slice(0, 500), accepts: JSON.stringify(Array.isArray(b.accepts) ? b.accepts.slice(0, 20) : []), keywords: JSON.stringify(Array.isArray(b.keywords) ? b.keywords.slice(0, 20) : []), explanation: String(b.explanation || '').slice(0, 3000), source: String(b.source || '').slice(0, 300), tags: String(b.tags || '').slice(0, 200), status: ['draft', 'approved', 'archived'].includes(b.status) ? b.status : 'draft' };
+        if (request.method === 'PUT' && b.id) {
+          await env.DB.prepare("UPDATE quiz_question SET product=?,type=?,difficulty=?,question=?,choices=?,answer=?,accepts=?,keywords=?,explanation=?,source=?,tags=?,status=?,updated_at=? WHERE id=?").bind(F.product, F.type, F.difficulty, F.question, F.choices, F.answer, F.accepts, F.keywords, F.explanation, F.source, F.tags, F.status, now, parseInt(b.id)).run();
+          await auditLog(env, user, 'QUIZ_Q', { quizAct: 'update', qid: parseInt(b.id) });
+          return corsResponse({ ok: true, id: parseInt(b.id) });
+        }
+        const ins = await env.DB.prepare("INSERT INTO quiz_question (product,type,difficulty,question,choices,answer,accepts,keywords,explanation,source,tags,status,created_by,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(F.product, F.type, F.difficulty, F.question, F.choices, F.answer, F.accepts, F.keywords, F.explanation, F.source, F.tags, F.status, user, now, now).run();
+        await auditLog(env, user, 'QUIZ_Q', { quizAct: 'create' });
+        return corsResponse({ ok: true, id: ins.meta && ins.meta.last_row_id });
+      }
+      if (path === '/quiz/question' && request.method === 'DELETE') {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 접근할 수 있습니다.' }, 403);
+        await quizEnsureTables(env);
+        const id = parseInt(url.searchParams.get('id') || '0'); if (!id) return corsResponse({ ok: false, message: 'id 필요' }, 400);
+        await env.DB.prepare('DELETE FROM quiz_question WHERE id=?').bind(id).run();
+        await auditLog(env, user, 'QUIZ_Q', { quizAct: 'delete', qid: id });
+        return corsResponse({ ok: true });
+      }
+      if (path === '/quiz/suggest' && request.method === 'GET') {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 접근할 수 있습니다.' }, 403);
+        await quizEnsureTables(env);
+        const n = Math.max(1, Math.min(20, parseInt(url.searchParams.get('n') || '10')));
+        const prod = url.searchParams.get('product') || '';
+        const r = await env.DB.prepare(`SELECT * FROM quiz_question WHERE status='approved'${prod ? ' AND product=?' : ''} ORDER BY RANDOM() LIMIT ?`).bind(...(prod ? [prod, n] : [n])).all();
+        return corsResponse({ ok: true, items: (r.results || []) });
+      }
+      if (path === '/quiz/week' && request.method === 'PUT') {
+        if (!hasSession || !await isAdmin(env, user)) return corsResponse({ ok: false, message: '관리자만 접근할 수 있습니다.' }, 403);
+        await quizEnsureTables(env);
+        const b = await request.json().catch(() => ({}));
+        const week = String(b.week || quizWeekId(Date.now() + 9 * 3600e3)).slice(0, 10);
+        const ids = (Array.isArray(b.question_ids) ? b.question_ids : []).map(x => parseInt(x)).filter(Boolean).slice(0, 20);
+        const opens = Number(b.opens_at) || Date.now();
+        const closes = Number(b.closes_at) || (opens + 7 * 86400000);
+        await env.DB.prepare("INSERT OR REPLACE INTO quiz_week (week,question_ids,opens_at,closes_at,published_by,published_at) VALUES (?,?,?,?,?,?)").bind(week, JSON.stringify(ids), opens, closes, user, Date.now()).run();
+        await auditLog(env, user, 'QUIZ_WEEK', { week, n: ids.length });
+        return corsResponse({ ok: true, week, count: ids.length });
+      }
+      if (path === '/quiz/current' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        await quizEnsureTables(env);
+        const now = Date.now();
+        const w = await env.DB.prepare("SELECT * FROM quiz_week WHERE opens_at<=? AND closes_at>=? ORDER BY opens_at DESC LIMIT 1").bind(now, now).first();
+        if (!w) return corsResponse({ ok: true, week: null });
+        let ids = []; try { ids = JSON.parse(w.question_ids || '[]'); } catch (_) {}
+        let questions = [];
+        if (ids.length) { const r = await env.DB.prepare(`SELECT id,product,type,difficulty,question,choices FROM quiz_question WHERE id IN (${ids.map(() => '?').join(',')})`).bind(...ids).all(); const map = {}; (r.results || []).forEach(q => map[q.id] = q); questions = ids.map(id => map[id]).filter(Boolean); }
+        const mine = await env.DB.prepare("SELECT question_id,answer,score FROM quiz_answer WHERE week=? AND user=?").bind(w.week, user).all();
+        return corsResponse({ ok: true, week: w.week, opens_at: w.opens_at, closes_at: w.closes_at, questions, submitted: (mine.results || []).length > 0, myAnswers: (mine.results || []) });
+      }
+      if (path === '/quiz/submit' && request.method === 'POST') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        await quizEnsureTables(env);
+        const b = await request.json().catch(() => ({}));
+        const now = Date.now();
+        const w = await env.DB.prepare("SELECT * FROM quiz_week WHERE week=?").bind(String(b.week || '')).first();
+        if (!w) return corsResponse({ ok: false, message: '퀴즈 주차를 찾을 수 없습니다.' }, 404);
+        if (now < w.opens_at || now > w.closes_at) return corsResponse({ ok: false, message: '응시 기간이 아닙니다.' }, 400);
+        let ids = []; try { ids = JSON.parse(w.question_ids || '[]'); } catch (_) {}
+        if (!ids.length) return corsResponse({ ok: false, message: '문제가 없습니다.' }, 400);
+        const qr = await env.DB.prepare(`SELECT * FROM quiz_question WHERE id IN (${ids.map(() => '?').join(',')})`).bind(...ids).all();
+        const qmap = {}; (qr.results || []).forEach(q => qmap[q.id] = q);
+        const answers = b.answers || {};
+        let total = 0, n = 0;
+        for (const id of ids) { const q = qmap[id]; if (!q) continue; const ua = (answers[id] !== undefined) ? answers[id] : answers[String(id)]; const g = gradeQuiz(q, ua); total += g.score; n++; await env.DB.prepare("INSERT INTO quiz_answer (week,user,question_id,answer,score,graded_by,note,submitted_at) VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(week,user,question_id) DO UPDATE SET answer=excluded.answer,score=excluded.score,graded_by=excluded.graded_by,note=excluded.note,submitted_at=excluded.submitted_at").bind(w.week, user, id, String(ua == null ? '' : ua).slice(0, 1000), g.score, 'auto', String(g.note || '').slice(0, 80), now).run(); }
+        await auditLog(env, user, 'QUIZ_SUBMIT', { week: w.week, score: n ? Math.round(total / n) : 0 });
+        return corsResponse({ ok: true, week: w.week, avg: n ? Math.round(total / n) : 0, answered: n });
+      }
+      if (path === '/quiz/me' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        await quizEnsureTables(env);
+        const week = String(url.searchParams.get('week') || '');
+        const w = await env.DB.prepare("SELECT * FROM quiz_week WHERE week=?").bind(week).first();
+        if (!w) return corsResponse({ ok: true, week: null });
+        const closed = Date.now() > w.closes_at;
+        const mine = await env.DB.prepare("SELECT question_id,answer,score,note FROM quiz_answer WHERE week=? AND user=?").bind(week, user).all();
+        let review = null;
+        if (closed) { let ids = []; try { ids = JSON.parse(w.question_ids || '[]'); } catch (_) {} if (ids.length) { const r = await env.DB.prepare(`SELECT id,question,type,choices,answer,explanation,source FROM quiz_question WHERE id IN (${ids.map(() => '?').join(',')})`).bind(...ids).all(); review = (r.results || []); } }
+        return corsResponse({ ok: true, week, closed, myAnswers: (mine.results || []), review });
+      }
+      if (path === '/quiz/leaderboard' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        await quizEnsureTables(env);
+        const scope = url.searchParams.get('scope') || 'week';
+        if (scope === 'month') {
+          const kst = new Date(Date.now() + 9 * 3600e3); const ms = Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth(), 1) - 9 * 3600e3; const me = Date.UTC(kst.getUTCFullYear(), kst.getUTCMonth() + 1, 1) - 9 * 3600e3;
+          const r = await env.DB.prepare("SELECT user, AVG(score) AS acc, COUNT(*) AS answered, COUNT(DISTINCT week) AS weeks FROM quiz_answer WHERE submitted_at>=? AND submitted_at<? GROUP BY user").bind(ms, me).all();
+          return corsResponse({ ok: true, scope: 'month', rows: (r.results || []) });
+        }
+        const week = String(url.searchParams.get('week') || quizWeekId(Date.now() + 9 * 3600e3));
+        const w = await env.DB.prepare("SELECT * FROM quiz_week WHERE week=?").bind(week).first();
+        let totalQ = 0; if (w) { try { totalQ = JSON.parse(w.question_ids || '[]').length; } catch (_) {} }
+        const r = await env.DB.prepare("SELECT user, AVG(score) AS acc, COUNT(*) AS answered, MAX(submitted_at) AS last FROM quiz_answer WHERE week=? GROUP BY user").bind(week).all();
+        return corsResponse({ ok: true, scope: 'week', week, totalQ, rows: (r.results || []) });
       }
 
       // \u2500\u2500 \uC2A4\uCF00\uC904 \uBD84\uC11D \uC5D4\uC9C4(B\uC548) \uACB0\uACFC \uC800\uC7A5/\uC870\uD68C : Claude \uC5D0\uC774\uC804\uD2B8\uAC00 \uC4F0\uACE0 \uD300\uC6D0\uC740 \uBDF0\uB9CC \u2500\u2500
