@@ -120,7 +120,7 @@ function injectV158Style(){
       html,body{background:#FAF1E6!important;color:#241B20!important;overflow-x:hidden!important}
       #app{display:flex!important;flex-direction:column!important;min-height:100vh!important;background:#FAF1E6!important;padding-bottom:78px!important;overflow-x:hidden!important}
       main{width:100%!important;max-width:100%!important;min-width:0!important;padding:0 0 14px!important;overflow-x:hidden!important;background:#FAF1E6!important}
-      header{position:sticky!important;top:0!important;z-index:90!important;margin:0!important;padding:10px 12px!important;background:rgba(255,255,255,.96)!important;border-bottom:1px solid #E7D8C4!important;box-shadow:0 2px 14px rgba(60,45,30,.06)!important;backdrop-filter:blur(10px)!important}
+      header{position:sticky!important;top:0!important;z-index:90!important;margin:0!important;padding:10px 12px!important;background:var(--control-bg)!important;border-bottom:1px solid #E7D8C4!important;box-shadow:0 2px 14px rgba(60,45,30,.06)!important;backdrop-filter:blur(10px)!important}
       .topbar{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:start!important;gap:8px!important;width:100%!important}
       .top-left{min-width:0!important}
       .top-title{font-size:17px!important;font-weight:800!important;color:#211D22!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}

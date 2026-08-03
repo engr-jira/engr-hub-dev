@@ -118,14 +118,14 @@ function applyV151Dom(){
   }
   const caseInfo=document.querySelector('#page-cases > div');
   if(caseInfo&&caseInfo.textContent.includes('7자리 이상')){
-    caseInfo.innerHTML='📦 <strong>케이스 트래커 분류 기준:</strong> Jira 제목 맨 앞이 <code style="background:rgba(255,255,255,.08);padding:2px 5px;border-radius:8px">[숫자8자리]</code> 형식인 항목만 케이스로 분류합니다. 일반 이슈에 포함된 케이스 번호는 연결 케이스로만 표시합니다.';
+    caseInfo.innerHTML='📦 <strong>케이스 트래커 분류 기준:</strong> Jira 제목 맨 앞이 <code style="background:var(--surface-tint-2);padding:2px 5px;border-radius:8px">[숫자8자리]</code> 형식인 항목만 케이스로 분류합니다. 일반 이슈에 포함된 케이스 번호는 연결 케이스로만 표시합니다.';
   }
   if(!document.getElementById('v151-style')){
     const st=document.createElement('style');
     st.id='v151-style';
     st.textContent=`
       .kpi.clickable{cursor:pointer;transition:transform .12s,border-color .12s,background .12s}.kpi.clickable:hover{transform:translateY(-1px);border-color:rgba(239,131,84,.55);background:rgba(239,131,84,.08)}
-      .case-chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 7px;font-size:10px;font-weight:700;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:var(--text2);margin-left:4px}
+      .case-chip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 7px;font-size:10px;font-weight:700;border:1px solid var(--control-border);background:var(--surface-tint-2);color:var(--text2);margin-left:4px}
       .case-chip.done{color:var(--success);background:rgba(63,190,146,.12);border-color:rgba(63,190,146,.25)}.case-chip.open{color:var(--warn);background:rgba(252,211,77,.10);border-color:rgba(252,211,77,.25)}
       .jump-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.jump-row button{width:auto;padding:7px 12px;font-size:11px}
       .case-ai-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:8px}.case-ai-grid .btn{width:100%;font-size:11px;padding:8px 10px}
@@ -398,7 +398,7 @@ function renderOpsFocus(){
   const metaInc=getGeneralIssues().filter(i=>isOpenStatus(i.status)&&isMetaIncomplete(i)).slice(0,5);
   const wrap=document.getElementById('ops-focus');
   if(!wrap)return;
-  const sec=(title,items,empty,mapper)=>`<div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="font-size:12px;font-weight:800;color:#F7E7DA;margin-bottom:8px">${title}</div>${items.length?items.map(mapper).join(''):`<div style="font-size:11px;color:var(--text3);padding:8px">${empty}</div>`}</div>`;
+  const sec=(title,items,empty,mapper)=>`<div style="background:var(--surface-tint);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="font-size:12px;font-weight:800;color:#F7E7DA;margin-bottom:8px">${title}</div>${items.length?items.map(mapper).join(''):`<div style="font-size:11px;color:var(--text3);padding:8px">${empty}</div>`}</div>`;
   wrap.innerHTML=`<div class="chart-card"><div class="chart-title">운영 포커스</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">${sec('7일 이상 미완료 일반 이슈',overdue,'대상 없음',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})"><b class="u-c-fcd34d">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:var(--danger)">${daysSince(i.date)}일</span></div>`)}${sec('High 이상 미완료 일반 이슈',highOpen,'대상 없음',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'high',label:'High 이상 미완료 일반 이슈'}})"><b class="u-c-fca5a5">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:var(--danger)">${i.pri}</span></div>`)}${sec('메타 미완성 (고객사·레이블·범주·기한)',metaInc,'모두 입력됨 ✓',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'incomplete',label:'메타 미완성 일반 이슈'}})"><b class="u-c-fbbf24">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,38)} <span style="float:right;color:var(--warn)">${metaMissingFields(i).join('·')}</span></div>`)}${sec('60일 내 라이선스 만료',nearEos,'대상 없음',x=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="showPage('eos',document.getElementById('nav-eos'));document.getElementById('eos-q').value=${jsAttr(x.customer)};PAGE_STATE.eos=1;renderEosList();"><b class="u-c-fcd34d">${escapeHtml(x.customer)}</b> ${escapeHtml(x.productDesc||x.product||'')} <span style="float:right;color:var(--warn)">D-${daysUntil(x.expireDate)}</span></div>`)}</div></div>`;
 }
 
@@ -422,7 +422,7 @@ function applyV153Dom(){
       .dash-section .sec-title:after{content:'';height:1px;background:var(--border);flex:1}
       .mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
       .mini-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px;min-height:140px;overflow:hidden}
-      .dash-list-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px;cursor:pointer}
+      .dash-list-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid var(--control-border);font-size:12px;cursor:pointer}
       .dash-list-row:last-child{border-bottom:0}
       .dash-list-row:hover .title{color:#FFFDF9}
       .case-chip{display:inline-flex;align-items:center;gap:4px;border:1px solid rgba(251,191,36,.32);background:rgba(251,191,36,.1);color:var(--warn);border-radius:999px;padding:2px 7px;font-size:10px;font-weight:800;margin-left:6px;white-space:nowrap}
@@ -436,7 +436,7 @@ function applyV153Dom(){
       .usage-card .u-muted,.health-card .u-muted{color:var(--text3)}
       .usage-card .u-val,.health-card .u-val{color:#FBF4EA;font-weight:800;text-align:right}
       .usage-card .u-ok{color:var(--success);font-weight:800}.usage-card .u-bad{color:var(--danger);font-weight:800}
-      .usage-card .u-foot{font-size:9px;color:var(--text3);text-align:right;margin-top:5px}
+      .usage-card .u-foot{font-size:10px;color:var(--text3);text-align:right;margin-top:5px}
       .health-card .h-row{display:flex;align-items:center;justify-content:space-between;font-size:10px;margin:3px 0;color:var(--text2)}
       .health-card .h-state{font-weight:800}.health-card .ok{color:var(--success)}.health-card .bad{color:var(--danger)}.health-card .warn{color:var(--warn)}
       .health-card .sync-mini{margin-top:6px;width:100%;padding:6px 8px!important;font-size:10px!important}

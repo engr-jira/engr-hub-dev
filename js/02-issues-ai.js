@@ -210,7 +210,7 @@ function openFullIssue(){
   const i=SEL;
   const sc=SC[i.status]||'#A2917A';
   const pc=PC[i.pri]||'#A2917A';
-  const commentHtml=i.comments.map(c=>`<div style="padding:12px 14px;background:rgba(255,255,255,.02);border-left:3px solid var(--accent2);border-radius:0 8px 8px 0;margin-bottom:8px">
+  const commentHtml=i.comments.map(c=>`<div style="padding:12px 14px;background:var(--surface-tint);border-left:3px solid var(--accent2);border-radius:0 8px 8px 0;margin-bottom:8px">
     <div style="font-size:10px;color:var(--accent3);font-weight:700;margin-bottom:5px">${escapeHtml(c.author)} · ${fdt(c.created)}</div>
     <div style="font-size:12px;color:var(--text2);line-height:1.7;white-space:pre-wrap">${adfToHtml(c.body)}</div>
   </div>`).join('');
@@ -228,7 +228,7 @@ function openFullIssue(){
       <div><span class="u-muted">수정일</span>&nbsp;${fd(i.updated)}</div>
     </div>
     ${attachHtml?`<div style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:6px">${attachHtml}</div>`:''}
-    ${i.desc?`<div class="u-mb-16px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px;text-transform:uppercase">본문</div><div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:12.5px;line-height:1.75;white-space:pre-wrap;max-height:400px;overflow-y:auto;color:var(--text2)">${adfToHtml(i.desc)}</div></div>`:''}
+    ${i.desc?`<div class="u-mb-16px"><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:6px;text-transform:uppercase">본문</div><div style="background:var(--surface-tint);border:1px solid var(--border);border-radius:12px;padding:14px;font-size:12.5px;line-height:1.75;white-space:pre-wrap;max-height:400px;overflow-y:auto;color:var(--text2)">${adfToHtml(i.desc)}</div></div>`:''}
     ${commentHtml?`<div><div style="font-size:10px;color:var(--text3);font-weight:700;margin-bottom:8px;text-transform:uppercase">코멘트 (${i.comments.length})</div>${commentHtml}</div>`:''}
   `,`<a class="u-td-none" href="https://escare-engr.atlassian.net/browse/${i.key}" target="_blank"><button class="btn btn-ghost u-btn-inline">Jira에서 보기 →</button></a>`);
 }

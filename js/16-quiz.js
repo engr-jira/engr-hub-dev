@@ -11,7 +11,7 @@ function quizLadderHtml(levels,curName){
     const cur=l.name===curName;
     return `<span style="display:inline-flex;flex-direction:column;align-items:center;gap:1px;padding:3px 9px;border-radius:9px;${cur?'background:color-mix(in srgb,var(--accent) 12%,transparent);border:1px solid var(--accent)':'opacity:.55'}">
       <span style="font-size:12px;font-weight:${cur?'800':'600'};color:${cur?'var(--accent)':'var(--text2)'};white-space:nowrap">${escapeHtml(l.name)}${cur?' ◂':''}</span>
-      <span style="font-size:9.5px;color:var(--text3)">${l.xp}+</span>
+      <span style="font-size:10px;color:var(--text3)">${l.xp}+</span>
     </span>`;
   }).join('<span style="color:var(--text3);opacity:.5">›</span>');
 }
@@ -136,7 +136,7 @@ function renderQuizResult(r){
       </div>
       <div style="font-size:12.5px;color:var(--text2);margin:6px 0 2px;white-space:pre-wrap">${escapeHtml(q.question||'')}</div>
       <div style="font-size:12px;margin-top:6px"><span style="color:var(--text3)">내 답</span> <b style="color:${quizScoreColor(res.score)}">${escapeHtml(String(my))}</b> · <span style="color:var(--text3)">정답</span> <b style="color:var(--success)">${escapeHtml(res.answer||'')}</b></div>
-      ${res.explanation?`<div style="font-size:12px;color:var(--text2);background:rgba(255,255,255,.04);border-radius:8px;padding:8px 11px;margin-top:7px;line-height:1.6">💡 ${escapeHtml(res.explanation)}${quizSourceHtml(res.source)}${res.credit?` <span class="u-muted-10">— 제보: ${escapeHtml(res.credit)} 🙌</span>`:''}</div>`:quizSourceHtml(res.source)?`<div style="font-size:12px;margin-top:6px">${quizSourceHtml(res.source)}</div>`:''}
+      ${res.explanation?`<div style="font-size:12px;color:var(--text2);background:var(--surface-tint);border-radius:8px;padding:8px 11px;margin-top:7px;line-height:1.6">💡 ${escapeHtml(res.explanation)}${quizSourceHtml(res.source)}${res.credit?` <span class="u-muted-10">— 제보: ${escapeHtml(res.credit)} 🙌</span>`:''}</div>`:quizSourceHtml(res.source)?`<div style="font-size:12px;margin-top:6px">${quizSourceHtml(res.source)}</div>`:''}
     </div>`;
   }).join('');
   const badges=(r.badges||[]).map(b=>`<span class="badge" style="background:rgba(159,107,181,.14);color:#9F6BB5;font-weight:800">${escapeHtml(b)}</span>`).join(' ');
@@ -246,7 +246,7 @@ async function loadQuizBank(){
     QUIZ_BANK=d.items||[];
     const cc=document.getElementById('quiz-bank-count'); if(cc)cc.textContent=`(${QUIZ_BANK.length}건 · 승인 ${QUIZ_BANK.filter(q=>q.status==='approved').length})`;
     if(!QUIZ_BANK.length){ box.innerHTML='<div class="empty">문제가 없습니다 — ➕ 새 문제로 시작하세요</div>'; return; }
-    const stBadge=s=>s==='approved'?'<span class="badge" style="background:rgba(30,158,106,.14);color:var(--success)">승인</span>':s==='archived'?'<span class="badge" style="background:rgba(255,255,255,.08);color:var(--text3)">보관</span>':'<span class="badge" style="background:rgba(224,163,46,.14);color:#B27E00">초안</span>';
+    const stBadge=s=>s==='approved'?'<span class="badge" style="background:rgba(30,158,106,.14);color:var(--success)">승인</span>':s==='archived'?'<span class="badge" style="background:var(--surface-tint-2);color:var(--text3)">보관</span>':'<span class="badge" style="background:rgba(224,163,46,.14);color:#B27E00">초안</span>';
     box.innerHTML=QUIZ_BANK.map(q=>`<div style="display:flex;gap:8px;align-items:center;padding:8px 6px;border-bottom:1px solid var(--border);font-size:12px">
       <span class="u-muted-10" style="width:34px">#${q.id}</span>
       ${q.created_by==='engine'?'<span class="badge" style="background:rgba(63,163,196,.14);color:#3F8FC4;font-weight:800" title="분석 엔진이 자동 생성한 초안">🤖</span>':''}
@@ -399,7 +399,7 @@ function quizPreviewQ(id){
       <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-size:11px;font-weight:800;color:var(--text3)">Q1 / 10</span><span style="display:flex;gap:6px;align-items:center">${quizProdBadge(q.product)}${quizDiffStars(q.difficulty)}</span></div>
       <div style="font-size:13.5px;font-weight:700;color:var(--text-strong);margin:8px 0 2px;line-height:1.6;white-space:pre-wrap">${escapeHtml(q.question)}</div>
       ${input}
-      ${q.explanation?`<div style="font-size:12px;color:var(--text2);background:rgba(255,255,255,.04);border-radius:8px;padding:8px 11px;margin-top:10px;line-height:1.6">💡 ${escapeHtml(q.explanation)}${quizSourceHtml(q.source)}${q.credit?` <span class="u-muted-10">— 제보: ${escapeHtml(q.credit)} 🙌</span>`:''}</div>`:''}
+      ${q.explanation?`<div style="font-size:12px;color:var(--text2);background:var(--surface-tint);border-radius:8px;padding:8px 11px;margin-top:10px;line-height:1.6">💡 ${escapeHtml(q.explanation)}${quizSourceHtml(q.source)}${q.credit?` <span class="u-muted-10">— 제보: ${escapeHtml(q.credit)} 🙌</span>`:''}</div>`:''}
     </div>
     <div style="display:flex;gap:8px;margin-top:12px"><button class="btn btn-ghost u-btn-xs" onclick="document.getElementById('quiz-q-modal').style.display='none';quizEditQ(${q.id})">✏️ 수정</button>${q.status!=='approved'?`<button class="btn btn-primary u-btn-xs" onclick="quizSetStatus(${q.id},'approved');document.getElementById('quiz-q-modal').style.display='none'">✔ 승인</button>`:''}</div>
   </div>`;

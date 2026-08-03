@@ -264,7 +264,7 @@ function briefList(text,mode,accent){
   // mode 'line'=줄 단위(포커스), 'sent'=문장 단위(동향·패턴)
   const parts=(mode==='line'?String(text).split(/\n+/):String(text).split(/(?<=다\.)\s+/)).map(p=>p.trim()).filter(Boolean);
   if(parts.length<2)return `<div class="u-fs125px-lh17-ctext2-wsprewra">${briefLinkify(text)}</div>`;
-  return parts.map(p=>`<div style="font-size:12.5px;line-height:1.6;color:var(--text2);padding:6px 10px;background:rgba(255,255,255,.03);border-left:2px solid ${accent};border-radius:0 8px 8px 0">${briefLinkify(p)}</div>`).join('<div style="height:6px"></div>');
+  return parts.map(p=>`<div style="font-size:12.5px;line-height:1.6;color:var(--text2);padding:6px 10px;background:var(--surface-tint);border-left:2px solid ${accent};border-radius:0 8px 8px 0">${briefLinkify(p)}</div>`).join('<div style="height:6px"></div>');
 }
 function archiveBriefBlock(arch){
   const items=(arch&&arch.items)||[];
@@ -293,7 +293,7 @@ async function renderIssueAnalysis(key,secId){
   try{
     const d=await hubApi('/analysis/issue/'+encodeURIComponent(key));
     const a=d.analysis;
-    if(!a){sec.innerHTML=`<div class="u-fs10px-ctext3-fw700-m4px06p">🤖 AI 분석 (스케줄)</div><div style="font-size:11.5px;color:var(--text3);background:rgba(255,255,255,.03);border:1px dashed var(--border);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>이 이슈는 최근 분석 대상에 포함되지 않았습니다. 다음 주기(07:00/15:30)에 변경된 이슈 위주로 분석됩니다.</span>${btn}</div>`;return;}
+    if(!a){sec.innerHTML=`<div class="u-fs10px-ctext3-fw700-m4px06p">🤖 AI 분석 (스케줄)</div><div style="font-size:11.5px;color:var(--text3);background:var(--surface-tint);border:1px dashed var(--border);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>이 이슈는 최근 분석 대상에 포함되지 않았습니다. 다음 주기(07:00/15:30)에 변경된 이슈 위주로 분석됩니다.</span>${btn}</div>`;return;}
     const rows=[];
     if(a.summary)rows.push(`<div class="u-mb-8px"><b style="color:var(--text)">📋 내용 요약</b><div class="u-ws-prewrap">${escapeHtml(String(a.summary))}</div></div>`);
     if(a.tech_analysis)rows.push(`<div class="u-mb-8px"><b style="color:#9F6BB5">🧪 기술 분석</b><div class="u-ws-prewrap">${escapeHtml(String(a.tech_analysis))}</div></div>`);
