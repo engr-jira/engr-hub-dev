@@ -24,7 +24,7 @@ async function refreshStorageStats(){
       <div class="storage-summary u-mt-10px">
         <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px">
           <div>
-            <div style="font-size:12px;font-weight:800;color:#F7E7DA">Cloudflare KV Operation 사용량</div>
+            <div style="font-size:12px;font-weight:800;color:var(--control-text)">Cloudflare KV Operation 사용량</div>
             <div class="storage-note">Free 기준 일일 한도: read ${Number(limits.reads||0).toLocaleString()} / write ${Number(limits.writes||0).toLocaleString()} / list ${Number(limits.lists||0).toLocaleString()} / delete ${Number(limits.deletes||0).toLocaleString()} · UTC ${escapeHtml(ops.resetAtUtc||'00:00')} 리셋</div>
           </div>
           <div style="text-align:right;font-size:11px;color:var(--text3)">AI 오늘 ${ops.aiToday||0}회 · 이번달 ${ops.aiMonth||0}회</div>
@@ -398,7 +398,7 @@ function renderOpsFocus(){
   const metaInc=getGeneralIssues().filter(i=>isOpenStatus(i.status)&&isMetaIncomplete(i)).slice(0,5);
   const wrap=document.getElementById('ops-focus');
   if(!wrap)return;
-  const sec=(title,items,empty,mapper)=>`<div style="background:var(--surface-tint);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="font-size:12px;font-weight:800;color:#F7E7DA;margin-bottom:8px">${title}</div>${items.length?items.map(mapper).join(''):`<div style="font-size:11px;color:var(--text3);padding:8px">${empty}</div>`}</div>`;
+  const sec=(title,items,empty,mapper)=>`<div style="background:var(--surface-tint);border:1px solid var(--border);border-radius:12px;padding:12px"><div style="font-size:12px;font-weight:800;color:var(--control-text);margin-bottom:8px">${title}</div>${items.length?items.map(mapper).join(''):`<div style="font-size:11px;color:var(--text3);padding:8px">${empty}</div>`}</div>`;
   wrap.innerHTML=`<div class="chart-card"><div class="chart-title">운영 포커스</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">${sec('7일 이상 미완료 일반 이슈',overdue,'대상 없음',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'overdue',label:'7일 이상 미완료 일반 이슈'}})"><b class="u-c-fcd34d">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:var(--danger)">${daysSince(i.date)}일</span></div>`)}${sec('High 이상 미완료 일반 이슈',highOpen,'대상 없음',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'high',label:'High 이상 미완료 일반 이슈'}})"><b class="u-c-fca5a5">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,50)} <span style="float:right;color:var(--danger)">${i.pri}</span></div>`)}${sec('메타 미완성 (고객사·레이블·범주·기한)',metaInc,'모두 입력됨 ✓',i=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="setIssueNavigationFilter({preset:{kind:'incomplete',label:'메타 미완성 일반 이슈'}})"><b class="u-c-fbbf24">${i.key}</b> ${escapeHtml(cleanTitle(i.title)).slice(0,38)} <span style="float:right;color:var(--warn)">${metaMissingFields(i).join('·')}</span></div>`)}${sec('60일 내 라이선스 만료',nearEos,'대상 없음',x=>`<div class="u-curpointe-fs11px-ctext2-p6px0-bor1pxsol" onclick="showPage('eos',document.getElementById('nav-eos'));document.getElementById('eos-q').value=${jsAttr(x.customer)};PAGE_STATE.eos=1;renderEosList();"><b class="u-c-fcd34d">${escapeHtml(x.customer)}</b> ${escapeHtml(x.productDesc||x.product||'')} <span style="float:right;color:var(--warn)">D-${daysUntil(x.expireDate)}</span></div>`)}</div></div>`;
 }
 

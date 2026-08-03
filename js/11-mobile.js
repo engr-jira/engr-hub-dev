@@ -170,7 +170,7 @@ function injectV158Style(){
       .admin-section>summary{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:5px 8px!important;min-height:58px!important;padding:12px 13px!important;color:#211D22!important}
       .admin-section>summary span{grid-column:1/2!important;grid-row:1!important;font-size:13px!important;justify-self:start!important}
       .admin-section>summary small{grid-column:1/-1!important;grid-row:2!important;justify-self:start!important;text-align:left!important;white-space:normal!important;color:var(--text3)!important;font-size:10px!important;line-height:1.35!important}
-      .admin-section>summary:after{grid-column:2!important;grid-row:1!important;background:#FBEFE6!important;border-color:#F3C9B4!important;color:#A83E1F!important}
+      .admin-section>summary:after{grid-column:2!important;grid-row:1!important;background:var(--accent-soft)!important;border-color:#F3C9B4!important;color:#A83E1F!important}
       .admin-section .admin-card{margin:10px!important;background:#FBF4EA!important}
       .danger-section{border-color:#F3CFC9!important}
       .danger-section>summary:after{background:#fef2f2!important;border-color:#F3CFC9!important;color:#9E2E2A!important}

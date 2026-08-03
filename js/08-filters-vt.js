@@ -89,7 +89,7 @@ function injectV155Style(){
     .ai-usage-v155 .u-mini{border:1px solid var(--control-border);background:var(--surface-tint);border-radius:8px;padding:6px}
     .ai-usage-v155 .u-mini span{display:block;font-size:10px;color:var(--text3);margin-bottom:3px}.ai-usage-v155 .u-mini b{font-size:11px;color:#FBF4EA}
     .ai-usage-v155 .u-foot{border-top:1px solid var(--control-border);padding-top:6px;text-align:left!important}
-    .health-card .sync-mini{background:var(--surface-tint-2)!important;border-color:var(--control-border)!important;color:#F7E7DA!important}
+    .health-card .sync-mini{background:var(--surface-tint-2)!important;border-color:var(--control-border)!important;color:var(--control-text)!important}
     .issue-list{display:flex;flex-direction:column;gap:8px}
     .issue-card{background:var(--surface-tint);border:1px solid rgba(239,131,84,.18);border-left:3px solid rgba(63,163,196,.42);border-radius:8px;padding:11px 13px;cursor:pointer;transition:background .12s ease,border-color .12s ease,transform .12s ease}
     .issue-card:hover,.issue-card.sel{background:rgba(217,96,59,.12);border-color:rgba(239,131,84,.48);transform:translateY(-1px)}
@@ -128,7 +128,7 @@ function injectV155Style(){
     .top-status-card .label{font-size:10px;color:var(--text3);font-weight:800;letter-spacing:.2px}
     .top-status-card .value{font-size:11px;color:#f5f8ff;font-weight:800;white-space:nowrap}
     .top-status-card .ok{color:var(--success)}.top-status-card .warn{color:var(--warn)}
-    .top-refresh,.top-logout,.top-pin{height:34px;border-radius:12px;border:1px solid var(--control-border);background:var(--surface-tint-2);color:#F7E7DA;font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px}
+    .top-refresh,.top-logout,.top-pin{height:34px;border-radius:12px;border:1px solid var(--control-border);background:var(--surface-tint-2);color:var(--control-text);font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px}
     .top-pin{color:#BFE0EC;border-color:rgba(63,163,196,.28);background:rgba(63,163,196,.08)}
     .top-refresh{width:36px;padding:0}.top-refresh svg{width:15px;height:15px}.top-refresh:hover,.top-logout:hover,.top-pin:hover{background:rgba(239,131,84,.2);border-color:rgba(239,131,84,.42)}
     #page-nav,#case-pager{display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:6px!important;background:transparent!important;border:0!important;padding:8px 0!important}
