@@ -104,12 +104,12 @@ function vtTableHtml(results,total,done){
   window.__vtLastResults=results;
   const ok=results.filter(r=>r.ok);
   const nf=results.filter(r=>!r.ok);
-  const okRows=ok.map(r=>{
+  const okRows=ok.map((r,_i)=>{
     const col=vtRiskColor(r.mal),label=r.mal>=5?'악성':r.mal>=1?'의심':'안전';
     const dets=r.detections||[];
     const detShort=dets.length?escapeHtml(dets.slice(0,2).join(' · '))+(dets.length>2?` <span class="u-muted">외 ${dets.length-2}</span>`:''):(r.info?escapeHtml(String(r.info).slice(0,60)):'<span class="u-muted">-</span>');
-    return `<tr>
-      <td><span class="badge" style="background:var(--accent-soft,rgba(217,96,59,.14));color:var(--accent3)">${VT_TYPE_LABEL[r.vtType]||r.vtType}</span></td>
+    return `<tr class="vt-hist-row new" style="animation-delay:${_i*70}ms">
+      <td><span class="badge" style="background:var(--accent-soft);color:var(--accent3)">${VT_TYPE_LABEL[r.vtType]||r.vtType}</span></td>
       <td style="font-family:monospace;font-size:11px;white-space:nowrap;max-width:220px;overflow:hidden;text-overflow:ellipsis" title="${escapeHtml(r.value)}">${escapeHtml(String(r.value).slice(0,30))}${String(r.value).length>30?'…':''}</td>
       <td style="font-weight:800;color:${col};white-space:nowrap">${r.mal}/${r.total}</td>
       <td><span class="badge" style="background:${col}22;color:${col}">${label}</span></td>

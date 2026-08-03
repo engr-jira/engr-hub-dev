@@ -64,7 +64,7 @@ async function syncJira(){
     ISSUES=d.issues.map(normalizeJiraIssue);
     normalizeCustomerFallback();
     const gi=getGeneralIssues().length, ci=getCaseIssueBase().length;
-    if(dot)dot.innerHTML='<span class="dot dot-green"></span><span class="ok">연결됨</span>';
+    if(dot)dot.innerHTML='<span class="dot dot-green dot-live"></span><span class="ok">연결됨</span>';
     const ic=document.getElementById('issue-count');
     if(ic)ic.textContent=`일반 ${gi} / 케이스 ${ci}`;
     renderTopbarStatus();

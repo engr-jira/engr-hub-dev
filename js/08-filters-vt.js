@@ -237,7 +237,7 @@ function renderSidebarCompact(){
   if(!box)return;
   box.dataset.v153='1';
   const gi=getGeneralIssues().length, ci=getCaseIssueBase().length;
-  const jiraState=ISSUES&&ISSUES.length?'<span class="dot dot-green"></span>연결됨':'<span class="dot u-bg-warn"></span>대기';
+  const jiraState=ISSUES&&ISSUES.length?'<span class="dot dot-green dot-live"></span>연결됨':'<span class="dot u-bg-warn"></span>대기';
   box.innerHTML=`
     <div class="health-card">
       <div class="h-head"><div class="h-title">연결/동기화</div><span class="u-muted-10" id="issue-count">${gi||ci?`일반 ${gi} / 케이스 ${ci}`:'-'}</span></div>
