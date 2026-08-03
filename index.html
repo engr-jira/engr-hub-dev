@@ -17,6 +17,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -40,6 +42,10 @@ html[data-theme="dark"]{ color-scheme:dark }
 html[data-theme="light"]{ color-scheme:light }
 body{font-family:'Pretendard Variable',Pretendard,'Malgun Gothic','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .kpi .num,.kpi-val,.kpi-num,.vt-score,.rank-pos,.session-timer,.pager span{font-variant-numeric:tabular-nums}
+/* 숫자의 목소리 — 숫자·시각·해시·로그만 모노스페이스 (한글/UI는 Pretendard 유지) */
+.kpi .num,.kpi-val,.kpi-num,.vt-score,.session-timer,.vt-hist-hash,.vt-history-hash,.logx-term,.rank-pos,.pager span,#page-nav button,#case-pager button,.tc-time,.tc-date,#top-range-text,.issue-main .key,.ikey{font-family:"IBM Plex Mono",Consolas,monospace}
+/* 이중 언어 마이크로캡션 */
+.sec-en{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;letter-spacing:1.8px;color:var(--text3);text-transform:uppercase}
 #cfg{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:1000;overflow:hidden;
   background:
     radial-gradient(900px 620px at 16% 20%, rgba(217,96,59,.30), transparent 60%),
@@ -318,7 +324,7 @@ html[data-theme="light"] .logx-pre{background:#FAF1E6;color:var(--bg)}
 html[data-theme="light"] .logx-issue{background:var(--card)}
 .logx-issue-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .logx-sum{font-size:13px;font-weight:700;color:var(--text)}
-.logx-term{font-family:'Consolas',monospace;font-size:11px;color:var(--text3);margin-bottom:8px;word-break:break-all}
+.logx-term{font-family:'IBM Plex Mono',Consolas,monospace;font-size:11px;color:var(--text3);margin-bottom:8px;word-break:break-all}
 .logx-links{display:flex;flex-wrap:wrap;gap:8px}
 .logx-link{display:inline-flex;align-items:center;gap:0;border:1px solid var(--border2);border-radius:8px;overflow:hidden}
 .logx-link a{font-size:11.5px;color:var(--cyan);text-decoration:none;padding:6px 10px;white-space:nowrap}
@@ -529,7 +535,7 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
 .customer-work-row:hover{border-color:rgba(239,131,84,.55);background:rgba(239,131,84,.09);transform:translateY(-1px)}
 .customer-work-row .k{font-weight:800;color:#BFE0EC;font-size:12px}.customer-work-row .t{font-size:11px;color:var(--text2);margin-top:2px;line-height:1.35}.customer-work-row .m{font-size:10px;color:var(--text3);white-space:nowrap}
 .vt-history-item{display:grid;grid-template-columns:minmax(150px,1fr) 70px 76px 84px;gap:8px;align-items:center;padding:8px 10px;border-bottom:1px solid var(--control-border);font-size:11px}
-.vt-history-item:last-child{border-bottom:0}.vt-history-hash{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;color:#BFE0EC;overflow:hidden;text-overflow:ellipsis}.vt-history-meta{color:var(--text3);font-size:10px}
+.vt-history-item:last-child{border-bottom:0}.vt-history-hash{font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Consolas,monospace;color:#BFE0EC;overflow:hidden;text-overflow:ellipsis}.vt-history-meta{color:var(--text3);font-size:10px}
 @media(max-width:1200px){.vt-history-item{grid-template-columns:1fr 62px 66px}.vt-history-item .hide-narrow{display:none}}
 </style>
 
@@ -552,7 +558,7 @@ input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;cursor:po
 .issue-card{background:var(--surface-tint);border:1px solid rgba(239,131,84,.18);border-radius:8px;padding:11px 13px;cursor:pointer;transition:background .12s ease,border-color .12s ease,transform .12s ease}
 .issue-card:hover,.issue-card.sel{background:rgba(217,96,59,.12);border-color:rgba(239,131,84,.48);transform:translateY(-1px)}
 .issue-main{display:grid;grid-template-columns:auto auto auto minmax(0,1fr) auto;gap:7px;align-items:center;min-width:0}
-.issue-main .key{font-size:12px;font-weight:800;color:#BFE0EC;font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+.issue-main .key{font-size:12px;font-weight:800;color:#BFE0EC;font-family:'IBM Plex Mono',ui-monospace,SFMono-Regular,Consolas,monospace}
 .issue-main .st,.issue-main .pri{font-size:10px;font-weight:800;border-radius:8px;padding:3px 6px;white-space:nowrap}
 .issue-main .title{font-size:13px;font-weight:700;color:var(--text-strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .issue-main .date{font-size:11px;color:var(--text3);white-space:nowrap}
@@ -1886,13 +1892,13 @@ body.is-sales #nav-sales{display:flex!important}
       </div>
       <div id="overdue-banner-wrap"></div>
       <div id="eos-banner-wrap"></div>
-      <div class="sec-title">현황 요약</div>
+      <div class="sec-title">현황 요약 <span class="sec-en">OVERVIEW</span></div>
       <div class="kpi-grid" id="kpi-wrap"></div>
       <div id="meta-incomplete-wrap"></div>
-      <div class="sec-title" id="ai-brief-title" style="display:none">🗞 우리팀 보안 브리핑</div>
+      <div class="sec-title" id="ai-brief-title" style="display:none">🗞 우리팀 보안 브리핑 <span class="sec-en">DAILY BRIEFING</span></div>
       <div id="ai-brief-wrap" style="display:none"></div>
       <div class="chart-grid" id="chart-section"></div>
-      <div class="sec-title">팀원 랭킹</div>
+      <div class="sec-title">팀원 랭킹 <span class="sec-en">TEAM RANKING</span></div>
       <div class="chart-grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr))">
         <div class="chart-card"><h4>처리 건수 TOP</h4><div id="rank-handled"></div></div>
         <div class="chart-card"><h4>완료율 (5건 이상)</h4><div id="rank-rate"></div></div>
@@ -1900,7 +1906,7 @@ body.is-sales #nav-sales{display:flex!important}
         <div class="chart-card"><h4>🔴 팀 회신 필요 케이스</h4><div class="u-fs11px-ctext3-mb6px">제조사 회신이 도착해 팀 응답 차례인 진행 케이스</div><div id="rank-need-reply"></div></div>
         <div class="chart-card"><h4>월별 신규 등록</h4><div class="u-fs11px-ctext3-mb6px">최근 6개월 신규 이슈 — <span style="color:var(--cyan)">● 일반</span> · <span style="color:#9F6BB5">● 케이스</span></div><svg class="line-chart" id="trend-chart" viewBox="0 0 400 140"></svg></div>
       </div>
-      <div class="sec-title">최근 이슈 (10건)</div>
+      <div class="sec-title">최근 이슈 (10건) <span class="sec-en">ACTIVITY</span></div>
       <div id="dash-list" class="issue-list"></div>
     </div>
 
@@ -2526,7 +2532,7 @@ body.is-sales #nav-sales{display:flex!important}
     </div>
 
     <div class="page" id="page-settings">
-      <div class="sec-title">⚙ 관리자 설정</div>
+      <div class="sec-title">⚙ 관리자 설정 <span class="sec-en">ADMIN</span></div>
       <div id="admin-action-status" class="admin-action-status" role="status" aria-live="polite"></div>
 
       <details class="admin-section" open>

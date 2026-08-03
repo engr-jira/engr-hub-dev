@@ -181,13 +181,13 @@ function renderDash_legacy_v2(){
       <div class="kpi" onclick="setIssueNavigationFilter({preset:{kind:'my',label:'내 담당 일반 이슈'}})"><div class="num">${myRate}%</div><div class="label">내 완료율</div><div class="sub">${myDone.length}/${my.length}건</div></div>
     </div>`;
   const focus=document.getElementById('focus');
-  if(focus)focus.innerHTML=`<div class="dash-section"><div class="sec-title">운영 포커스</div><div class="mini-grid">
+  if(focus)focus.innerHTML=`<div class="dash-section"><div class="sec-title">운영 포커스 <span class="sec-en">OPS FOCUS</span></div><div class="mini-grid">
     <div class="mini-card"><div class="u-fs12px-ca5b4fc-fw800-mb8px">처리 건수 TOP</div>${topAssigneeRows(g)}</div>
     <div class="mini-card"><div class="u-fs12px-ca5b4fc-fw800-mb8px">케이스 진행 TOP</div>${topAssigneeRows(cOpen)}</div>
     <div class="mini-card"><div class="u-fs12px-ca5b4fc-fw800-mb8px">월별 추이 (최근 6개월)</div>${monthTrendRows(g,c)}</div>
   </div></div>`;
   const recent=document.getElementById('recent');
-  if(recent)recent.innerHTML=`<div class="dash-section"><div class="sec-title">최근 일반 이슈 (10건)</div>${g.sort((a,b)=>issueDateValue(b)-issueDateValue(a)).slice(0,10).map(i=>`<div class="issue-card" onclick="setIssueNavigationFilter({q:${jsAttr(i.key)}})"><div class="issue-main"><span class="key">${escapeHtml(i.key)}</span><span class="st" style="background:${(SC[i.status]||'#A2917A')}22;color:${SC[i.status]||'#A2917A'}">${escapeHtml(i.status)}</span><span class="title">${escapeHtml(cleanTitle(i.title))}</span>${caseChipsForIssue(i)}<span class="date">${fd(i.date)}</span></div><div class="issue-sub"><span>@${escapeHtml(i.assignee||'-')}</span><span>${escapeHtml(i.customer||'-')}</span></div></div>`).join('')||'<div class="empty">최근 일반 이슈 없음</div>'}</div>`;
+  if(recent)recent.innerHTML=`<div class="dash-section"><div class="sec-title">최근 일반 이슈 (10건) <span class="sec-en">ACTIVITY</span></div>${g.sort((a,b)=>issueDateValue(b)-issueDateValue(a)).slice(0,10).map(i=>`<div class="issue-card" onclick="setIssueNavigationFilter({q:${jsAttr(i.key)}})"><div class="issue-main"><span class="key">${escapeHtml(i.key)}</span><span class="st" style="background:${(SC[i.status]||'#A2917A')}22;color:${SC[i.status]||'#A2917A'}">${escapeHtml(i.status)}</span><span class="title">${escapeHtml(cleanTitle(i.title))}</span>${caseChipsForIssue(i)}<span class="date">${fd(i.date)}</span></div><div class="issue-sub"><span>@${escapeHtml(i.assignee||'-')}</span><span>${escapeHtml(i.customer||'-')}</span></div></div>`).join('')||'<div class="empty">최근 일반 이슈 없음</div>'}</div>`;
 }
 function topAssigneeRows(list){
   const rows=Object.entries(list.reduce((m,i)=>(m[i.assignee||'-']=(m[i.assignee||'-']||0)+1,m),{})).sort((a,b)=>b[1]-a[1]).slice(0,6);

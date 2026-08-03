@@ -127,7 +127,7 @@ function vtTableHtml(results,total,done){
     ${nf.length?`<button onclick="vtCopyResults('notfound')" class="btn btn-ghost u-btn-xs">📋 미발견 해시 복사 (${nf.length})</button>`:''}
   </div>`:'';
   return `<div class="vt-result">${head}${copyBar}
-    ${ok.length?`<div class="sec-title" style="margin:4px 0 8px">✅ 조회 성공 ${ok.length}건</div>
+    ${ok.length?`<div class="sec-title" style="margin:4px 0 8px">✅ 조회 성공 ${ok.length}건 <span class="sec-en">VERDICTS</span></div>
       <table class="eos-table srt"><thead><tr><th>유형</th><th>대상</th><th>탐지</th><th>위험도</th><th>탐지명 / 정보</th><th>VT</th></tr></thead><tbody>${okRows}</tbody></table>`:''}
     ${nf.length?`<div class="sec-title" style="margin:16px 0 8px">❔ 미발견 / 오류 ${nf.length}건</div>
       <table class="eos-table"><thead><tr><th>대상</th><th>사유</th></tr></thead><tbody>${nfRows}</tbody></table>`:''}
@@ -194,7 +194,7 @@ function renderVtRich(rec){
         <div class="vt-cell"><div class="vt-cell-label">미탐지</div><div class="vt-cell-val">${stats.undetected||0}</div></div>
         ${metaCells}
       </div>
-      ${malEngines.length?`<div class="u-mt-14px"><div class="sec-title u-mb-8px">탐지 엔진 (${malEngines.length}개)</div>
+      ${malEngines.length?`<div class="u-mt-14px"><div class="sec-title u-mb-8px">탐지 엔진 (${malEngines.length}개) <span class="sec-en">ENGINE VERDICTS</span></div>
       ${malEngines.map(e=>`<div style="font-size:11px;color:var(--danger);padding:4px 0;border-bottom:1px solid var(--border)">${escapeHtml(e)}</div>`).join('')}</div>`:''}
       <div style="margin-top:14px;display:flex;gap:8px">
         <a class="u-td-none" href="${link||'https://www.virustotal.com/'}" target="_blank">
