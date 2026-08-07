@@ -282,18 +282,19 @@ function applyDigestRecipientPolicy(recipients, cfg, domain) {
 }
 // 전송 목록을 웹훅으로 1건씩 발사 (Flow가 target/email 보고 DM 또는 채널 게시)
 async function pushPersonalDigests(env, sendList) {
-  let sent = 0, failed = 0;
-  if (!env.TEAMS_WEBHOOK_URL) return { sent, failed, reason: 'no-webhook' };
+  let sent = 0, failed = 0; const errors = [];
+  if (!env.TEAMS_WEBHOOK_URL) return { sent, failed, errors, reason: 'no-webhook' };
   for (const r of sendList) {
     try {
       const resp = await fetch(env.TEAMS_WEBHOOK_URL, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'message', target: 'dm', assignee: r.assignee, userId: r.userId, email: r.email, testOf: r.testOf || '', attachments: r.attachments })
       });
-      if (resp.ok) sent++; else failed++;
-    } catch (_) { failed++; }
+      if (resp.ok) sent++;
+      else { failed++; if (errors.length < 3) errors.push({ to: r.assignee, status: resp.status, body: (await resp.text().catch(() => '')).slice(0, 300) }); }
+    } catch (e) { failed++; if (errors.length < 3) errors.push({ to: r.assignee, status: 0, body: String(e && e.message || e).slice(0, 300) }); }
   }
-  return { sent, failed };
+  return { sent, failed, errors };
 }
 
 // ── 다이제스트 카드를 Teams 채널로 전송 (TEAMS_WEBHOOK_URL 시크릿 설정 시에만; MJ의 Power Automate 웹훅 flow가 수신·게시) ──
@@ -1550,12 +1551,12 @@ export default {
         const rcfg = await digestGetRecipients(env);
         const pol = applyDigestRecipientPolicy(R.recipients, rcfg, env.MAIL_DOMAIN || 'escare.co.kr');
         // POST: 정책이 추린 목록만 전송 (Flow가 대상자에게 DM)
-        let sent = 0, failed = 0;
-        if (request.method === 'POST') { const pr = await pushPersonalDigests(env, pol.send); sent = pr.sent; failed = pr.failed; }
+        let sent = 0, failed = 0, pushErrors = [];
+        if (request.method === 'POST') { const pr = await pushPersonalDigests(env, pol.send); sent = pr.sent; failed = pr.failed; pushErrors = pr.errors || []; }
         await auditLog(env, viaSession ? user : 'teams-flow', 'DIGEST_GEN', { via: 'personal', digDate: R.date, digMode: pol.mode, people: R.recipients.length, willSend: pol.send.length, sent, failed });
         return corsResponse({
           ok: true, date: R.date, dateLabel: R.dateLabel, mode: pol.mode, testTo: rcfg.testTo,
-          count: R.recipients.length, willSend: pol.send.length, held: pol.held, sent, failed,
+          count: R.recipients.length, willSend: pol.send.length, held: pol.held, sent, failed, errors: pushErrors,
           sendTo: pol.send.map(r => ({ assignee: r.assignee, testOf: r.testOf || '', userId: r.userId, email: r.email })),
           recipients: R.recipients
         });
