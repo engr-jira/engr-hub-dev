@@ -251,6 +251,35 @@ async function loadAnalysisLatest(){
     renderAIBriefing(d);
   }catch(_){/* 데이터 없음/미로그인 = 조용히 */}
 }
+// ── 📬 내 브리핑 — 로그인한 본인 건만(서버에서 세션 계정 기준 필터). Teams·Flow 권한과 무관한 조회 경로 ──
+async function loadMyBriefing(){
+  const wrap=document.getElementById('mybrief-wrap'), title=document.getElementById('mybrief-title');
+  if(!wrap||!title)return;
+  let d; try{ d=await hubApi('/team/digest/mine'); }catch(_){ wrap.style.display='none'; title.style.display='none'; return; }
+  if(!d||!d.ok){ wrap.style.display='none'; title.style.display='none'; return; }
+  const it=d.items||{}, c=d.counts||{};
+  const total=(c.due||0)+(c.overdue||0)+(c.meta||0);
+  const row=(icon,txt,key)=>`<div style="font-size:12px;line-height:1.55;color:var(--text2);padding:3px 0;display:flex;gap:6px"><span>${icon}</span><span>${key?`<a style="color:var(--cyan);font-weight:800;cursor:pointer;text-decoration:none" onclick="hubJumpKey('${key}')">${key}</a> `:''}${escapeHtml(txt)}</span></div>`;
+  const cards=[];
+  if(d.notice){
+    const nl=String(d.notice).split('\n').map(s=>s.trim()).filter(Boolean);
+    cards.push(`<div class="chart-card"><h4>📢 공지사항</h4>${nl.map(l=>`<div style="font-size:12.5px;line-height:1.6;color:var(--text2);padding:3px 0">• ${escapeHtml(l)}</div>`).join('')}</div>`);
+  }
+  if(total){
+    const rows=[];
+    (it.dueToday||[]).forEach(r=>rows.push(row('⏰',`${r.customer?'['+r.customer+'] ':''}${r.summary}`,r.key)));
+    (it.overdue||[]).forEach(r=>rows.push(row('🔴',`${r.customer?'['+r.customer+'] ':''}${r.summary} (D+${r.overdueDays})`,r.key)));
+    if(c.meta){ const fs=Object.entries((it.meta&&it.meta.fields)||{}).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`${k} ${n}`).join(' · '); rows.push(row('📝',`메타 미기입 ${c.meta}건 (${fs})`,'')); }
+    cards.push(`<div class="chart-card"><h4>🚨 오늘 챙길 것 <span style="font-weight:400;color:var(--text3)">${total}건 · 마감 ${c.due||0} · 지연 ${c.overdue||0} · 미기입 ${c.meta||0}</span></h4>${rows.join('')}</div>`);
+  }else{
+    cards.push(`<div class="chart-card"><h4>🎉 오늘 챙길 항목 없음</h4><div style="font-size:12.5px;color:var(--text3)">마감·지연·미기입 건이 없습니다.</div></div>`);
+  }
+  if((it.doneY||[]).length){
+    cards.push(`<div class="chart-card"><h4>📌 어제의 성과 <span style="font-weight:400;color:var(--text3)">완료 ${c.done}건</span></h4>${(it.doneY||[]).map(r=>row('✅',`${r.customer?'['+r.customer+'] ':''}${r.summary}`,r.key)).join('')}</div>`);
+  }
+  title.style.display=''; wrap.style.display='';
+  wrap.innerHTML=`<div class="u-muted-10" style="margin-bottom:6px">${escapeHtml(d.dateLabel||'')}${d.assignee?' · '+escapeHtml(d.assignee)+'님':''} — 본인 건만 표시됩니다</div><div class="chart-grid" style="grid-template-columns:repeat(auto-fit,minmax(280px,1fr))">${cards.join('')}</div>`;
+}
 function hubJumpKey(key){
   const isCase=(typeof getCaseIssueBase==='function'?getCaseIssueBase():[]).some(c=>c.key===key);
   if(isCase&&typeof v154GoCaseExact==='function')v154GoCaseExact(key);

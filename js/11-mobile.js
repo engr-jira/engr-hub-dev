@@ -96,6 +96,7 @@ enterApp=function(){
   try{ if(typeof initPushOnLogin==='function')setTimeout(initPushOnLogin,400); }catch(_){}
   try{ if(typeof loadFeatureFlags==='function')setTimeout(loadFeatureFlags,300); }catch(_){}
   try{ if(typeof loadAnalysisLatest==='function')setTimeout(loadAnalysisLatest,600); }catch(_){}
+  try{ if(typeof loadMyBriefing==='function')setTimeout(loadMyBriefing,700); }catch(_){}
   return result;
 };
 

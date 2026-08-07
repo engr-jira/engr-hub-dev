@@ -1896,13 +1896,30 @@ body.is-sales #nav-sales{display:flex!important}
             <button class="btn btn-ghost u-btn-xxs" onclick="clearDigestNotice()">🗑 공지 삭제</button>
             <span id="digest-notice-state" class="u-muted-10"></span>
           </div>
+          <div style="border:1px solid var(--hairline);border-radius:10px;padding:10px 12px;margin-bottom:10px;background:var(--surface-tint)">
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+              <span class="u-muted-10">📬 개인 브리핑 수신 대상</span>
+              <select id="digest-rcp-mode" class="admin-input" style="width:auto;font-size:11.5px" onchange="onDigestRcpMode()">
+                <option value="off">⏸ 중단 — 아무에게도 안 감</option>
+                <option value="test">🧪 테스트 — 지정 1명에게만</option>
+                <option value="allow">✅ 지정 인원만</option>
+                <option value="all">📢 전원</option>
+              </select>
+              <select id="digest-rcp-testto" class="admin-input" style="width:auto;font-size:11.5px"></select>
+              <button class="btn btn-ghost u-btn-xxs" onclick="saveDigestRecipients()">💾 대상 저장</button>
+              <span id="digest-rcp-state" class="u-muted-10"></span>
+            </div>
+            <div id="digest-rcp-people" style="display:none;flex-wrap:wrap;gap:4px 14px;margin-top:8px"></div>
+            <div id="digest-rcp-hint" class="u-muted-10" style="margin-top:6px"></div>
+          </div>
           <div class="u-muted-10" style="margin-bottom:4px">✏️ 편집 — 수정하면 아래 미리보기·복사에 바로 반영됩니다</div>
           <textarea id="digest-text" spellcheck="false" oninput="renderDigestPreview()" style="width:100%;min-height:170px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:11px 13px;font-family:var(--mono,monospace);font-size:12.5px;line-height:1.55;box-sizing:border-box;resize:vertical" placeholder="생성 중..."></textarea>
           <div class="u-muted-10" style="margin:12px 0 5px">👁 미리보기 — Teams에 붙이면 이렇게 보입니다</div>
           <div id="digest-preview" style="border:1px dashed var(--border2);border-radius:10px;padding:12px 14px;background:var(--bg2);max-height:320px;overflow:auto"></div>
           <div style="display:flex;gap:8px;margin-top:14px;align-items:center;flex-wrap:wrap">
             <button class="btn btn-primary u-btn-xs" onclick="copyDigest()">📋 서식 복사 → Teams</button>
-            <button class="btn u-btn-xs" style="background:var(--accent);color:#FFFDF9;border-color:var(--accent)" onclick="pushDigestToTeams()">🚀 지금 채널로 발사</button>
+            <button class="btn u-btn-xs" style="background:var(--accent);color:#FFFDF9;border-color:var(--accent)" onclick="pushPersonalDigest()">📬 개인별 발사</button>
+            <button class="btn btn-ghost u-btn-xs" onclick="pushDigestToTeams()">🚀 채널 발사(전사)</button>
             <button class="btn btn-ghost u-btn-xs" onclick="openDigest()">🔄 다시 생성</button>
             <span id="digest-status" class="u-muted-11" style="margin-left:auto"></span>
           </div>
@@ -1913,6 +1930,8 @@ body.is-sales #nav-sales{display:flex!important}
       <div class="sec-title">현황 요약 <span class="sec-en">OVERVIEW</span></div>
       <div class="kpi-grid" id="kpi-wrap"></div>
       <div id="meta-incomplete-wrap"></div>
+      <div class="sec-title" id="mybrief-title" style="display:none">📬 내 브리핑 <span class="sec-en">MY BRIEFING</span></div>
+      <div id="mybrief-wrap" style="display:none"></div>
       <div class="sec-title" id="ai-brief-title" style="display:none">🗞 우리팀 보안 브리핑 <span class="sec-en">DAILY BRIEFING</span></div>
       <div id="ai-brief-wrap" style="display:none"></div>
       <div class="chart-grid" id="chart-section"></div>

@@ -203,7 +203,7 @@ async function buildPersonalDigests(env, hubUrl, notice) {
       body.push({ type: 'Container', style: 'attention', spacing: 'Medium', separator: true, items: it });
     }
     const card = { type: 'AdaptiveCard', $schema: 'http://adaptivecards.io/schemas/adaptive-card.json', version: '1.4', body, actions: [{ type: 'Action.OpenUrl', title: '🔗 내 이슈 보기', url: base + '/?go=issues' }], msteams: { width: 'Full' } };
-    out.push({ assignee: p.assignee, userId: p.userId, email: p.email, counts: { due: p.dueToday.length, overdue: p.overdue.length, meta: p.metaCount, done: p.doneY.length }, card, attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: card }] });
+    out.push({ assignee: p.assignee, userId: p.userId, email: p.email, counts: { due: p.dueToday.length, overdue: p.overdue.length, meta: p.metaCount, done: p.doneY.length }, items: { dueToday: p.dueToday, overdue: p.overdue, meta: { count: p.metaCount, fields: p.metaFields }, doneY: p.doneY }, card, attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: card }] });
   }
   return { date: D.day, dateLabel: D.dateLabel, recipients: out };
 }
@@ -226,6 +226,76 @@ async function digestSaveNotice(env, text, until, by) {
     return true;
   } catch (_) { return false; }
 }
+// ── 개인 브리핑 수신자 제어 (app_settings digest_recipients) ──
+// off=전면중단 / test=모든 카드를 지정 1인에게만(원래 수신자 배지) / allow=지정 인원만 / all=전원
+// ⚠️ 전송 대상 축소는 전부 워커에서 수행 — Flow 설정과 무관하게 "테스트가 전원에게 새어나갈" 위험을 차단한다.
+const DIGEST_RECIPIENT_MODES = ['off', 'test', 'allow', 'all'];
+const DIGEST_RECIPIENT_DEFAULTS = { mode: 'test', allow: [], testTo: 'mj.park' };   // 기본값=테스트→MJ (안전 우선)
+async function digestGetRecipients(env) {
+  try {
+    const r = await env.DB.prepare("SELECT value FROM app_settings WHERE key='digest_recipients'").first();
+    if (!r || !r.value) return { ...DIGEST_RECIPIENT_DEFAULTS, allow: [] };
+    const c = JSON.parse(r.value);
+    return {
+      mode: DIGEST_RECIPIENT_MODES.includes(c.mode) ? c.mode : DIGEST_RECIPIENT_DEFAULTS.mode,
+      allow: Array.isArray(c.allow) ? c.allow.map(String).filter(Boolean).slice(0, 100) : [],
+      testTo: String(c.testTo || DIGEST_RECIPIENT_DEFAULTS.testTo),
+      by: String(c.by || ''), at: Number(c.at || 0)
+    };
+  } catch (_) { return { ...DIGEST_RECIPIENT_DEFAULTS, allow: [] }; }
+}
+async function digestSaveRecipients(env, cfg, by) {
+  try {
+    await env.DB.prepare("CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value TEXT)").run();
+    const v = {
+      mode: DIGEST_RECIPIENT_MODES.includes(cfg.mode) ? cfg.mode : 'test',
+      allow: Array.isArray(cfg.allow) ? cfg.allow.map(String).filter(Boolean).slice(0, 100) : [],
+      testTo: String(cfg.testTo || 'mj.park').slice(0, 60),
+      by: String(by || ''), at: Date.now()
+    };
+    await env.DB.prepare("INSERT INTO app_settings (key,value) VALUES ('digest_recipients',?) ON CONFLICT(key) DO UPDATE SET value=excluded.value").bind(JSON.stringify(v)).run();
+    return v;
+  } catch (_) { return null; }
+}
+// 실제 전송 목록 산출 — 원본 recipients는 건드리지 않는다(미리보기 공용)
+function applyDigestRecipientPolicy(recipients, cfg, domain) {
+  const list = Array.isArray(recipients) ? recipients : [];
+  const mode = DIGEST_RECIPIENT_MODES.includes(cfg && cfg.mode) ? cfg.mode : 'test';
+  if (mode === 'off') return { mode, send: [], held: list.length };
+  if (mode === 'all') return { mode, send: list.slice(), held: 0 };
+  if (mode === 'allow') {
+    const allow = new Set((cfg.allow || []).map(String));
+    const send = list.filter(r => r.userId && allow.has(r.userId));
+    return { mode, send, held: list.length - send.length };
+  }
+  const to = String((cfg && cfg.testTo) || 'mj.park');
+  const toEmail = `${to}@${domain || 'escare.co.kr'}`;
+  const send = list.map(r => {
+    const card = JSON.parse(JSON.stringify(r.card));   // 깊은 복사 — 미리보기 카드에 배지가 남지 않게
+    card.body.splice(1, 0, {
+      type: 'Container', style: 'emphasis', spacing: 'Small',
+      items: [{ type: 'TextBlock', wrap: true, weight: 'Bolder', color: 'Warning', text: `🧪 테스트 발송 — 실제 수신 대상: ${r.assignee}${r.email ? ' (' + r.email + ')' : ''}` }]
+    });
+    return { ...r, testOf: r.assignee, userId: to, email: toEmail, card, attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: card }] };
+  });
+  return { mode, send, held: 0 };
+}
+// 전송 목록을 웹훅으로 1건씩 발사 (Flow가 target/email 보고 DM 또는 채널 게시)
+async function pushPersonalDigests(env, sendList) {
+  let sent = 0, failed = 0;
+  if (!env.TEAMS_WEBHOOK_URL) return { sent, failed, reason: 'no-webhook' };
+  for (const r of sendList) {
+    try {
+      const resp = await fetch(env.TEAMS_WEBHOOK_URL, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'message', target: 'dm', assignee: r.assignee, userId: r.userId, email: r.email, testOf: r.testOf || '', attachments: r.attachments })
+      });
+      if (resp.ok) sent++; else failed++;
+    } catch (_) { failed++; }
+  }
+  return { sent, failed };
+}
+
 // ── 다이제스트 카드를 Teams 채널로 전송 (TEAMS_WEBHOOK_URL 시크릿 설정 시에만; MJ의 Power Automate 웹훅 flow가 수신·게시) ──
 async function postDigestToTeams(env, hubUrl, notice) {
   if (!env.TEAMS_WEBHOOK_URL) return { ok: false, reason: 'no-webhook' };
@@ -1476,18 +1546,55 @@ export default {
         const hubUrl = url.searchParams.get('hub') || 'https://engr-jira.github.io/engr-hub-dev/';
         const noti = url.searchParams.has('notice') ? (url.searchParams.get('notice') || '') : (await digestGetNotice(env)).text;
         let R; try { R = await buildPersonalDigests(env, hubUrl, noti); } catch (e) { return corsResponse({ ok: false, message: 'Jira 조회 실패: ' + e.message }, 502); }
-        // POST + 웹훅 설정 시: 워커가 각 담당자 카드를 순차 전송(Flow가 대상자에게 DM)
-        let sent = 0;
-        if (request.method === 'POST' && env.TEAMS_WEBHOOK_URL) {
-          for (const r of R.recipients) {
-            try {
-              const resp = await fetch(env.TEAMS_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'message', target: 'dm', assignee: r.assignee, userId: r.userId, email: r.email, attachments: r.attachments }) });
-              if (resp.ok) sent++;
-            } catch (_) {}
-          }
-        }
-        await auditLog(env, viaSession ? user : 'teams-flow', 'DIGEST_GEN', { via: 'personal', digDate: R.date, people: R.recipients.length, sent });
-        return corsResponse({ ok: true, date: R.date, dateLabel: R.dateLabel, count: R.recipients.length, sent, recipients: R.recipients });
+        // 수신자 정책 적용 — GET(미리보기)에서도 "실제로 누구에게 갈지"를 함께 보여준다
+        const rcfg = await digestGetRecipients(env);
+        const pol = applyDigestRecipientPolicy(R.recipients, rcfg, env.MAIL_DOMAIN || 'escare.co.kr');
+        // POST: 정책이 추린 목록만 전송 (Flow가 대상자에게 DM)
+        let sent = 0, failed = 0;
+        if (request.method === 'POST') { const pr = await pushPersonalDigests(env, pol.send); sent = pr.sent; failed = pr.failed; }
+        await auditLog(env, viaSession ? user : 'teams-flow', 'DIGEST_GEN', { via: 'personal', digDate: R.date, digMode: pol.mode, people: R.recipients.length, willSend: pol.send.length, sent, failed });
+        return corsResponse({
+          ok: true, date: R.date, dateLabel: R.dateLabel, mode: pol.mode, testTo: rcfg.testTo,
+          count: R.recipients.length, willSend: pol.send.length, held: pol.held, sent, failed,
+          sendTo: pol.send.map(r => ({ assignee: r.assignee, testOf: r.testOf || '', userId: r.userId, email: r.email })),
+          recipients: R.recipients
+        });
+      }
+
+      // ── 개인 브리핑 수신자 설정 (mj.park) — off/test/allow/all ──
+      if (path === '/team/digest/recipients' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        if (!await isMonitorAllowed(env, user)) return corsResponse({ ok: false, message: '접근 권한이 없습니다.' }, 403);
+        const cfg = await digestGetRecipients(env);
+        const users = await getUsers(env);
+        const people = Object.values(users).filter(u => u && u.active !== false && u.id)
+          .map(u => ({ id: u.id, name: u.displayName || u.id })).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+        return corsResponse({ ok: true, ...cfg, people, hasWebhook: !!env.TEAMS_WEBHOOK_URL });
+      }
+      if (path === '/team/digest/recipients' && request.method === 'POST') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        if (!await isMonitorAllowed(env, user)) return corsResponse({ ok: false, message: '접근 권한이 없습니다.' }, 403);
+        const b = await request.json().catch(() => ({}));
+        if (b.mode && !DIGEST_RECIPIENT_MODES.includes(b.mode)) return corsResponse({ ok: false, message: '알 수 없는 모드입니다.' }, 400);
+        const saved = await digestSaveRecipients(env, b, user);
+        if (!saved) return corsResponse({ ok: false, message: '저장 실패' }, 500);
+        await auditLog(env, user, 'DIGEST_RECIPIENTS', { digMode: saved.mode, n: saved.allow.length, testTo: saved.testTo });
+        return corsResponse({ ok: true, ...saved });
+      }
+
+      // ── 📬 내 브리핑 (로그인한 본인 것만) — Teams·Flow 권한과 무관한 pull 경로 ──
+      if (path === '/team/digest/mine' && request.method === 'GET') {
+        if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
+        if (!(await getFeatureFlags(env)).digest) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);
+        const hubUrl = url.searchParams.get('hub') || 'https://engr-jira.github.io/engr-hub-dev/';
+        const noti = await digestGetNotice(env);
+        let R; try { R = await buildPersonalDigests(env, hubUrl, noti.text); } catch (e) { return corsResponse({ ok: false, message: 'Jira 조회 실패: ' + e.message }, 502); }
+        const mine = R.recipients.find(r => r.userId && r.userId === user) || null;   // 세션 계정과 일치하는 건만
+        return corsResponse({
+          ok: true, date: R.date, dateLabel: R.dateLabel, notice: noti.text,
+          assignee: mine ? mine.assignee : '', counts: mine ? mine.counts : { due: 0, overdue: 0, meta: 0, done: 0 },
+          items: mine ? mine.items : { dueToday: [], overdue: [], meta: { count: 0, fields: {} }, doneY: [] }
+        });
       }
 
       // ── 다이제스트 공지사항 저장/조회 (mj.park) — 지정 날짜까지 유지되어 cron 자동 게시에도 포함 ──
@@ -1914,14 +2021,11 @@ export default {
           const hub = 'https://engr-jira.github.io/engr-hub-dev/';
           const noti = (await digestGetNotice(env)).text;
           const R = await buildPersonalDigests(env, hub, noti);
-          let sent = 0;
-          for (const r of R.recipients) {
-            try {
-              const resp = await fetch(env.TEAMS_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'message', target: 'dm', assignee: r.assignee, userId: r.userId, email: r.email, attachments: r.attachments }) });
-              if (resp.ok) sent++;
-            } catch (_) {}
-          }
-          await auditLog(env, 'system(cron)', 'DIGEST_GEN', { via: 'personal-cron', digDate: R.date, people: R.recipients.length, sent });
+          const rcfg = await digestGetRecipients(env);
+          const pol = applyDigestRecipientPolicy(R.recipients, rcfg, env.MAIL_DOMAIN || 'escare.co.kr');
+          if (!pol.send.length) { await auditLog(env, 'system(cron)', 'DIGEST_GEN', { via: 'personal-cron', digDate: R.date, digMode: pol.mode, people: R.recipients.length, willSend: 0, sent: 0 }); return; }
+          const pr = await pushPersonalDigests(env, pol.send);
+          await auditLog(env, 'system(cron)', 'DIGEST_GEN', { via: 'personal-cron', digDate: R.date, digMode: pol.mode, people: R.recipients.length, willSend: pol.send.length, sent: pr.sent, failed: pr.failed });
         } catch (_) {}
       })());
     }

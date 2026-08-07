@@ -433,6 +433,7 @@ async function openDigest(){
   const modal=document.getElementById('digest-modal'); if(!modal)return;
   const ta=document.getElementById('digest-text'), st=document.getElementById('digest-status');
   modal.style.display='flex'; if(st){st.textContent='';st.style.color='';} if(ta)ta.value='생성 중...'; renderDigestPreview();
+  loadDigestRecipients();
   try{
     const d=await hubApi('/team/digest');
     const text=String(d.text||'').replace('{HUB_URL}', location.origin+location.pathname);
@@ -496,4 +497,69 @@ async function pushDigestToTeams(){
     if(typeof toast==='function')toast('발사 실패: '+e.message,true);
   }
 }
+// ── 개인 브리핑 수신 대상 (off/test/allow/all) — 전송 축소는 워커가 수행, 여기선 설정만 ──
+var __DG_PEOPLE=[];
+var DG_MODE_HINT={
+  off:'⏸ 자동·수동 모두 아무에게도 발송되지 않습니다.',
+  test:'🧪 모든 사람의 카드가 <b>지정한 1명</b>에게만 갑니다. 카드 상단에 원래 수신자가 표시됩니다.',
+  allow:'✅ 체크한 사람에게만 <b>각자 본인 카드</b>가 갑니다. 체크 안 된 사람은 발송 제외.',
+  all:'📢 대상 전원에게 각자 본인 카드가 갑니다. (챙길 것이 없는 사람은 자동 제외)'
+};
+function onDigestRcpMode(){
+  const mode=((document.getElementById('digest-rcp-mode')||{}).value)||'test';
+  const wrap=document.getElementById('digest-rcp-people'), tt=document.getElementById('digest-rcp-testto'), hint=document.getElementById('digest-rcp-hint');
+  if(wrap)wrap.style.display=(mode==='allow')?'flex':'none';
+  if(tt)tt.style.display=(mode==='test')?'':'none';
+  if(hint)hint.innerHTML=DG_MODE_HINT[mode]||'';
+}
+async function loadDigestRecipients(){
+  const st=document.getElementById('digest-rcp-state');
+  try{
+    const d=await hubApi('/team/digest/recipients');
+    __DG_PEOPLE=d.people||[];
+    const ms=document.getElementById('digest-rcp-mode'); if(ms)ms.value=d.mode||'test';
+    const tt=document.getElementById('digest-rcp-testto');
+    if(tt)tt.innerHTML=__DG_PEOPLE.map(p=>`<option value="${escapeHtml(p.id)}"${p.id===d.testTo?' selected':''}>${escapeHtml(p.name)}</option>`).join('')||`<option value="${escapeHtml(d.testTo||'')}">${escapeHtml(d.testTo||'')}</option>`;
+    const allow=new Set(d.allow||[]);
+    const wrap=document.getElementById('digest-rcp-people');
+    if(wrap)wrap.innerHTML=__DG_PEOPLE.map(p=>`<label style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;cursor:pointer"><input type="checkbox" class="dg-rcp-chk" value="${escapeHtml(p.id)}"${allow.has(p.id)?' checked':''}> ${escapeHtml(p.name)}</label>`).join('');
+    if(st)st.innerHTML=d.hasWebhook?'':'<span style="color:var(--warn)">⚠️ Teams 웹훅 미설정 — 발사는 동작하지 않습니다</span>';
+    onDigestRcpMode();
+  }catch(e){ if(st)st.innerHTML=`<span style="color:var(--danger)">대상 불러오기 실패: ${escapeHtml(e.message)}</span>`; }
+}
+async function saveDigestRecipients(){
+  const st=document.getElementById('digest-rcp-state');
+  const mode=((document.getElementById('digest-rcp-mode')||{}).value)||'test';
+  const testTo=((document.getElementById('digest-rcp-testto')||{}).value)||'mj.park';
+  const allow=[...document.querySelectorAll('.dg-rcp-chk:checked')].map(c=>c.value);
+  if(mode==='allow'&&!allow.length){ if(st)st.innerHTML='<span style="color:var(--danger)">지정 인원을 1명 이상 체크하세요</span>'; return; }
+  if(mode==='all'&&!confirm('수신 대상을 "전원"으로 바꿉니다.\n이후 자동 발송(매일 08:30)이 대상자 전원에게 나갑니다. 계속할까요?'))return;
+  try{
+    const r=await hubApi('/team/digest/recipients',{method:'POST',body:JSON.stringify({mode,testTo,allow})});
+    const label={off:'중단',test:'테스트→'+testTo,allow:'지정 '+r.allow.length+'명',all:'전원'}[r.mode]||r.mode;
+    if(st)st.innerHTML=`<span style="color:var(--success)">✓ 저장됨 · ${escapeHtml(label)}</span>`;
+    if(typeof toast==='function')toast('수신 대상 저장됨 — 자동 발송에도 적용됩니다');
+  }catch(e){ if(st)st.innerHTML=`<span style="color:var(--danger)">저장 실패: ${escapeHtml(e.message)}</span>`; }
+}
+async function pushPersonalDigest(){
+  const st=document.getElementById('digest-status');
+  const mode=((document.getElementById('digest-rcp-mode')||{}).value)||'test';
+  if(mode==='off'){ if(st){st.textContent='수신 대상이 "중단"입니다 — 발송하지 않습니다';st.style.color='var(--warn)';} return; }
+  if(st){st.textContent='대상 확인 중...';st.style.color='';}
+  let pre; try{ pre=await hubApi('/team/digest/personal'); }catch(e){ if(st){st.textContent='대상 확인 실패: '+e.message;st.style.color='var(--danger)';} return; }
+  if(!pre.willSend){ if(st){st.textContent=`발송 대상 0명 (생성 ${pre.count}명 · 정책 ${pre.mode})`;st.style.color='var(--warn)';} return; }
+  const who=(pre.sendTo||[]).map(r=>r.testOf?`${r.testOf}→${r.userId}`:r.assignee).join(', ');
+  const head=pre.mode==='test'?`🧪 테스트 — 아래 ${pre.willSend}건이 모두 "${(pre.sendTo[0]||{}).userId||''}" 1명에게만 갑니다.`:`📬 ${pre.willSend}명에게 각자 본인 카드를 보냅니다.`;
+  if(!confirm(`${head}\n\n${who}\n\n계속할까요?`))return;
+  if(st){st.textContent='📬 발사 중...';st.style.color='';}
+  try{
+    const r=await hubApi('/team/digest/personal',{method:'POST'});
+    if(st){st.textContent=`✓ ${r.sent}건 전송${r.failed?` · 실패 ${r.failed}`:''} (모드 ${r.mode})`;st.style.color=r.failed?'var(--warn)':'var(--success)';}
+    if(typeof toast==='function')toast(`개인 브리핑 ${r.sent}건 전송됨`);
+  }catch(e){
+    if(st){st.textContent='발사 실패: '+e.message;st.style.color='var(--danger)';}
+    if(typeof toast==='function')toast('발사 실패: '+e.message,true);
+  }
+}
 window.openDigest=openDigest; window.copyDigest=copyDigest; window.renderDigestPreview=renderDigestPreview; window.pushDigestToTeams=pushDigestToTeams; window.saveDigestNotice=saveDigestNotice; window.clearDigestNotice=clearDigestNotice;
+window.onDigestRcpMode=onDigestRcpMode; window.saveDigestRecipients=saveDigestRecipients; window.pushPersonalDigest=pushPersonalDigest;
