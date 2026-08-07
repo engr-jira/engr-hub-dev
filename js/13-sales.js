@@ -36,9 +36,11 @@ function salesRenewalRows(d){
   return rows;
 }
 
-// ── 영업 현황 필터 (팀원 건의: 내 고객사만 보기 등) ──────────────────────────
+// ── 영업 현황 필터 ─────────────────────────────────────────────────────────
+// 두 섹션은 데이터가 달라(라이선스 vs 이슈) 필터를 완전히 분리한다.
+// SALES_FILTER = 🔑 갱신 기회 전용 / SALES_CFILTER = 🏢 고객사 대응 현황 전용.
 let SALES_FILTER={q:'',owner:'',status:'',exp:''};
-let __salesQT=null;
+let __salesQT=null, __custQT=null;
 function salesMyName(){
   const uid=(typeof CURRENT_USER!=='undefined')?CURRENT_USER:'';
   if(!uid)return '';
@@ -52,20 +54,20 @@ function salesMyName(){
   return '';
 }
 function salesOwnerName(cust){ return (typeof salesOwnerOf==='function'?(salesOwnerOf(cust)||''):''); }
-function salesOwnerPass(cust){
-  const f=SALES_FILTER; if(!f.owner)return true;
+function ownerPass(sel,cust){
+  if(!sel)return true;
   const o=salesOwnerName(cust);
-  if(f.owner==='__me__'){ const me=salesMyName(); return !!me&&o===me; }
-  return o===f.owner;
+  if(sel==='__me__'){ const me=salesMyName(); return !!me&&o===me; }
+  return o===sel;
 }
-function salesQPass(fields){
-  const q=(SALES_FILTER.q||'').trim().toLowerCase(); if(!q)return true;
-  if(typeof qMatch==='function')return qMatch(q,fields);
-  return fields.filter(Boolean).join(' ').toLowerCase().includes(q);
+function qPass(q,fields){
+  const s=String(q||'').trim().toLowerCase(); if(!s)return true;
+  if(typeof qMatch==='function')return qMatch(s,fields);
+  return fields.filter(Boolean).join(' ').toLowerCase().includes(s);
 }
 function salesRowPass(r){
-  if(!salesQPass([r.customer,r.product]))return false;
-  if(!salesOwnerPass(r.customer))return false;
+  if(!qPass(SALES_FILTER.q,[r.customer,r.product]))return false;
+  if(!ownerPass(SALES_FILTER.owner,r.customer))return false;
   if(SALES_FILTER.status&&String((r.note&&r.note.status)||'미착수')!==SALES_FILTER.status)return false;
   const e=SALES_FILTER.exp;
   if(e){
@@ -79,12 +81,14 @@ function salesRowPass(r){
 }
 function salesFilterActive(){ return !!(SALES_FILTER.q||SALES_FILTER.owner||SALES_FILTER.status||SALES_FILTER.exp); }
 
-// ── 🏢 고객사 대응 현황 전용 필터 (상단 공통 필터와 별개로 이 섹션에만 적용) ──
-let SALES_CFILTER={state:'',overdueOnly:false,sort:'name'};
+// ── 🏢 고객사 대응 현황 전용 필터 ──
+let SALES_CFILTER={q:'',owner:'',state:'',overdueOnly:false,sort:'name'};
 const CUST_STATES=[['','대응 상태 — 전체'],['active','활발'],['warn','주의'],['stale','정체'],['none','이슈 없음']];
 const CUST_SORTS=[['name','이름순'],['stale','정체 오래된순'],['overdue','기한초과 많은순'],['open','진행 많은순']];
 function custStatePass(x){
   const f=SALES_CFILTER;
+  if(!qPass(f.q,[x.c.name]))return false;
+  if(!ownerPass(f.owner,x.c.name))return false;
   if(f.state&&x.state!==f.state)return false;
   if(f.overdueOnly&&!((x.c.overdue||0)>0))return false;
   return true;
@@ -96,43 +100,74 @@ function custSortFn(k){
   if(k==='open')return (a,b)=>(b.c.open||0)-(a.c.open||0)||byName(a,b);
   return byName;
 }
-function salesCustFilterActive(){ return !!(SALES_CFILTER.state||SALES_CFILTER.overdueOnly); }
-function setCustFilter(k,v){ SALES_CFILTER[k]=v; renderSalesPage(); }
-function resetCustFilter(){ SALES_CFILTER={state:'',overdueOnly:false,sort:'name'}; renderSalesPage(); }
-window.setCustFilter=setCustFilter; window.resetCustFilter=resetCustFilter;
-function salesFilterBarHtml(){
-  const owners=[...new Set(((SALES_DATA&&SALES_DATA.eos)||[]).map(e=>salesOwnerName(e.customer)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
-  const me=salesMyName();
-  return `<div id="sales-filter-bar" class="panel" style="padding:10px 12px;margin-bottom:12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-    <input id="sales-q" class="admin-input" style="flex:1;min-width:180px" placeholder="고객사 / 제품 검색..." oninput="onSalesFilterQ(this)">
-    <select class="admin-input" style="width:auto" onchange="setSalesFilter('owner',this.value)">
-      <option value="">영업 담당 — 전체</option>
-      ${me?`<option value="__me__">👤 내 담당 (${escapeHtml(me)})</option>`:''}
-      ${owners.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('')}
-    </select>
-    <select class="admin-input" style="width:auto" onchange="setSalesFilter('status',this.value)">
-      <option value="">진행 상태 — 전체</option>
-      ${SALES_STATUS.map(s=>`<option value="${s}">${s}</option>`).join('')}
-    </select>
-    <select class="admin-input" style="width:auto" onchange="setSalesFilter('exp',this.value)">
-      <option value="">만료 — 전체</option>
-      <option value="past">만료 경과</option>
-      <option value="d90">90일 내</option>
-      <option value="d365">1년 내</option>
-      <option value="perp">Perpetual</option>
-    </select>
-    <button class="btn btn-ghost u-btn-xxs" onclick="resetSalesFilter()">초기화</button>
-    <span id="sales-f-note" class="u-muted-10"></span>
-  </div>`;
-}
-function onSalesFilterQ(el){ SALES_FILTER.q=el.value; clearTimeout(__salesQT); __salesQT=setTimeout(()=>renderSalesPage(),180); }
-function setSalesFilter(k,v){ SALES_FILTER[k]=v; renderSalesPage(); }
+function salesCustFilterActive(){ const f=SALES_CFILTER; return !!(f.q||f.owner||f.state||f.overdueOnly); }
+function onSalesFilterQ(el){ SALES_FILTER.q=el.value; clearTimeout(__salesQT); __salesQT=setTimeout(()=>renderSalesBodies(),180); }
+function onCustFilterQ(el){ SALES_CFILTER.q=el.value; clearTimeout(__custQT); __custQT=setTimeout(()=>renderSalesBodies(),180); }
+function setSalesFilter(k,v){ SALES_FILTER[k]=v; renderSalesBodies(); }
+function setCustFilter(k,v){ SALES_CFILTER[k]=v; renderSalesBodies(); }
 function resetSalesFilter(){
   SALES_FILTER={q:'',owner:'',status:'',exp:''};
-  const b=document.getElementById('sales-filter-bar'); if(b)b.remove();   // 값 초기화된 새 바로 다시 그림
-  renderSalesPage();
+  ['rn-q','rn-owner','rn-status','rn-exp'].forEach(id=>{ const e=document.getElementById(id); if(e)e.value=''; });
+  renderSalesBodies();
 }
-window.onSalesFilterQ=onSalesFilterQ; window.setSalesFilter=setSalesFilter; window.resetSalesFilter=resetSalesFilter;
+function resetCustFilter(){
+  SALES_CFILTER={q:'',owner:'',state:'',overdueOnly:false,sort:'name'};
+  ['ct-q','ct-owner','ct-state'].forEach(id=>{ const e=document.getElementById(id); if(e)e.value=''; });
+  const s=document.getElementById('ct-sort'); if(s)s.value='name';
+  const o=document.getElementById('ct-over'); if(o)o.checked=false;
+  renderSalesBodies();
+}
+window.onSalesFilterQ=onSalesFilterQ; window.onCustFilterQ=onCustFilterQ;
+window.setSalesFilter=setSalesFilter; window.setCustFilter=setCustFilter;
+window.resetSalesFilter=resetSalesFilter; window.resetCustFilter=resetCustFilter;
+
+function salesOwnerOptions(names){
+  const owners=[...new Set(names.map(salesOwnerName).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
+  const me=salesMyName();
+  return `<option value="">영업 담당 — 전체</option>`
+    +(me?`<option value="__me__">👤 내 담당 (${escapeHtml(me)})</option>`:'')
+    +owners.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
+}
+// 필터 바·검색창은 한 번만 만들고 이후엔 본문(#…-body)만 다시 그린다 — 타이핑 중 포커스 유지
+function salesSkeletonHtml(d){
+  const eosNames=((d&&d.eos)||[]).map(e=>e.customer||'');
+  const custNames=[...(((d&&d.customers)||[]).map(c=>c.name||'')),...((typeof OWNER_ROWS!=='undefined'&&OWNER_ROWS?OWNER_ROWS:[]).map(r=>r.customer||''))];
+  const bar='class="panel" style="padding:9px 11px;margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"';
+  return `<div id="sales-kpi"></div>
+  <div class="sec-title" style="margin:0 0 8px">🔑 갱신 기회 — 만료 임박순</div>
+  <div id="sales-renew-bar" ${bar}>
+    <input id="rn-q" class="admin-input" style="flex:1;min-width:160px;font-size:12px" placeholder="고객사 / 제품 검색..." oninput="onSalesFilterQ(this)">
+    <select id="rn-owner" class="admin-input" style="width:auto;font-size:11.5px" onchange="setSalesFilter('owner',this.value)">${salesOwnerOptions(eosNames)}</select>
+    <select id="rn-status" class="admin-input" style="width:auto;font-size:11.5px" onchange="setSalesFilter('status',this.value)">
+      <option value="">진행 상태 — 전체</option>${SALES_STATUS.map(s=>`<option value="${s}">${s}</option>`).join('')}
+    </select>
+    <select id="rn-exp" class="admin-input" style="width:auto;font-size:11.5px" onchange="setSalesFilter('exp',this.value)">
+      <option value="">만료 — 전체</option><option value="past">만료 경과</option><option value="d90">90일 내</option><option value="d365">1년 내</option><option value="perp">Perpetual</option>
+    </select>
+    <button class="btn btn-ghost u-btn-xxs" onclick="resetSalesFilter()">초기화</button>
+    <span id="rn-note" class="u-muted-10"></span>
+  </div>
+  <div id="sales-renew-body"></div>
+
+  <div class="sec-title" style="margin:22px 0 8px" id="sales-cust-title">🏢 고객사 대응 현황</div>
+  <div id="sales-cust-bar" ${bar}>
+    <input id="ct-q" class="admin-input" style="flex:1;min-width:160px;font-size:12px" placeholder="고객사 검색..." oninput="onCustFilterQ(this)">
+    <select id="ct-owner" class="admin-input" style="width:auto;font-size:11.5px" onchange="setCustFilter('owner',this.value)">${salesOwnerOptions(custNames)}</select>
+    <select id="ct-state" class="admin-input" style="width:auto;font-size:11.5px" onchange="setCustFilter('state',this.value)">
+      ${CUST_STATES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}
+    </select>
+    <label style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2);cursor:pointer">
+      <input type="checkbox" id="ct-over" onchange="setCustFilter('overdueOnly',this.checked)"> 기한초과만
+    </label>
+    <select id="ct-sort" class="admin-input" style="width:auto;font-size:11.5px" onchange="setCustFilter('sort',this.value)">
+      ${CUST_SORTS.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}
+    </select>
+    <button class="btn btn-ghost u-btn-xxs" onclick="resetCustFilter()">초기화</button>
+    <span id="ct-note" class="u-muted-10"></span>
+  </div>
+  <div id="sales-cust-body"></div>
+  <div id="sales-foot"></div>`;
+}
 
 function salesDDayBadge(dd,perp){
   if(perp)return `<span class="badge" style="background:color-mix(in srgb,var(--success) 15%,transparent);color:var(--success)">Perpetual</span>`;
@@ -152,36 +187,45 @@ function renderSalesPage(){
   if(!wrap)return;
   const d=SALES_DATA;
   if(!d){loadSalesOverview();return;}
+  // 골격(필터 바 포함)은 1회만 생성 — 이후 renderSalesBodies가 본문만 교체하므로 검색창 포커스가 유지된다
+  if(!document.getElementById('sales-renew-body')) wrap.innerHTML=salesSkeletonHtml(d);
+  renderSalesBodies();
+}
 
-  // 필터 바는 본문 밖에 두어 재렌더 시 입력 포커스·값이 보존되게 한다
-  if(!document.getElementById('sales-filter-bar')) wrap.innerHTML=salesFilterBarHtml()+'<div id="sales-content"></div>';
-  else if(!document.getElementById('sales-content')) wrap.insertAdjacentHTML('beforeend','<div id="sales-content"></div>');
-  const box=document.getElementById('sales-content'); if(!box)return;
+function renderSalesBodies(){
+  const d=SALES_DATA; if(!d)return;
+  const renewBox=document.getElementById('sales-renew-body');
+  const custBox=document.getElementById('sales-cust-body');
+  if(!renewBox||!custBox)return;
 
   const allRows=salesRenewalRows(d);
   const rows=allRows.filter(salesRowPass);
   const near=rows.filter(r=>r.dd>=0&&r.dd<=90).length;
   const past=rows.filter(r=>r.dd<0).length;
-  const fnote=document.getElementById('sales-f-note');
-  if(fnote)fnote.innerHTML=salesFilterActive()?`<span style="color:var(--accent)">필터 적용 — 라이선스 ${rows.length}/${allRows.length}건</span>`:`전체 ${allRows.length}건`;
   const canEdit=(typeof USER_ROLE!=='undefined'&&(USER_ROLE==='sales'||USER_ROLE==='admin'||USER_ROLE==='super'));
   const stale=d.staleDays||14;
 
-  // 고객사 목록도 같은 필터(검색·영업담당)를 받는다 — KPI가 필터 결과를 반영해야 '내 담당 현황'으로 읽힌다
   const _canonC=n=>typeof canonCustomer==='function'?canonCustomer(n):n;
   const _custBase=(d.customers||[]).filter(c=>c.name&&c.name!=='None');
   const _seenC=new Set(_custBase.map(c=>_canonC(c.name)));
   // #1 담당자 관리에 등록된 전 고객사 포함 — 이슈가 없어도 담당자 정보 노출
   (typeof OWNER_ROWS!=='undefined'&&OWNER_ROWS?OWNER_ROWS:[]).forEach(r=>{const k=_canonC(r.customer);if(r.customer&&!_seenC.has(k)){_custBase.push({name:r.customer,open:0,overdue:0,issues:[],lastActivity:null,_noIssues:true});_seenC.add(k);}});
-  // 대응 상태를 먼저 산출해야 섹션 전용 필터(활발/주의/정체/이슈없음)를 걸 수 있다
+  // 대응 상태를 먼저 산출해야 상태 필터(활발/주의/정체/이슈없음)를 걸 수 있다
   const custAll=_custBase.map(c=>{
     const days=c.lastActivity?daysSince(c.lastActivity.slice(0,10)):999;
     const noAct=c._noIssues||(!(c.issues&&c.issues.length)&&!c.open);
     const state=noAct?'none':days>=stale?'stale':days>=Math.ceil(stale/2)?'warn':'active';
     return {c,days,noAct,state};
-  }).filter(x=>salesQPass([x.c.name])&&salesOwnerPass(x.c.name));   // 상단 공통 필터(검색·영업담당)
+  });
   const custList=custAll.filter(custStatePass).sort(custSortFn(SALES_CFILTER.sort));
   const openTotal=custList.reduce((s,x)=>s+(x.c.open||0),0);
+
+  const rnote=document.getElementById('rn-note');
+  if(rnote)rnote.innerHTML=salesFilterActive()?`<span style="color:var(--accent)">${rows.length}/${allRows.length}건</span>`:`${allRows.length}건`;
+  const cnote=document.getElementById('ct-note');
+  if(cnote)cnote.innerHTML=salesCustFilterActive()?`<span style="color:var(--accent)">${custList.length}/${custAll.length}곳</span>`:`${custAll.length}곳`;
+  const ctitle=document.getElementById('sales-cust-title');
+  if(ctitle)ctitle.innerHTML=`🏢 고객사 대응 현황 <span class="u-muted-11" style="font-weight:400">— 정체 기준 ${stale}일(관리자 설정)</span>`;
 
   const kpi=`<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px">
     <div class="kpi"><div class="kpi-val" style="color:var(--warn)">${near}</div><div class="kpi-label">90일 내 만료</div></div>
@@ -190,8 +234,7 @@ function renderSalesPage(){
     <div class="kpi"><div class="kpi-val">${openTotal}</div><div class="kpi-label">진행중 이슈</div></div>
   </div>`;
 
-  const renew=`<div class="sec-title">🔑 갱신 기회 — 만료 임박순</div>
-  <div class="panel" style="overflow-x:auto;padding:0">
+  const renew=`<div class="panel" style="overflow-x:auto;padding:0">
   <table class="sales-tbl">
     <thead><tr><th>고객사</th><th>제품</th><th>만료</th><th>진행 상태</th><th>영업 메모</th><th>다음 컨택</th>${canEdit?'<th></th>':''}</tr></thead>
     <tbody>${rows.map((r,i)=>{
@@ -243,28 +286,15 @@ function renderSalesPage(){
     </summary><div style="padding:4px 16px 12px">${issues||'<div class="u-muted-11">이슈 없음</div>'}</div></details>`;
   }).join('');
 
-  const cust=`<div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin-top:20px">
-    <div class="sec-title" style="margin:0">🏢 고객사 대응 현황 <span class="u-muted-11" style="font-weight:400">— 정체 기준 ${stale}일(관리자 설정)</span></div>
-    <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
-      <select class="admin-input" style="width:auto;font-size:11.5px" onchange="setCustFilter('state',this.value)">
-        ${CUST_STATES.map(([v,l])=>`<option value="${v}"${SALES_CFILTER.state===v?' selected':''}>${l}</option>`).join('')}
-      </select>
-      <label style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2);cursor:pointer">
-        <input type="checkbox"${SALES_CFILTER.overdueOnly?' checked':''} onchange="setCustFilter('overdueOnly',this.checked)"> 기한초과만
-      </label>
-      <select class="admin-input" style="width:auto;font-size:11.5px" onchange="setCustFilter('sort',this.value)">
-        ${CUST_SORTS.map(([v,l])=>`<option value="${v}"${SALES_CFILTER.sort===v?' selected':''}>${l}</option>`).join('')}
-      </select>
-      ${salesCustFilterActive()?`<button class="btn btn-ghost u-btn-xxs" onclick="resetCustFilter()">해제</button>`:''}
-      <span class="u-muted-10">${salesCustFilterActive()?`<span style="color:var(--accent)">${custList.length}/${custAll.length}곳</span>`:`${custAll.length}곳`}</span>
-    </div>
-  </div>
-  <div class="panel" style="padding:4px 0">${custRows||'<div class="u-empty">'+((salesFilterActive()||salesCustFilterActive())?'조건에 맞는 고객사가 없습니다':'이슈 데이터가 없습니다'+(d.jiraOk?'':' (Jira 조회 실패 — 라이선스만 표시)'))+'</div>'}</div>`;
+  const cust=`<div class="panel" style="padding:4px 0">${custRows||'<div class="u-empty">'+(salesCustFilterActive()?'조건에 맞는 고객사가 없습니다':'이슈 데이터가 없습니다'+(d.jiraOk?'':' (Jira 조회 실패 — 라이선스만 표시)'))+'</div>'}</div>`;
 
   const foot=`<div class="u-muted-10" style="margin-top:12px">🕐 ${new Date(d.built_at).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} 집계 · 조회 기간 ${d.rangeMonths}개월 · AI 미사용(실시간 규칙 집계)
   <button class="btn btn-ghost u-btn-xxs" style="margin-left:8px" onclick="loadSalesOverview(true)">새로고침</button></div>`;
 
-  box.innerHTML=kpi+renew+cust+foot;
+  const kbox=document.getElementById('sales-kpi'); if(kbox)kbox.innerHTML=kpi;
+  renewBox.innerHTML=renew;
+  custBox.innerHTML=cust;
+  const fbox=document.getElementById('sales-foot'); if(fbox)fbox.innerHTML=foot;
 }
 
 function toggleSalesEdit(i){
