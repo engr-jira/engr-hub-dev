@@ -39,26 +39,33 @@ function salesRenewalRows(d){
 // ── 영업 현황 필터 ─────────────────────────────────────────────────────────
 // 두 섹션은 데이터가 달라(라이선스 vs 이슈) 필터를 완전히 분리한다.
 // SALES_FILTER = 🔑 갱신 기회 전용 / SALES_CFILTER = 🏢 고객사 대응 현황 전용.
-let SALES_FILTER={q:'',owner:'',status:'',exp:''};
+let SALES_FILTER={q:'',owner:'',tech:'',status:'',exp:''};
 let __salesQT=null, __custQT=null;
+// CURRENT_DISPLAY(01-core)가 로그인 사용자 표시명. HUB_USERS는 이름 문자열 배열이라 id 매핑에 못 씀.
 function salesMyName(){
-  const uid=(typeof CURRENT_USER!=='undefined')?CURRENT_USER:'';
-  if(!uid)return '';
-  try{
-    if(typeof HUB_USERS!=='undefined'&&HUB_USERS){
-      const arr=Array.isArray(HUB_USERS)?HUB_USERS:Object.values(HUB_USERS);
-      const m=arr.find(u=>u&&u.id===uid); if(m&&m.displayName)return m.displayName;
-    }
-  }catch(_){}
-  try{ const m=window.__userMap; if(m&&m[uid])return m[uid]; }catch(_){}
+  try{ if(typeof CURRENT_DISPLAY!=='undefined'&&CURRENT_DISPLAY)return CURRENT_DISPLAY; }catch(_){}
+  try{ const uid=(typeof CURRENT_USER!=='undefined')?CURRENT_USER:''; const u=window.__userMap&&window.__userMap[uid];
+       if(u)return (typeof u==='string')?u:(u.displayName||u.name||''); }catch(_){}
   return '';
 }
 function salesOwnerName(cust){ return (typeof salesOwnerOf==='function'?(salesOwnerOf(cust)||''):''); }
+// 기술 담당 = 담당자 관리의 정(primary)/부(secondary)
+function techOwnersOf(cust){
+  const o=(typeof ownerOf==='function')?ownerOf(cust):null;
+  return { p:(o&&o.primary_owner)||'', s:(o&&o.secondary_owner)||'' };
+}
+function allOwnerNames(cust){ const t=techOwnersOf(cust); return [salesOwnerName(cust),t.p,t.s].filter(Boolean); }
 function ownerPass(sel,cust){
   if(!sel)return true;
   const o=salesOwnerName(cust);
   if(sel==='__me__'){ const me=salesMyName(); return !!me&&o===me; }
   return o===sel;
+}
+function techPass(sel,cust){
+  if(!sel)return true;
+  const t=techOwnersOf(cust);
+  if(sel==='__me__'){ const me=salesMyName(); return !!me&&(t.p===me||t.s===me); }
+  return t.p===sel||t.s===sel;
 }
 function qPass(q,fields){
   const s=String(q||'').trim().toLowerCase(); if(!s)return true;
@@ -66,8 +73,9 @@ function qPass(q,fields){
   return fields.filter(Boolean).join(' ').toLowerCase().includes(s);
 }
 function salesRowPass(r){
-  if(!qPass(SALES_FILTER.q,[r.customer,r.product]))return false;
+  if(!qPass(SALES_FILTER.q,[r.customer,r.product,...allOwnerNames(r.customer)]))return false;   // 담당자 이름으로도 검색
   if(!ownerPass(SALES_FILTER.owner,r.customer))return false;
+  if(!techPass(SALES_FILTER.tech,r.customer))return false;
   if(SALES_FILTER.status&&String((r.note&&r.note.status)||'미착수')!==SALES_FILTER.status)return false;
   const e=SALES_FILTER.exp;
   if(e){
@@ -79,16 +87,17 @@ function salesRowPass(r){
   }
   return true;
 }
-function salesFilterActive(){ return !!(SALES_FILTER.q||SALES_FILTER.owner||SALES_FILTER.status||SALES_FILTER.exp); }
+function salesFilterActive(){ const f=SALES_FILTER; return !!(f.q||f.owner||f.tech||f.status||f.exp); }
 
 // ── 🏢 고객사 대응 현황 전용 필터 ──
-let SALES_CFILTER={q:'',owner:'',state:'',overdueOnly:false,sort:'name'};
+let SALES_CFILTER={q:'',owner:'',tech:'',state:'',overdueOnly:false,sort:'name'};
 const CUST_STATES=[['','대응 상태 — 전체'],['active','활발'],['warn','주의'],['stale','정체'],['none','이슈 없음']];
 const CUST_SORTS=[['name','이름순'],['stale','정체 오래된순'],['overdue','기한초과 많은순'],['open','진행 많은순']];
 function custStatePass(x){
   const f=SALES_CFILTER;
-  if(!qPass(f.q,[x.c.name]))return false;
+  if(!qPass(f.q,[x.c.name,...allOwnerNames(x.c.name)]))return false;   // 담당자 이름으로도 검색
   if(!ownerPass(f.owner,x.c.name))return false;
+  if(!techPass(f.tech,x.c.name))return false;
   if(f.state&&x.state!==f.state)return false;
   if(f.overdueOnly&&!((x.c.overdue||0)>0))return false;
   return true;
@@ -106,13 +115,13 @@ function onCustFilterQ(el){ SALES_CFILTER.q=el.value; clearTimeout(__custQT); __
 function setSalesFilter(k,v){ SALES_FILTER[k]=v; renderSalesBodies(); }
 function setCustFilter(k,v){ SALES_CFILTER[k]=v; renderSalesBodies(); }
 function resetSalesFilter(){
-  SALES_FILTER={q:'',owner:'',status:'',exp:''};
-  ['rn-q','rn-owner','rn-status','rn-exp'].forEach(id=>{ const e=document.getElementById(id); if(e)e.value=''; });
+  SALES_FILTER={q:'',owner:'',tech:'',status:'',exp:''};
+  ['rn-q','rn-owner','rn-tech','rn-status','rn-exp'].forEach(id=>{ const e=document.getElementById(id); if(e)e.value=''; });
   renderSalesBodies();
 }
 function resetCustFilter(){
-  SALES_CFILTER={q:'',owner:'',state:'',overdueOnly:false,sort:'name'};
-  ['ct-q','ct-owner','ct-state'].forEach(id=>{ const e=document.getElementById(id); if(e)e.value=''; });
+  SALES_CFILTER={q:'',owner:'',tech:'',state:'',overdueOnly:false,sort:'name'};
+  ['ct-q','ct-owner','ct-tech','ct-state'].forEach(id=>{ const e=document.getElementById(id); if(e)e.value=''; });
   const s=document.getElementById('ct-sort'); if(s)s.value='name';
   const o=document.getElementById('ct-over'); if(o)o.checked=false;
   renderSalesBodies();
@@ -121,23 +130,38 @@ window.onSalesFilterQ=onSalesFilterQ; window.onCustFilterQ=onCustFilterQ;
 window.setSalesFilter=setSalesFilter; window.setCustFilter=setCustFilter;
 window.resetSalesFilter=resetSalesFilter; window.resetCustFilter=resetCustFilter;
 
-function salesOwnerOptions(names){
-  const owners=[...new Set(names.map(salesOwnerName).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
-  const me=salesMyName();
-  return `<option value="">영업 담당 — 전체</option>`
-    +(me?`<option value="__me__">👤 내 담당 (${escapeHtml(me)})</option>`:'')
-    +owners.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
+// ⚠️ 담당자 목록은 렌더할 때마다 다시 만든다 — 골격 생성 시점엔 OWNER_MAP/ISSUES가 아직 안 실려
+//    옵션이 '전체'만 남던 문제가 있었다. sig가 같으면 innerHTML을 건드리지 않아 깜빡임은 없다.
+function ownerOptionData(kind,names){
+  const set=new Set();
+  names.forEach(n=>{
+    if(kind==='sales'){ const s=salesOwnerName(n); if(s)set.add(s); }
+    else { const t=techOwnersOf(n); if(t.p)set.add(t.p); if(t.s)set.add(t.s); }
+  });
+  return [...set].sort((a,b)=>a.localeCompare(b,'ko'));
+}
+function syncOwnerSelect(id,kind,names,cur){
+  const el=document.getElementById(id); if(!el)return;
+  const list=ownerOptionData(kind,names), me=salesMyName();
+  const sig=kind+'|'+me+'|'+list.join(',');
+  if(el.getAttribute('data-sig')!==sig){
+    const label=kind==='sales'?'영업 담당':'기술 담당';
+    el.innerHTML=`<option value="">${label} — 전체</option>`
+      +(me?`<option value="__me__">👤 내 담당 (${escapeHtml(me)})</option>`:'')
+      +list.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('');
+    el.setAttribute('data-sig',sig);
+  }
+  el.value=cur||'';
 }
 // 필터 바·검색창은 한 번만 만들고 이후엔 본문(#…-body)만 다시 그린다 — 타이핑 중 포커스 유지
-function salesSkeletonHtml(d){
-  const eosNames=((d&&d.eos)||[]).map(e=>e.customer||'');
-  const custNames=[...(((d&&d.customers)||[]).map(c=>c.name||'')),...((typeof OWNER_ROWS!=='undefined'&&OWNER_ROWS?OWNER_ROWS:[]).map(r=>r.customer||''))];
+function salesSkeletonHtml(){
   const bar='class="panel" style="padding:9px 11px;margin-bottom:10px;display:flex;gap:6px;flex-wrap:wrap;align-items:center"';
   return `<div id="sales-kpi"></div>
   <div class="sec-title" style="margin:0 0 8px">🔑 갱신 기회 — 만료 임박순</div>
   <div id="sales-renew-bar" ${bar}>
-    <input id="rn-q" class="admin-input" style="flex:1;min-width:160px;font-size:12px" placeholder="고객사 / 제품 검색..." oninput="onSalesFilterQ(this)">
-    <select id="rn-owner" class="admin-input" style="width:auto;font-size:11.5px" onchange="setSalesFilter('owner',this.value)">${salesOwnerOptions(eosNames)}</select>
+    <input id="rn-q" class="admin-input" style="flex:1;min-width:160px;font-size:12px" placeholder="고객사 / 제품 / 담당자 검색..." oninput="onSalesFilterQ(this)">
+    <select id="rn-owner" class="admin-input" style="width:auto;font-size:11.5px" onchange="setSalesFilter('owner',this.value)"></select>
+    <select id="rn-tech" class="admin-input" style="width:auto;font-size:11.5px" onchange="setSalesFilter('tech',this.value)"></select>
     <select id="rn-status" class="admin-input" style="width:auto;font-size:11.5px" onchange="setSalesFilter('status',this.value)">
       <option value="">진행 상태 — 전체</option>${SALES_STATUS.map(s=>`<option value="${s}">${s}</option>`).join('')}
     </select>
@@ -151,8 +175,9 @@ function salesSkeletonHtml(d){
 
   <div class="sec-title" style="margin:22px 0 8px" id="sales-cust-title">🏢 고객사 대응 현황</div>
   <div id="sales-cust-bar" ${bar}>
-    <input id="ct-q" class="admin-input" style="flex:1;min-width:160px;font-size:12px" placeholder="고객사 검색..." oninput="onCustFilterQ(this)">
-    <select id="ct-owner" class="admin-input" style="width:auto;font-size:11.5px" onchange="setCustFilter('owner',this.value)">${salesOwnerOptions(custNames)}</select>
+    <input id="ct-q" class="admin-input" style="flex:1;min-width:160px;font-size:12px" placeholder="고객사 / 담당자 검색..." oninput="onCustFilterQ(this)">
+    <select id="ct-owner" class="admin-input" style="width:auto;font-size:11.5px" onchange="setCustFilter('owner',this.value)"></select>
+    <select id="ct-tech" class="admin-input" style="width:auto;font-size:11.5px" onchange="setCustFilter('tech',this.value)"></select>
     <select id="ct-state" class="admin-input" style="width:auto;font-size:11.5px" onchange="setCustFilter('state',this.value)">
       ${CUST_STATES.map(([v,l])=>`<option value="${v}">${l}</option>`).join('')}
     </select>
@@ -188,7 +213,7 @@ function renderSalesPage(){
   const d=SALES_DATA;
   if(!d){loadSalesOverview();return;}
   // 골격(필터 바 포함)은 1회만 생성 — 이후 renderSalesBodies가 본문만 교체하므로 검색창 포커스가 유지된다
-  if(!document.getElementById('sales-renew-body')) wrap.innerHTML=salesSkeletonHtml(d);
+  if(!document.getElementById('sales-renew-body')) wrap.innerHTML=salesSkeletonHtml();
   renderSalesBodies();
 }
 
@@ -219,6 +244,14 @@ function renderSalesBodies(){
   });
   const custList=custAll.filter(custStatePass).sort(custSortFn(SALES_CFILTER.sort));
   const openTotal=custList.reduce((s,x)=>s+(x.c.open||0),0);
+
+  // 담당자 목록 갱신 (담당자 관리·이슈 로드가 늦게 끝나도 옵션이 채워지도록 매 렌더 동기화)
+  const eosNames=[...new Set(((d.eos)||[]).map(e=>e.customer||'').filter(Boolean))];
+  const custNames=custAll.map(x=>x.c.name);
+  syncOwnerSelect('rn-owner','sales',eosNames,SALES_FILTER.owner);
+  syncOwnerSelect('rn-tech','tech',eosNames,SALES_FILTER.tech);
+  syncOwnerSelect('ct-owner','sales',custNames,SALES_CFILTER.owner);
+  syncOwnerSelect('ct-tech','tech',custNames,SALES_CFILTER.tech);
 
   const rnote=document.getElementById('rn-note');
   if(rnote)rnote.innerHTML=salesFilterActive()?`<span style="color:var(--accent)">${rows.length}/${allRows.length}건</span>`:`${allRows.length}건`;
