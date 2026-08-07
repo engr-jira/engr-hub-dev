@@ -243,6 +243,7 @@ async function loadAudit(){
       DIGEST_GEN:{bg:'rgba(63,163,196,.12)',color:'#3F8FC4',label:'다이제스트'},
       DIGEST_NOTICE:{bg:'rgba(63,163,196,.12)',color:'#3F8FC4',label:'공지'},
       DIGEST_RECIPIENTS:{bg:'rgba(63,163,196,.12)',color:'#3F8FC4',label:'수신대상'},
+      DIGEST_SCHEDULE:{bg:'rgba(63,163,196,.12)',color:'#3F8FC4',label:'발송스케줄'},
       QUIZ_SUBMIT:{bg:'rgba(159,107,181,.12)',color:'#9F6BB5',label:'퀴즈'},
       QUIZ_Q:{bg:'rgba(159,107,181,.12)',color:'#9F6BB5',label:'퀴즈문제'},
       QUIZ_WEEK:{bg:'rgba(159,107,181,.12)',color:'#9F6BB5',label:'퀴즈출제'},

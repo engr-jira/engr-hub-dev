@@ -433,7 +433,7 @@ async function openDigest(){
   const modal=document.getElementById('digest-modal'); if(!modal)return;
   const ta=document.getElementById('digest-text'), st=document.getElementById('digest-status');
   modal.style.display='flex'; if(st){st.textContent='';st.style.color='';} if(ta)ta.value='생성 중...'; renderDigestPreview();
-  loadDigestRecipients();
+  loadDigestRecipients(); loadDigestSchedule();
   try{
     const d=await hubApi('/team/digest');
     const text=String(d.text||'').replace('{HUB_URL}', location.origin+location.pathname);
@@ -443,7 +443,7 @@ async function openDigest(){
     if(nt)nt.value=String(d.notice||'');
     if(ns)ns.innerHTML=d.noticeExpired?'<span style="color:var(--warn)">⚠️ 이전 공지 만료됨(미게시)</span>':(d.notice?`<span style="color:var(--success)">✓ 저장됨${d.noticeUntil?' · '+escapeHtml(d.noticeUntil)+'까지':' · 무기한'}</span>`:'');
     renderDigestPreview();
-    if(st){const s=d.sections||{};const mi=(s.metaIncomplete||[]).reduce((a,r)=>a+(r.count||0),0);st.textContent=`마감 ${s.dueToday?.length||0} · 지연 ${s.overdue?.length||0} · 미기입 ${mi} · 라이선스 ${s.licenseSoon?.length||0}${(s.doneYesterday||[]).length?' · 어제완료 '+s.doneYesterday.length:''}${(s.headline||[]).length?' · 헤드라인 '+s.headline.length:''}`;}
+    if(st){const c=d.counts||{};st.textContent=`팀 전체 — 마감 ${c.due||0} · 지연 ${c.overdue||0} · 미기입 ${c.meta||0} · 라이선스 ${c.lic||0}${c.done?' · 어제완료 '+c.done:''}${c.hl?' · 헤드라인 '+c.hl:''}`;}
   }catch(e){ if(ta)ta.value=''; renderDigestPreview(); if(st){st.textContent='생성 실패: '+e.message;st.style.color='var(--danger)';} }
 }
 async function copyDigest(){
@@ -548,4 +548,28 @@ async function pushPersonalDigest(){
   }
 }
 window.openDigest=openDigest; window.copyDigest=copyDigest; window.renderDigestPreview=renderDigestPreview; window.saveDigestNotice=saveDigestNotice; window.clearDigestNotice=clearDigestNotice;
-window.onDigestRcpMode=onDigestRcpMode; window.saveDigestRecipients=saveDigestRecipients; window.pushPersonalDigest=pushPersonalDigest;
+// ── 자동 발송 스케줄 (on/off + 시각, 30분 단위) ──
+async function loadDigestSchedule(){
+  const sel=document.getElementById('digest-sch-time'), st=document.getElementById('digest-sch-state');
+  if(sel&&!sel.options.length){
+    const opts=[]; for(let h=0;h<24;h++)for(const m of ['00','30'])opts.push(`${String(h).padStart(2,'0')}:${m}`);
+    sel.innerHTML=opts.map(t=>`<option value="${t}">${t}</option>`).join('');
+  }
+  try{
+    const d=await hubApi('/team/digest/schedule');
+    const on=document.getElementById('digest-sch-on'); if(on)on.value=d.enabled?'1':'0';
+    if(sel)sel.value=d.time||'08:30';
+    if(st)st.innerHTML=d.enabled?`<span style="color:var(--success)">✓ 매일 ${escapeHtml(d.time)} 자동 발송</span>`:'<span style="color:var(--warn)">⏸ 자동 발송 꺼짐</span>';
+  }catch(e){ if(st)st.innerHTML=`<span style="color:var(--danger)">스케줄 조회 실패: ${escapeHtml(e.message)}</span>`; }
+}
+async function saveDigestSchedule(){
+  const st=document.getElementById('digest-sch-state');
+  const enabled=((document.getElementById('digest-sch-on')||{}).value)==='1';
+  const time=((document.getElementById('digest-sch-time')||{}).value)||'08:30';
+  try{
+    const r=await hubApi('/team/digest/schedule',{method:'POST',body:JSON.stringify({enabled,time})});
+    if(st)st.innerHTML=r.enabled?`<span style="color:var(--success)">✓ 매일 ${escapeHtml(r.time)} 자동 발송</span>`:'<span style="color:var(--warn)">⏸ 자동 발송 꺼짐</span>';
+    if(typeof toast==='function')toast(r.enabled?`자동 발송 ${r.time} 저장됨`:'자동 발송을 껐습니다');
+  }catch(e){ if(st)st.innerHTML=`<span style="color:var(--danger)">저장 실패: ${escapeHtml(e.message)}</span>`; }
+}
+window.onDigestRcpMode=onDigestRcpMode; window.saveDigestRecipients=saveDigestRecipients; window.pushPersonalDigest=pushPersonalDigest; window.saveDigestSchedule=saveDigestSchedule;

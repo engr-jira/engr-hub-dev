@@ -27,6 +27,8 @@
     "VAPID_SUBJECT": "mailto:passikmj@gmail.com"
   },
   "triggers": {
-    "crons": ["30 23 * * *"]
+    // 30분마다 기상 → worker의 scheduled()가 KST 시각·설정(digest_schedule)을 보고 자기 차례만 실행.
+    // 하루 1회 보장은 app_settings 날짜 마커(claimDailyOnce)가 담당한다.
+    "crons": ["0,30 * * * *"]
   }
 }
