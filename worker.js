@@ -297,19 +297,8 @@ async function pushPersonalDigests(env, sendList) {
   return { sent, failed, errors };
 }
 
-// ── 다이제스트 카드를 Teams 채널로 전송 (TEAMS_WEBHOOK_URL 시크릿 설정 시에만; MJ의 Power Automate 웹훅 flow가 수신·게시) ──
-async function postDigestToTeams(env, hubUrl, notice) {
-  if (!env.TEAMS_WEBHOOK_URL) return { ok: false, reason: 'no-webhook' };
-  const D = await buildDigestData(env);
-  const noti = (notice === undefined || notice === null) ? (await digestGetNotice(env)).text : notice;   // 미지정(cron 등)이면 저장된 공지 사용
-  const card = buildDigestCard(D, hubUrl || 'https://engr-jira.github.io/engr-hub-dev/', noti);
-  const resp = await fetch(env.TEAMS_WEBHOOK_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: 'message', attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: card }] })
-  });
-  return { ok: resp.ok, status: resp.status, day: D.day, mgmt: D.mgmtTotal };
-}
+// ⚠️ 전사 채널 자동/수동 게시는 폐지(2026-08-07). TEAMS_WEBHOOK_URL은 이제 개인 DM flow를 가리키므로
+//    전사 다이제스트를 이 웹훅으로 보내면 팀 전체 업무가 한 사람 DM으로 쏟아진다. 개인 경로만 사용할 것.
 
 // ══ 🧠 팀 퀴즈 헬퍼 (P1) ══
 function quizWeekId(ms) { const d = new Date(ms); d.setUTCHours(0, 0, 0, 0); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7)); const ys = new Date(Date.UTC(d.getUTCFullYear(), 0, 1)); const wn = Math.ceil(((d - ys) / 86400000 + 1) / 7); return d.getUTCFullYear() + '-W' + String(wn).padStart(2, '0'); }
@@ -1521,21 +1510,7 @@ export default {
         return corsResponse({ ok: true, card, attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: card }] });
       }
 
-      // ── 다이제스트를 Teams 채널로 즉시 전송 (수동/테스트, x-analysis-token 게이트) ──
-      if (path === '/team/digest/push' && request.method === 'POST') {
-        const tok = request.headers.get('x-analysis-token') || '';
-        const viaToken = env.ANALYSIS_WRITE_TOKEN && tok === env.ANALYSIS_WRITE_TOKEN;
-        const viaSession = hasSession && await isMonitorAllowed(env, user);  // mj.park 수동 발사(모달 버튼)
-        if (!viaToken && !viaSession) return corsResponse({ ok: false, message: '권한이 없습니다(mj.park 또는 분석 토큰).' }, 401);
-        if (!(await getFeatureFlags(env)).digest) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);
-        if (!env.TEAMS_WEBHOOK_URL) return corsResponse({ ok: false, message: 'Teams 웹훅이 설정되지 않았습니다.' }, 400);
-        const pushBody = await request.json().catch(() => ({}));
-        const notice = (pushBody && typeof pushBody.notice === 'string') ? pushBody.notice.slice(0, 500) : undefined;   // 미지정이면 저장된 공지 사용
-        const hubUrl = url.searchParams.get('hub') || 'https://engr-jira.github.io/engr-hub-dev/';
-        let r; try { r = await postDigestToTeams(env, hubUrl, notice); } catch (e) { return corsResponse({ ok: false, message: '전송 실패: ' + e.message }, 502); }
-        await auditLog(env, viaSession ? user : 'teams-flow', 'DIGEST_GEN', { via: 'teams-manual', status: r.status, digDate: r.day });
-        return corsResponse({ ok: r.ok, status: r.status, day: r.day });
-      }
+      // ── /team/digest/push(전사 채널 발사)는 폐지됨 — 개인 경로(/team/digest/personal)만 사용 ──
 
       // ── 개인별 브리핑 (x-analysis-token 또는 mj.park) — Flow가 각 담당자에게 1:1 전달 ──
       if (path === '/team/digest/personal' && (request.method === 'GET' || request.method === 'POST')) {

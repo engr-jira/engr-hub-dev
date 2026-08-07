@@ -483,20 +483,6 @@ async function clearDigestNotice(){
     if(typeof toast==='function')toast('공지 삭제됨');
   }catch(e){ if(ns)ns.innerHTML=`<span style="color:var(--danger)">삭제 실패: ${escapeHtml(e.message)}</span>`; }
 }
-async function pushDigestToTeams(){
-  const notice=((document.getElementById('digest-notice')||{}).value||'').trim();
-  if(!confirm((notice?('📢 공지 포함: '+notice+'\n\n'):'')+'지금 팀 데스크 채널에 다이제스트 카드를 게시합니다.\n계속할까요?'))return;
-  const st=document.getElementById('digest-status');
-  if(st){st.textContent='🚀 발사 중...';st.style.color='';}
-  try{
-    const r=await hubApi('/team/digest/push',{method:'POST',body:JSON.stringify({notice})});
-    if(st){st.textContent=`✓ 채널에 게시됨 (status ${r.status||'ok'})`;st.style.color='var(--success)';}
-    if(typeof toast==='function')toast('Teams 데스크 채널에 게시했습니다');
-  }catch(e){
-    if(st){st.textContent='발사 실패: '+e.message;st.style.color='var(--danger)';}
-    if(typeof toast==='function')toast('발사 실패: '+e.message,true);
-  }
-}
 // ── 개인 브리핑 수신 대상 (off/test/allow/all) — 전송 축소는 워커가 수행, 여기선 설정만 ──
 var __DG_PEOPLE=[];
 var DG_MODE_HINT={
@@ -561,5 +547,5 @@ async function pushPersonalDigest(){
     if(typeof toast==='function')toast('발사 실패: '+e.message,true);
   }
 }
-window.openDigest=openDigest; window.copyDigest=copyDigest; window.renderDigestPreview=renderDigestPreview; window.pushDigestToTeams=pushDigestToTeams; window.saveDigestNotice=saveDigestNotice; window.clearDigestNotice=clearDigestNotice;
+window.openDigest=openDigest; window.copyDigest=copyDigest; window.renderDigestPreview=renderDigestPreview; window.saveDigestNotice=saveDigestNotice; window.clearDigestNotice=clearDigestNotice;
 window.onDigestRcpMode=onDigestRcpMode; window.saveDigestRecipients=saveDigestRecipients; window.pushPersonalDigest=pushPersonalDigest;
