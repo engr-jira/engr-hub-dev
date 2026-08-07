@@ -155,6 +155,58 @@ function buildDigestCard(D, hubUrl, notice) {
   return { type: 'AdaptiveCard', $schema: 'http://adaptivecards.io/schemas/adaptive-card.json', version: '1.4', body, actions, msteams: { width: 'Full' } };
 }
 
+// ── 개인별 브리핑 — 담당자 본인 건만 묶어 1:1 전달 (전사 노출 부담 제거) ──
+async function buildPersonalDigests(env, hubUrl, notice) {
+  const D = await buildDigestData(env);
+  const users = await getUsers(env);
+  // Jira displayName(한글) → HUB 계정 id → 메일주소 규칙
+  const byName = {};
+  for (const u of Object.values(users)) { if (u && u.active !== false && u.displayName) byName[String(u.displayName).trim()] = u.id; }
+  const domain = env.MAIL_DOMAIN || 'escare.co.kr';
+  const per = {};
+  const bucket = name => {
+    const n = String(name || '').trim(); if (!n || n === '-' || n === '(미지정)') return null;
+    const id = byName[n] || null;
+    const k = id || n;
+    return per[k] || (per[k] = { assignee: n, userId: id, email: id ? `${id}@${domain}` : '', dueToday: [], overdue: [], metaCount: 0, metaFields: {}, doneY: [] });
+  };
+  D.dueToday.forEach(r => { const b = bucket(r.assignee); if (b) b.dueToday.push(r); });
+  D.overdue.forEach(r => { const b = bucket(r.assignee); if (b) b.overdue.push(r); });
+  D.metaRows.forEach(r => { const b = bucket(r.assignee); if (b) { b.metaCount += r.count; b.metaFields = r.fields; } });
+  D.doneY.forEach(r => { const b = bucket(r.assignee); if (b) b.doneY.push(r); });
+  const base = String(hubUrl || 'https://engr-jira.github.io/engr-hub-dev/').replace(/\/+$/, '');
+  const esc = s => String(s || '').replace(/\s+/g, ' ').trim();
+  const clip = (s, n) => { const x = esc(s); return x.length > n ? x.slice(0, n - 1) + '…' : x; };
+  const tb = (text, opt) => Object.assign({ type: 'TextBlock', text, wrap: true }, opt || {});
+  const out = [];
+  for (const p of Object.values(per)) {
+    const total = p.dueToday.length + p.overdue.length + p.metaCount;
+    if (!total && !p.doneY.length) continue;   // 챙길 것도 성과도 없으면 보내지 않음(알림 피로 방지)
+    const body = [{ type: 'Container', style: 'accent', bleed: true, items: [tb(`📋 ${p.assignee}님의 오늘 — ${D.dateLabel}`, { weight: 'Bolder', size: 'Large' })] }];
+    if (notice && String(notice).trim()) {
+      const nl = String(notice).split('\n').map(x => x.trim()).filter(Boolean);
+      const it = [tb('📢 공지사항', { weight: 'Bolder' })];
+      nl.forEach(l => it.push(tb('• ' + esc(l), { weight: 'Bolder', spacing: 'Small' })));
+      body.push({ type: 'Container', style: 'warning', spacing: 'Small', items: it });
+    }
+    body.push(tb(total ? `⚡ 오늘 챙길 것 ${total}건 — 마감 ${p.dueToday.length} · 지연 ${p.overdue.length} · 미기입 ${p.metaCount}` : '🎉 오늘 챙길 항목이 없습니다!', { isSubtle: true, spacing: 'Small' }));
+    if (p.doneY.length) {
+      const it = [tb(`📌 어제의 성과 (완료 ${p.doneY.length}건)`, { weight: 'Bolder', color: 'Good', size: 'Medium' })];
+      p.doneY.slice(0, 5).forEach(r => it.push(tb(`• ${r.customer ? '[' + r.customer + '] ' : ''}${clip(r.summary, 46)}`, { spacing: 'Small' })));
+      body.push({ type: 'Container', style: 'good', spacing: 'Medium', separator: true, items: it });
+    }
+    if (total) {
+      const it = [tb('🚨 지금 챙길 것', { weight: 'Bolder', color: 'Attention', size: 'Medium' })];
+      if (p.dueToday.length) { it.push(tb(`⏰ 오늘 마감 ${p.dueToday.length}`, { weight: 'Bolder', spacing: 'Medium' })); p.dueToday.slice(0, 8).forEach(r => it.push(tb(`• ${r.customer ? '[' + r.customer + '] ' : ''}${clip(r.summary, 48)} (${r.key})`, { spacing: 'Small' }))); }
+      if (p.overdue.length) { it.push(tb(`🔴 지연 ${p.overdue.length}`, { weight: 'Bolder', spacing: 'Medium' })); p.overdue.slice(0, 8).forEach(r => it.push(tb(`• ${r.customer ? '[' + r.customer + '] ' : ''}${clip(r.summary, 48)} (D+${r.overdueDays}, ${r.key})`, { spacing: 'Small' }))); }
+      if (p.metaCount) { const fs = Object.entries(p.metaFields).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(' · '); it.push(tb(`📝 메타 미기입 ${p.metaCount}건 (${fs})`, { weight: 'Bolder', spacing: 'Medium' })); }
+      body.push({ type: 'Container', style: 'attention', spacing: 'Medium', separator: true, items: it });
+    }
+    const card = { type: 'AdaptiveCard', $schema: 'http://adaptivecards.io/schemas/adaptive-card.json', version: '1.4', body, actions: [{ type: 'Action.OpenUrl', title: '🔗 내 이슈 보기', url: base + '/?go=issues' }], msteams: { width: 'Full' } };
+    out.push({ assignee: p.assignee, userId: p.userId, email: p.email, counts: { due: p.dueToday.length, overdue: p.overdue.length, meta: p.metaCount, done: p.doneY.length }, card, attachments: [{ contentType: 'application/vnd.microsoft.card.adaptive', content: card }] });
+  }
+  return { date: D.day, dateLabel: D.dateLabel, recipients: out };
+}
 // ── 다이제스트 공지사항 (app_settings digest_notice) — 지정 날짜까지 유지, 만료 시 자동 제외 ──
 async function digestGetNotice(env) {
   try {
@@ -1414,6 +1466,30 @@ export default {
         return corsResponse({ ok: r.ok, status: r.status, day: r.day });
       }
 
+      // ── 개인별 브리핑 (x-analysis-token 또는 mj.park) — Flow가 각 담당자에게 1:1 전달 ──
+      if (path === '/team/digest/personal' && (request.method === 'GET' || request.method === 'POST')) {
+        const tok = request.headers.get('x-analysis-token') || '';
+        const viaToken = env.ANALYSIS_WRITE_TOKEN && tok === env.ANALYSIS_WRITE_TOKEN;
+        const viaSession = hasSession && await isMonitorAllowed(env, user);
+        if (!viaToken && !viaSession) return corsResponse({ ok: false, message: '권한이 없습니다(mj.park 또는 분석 토큰).' }, 401);
+        if (!(await getFeatureFlags(env)).digest) return corsResponse({ ok: false, message: '비활성화된 기능입니다.' }, 403);
+        const hubUrl = url.searchParams.get('hub') || 'https://engr-jira.github.io/engr-hub-dev/';
+        const noti = url.searchParams.has('notice') ? (url.searchParams.get('notice') || '') : (await digestGetNotice(env)).text;
+        let R; try { R = await buildPersonalDigests(env, hubUrl, noti); } catch (e) { return corsResponse({ ok: false, message: 'Jira 조회 실패: ' + e.message }, 502); }
+        // POST + 웹훅 설정 시: 워커가 각 담당자 카드를 순차 전송(Flow가 대상자에게 DM)
+        let sent = 0;
+        if (request.method === 'POST' && env.TEAMS_WEBHOOK_URL) {
+          for (const r of R.recipients) {
+            try {
+              const resp = await fetch(env.TEAMS_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'message', target: 'dm', assignee: r.assignee, userId: r.userId, email: r.email, attachments: r.attachments }) });
+              if (resp.ok) sent++;
+            } catch (_) {}
+          }
+        }
+        await auditLog(env, viaSession ? user : 'teams-flow', 'DIGEST_GEN', { via: 'personal', digDate: R.date, people: R.recipients.length, sent });
+        return corsResponse({ ok: true, date: R.date, dateLabel: R.dateLabel, count: R.recipients.length, sent, recipients: R.recipients });
+      }
+
       // ── 다이제스트 공지사항 저장/조회 (mj.park) — 지정 날짜까지 유지되어 cron 자동 게시에도 포함 ──
       if (path === '/team/digest/notice' && request.method === 'GET') {
         if (!hasSession) return corsResponse({ ok: false, message: '로그인이 필요합니다.' }, 401);
@@ -1830,13 +1906,22 @@ export default {
     } catch (_) {}
     // 자료실 KB 증분 수집 (매일, 무료 모드: 시드+기존링크+Jira 참조 KB, 2년 컷오프·중복 자동 제거)
     try { ctx.waitUntil(importRecentKBLinks(env, 'system(cron)', 2, { limit: 120 })); } catch (_) {}
-    // 팀 다이제스트 카드를 Teams 채널로 자동 게시 (TEAMS_WEBHOOK_URL 시크릿 설정 시에만)
+    // 개인별 브리핑을 담당자에게 1:1 전달 (전사 채널 게시는 중단 — 개인 업무 노출 부담 제거)
     if (env.TEAMS_WEBHOOK_URL) {
       ctx.waitUntil((async () => {
         try {
           if (!(await getFeatureFlags(env)).digest) return;
-          const r = await postDigestToTeams(env, 'https://engr-jira.github.io/engr-hub-dev/');
-          await auditLog(env, 'system(cron)', 'DIGEST_GEN', { via: 'teams', status: r.status, digDate: r.day });
+          const hub = 'https://engr-jira.github.io/engr-hub-dev/';
+          const noti = (await digestGetNotice(env)).text;
+          const R = await buildPersonalDigests(env, hub, noti);
+          let sent = 0;
+          for (const r of R.recipients) {
+            try {
+              const resp = await fetch(env.TEAMS_WEBHOOK_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type: 'message', target: 'dm', assignee: r.assignee, userId: r.userId, email: r.email, attachments: r.attachments }) });
+              if (resp.ok) sent++;
+            } catch (_) {}
+          }
+          await auditLog(env, 'system(cron)', 'DIGEST_GEN', { via: 'personal-cron', digDate: R.date, people: R.recipients.length, sent });
         } catch (_) {}
       })());
     }
