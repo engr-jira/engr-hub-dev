@@ -24,10 +24,12 @@ function renderEosList(){
   const tbody=document.getElementById('eos-tbody');
   if(!pageList.length){tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text3)">등록된 라이선스가 없습니다</td></tr>`;renderPager('eos-pager','eos',list.length,'renderEosList');return;}
   tbody.innerHTML=pageList.map(it=>{
-    const hasEnd=!!it.expireDate;
+    const perp=!!it.perpetual;
+    const hasEnd=!perp&&!!it.expireDate;
     const days=hasEnd?daysUntil(it.expireDate):null;
     let rowClass='',badgeBg='rgba(162,145,122,.15)',badgeColor='var(--text3)',badgeText='—';
-    if(hasEnd){
+    if(perp){badgeBg='color-mix(in srgb,var(--success) 15%,transparent)';badgeColor='var(--success)';badgeText='Perpetual';}
+    else if(hasEnd){
       const wd=(typeof EOS_WARN_DAYS!=='undefined'&&EOS_WARN_DAYS.length?[...EOS_WARN_DAYS].map(Number).filter(n=>n>0).sort((a,b)=>a-b):[7,30,60]);
       const w0=wd[0]||7, w1=wd[1]||w0, w2=wd[2]||w1;
       if(days<0){rowClass='eos-warn';badgeBg='rgba(248,113,113,.2)';badgeColor='#E06A63';badgeText='만료';}
@@ -37,7 +39,7 @@ function renderEosList(){
       else {badgeBg='rgba(63,190,146,.15)';badgeColor='#2FB085';badgeText='D-'+days;}
     }
     const pd=it.productDesc||it.product||'-';
-    const period=[it.startDate,it.expireDate].filter(Boolean).join(' ~ ')||'-';
+    const period=perp?`${it.startDate||'-'} ~ Perpetual`:([it.startDate,it.expireDate].filter(Boolean).join(' ~ ')||'-');
     return `<tr class="${rowClass} u-cur-pointer" onclick="openEosDetailModal('${it.id}')">
       <td onclick="event.stopPropagation()"><input type="checkbox" class="eos-pick" data-id="${it.id}"></td>
       <td style="font-weight:700">${escapeHtml(it.customer||'-')}</td>
@@ -46,7 +48,7 @@ function renderEosList(){
       <td class="u-ta-right" data-sort="${parseInt(String(it.quantity).replace(/[^0-9]/g,''))||0}">${escapeHtml(String(it.quantity||'-'))}</td>
       <td style="font-family:'Consolas',monospace;font-size:11px">${escapeHtml(it.serial||'-')}</td>
       <td style="font-size:11px;color:var(--text2);white-space:nowrap" data-sort="${escapeHtml(it.startDate||'')}">${escapeHtml(period)}</td>
-      <td data-sort="${hasEnd?days:99999}"><span class="eos-day-badge" style="background:${badgeBg};color:${badgeColor}">${badgeText}</span></td>
+      <td data-sort="${perp?99998:(hasEnd?days:99999)}"><span class="eos-day-badge" style="background:${badgeBg};color:${badgeColor}">${badgeText}</span></td>
       <td class="u-ws-nowrap">
         <button onclick="event.stopPropagation();openEosEditModal('${it.id}')" style="background:none;border:1px solid var(--border2);border-radius:8px;color:var(--text3);cursor:pointer;font-size:11px;padding:3px 8px;font-family:inherit;margin-right:4px">✎ 수정</button>
         <button onclick="event.stopPropagation();deleteEos('${it.id}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px">×</button>
@@ -58,9 +60,10 @@ function renderEosList(){
 function openEosDetailModal(id){
   const it=EOS_ITEMS.find(x=>x.id===id);
   if(!it){toast('항목을 찾을 수 없습니다',true);return;}
-  const hasEnd=!!it.expireDate;
+  const perp=!!it.perpetual;
+  const hasEnd=!perp&&!!it.expireDate;
   const d=hasEnd?daysUntil(it.expireDate):null;
-  const color=!hasEnd?'var(--text3)':d<0?'#E06A63':d<=30?'#E0A32E':'#2FB085';
+  const color=perp?'var(--success)':!hasEnd?'var(--text3)':d<0?'#E06A63':d<=30?'#E0A32E':'#2FB085';
   const pd=it.productDesc||it.product||'-';
   openGenModal('라이선스 상세',`
   <div class="rp-meta">
@@ -70,8 +73,8 @@ function openEosDetailModal(id){
     <div class="rp-row"><span>Quantity</span><span>${escapeHtml(String(it.quantity||'-'))}</span></div>
     <div class="rp-row"><span>Serial Number</span><span>${escapeHtml(it.serial||'-')}</span></div>
     <div class="rp-row"><span>Start Date</span><span>${escapeHtml(it.startDate||'-')}</span></div>
-    <div class="rp-row"><span>End Date</span><span>${escapeHtml(it.expireDate||'-')}</span></div>
-    <div class="rp-row"><span>D-Day</span><span style="color:${color};font-weight:800">${!hasEnd?'-':d<0?'만료':`D-${d}`}</span></div>
+    <div class="rp-row"><span>End Date</span><span>${perp?'Perpetual':escapeHtml(it.expireDate||'-')}</span></div>
+    <div class="rp-row"><span>D-Day</span><span style="color:${color};font-weight:800">${perp?'Perpetual':!hasEnd?'-':d<0?'만료':`D-${d}`}</span></div>
     <div class="rp-row"><span>등록</span><span>${escapeHtml(it.createdBy||'-')} · ${fd(it.createdAt)}</span></div>
   </div>
   ${it.memo?`<div class="rp-desc u-mt-12px">${escapeHtml(it.memo)}</div>`:''}`,
@@ -102,8 +105,13 @@ function addEosLine(){
     +'<div class="eos-lic-dates">'
       +'<label>START DATE<span class="el-date-wrap"><input type="date" class="el-start" data-date-button="1"><button type="button" class="el-cal" tabindex="-1" title="달력 열기">📅</button></span></label>'
       +'<label>END DATE (만료)<span class="el-date-wrap"><input type="date" class="el-end" data-date-button="1"><button type="button" class="el-cal" tabindex="-1" title="달력 열기">📅</button></span></label>'
-    +'</div>';
+    +'</div>'
+    +'<label class="el-perp-lbl" style="display:inline-flex;align-items:center;gap:6px;margin-top:7px;font-size:11.5px;color:var(--text2);cursor:pointer">'
+      +'<input type="checkbox" class="el-perp"> Perpetual <span class="u-muted-10">— 만료 없음(무기한). 체크하면 만료일·D-day·갱신 대상에서 제외됩니다</span>'
+    +'</label>';
   row.querySelector('.eos-lic-rm').addEventListener('click',()=>{ row.remove(); if(!wrap.children.length)addEosLine(); });
+  const _perp=row.querySelector('.el-perp'), _end=row.querySelector('.el-end');
+  _perp.addEventListener('change',()=>{ _end.disabled=_perp.checked; if(_perp.checked)_end.value=''; });
   row.querySelectorAll('.el-cal').forEach(b=>b.addEventListener('click',()=>{ const i=b.previousElementSibling; try{ i.showPicker?i.showPicker():i.focus(); }catch(_){ i.focus(); } }));
   wrap.appendChild(row);
   const f=row.querySelector('.el-desc'); if(f)setTimeout(()=>f.focus(),0);
@@ -119,9 +127,10 @@ async function saveEos(){
     quantity:(b.querySelector('.el-qty').value||'').trim(),
     serial:(b.querySelector('.el-serial').value||'').trim(),
     startDate:b.querySelector('.el-start').value,
-    expireDate:b.querySelector('.el-end').value
+    perpetual:!!b.querySelector('.el-perp').checked,
+    expireDate:b.querySelector('.el-perp').checked?'':b.querySelector('.el-end').value
   }));
-  const filled=blocks.filter(l=>l.productDesc||l.serial||l.expireDate||l.siteId);
+  const filled=blocks.filter(l=>l.productDesc||l.serial||l.expireDate||l.siteId||l.perpetual);
   if(!filled.length){toast('라이선스 항목을 1개 이상 입력하세요',true);return;}
   if(filled.find(l=>!l.productDesc)){toast('Product Description은 필수입니다',true);return;}
   const items=filled.map(l=>({customer,memo,...l}));
@@ -143,12 +152,18 @@ function openEosEditModal(id){
     <div><label>Quantity</label><input id="eos-edit-qty" type="number" value="${escapeHtml(String(it.quantity||''))}"></div>
     <div class="full"><label>Serial Number</label><input id="eos-edit-serial" value="${escapeHtml(it.serial||'')}"></div>
     <div><label>Start Date</label><input type="date" id="eos-edit-start" value="${it.startDate||''}"></div>
-    <div><label>End Date (만료)</label><input type="date" id="eos-edit-end" value="${it.expireDate||''}"></div>
+    <div><label>End Date (만료)</label><input type="date" id="eos-edit-end" value="${it.expireDate||''}"${it.perpetual?' disabled':''}></div>
+    <div class="full"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-size:11.5px;color:var(--text2)"><input type="checkbox" id="eos-edit-perp"${it.perpetual?' checked':''} onchange="toggleEosEditPerp(this)"> Perpetual <span class="u-muted-10">— 만료 없음(무기한)</span></label></div>
     <div class="full"><label>메모</label><textarea id="eos-edit-memo">${escapeHtml(it.memo||'')}</textarea></div>
   </div>`,
   `<button class="btn btn-ghost u-btn-inline" onclick="closeGenModal()">취소</button>
    <button class="btn btn-primary u-btn-inline" onclick="updateEos('${id}')">저장</button>`);
 }
+function toggleEosEditPerp(cb){
+  const e=document.getElementById('eos-edit-end'); if(!e)return;
+  e.disabled=cb.checked; if(cb.checked)e.value='';
+}
+window.toggleEosEditPerp=toggleEosEditPerp;
 async function updateEos(id){
   const customer=document.getElementById('eos-edit-customer').value.trim();
   const productDesc=document.getElementById('eos-edit-desc').value.trim();
@@ -156,11 +171,12 @@ async function updateEos(id){
   const quantity=document.getElementById('eos-edit-qty').value.trim();
   const serial=document.getElementById('eos-edit-serial').value.trim();
   const startDate=document.getElementById('eos-edit-start').value;
-  const expireDate=document.getElementById('eos-edit-end').value;
+  const perpetual=!!document.getElementById('eos-edit-perp')?.checked;
+  const expireDate=perpetual?'':document.getElementById('eos-edit-end').value;
   const memo=document.getElementById('eos-edit-memo').value.trim();
   if(!customer||!productDesc){toast('고객사와 Product Description은 필수입니다',true);return;}
   try{
-    const r=await fetch(`${WORKERS}/eos/${id}`,{method:'PUT',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({customer,productDesc,siteId,quantity,serial,startDate,expireDate,memo})});
+    const r=await fetch(`${WORKERS}/eos/${id}`,{method:'PUT',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({customer,productDesc,siteId,quantity,serial,startDate,perpetual,expireDate,memo})});
     const d=await r.json();
     if(!d.ok){toast(d.message||'수정 실패',true);return;}
     toast('수정 완료');closeGenModal();await loadEOS();renderEosList();

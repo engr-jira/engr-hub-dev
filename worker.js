@@ -1356,7 +1356,8 @@ export default {
           quantity: body.quantity || '',
           serial: body.serial || '',
           startDate: okDate(body.startDate),
-          expireDate: okDate(body.expireDate),   // End Date (지원/만료 종료일 — D-day 기준)
+          perpetual: !!body.perpetual,                                  // Perpetual = 만료 없음
+          expireDate: body.perpetual ? '' : okDate(body.expireDate),   // End Date (지원/만료 종료일 — D-day 기준)
           memo: body.memo || '',
           createdBy: user,
           createdAt: new Date().toISOString(),
@@ -1382,7 +1383,8 @@ export default {
             id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
             customer: b.customer || '', productDesc: b.productDesc || '', siteId: b.siteId || '',
             quantity: b.quantity || '', serial: b.serial || '', startDate: okDate(b.startDate),
-            expireDate: okDate(b.expireDate), memo: b.memo || '', createdBy: user, createdAt: new Date().toISOString(),
+            perpetual: !!b.perpetual, expireDate: b.perpetual ? '' : okDate(b.expireDate),
+            memo: b.memo || '', createdBy: user, createdAt: new Date().toISOString(),
           };
           store.push(it); created.push(it);
         }
@@ -1419,7 +1421,9 @@ export default {
         if (!await canModifyItem(env, user, target)) return corsResponse({ ok: false, message: '\uC791\uC131\uC790 \uB610\uB294 \uAD00\uB9AC\uC790\uB9CC \uC218\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
         const ef = {}; ['customer', 'productDesc', 'siteId', 'quantity', 'serial', 'memo'].forEach(k => { if (body[k] !== undefined) ef[k] = body[k]; });  // M-3/M-7: 허용필드+날짜검증
         if (body.startDate !== undefined) ef.startDate = okDate(body.startDate);
+        if (body.perpetual !== undefined) ef.perpetual = !!body.perpetual;
         if (body.expireDate !== undefined) ef.expireDate = okDate(body.expireDate);
+        if (ef.perpetual) ef.expireDate = '';   // Perpetual이면 만료일은 항상 비운다(D-day·갱신 대상에서 제외)
         items = items.map(it => it.id === id ? { ...it, ...ef, id, updatedBy: user, updatedAt: new Date().toISOString() } : it);
         await env.ENGR_KV.put('config:eos', JSON.stringify(items));
         await auditLog(env, user, 'EOS_UPDATE', { id, customer: target?.customer, product: body.productDesc || target?.productDesc, expire: body.expireDate || target?.expireDate });

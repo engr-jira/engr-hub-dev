@@ -438,7 +438,8 @@ function renderCurrent(){
   else if(id==='issues')renderIssues();
   else if(id==='cases')renderCases();
   else if(id==='customers')renderCustomers();
-  else if(id==='eos')renderEosList();
+  // 캐시로 즉시 그리고 서버에서 다시 읽어 갱신 — 다른 사람이 등록한 라이선스가 새로고침 전까지 안 보이던 문제
+  else if(id==='eos'){renderEosList();loadEOS().then(()=>renderEosList()).catch(()=>{});}
   else if(id==='sales')renderSalesPage();
   else if(id==='links')renderLinks();
   else if(id==='knowledge')renderKnowledge();
