@@ -78,6 +78,28 @@ function salesRowPass(r){
   return true;
 }
 function salesFilterActive(){ return !!(SALES_FILTER.q||SALES_FILTER.owner||SALES_FILTER.status||SALES_FILTER.exp); }
+
+// ── 🏢 고객사 대응 현황 전용 필터 (상단 공통 필터와 별개로 이 섹션에만 적용) ──
+let SALES_CFILTER={state:'',overdueOnly:false,sort:'name'};
+const CUST_STATES=[['','대응 상태 — 전체'],['active','활발'],['warn','주의'],['stale','정체'],['none','이슈 없음']];
+const CUST_SORTS=[['name','이름순'],['stale','정체 오래된순'],['overdue','기한초과 많은순'],['open','진행 많은순']];
+function custStatePass(x){
+  const f=SALES_CFILTER;
+  if(f.state&&x.state!==f.state)return false;
+  if(f.overdueOnly&&!((x.c.overdue||0)>0))return false;
+  return true;
+}
+function custSortFn(k){
+  const byName=(a,b)=>(a.c.name||'').localeCompare(b.c.name||'','ko');
+  if(k==='stale')return (a,b)=>(a.noAct?1:0)-(b.noAct?1:0)||b.days-a.days||byName(a,b);   // 이슈 없음은 뒤로
+  if(k==='overdue')return (a,b)=>(b.c.overdue||0)-(a.c.overdue||0)||byName(a,b);
+  if(k==='open')return (a,b)=>(b.c.open||0)-(a.c.open||0)||byName(a,b);
+  return byName;
+}
+function salesCustFilterActive(){ return !!(SALES_CFILTER.state||SALES_CFILTER.overdueOnly); }
+function setCustFilter(k,v){ SALES_CFILTER[k]=v; renderSalesPage(); }
+function resetCustFilter(){ SALES_CFILTER={state:'',overdueOnly:false,sort:'name'}; renderSalesPage(); }
+window.setCustFilter=setCustFilter; window.resetCustFilter=resetCustFilter;
 function salesFilterBarHtml(){
   const owners=[...new Set(((SALES_DATA&&SALES_DATA.eos)||[]).map(e=>salesOwnerName(e.customer)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'ko'));
   const me=salesMyName();
@@ -151,9 +173,15 @@ function renderSalesPage(){
   const _seenC=new Set(_custBase.map(c=>_canonC(c.name)));
   // #1 담당자 관리에 등록된 전 고객사 포함 — 이슈가 없어도 담당자 정보 노출
   (typeof OWNER_ROWS!=='undefined'&&OWNER_ROWS?OWNER_ROWS:[]).forEach(r=>{const k=_canonC(r.customer);if(r.customer&&!_seenC.has(k)){_custBase.push({name:r.customer,open:0,overdue:0,issues:[],lastActivity:null,_noIssues:true});_seenC.add(k);}});
-  _custBase.sort((a,b)=>(a.name||'').localeCompare(b.name||'','ko'));
-  const custList=_custBase.filter(c=>salesQPass([c.name])&&salesOwnerPass(c.name));
-  const openTotal=custList.reduce((s,c)=>s+(c.open||0),0);
+  // 대응 상태를 먼저 산출해야 섹션 전용 필터(활발/주의/정체/이슈없음)를 걸 수 있다
+  const custAll=_custBase.map(c=>{
+    const days=c.lastActivity?daysSince(c.lastActivity.slice(0,10)):999;
+    const noAct=c._noIssues||(!(c.issues&&c.issues.length)&&!c.open);
+    const state=noAct?'none':days>=stale?'stale':days>=Math.ceil(stale/2)?'warn':'active';
+    return {c,days,noAct,state};
+  }).filter(x=>salesQPass([x.c.name])&&salesOwnerPass(x.c.name));   // 상단 공통 필터(검색·영업담당)
+  const custList=custAll.filter(custStatePass).sort(custSortFn(SALES_CFILTER.sort));
+  const openTotal=custList.reduce((s,x)=>s+(x.c.open||0),0);
 
   const kpi=`<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px">
     <div class="kpi"><div class="kpi-val" style="color:var(--warn)">${near}</div><div class="kpi-label">90일 내 만료</div></div>
@@ -188,9 +216,7 @@ function renderSalesPage(){
     }).join('')||`<tr><td colspan="7" class="u-empty">${salesFilterActive()?'조건에 맞는 라이선스가 없습니다':'라이선스 데이터가 없습니다'}</td></tr>`}</tbody>
   </table></div>`;
 
-  const custRows=custList.map(c=>{
-    const days=c.lastActivity?daysSince(c.lastActivity.slice(0,10)):999;
-    const noAct=c._noIssues||(!(c.issues&&c.issues.length)&&!c.open);
+  const custRows=custList.map(({c,days,noAct})=>{
     const judge = noAct?`<span class="badge" style="background:rgba(148,137,126,.15);color:var(--text3);font-size:11.5px">이슈 없음</span>`
       : days>=stale?`<span class="badge" style="background:rgba(248,113,113,.13);color:var(--danger);font-size:11.5px">정체 ${days}일</span>`
       : days>=Math.ceil(stale/2)?`<span class="badge" style="background:rgba(251,191,36,.13);color:var(--warn);font-size:11.5px">주의</span>`
@@ -217,8 +243,23 @@ function renderSalesPage(){
     </summary><div style="padding:4px 16px 12px">${issues||'<div class="u-muted-11">이슈 없음</div>'}</div></details>`;
   }).join('');
 
-  const cust=`<div class="sec-title" style="margin-top:20px">🏢 고객사 대응 현황 <span class="u-muted-11" style="font-weight:400">— 정체 기준 ${stale}일(관리자 설정)</span></div>
-  <div class="panel" style="padding:4px 0">${custRows||'<div class="u-empty">'+(salesFilterActive()?'조건에 맞는 고객사가 없습니다':'이슈 데이터가 없습니다'+(d.jiraOk?'':' (Jira 조회 실패 — 라이선스만 표시)'))+'</div>'}</div>`;
+  const cust=`<div style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin-top:20px">
+    <div class="sec-title" style="margin:0">🏢 고객사 대응 현황 <span class="u-muted-11" style="font-weight:400">— 정체 기준 ${stale}일(관리자 설정)</span></div>
+    <div style="margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <select class="admin-input" style="width:auto;font-size:11.5px" onchange="setCustFilter('state',this.value)">
+        ${CUST_STATES.map(([v,l])=>`<option value="${v}"${SALES_CFILTER.state===v?' selected':''}>${l}</option>`).join('')}
+      </select>
+      <label style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--text2);cursor:pointer">
+        <input type="checkbox"${SALES_CFILTER.overdueOnly?' checked':''} onchange="setCustFilter('overdueOnly',this.checked)"> 기한초과만
+      </label>
+      <select class="admin-input" style="width:auto;font-size:11.5px" onchange="setCustFilter('sort',this.value)">
+        ${CUST_SORTS.map(([v,l])=>`<option value="${v}"${SALES_CFILTER.sort===v?' selected':''}>${l}</option>`).join('')}
+      </select>
+      ${salesCustFilterActive()?`<button class="btn btn-ghost u-btn-xxs" onclick="resetCustFilter()">해제</button>`:''}
+      <span class="u-muted-10">${salesCustFilterActive()?`<span style="color:var(--accent)">${custList.length}/${custAll.length}곳</span>`:`${custAll.length}곳`}</span>
+    </div>
+  </div>
+  <div class="panel" style="padding:4px 0">${custRows||'<div class="u-empty">'+((salesFilterActive()||salesCustFilterActive())?'조건에 맞는 고객사가 없습니다':'이슈 데이터가 없습니다'+(d.jiraOk?'':' (Jira 조회 실패 — 라이선스만 표시)'))+'</div>'}</div>`;
 
   const foot=`<div class="u-muted-10" style="margin-top:12px">🕐 ${new Date(d.built_at).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})} 집계 · 조회 기간 ${d.rangeMonths}개월 · AI 미사용(실시간 규칙 집계)
   <button class="btn btn-ghost u-btn-xxs" style="margin-left:8px" onclick="loadSalesOverview(true)">새로고침</button></div>`;
