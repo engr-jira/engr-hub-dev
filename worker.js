@@ -796,7 +796,7 @@ export default {
       if (path === '/usage/pageview' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ ok: false }, 401);
         const body = await request.json().catch(() => ({}));
-        const ALLOWED = ['dash', 'issues', 'cases', 'customers', 'eos', 'log', 'vt', 'links', 'knowledge', 'audit', 'settings', 'mydesk', 'compat', 'nsis', 'monitor', 'sales'];
+        const ALLOWED = ['dash', 'issues', 'cases', 'customers', 'eos', 'vt', 'links', 'knowledge', 'audit', 'settings', 'mydesk', 'compat', 'monitor', 'sales', 'owners', 'quiz'];
         const pv = ALLOWED.includes(body.page) ? body.page : null;
         if (!pv) return corsResponse({ ok: false }, 400);
         ctx.waitUntil(auditLog(env, user, 'PAGE_VIEW', { page: pv }));
