@@ -190,3 +190,35 @@ export async function resetHubData(env) {
   }
   return { ok: true, deleted, truncated };
 }
+
+// ── 낙관적 잠금: KV 배열 컬렉션 갱신 ────────────────────────────────────────
+// KV에는 CAS가 없다. get → 수정 → put 사이에 다른 요청이 put 하면 그쪽 항목이 통째로 사라진다(lost update).
+// 여기서는 ① 쓰기 직전에 다시 읽어 스냅샷과 대조하고 ② 값이 바뀌었으면 "최신 배열에 델타를 다시 적용"한다.
+//   apply(list) 는 배열을 받아 { list } 를 돌려주는 **순수 델타 함수**여야 한다 —
+//   재시도 때 최신 배열로 다시 호출되므로, 바깥에서 미리 계산한 배열을 넘기면 안 된다.
+//   중단하려면 { abort: { body, status } } 를 돌려준다(권한 없음·중복 등).
+// ⚠️ 완전한 상호배제가 아니다. 재확인과 put 사이(수 ms) 창이 남고, KV 최종 일관성 탓에
+//    재확인이 낡은 값을 볼 수도 있다. 창을 없애려면 소스를 D1로 옮겨야 한다.
+export async function kvMutateArray(env, key, apply, opts = {}) {
+  const retries = opts.retries == null ? 4 : opts.retries;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const raw = await env.ENGR_KV.get(key);
+    const snapshot = raw == null ? '' : raw;
+    let list = [];
+    if (raw) { try { list = JSON.parse(raw); } catch (_) { list = []; } }
+    if (!Array.isArray(list)) list = [];
+    const out = await apply(list, attempt);
+    if (out && out.abort) return { abort: out.abort, attempts: attempt + 1 };
+    const next = JSON.stringify((out && out.list) || []);
+    if (next === snapshot) return { ok: true, noop: true, value: out && out.value, attempts: attempt + 1 };
+    const recheck = await env.ENGR_KV.get(key);
+    if ((recheck == null ? '' : recheck) === snapshot) {
+      await env.ENGR_KV.put(key, next);
+      return { ok: true, value: out && out.value, attempts: attempt + 1, retried: attempt };
+    }
+    // 그 사이 다른 요청이 썼다 → 루프 처음으로 돌아가 최신 배열에 델타를 다시 적용
+  }
+  return { conflict: true, attempts: retries + 1 };
+}
+// 동시 수정으로 끝내 저장하지 못했을 때의 공통 응답
+export const KV_CONFLICT_RESPONSE = { ok: false, message: '다른 사용자가 동시에 수정 중입니다. 잠시 후 다시 시도해 주세요.' };

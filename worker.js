@@ -8,7 +8,7 @@ import { PUSH_EVENTS, endpointHash, enqueuePending, getPushSettings, getPushSubs
 import { addCollectionComment, canModifyItem, deleteCollectionComment } from './src/items.js';
 import { auditLog, cleanupOldAudit, getAuditReadD1 } from './src/audit.js';
 import { buildDailySnapshot, getCustomersD1, handleJiraSearch, isMonitorAllowed, jiraSearchJql, jqlEsc, jqlTextEsc, mapJiraIssue, nextDayStr, okDate } from './src/jira.js';
-import { buildHubBackup, getStorageStats, resetHubData } from './src/kv.js';
+import { KV_CONFLICT_RESPONSE, buildHubBackup, getStorageStats, kvMutateArray, resetHubData } from './src/kv.js';
 import { createSession, deactivateUserAccount, getAdmins, getDefaultResetPin, getSessionUser, getTeamNames, getUserAccount, getUserPinHash, getUsers, isAdmin, isSalesRole, isSuper, normalizeUserId, purgeUserAccount, revokeUserSessions, salesPathAllowed, saveUserAccount, setUserPin, validateUserPin } from './src/auth.js';
 import { getFeatureFlags } from './src/settings.js';
 import { getVtHistory, saveVtHistory, vtDetectType, vtPollAnalysis, vtUrlId } from './src/vt.js';
@@ -1041,24 +1041,27 @@ export default {
         const byEngine = anaOkL && !hasSession;
         const actorL = byEngine ? 'AI \uCD94\uCC9C(\uBD84\uC11D \uC5D4\uC9C4)' : user;
         const body = await request.json().catch(() => ({}));
-        const raw = await env.ENGR_KV.get('config:links');
-        let links = raw ? JSON.parse(raw) : [];
-        if (byEngine && links.some(l => (l.url || '').replace(/\/$/, '') === String(body.url || '').replace(/\/$/, ''))) {
-          return corsResponse({ ok: false, message: '\uC774\uBBF8 \uB4F1\uB85D\uB41C URL' }, 409);
-        }
-        const newLink = {
-          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-          title: body.title || '',
-          url: body.url || '',
-          category: body.category || '\uAE30\uD0C0',
-          desc: body.desc || '',
-          comments: [],
-          createdBy: actorL,
-          createdAt: new Date().toISOString(),
-          ...(byEngine ? { aiSuggested: true } : {}),
-        };
-        links.push(newLink);
-        await env.ENGR_KV.put('config:links', JSON.stringify(links));
+        // 중복 URL 검사도 재시도마다 최신 배열로 다시 돈다 — 동시 등록으로 생기는 중복까지 막힌다
+        const m = await kvMutateArray(env, 'config:links', (links) => {
+          if (byEngine && links.some(l => (l.url || '').replace(//$/, '') === String(body.url || '').replace(//$/, ''))) {
+            return { abort: { body: { ok: false, message: '이미 등록된 URL' }, status: 409 } };
+          }
+          const link = {
+            id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+            title: body.title || '',
+            url: body.url || '',
+            category: body.category || '기타',
+            desc: body.desc || '',
+            comments: [],
+            createdBy: actorL,
+            createdAt: new Date().toISOString(),
+            ...(byEngine ? { aiSuggested: true } : {}),
+          };
+          return { list: [...links, link], value: link };
+        });
+        if (m.abort) return corsResponse(m.abort.body, m.abort.status);
+        if (m.conflict) return corsResponse(KV_CONFLICT_RESPONSE, 409);
+        const newLink = m.value;
         await auditLog(env, actorL, 'LINK_ADD', { title: newLink.title, aiLink: byEngine ? 1 : 0 });
         ctx.waitUntil(pushNotify(env, 'link', actorL, { target: newLink.title || '제목 없음' }));
         return corsResponse({ ok: true, link: newLink });
@@ -1083,13 +1086,14 @@ export default {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const id = decodeURIComponent(path.split('/')[2]);
         const body = await request.json().catch(() => ({}));
-        const raw = await env.ENGR_KV.get('config:links');
-        let links = raw ? JSON.parse(raw) : [];
-        const target = links.find(l => l.id === id);
-        if (!await canModifyItem(env, user, target)) return corsResponse({ ok: false, message: '\uC791\uC131\uC790 \uB610\uB294 \uAD00\uB9AC\uC790\uB9CC \uC218\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
-        const lf = {}; ['title', 'url', 'category', 'desc'].forEach(k => { if (body[k] !== undefined) lf[k] = body[k]; });  // M-3: 허용 필드만(createdBy/createdAt/comments 보존)
-        links = links.map(l => l.id === id ? { ...l, ...lf, id, updatedBy: user, updatedAt: new Date().toISOString() } : l);
-        await env.ENGR_KV.put('config:links', JSON.stringify(links));
+        const m = await kvMutateArray(env, 'config:links', async (links) => {
+          const target = links.find(l => l.id === id);
+          if (!await canModifyItem(env, user, target)) return { abort: { body: { ok: false, message: '작성자 또는 관리자만 수정할 수 있습니다.' }, status: 403 } };
+          const lf = {}; ['title', 'url', 'category', 'desc'].forEach(k => { if (body[k] !== undefined) lf[k] = body[k]; });  // M-3: 허용필드만(createdBy/createdAt/comments 보존)
+          return { list: links.map(l => l.id === id ? { ...l, ...lf, id, updatedBy: user, updatedAt: new Date().toISOString() } : l) };
+        });
+        if (m.abort) return corsResponse(m.abort.body, m.abort.status);
+        if (m.conflict) return corsResponse(KV_CONFLICT_RESPONSE, 409);
         await auditLog(env, user, 'LINK_UPDATE', { id, title: body.title });
         return corsResponse({ ok: true });
       }
@@ -1098,15 +1102,16 @@ export default {
       if (/^\/links\/[^/]+$/.test(path) && request.method === 'DELETE') {  // L-8: /links/{id}/comments \uD761\uC218 \uBC29\uC9C0(\uC815\uD655 \uB9E4\uCE6D)
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const id = decodeURIComponent(path.split('/')[2]);
-        const raw = await env.ENGR_KV.get('config:links');
-        let links = raw ? JSON.parse(raw) : [];
-        const delLink = links.find(l => l.id === id);
-        if (!await canModifyItem(env, user, delLink)) return corsResponse({ ok: false, message: '\uC791\uC131\uC790 \uB610\uB294 \uAD00\uB9AC\uC790\uB9CC \uC0AD\uC81C\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
-        const before = links.length;
-        links = links.filter(l => l.id !== id);
-        await env.ENGR_KV.put('config:links', JSON.stringify(links));
-        await auditLog(env, user, 'LINK_DELETE', { id, title: delLink?.title });
-        return corsResponse({ ok: true, deleted: before - links.length });
+        const m = await kvMutateArray(env, 'config:links', async (links) => {
+          const delLink = links.find(l => l.id === id);
+          if (!await canModifyItem(env, user, delLink)) return { abort: { body: { ok: false, message: '작성자 또는 관리자만 삭제할 수 있습니다.' }, status: 403 } };
+          const next = links.filter(l => l.id !== id);
+          return { list: next, value: { deleted: links.length - next.length, title: delLink && delLink.title } };
+        });
+        if (m.abort) return corsResponse(m.abort.body, m.abort.status);
+        if (m.conflict) return corsResponse(KV_CONFLICT_RESPONSE, 409);
+        await auditLog(env, user, 'LINK_DELETE', { id, title: m.value && m.value.title });
+        return corsResponse({ ok: true, deleted: m.value ? m.value.deleted : 0 });
       }
 
       //
