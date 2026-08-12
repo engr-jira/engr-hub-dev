@@ -131,7 +131,7 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
 `!important` 최다: **codex-mobile-dark 383 / v158-style 280 / theme-style 111 / v155-style 100**.
 
 - ⚠️ **v158-style(미완성 라이트 모바일)과 codex-mobile-dark(다크 강제)가 가드 없는 `@media`에서 충돌 중.** v158 셀렉터 83개 중 **42개는 codex가 덮지 않는다**(header, .top-*, .filter-row, .modal-card, .cfg-* 등) → v158 블록 삭제는 **실기기 확인 전까지 금지**.
-- ⚠️ **v154/v155/v158은 정적 블록과 JS 인젝터 템플릿에 이중 존재**하고, 인젝터는 id 가드로 항상 early-return 한다(= dead). **사본 내용이 이미 갈라져 있다**(v155 18,667 vs 15,385 / v158 11,160 vs 9,663) → **정적 블록만 수정할 것.** 인젝터 정의: js/07-jira-sync.js·js/08-filters-vt.js·js/11-mobile.js.
+- ✅ **중복 인젝터 제거 완료(2026-08-07)**. v154/v155/v158은 이전까지 정적 블록과 JS 인젝터에 이중 존재했고, 인젝터는 id 가드로 항상 early-return 하는 dead 코드였다. 게다가 **사본 내용이 이미 갈라져 있어**(v155 18,667 vs 15,385 / v158 11,160 vs 9,663) 잘못된 옛 CSS를 담은 함정이었다 → 인젝터 정의 3개와 호출부 5곳 제거(−241줄). **이제 이 세 시트는 index.html 정적 블록이 유일한 소스.**
 - ⚠️ **신규 CSS는 버전 시트를 새로 만들지 말고** 페이지 스코프(`@scope`) 또는 기존 페이지별 블록에 추가.
 
 ## 4.6 감사로그 이중쓰기 종료 조건

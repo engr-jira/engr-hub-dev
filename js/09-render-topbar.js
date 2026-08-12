@@ -326,7 +326,7 @@ async function requestReanalysis(key){
   catch(e){ toast('요청 실패: '+e.message,true); }
 }
 function showPage(name,btn){
-  injectV154Style();injectV155Style();renderSidebarCompact();
+  renderSidebarCompact();
   renderTopbarStatus();
   if(name==='dashboard')name='dash';
   if(name==='monitor' && !(typeof MONITOR_ALLOWED!=='undefined'&&MONITOR_ALLOWED&&(typeof FEATURE_FLAGS==='undefined'||FEATURE_FLAGS.monitor!==false)))name='dash';  // 비허용자 모니터 진입 차단
