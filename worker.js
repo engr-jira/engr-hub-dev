@@ -1043,7 +1043,7 @@ export default {
         const body = await request.json().catch(() => ({}));
         // 중복 URL 검사도 재시도마다 최신 배열로 다시 돈다 — 동시 등록으로 생기는 중복까지 막힌다
         const m = await kvMutateArray(env, 'config:links', (links) => {
-          if (byEngine && links.some(l => (l.url || '').replace(//$/, '') === String(body.url || '').replace(//$/, ''))) {
+          if (byEngine && links.some(l => (l.url || '').replace(/\/$/, '') === String(body.url || '').replace(/\/$/, ''))) {
             return { abort: { body: { ok: false, message: '이미 등록된 URL' }, status: 409 } };
           }
           const link = {

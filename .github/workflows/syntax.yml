@@ -16,15 +16,5 @@ jobs:
         with:
           node-version: '20'
 
-      - name: worker.js
-        run: node -c worker.js
-
-      - name: src/*.js
-        run: |
-          for f in src/*.js; do
-            echo "checking $f"
-            node --check "$f"
-          done
-
-      - name: js/*.js + index.html
+      - name: 문법 검사 (ESM 워커 + 프론트)
         run: node .github/scripts/check-syntax.js
