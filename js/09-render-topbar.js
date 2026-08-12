@@ -89,20 +89,6 @@ function filterByPreset(list,preset){
   if(preset.kind==='incomplete')out=out.filter(i=>isOpenStatus(i.status)&&isMetaOrOverdue(i));
   return out;
 }
-function renderTopbarStatus(){
-  const right=document.querySelector('.topbar-right'); if(!right)return;
-  const gi=getGeneralIssues().length, ci=getCaseIssueBase().length;
-  const connected=!!(ISSUES&&ISSUES.length);
-  right.innerHTML=`<div class="top-status">
-    <div class="top-status-card"><span class="label">접속자</span><span class="value" id="top-user">${escapeHtml(CURRENT_DISPLAY||CURRENT_USER||'-')}</span></div>
-    <button class="top-pin" onclick="openChangePinModal()">PIN 변경</button>
-    <div class="top-status-card"><span class="label">Jira</span><span class="value ${connected?'ok':'warn'}" id="top-jira">${connected?'연결됨':'대기'}</span></div>
-    <div class="top-status-card"><span class="label">동기화</span><span class="value" id="top-count">${gi||ci?`일반 ${gi} / 케이스 ${ci}`:'-'}</span></div>
-    <button class="top-refresh" onclick="syncJira()" title="Jira 새로고침"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg></button>
-    <button class="mob-search-btn" onclick="openMobSearch()" title="검색"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>
-    <button class="top-logout" onclick="logout()">로그아웃</button>
-  </div>`;
-}
 function renderTopbarStatusV159(){
   const right=document.querySelector('.topbar-right'); if(!right)return;
   // body로 빠져나간 모바일 메뉴 팝오버 잔여물 정리(중복 id 방지)

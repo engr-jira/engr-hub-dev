@@ -252,7 +252,6 @@ const pageTitles={
   cases:['케이스 트래커','벤더 케이스 현황 및 AI 가이드'],
   customers:['고객사 프로필','Jira 기반 고객사별 현황 자동 집계'],
   eos:['라이선스','고객사 라이선스 만료 관리'],
-  log:['로그 분석기','솔루션 로그 AI 분석'],
   vt:['VirusTotal 조회','해시값 기반 악성 여부 분석'],
   links:['업무 링크','자주 접근하는 URL 모음'],
   knowledge:['팀 노하우','팀원이 공유하는 Known Issue, 워크어라운드, 팁'],

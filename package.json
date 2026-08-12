@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "deploy:worker": "wrangler deploy",
-    "check:worker": "wrangler deploy --dry-run"
+    "deploy:worker": "wrangler deploy --config wrangler.jsonc",
+    "check:worker": "wrangler deploy --dry-run --config wrangler.jsonc"
   },
   "devDependencies": {
     "wrangler": "^4.86.0"

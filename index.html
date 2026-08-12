@@ -13,7 +13,6 @@
 <meta name="apple-mobile-web-app-title" content="ENGR AI">
 <link rel="apple-touch-icon" href="icon.svg">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%23C24E2C'/%3E%3Cpath d='M32 12 14 22l18 10 18-10-18-10Zm-18 22 18 10 18-10M14 44l18 10 18-10' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <link rel="preconnect" href="https://cdn.jsdelivr.net">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -43,7 +42,7 @@ html[data-theme="light"]{ color-scheme:light }
 body{font-family:'Pretendard Variable',Pretendard,'Malgun Gothic','Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
 .kpi .num,.kpi-val,.kpi-num,.vt-score,.rank-pos,.session-timer,.pager span{font-variant-numeric:tabular-nums}
 /* 숫자의 목소리 — 숫자·시각·해시·로그만 모노스페이스 (한글/UI는 Pretendard 유지) */
-.kpi .num,.kpi-val,.kpi-num,.vt-score,.session-timer,.vt-hist-hash,.vt-history-hash,.logx-term,.rank-pos,.pager span,#page-nav button,#case-pager button,.tc-time,.tc-date,#top-range-text,.issue-main .key,.ikey{font-family:"IBM Plex Mono",Consolas,monospace}
+.kpi .num,.kpi-val,.kpi-num,.vt-score,.session-timer,.vt-hist-hash,.vt-history-hash,.rank-pos,.pager span,#page-nav button,#case-pager button,.tc-time,.tc-date,#top-range-text,.issue-main .key,.ikey{font-family:"IBM Plex Mono",Consolas,monospace}
 /* 이중 언어 마이크로캡션 */
 .sec-en{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;letter-spacing:1.8px;color:var(--text3);text-transform:uppercase}
 #cfg{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:1000;overflow:hidden;
@@ -138,11 +137,11 @@ html[data-theme="light"] .sb-group-head svg{stroke:#EFA07E}
 @keyframes emberPulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--success) 45%,transparent)}50%{box-shadow:0 0 0 6px transparent}}
 /* 결과 등장 모션 */
 @keyframes riseIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.logx-issue,.vt-hist-row.new,.vt-history-item.new{animation:riseIn .35s ease both}
+.vt-hist-row.new,.vt-history-item.new{animation:riseIn .35s ease both}
 /* 로딩 스켈레톤 */
 .skel{background:var(--card2);border-radius:10px;height:38px;margin-bottom:7px}
 .skel:last-child{margin-bottom:0}
-@media(prefers-reduced-motion:reduce){.dot-live,.logx-issue,.vt-hist-row.new,.vt-history-item.new{animation:none}}
+@media(prefers-reduced-motion:reduce){.dot-live,.vt-hist-row.new,.vt-history-item.new{animation:none}}
 .session-timer{font-size:10px;color:var(--text3);text-align:center;margin-top:6px}
 .sb-sync-btn{width:100%;background:var(--control-bg);border:1.5px solid var(--control-border);border-radius:12px;padding:8px;color:var(--control-text);font-size:11px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;transition:all .15s;font-weight:600}
 .sb-sync-btn:hover{background:var(--control-bg-hover);border-color:var(--control-border);color:var(--text-strong)}
@@ -335,22 +334,6 @@ html[data-theme="light"] .btn-primary:hover,html[data-theme="light"] .btn-succes
 .vt-hist-hash{color:var(--text3);font-size:10px;font-family:monospace}
 .log-textarea{width:100%;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;color:var(--text);font-size:11px;font-family:'Consolas',monospace;resize:vertical;min-height:160px;outline:none;line-height:1.6}
 .log-textarea:focus{border-color:var(--accent)}
-/* 로그 발췌 결과 */
-.logx-pre{background:rgba(0,0,0,.28);border:1px solid var(--border2);border-radius:12px;padding:12px 14px;margin-top:8px;font-family:'Consolas','Courier New',monospace;font-size:11.5px;line-height:1.65;color:var(--text);white-space:pre-wrap;word-break:break-word;max-height:340px;overflow:auto}
-html[data-theme="light"] .logx-pre{background:#FAF1E6;color:var(--bg)}
-.logx-issue{border:1px solid var(--border);border-radius:12px;padding:11px 13px;margin-top:9px;background:var(--surface-tint)}
-html[data-theme="light"] .logx-issue{background:var(--card)}
-.logx-issue-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.logx-sum{font-size:13px;font-weight:700;color:var(--text)}
-.logx-term{font-family:'IBM Plex Mono',Consolas,monospace;font-size:11px;color:var(--text3);margin-bottom:8px;word-break:break-all}
-.logx-links{display:flex;flex-wrap:wrap;gap:8px}
-.logx-link{display:inline-flex;align-items:center;gap:0;border:1px solid var(--border2);border-radius:8px;overflow:hidden}
-.logx-link a{font-size:11.5px;color:var(--cyan);text-decoration:none;padding:6px 10px;white-space:nowrap}
-.logx-link a:hover{background:rgba(63,163,196,.1)}
-.logx-reg{border:none;border-left:1px solid var(--border2);background:var(--accent-soft);color:var(--accent3);font-size:11px;font-weight:700;padding:6px 10px;cursor:pointer;font-family:inherit;white-space:nowrap}
-.logx-reg:hover{background:var(--accent-border)}
-.logx-reg.done{background:rgba(63,190,146,.15);color:var(--success);cursor:default}
-.logx-link.logx-none{padding:6px 10px;color:var(--text3);font-size:11px;opacity:.55;border-style:dashed}
 .file-drop{border:2px dashed var(--border);border-radius:12px;padding:20px;text-align:center;margin-bottom:12px;background:var(--panel);cursor:pointer}
 .file-drop:hover,.file-drop.drag{border-color:var(--accent);background:rgba(217,96,59,.05)}
 .file-list{display:flex;flex-direction:column;gap:4px;margin-top:8px}
@@ -2726,7 +2709,7 @@ body.is-sales #nav-sales{display:flex!important}
         <div class="admin-card soft">
           <h3>ℹ 권한 안내</h3>
           <div style="font-size:12px;color:var(--text2);line-height:2">
-            <div>• <strong>일반 사용자</strong> — 대시보드, 이슈, 케이스 트래커, 라이선스, 로그 분석, VT, 업무 링크</div>
+            <div>• <strong>일반 사용자</strong> — 대시보드, 이슈, 케이스 트래커, 라이선스, VT, 업무 링크</div>
             <div>• <strong class="u-c-warn">일반 관리자</strong> — + 감사 로그 열람, 업무 링크 등록/삭제</div>
             <div>• <strong class="u-c-accent3">최상위 관리자</strong> — + 시스템 설정, 권한 부여</div>
           </div>
