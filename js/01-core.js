@@ -253,6 +253,7 @@ const pageTitles={
   customers:['고객사 프로필','Jira 기반 고객사별 현황 자동 집계'],
   eos:['라이선스','고객사 라이선스 만료 관리'],
   vt:['VirusTotal 조회','해시값 기반 악성 여부 분석'],
+  nsischk:['NSIS 정합성 검사','삭제 툴 스크립트와 순서도 대조'],
   links:['업무 링크','자주 접근하는 URL 모음'],
   knowledge:['팀 노하우','팀원이 공유하는 Known Issue, 워크어라운드, 팁'],
   audit:['감사 로그','접속 및 사용 이력'],
