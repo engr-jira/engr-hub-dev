@@ -378,13 +378,16 @@ html[data-theme="light"] .btn-primary:hover,html[data-theme="light"] .btn-succes
 #page-settings .admin-cards{display:grid;grid-template-columns:1fr;gap:12px;padding:12px}
 #page-settings .admin-cards>.admin-card{margin:0!important}
 #page-settings .admin-2col{display:grid;grid-template-columns:1fr;gap:0 20px}
-@media(min-width:1101px){
+@media(min-width:701px){#page-settings .admin-section>summary{min-height:42px;padding:9px 14px}}
+@media(min-width:1000px){
   #page-settings .admin-grid{grid-template-columns:1fr 1fr}
   #page-settings .admin-section[open]{grid-column:1/-1}
+  #page-settings .admin-2col{grid-template-columns:1fr 1fr}
+}
+@media(min-width:1280px){
+  /* 펼친 섹션이 전폭이라 카드도 2열로 — 이보다 좁으면 카드가 눌려 읽기 나쁘다 */
   #page-settings .admin-section[open] .admin-cards{grid-template-columns:1fr 1fr}
   #page-settings .admin-cards>.admin-card:only-child{grid-column:1/-1}
-  #page-settings .admin-2col{grid-template-columns:1fr 1fr}
-  #page-settings .admin-section>summary{min-height:42px;padding:9px 14px}
 }
 @media(max-width:700px){#page-settings .admin-cards{padding:10px;gap:10px}}
 .safe-actions .btn,.danger-actions .btn,.admin-add-row .btn{width:auto;padding:9px 14px}
