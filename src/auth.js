@@ -2,6 +2,7 @@
 // (worker.js에서 이동. 로직 변경 없음)
 
 import { DEFAULT_USERS, SUPER_ADMIN } from './config.js';
+import { kvMutateJson } from './kv.js';
 
 export function normalizeUserId(id = '') {
   return String(id || '').trim().toLowerCase();
@@ -97,56 +98,78 @@ export async function saveUserAccount(env, account) {
   if (!id || !/^[a-z0-9._-]{2,40}$/.test(id)) {
     throw new Error('\uACC4\uC815 ID\uB294 \uC601\uBB38/\uC22B\uC790/\uC810/\uD558\uC774\uD508/\uC5B8\uB354\uBC14\uB9CC \uD5C8\uC6A9\uB429\uB2C8\uB2E4.');
   }
-  const users = await getUsers(env);
-  users[id] = {
-    id,
-    displayName: String(account.displayName || account.name || id).trim(),
-    role: ['super', 'admin', 'user', 'sales'].includes(account.role) ? account.role : 'user',
-    active: account.active !== false,
-  };
-  users[SUPER_ADMIN] = users[SUPER_ADMIN] || { id: SUPER_ADMIN, displayName: 'mj.park', role: 'super', active: true };
-  users[SUPER_ADMIN].role = 'super';
-  users[SUPER_ADMIN].active = true;
-  await env.ENGR_KV.put('config:users', JSON.stringify(Object.values(users)));
-  return users[id];
+  let saved = null;
+  const m = await kvMutateJson(env, 'config:users', async () => {
+    const users = await getUsers(env);            // 재시도 시 최신 상태로 다시 계산된다
+    users[id] = {
+      id,
+      displayName: String(account.displayName || account.name || id).trim(),
+      role: ['super', 'admin', 'user', 'sales'].includes(account.role) ? account.role : 'user',
+      active: account.active !== false,
+    };
+    users[SUPER_ADMIN] = users[SUPER_ADMIN] || { id: SUPER_ADMIN, displayName: 'mj.park', role: 'super', active: true };
+    users[SUPER_ADMIN].role = 'super';
+    users[SUPER_ADMIN].active = true;
+    saved = users[id];
+    return { data: Object.values(users) };
+  });
+  if (m.conflict) throw new Error('다른 관리자가 동시에 수정 중입니다. 잠시 후 다시 시도해 주세요.');
+  return saved;
 }
 
 export async function deactivateUserAccount(env, idRaw) {
   const id = normalizeUserId(idRaw);
   if (!id) throw new Error('\uB300\uC0C1 \uC0AC\uC6A9\uC790\uB97C \uC120\uD0DD\uD558\uC138\uC694.');
   if (id === SUPER_ADMIN) throw new Error('\uCD5C\uACE0 \uAD00\uB9AC\uC790\uB294 \uBE44\uD65C\uC131\uD654\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.');
-  const users = await getUsers(env);
-  const account = users[id];
-  if (!account) return null;
-  users[id] = { ...account, active: false };
-  users[SUPER_ADMIN] = users[SUPER_ADMIN] || { id: SUPER_ADMIN, displayName: 'mj.park', role: 'super', active: true };
-  users[SUPER_ADMIN].role = 'super';
-  users[SUPER_ADMIN].active = true;
-  await env.ENGR_KV.put('config:users', JSON.stringify(Object.values(users)));
+  let result = null;
+  const mu = await kvMutateJson(env, 'config:users', async () => {
+    const users = await getUsers(env);
+    const account = users[id];
+    if (!account) return { abort: { notFound: true } };
+    users[id] = { ...account, active: false };
+    users[SUPER_ADMIN] = users[SUPER_ADMIN] || { id: SUPER_ADMIN, displayName: 'mj.park', role: 'super', active: true };
+    users[SUPER_ADMIN].role = 'super';
+    users[SUPER_ADMIN].active = true;
+    result = users[id];
+    return { data: Object.values(users) };
+  });
+  if (mu.abort) return null;
+  if (mu.conflict) throw new Error('다른 관리자가 동시에 수정 중입니다. 잠시 후 다시 시도해 주세요.');
 
-  const admins = await getAdmins(env, { skipUsers: true });
-  delete admins[id];
-  admins[SUPER_ADMIN] = 'super';
-  await env.ENGR_KV.put('config:admins', JSON.stringify(admins));
+  const ma = await kvMutateJson(env, 'config:admins', async () => {
+    const admins = await getAdmins(env, { skipUsers: true });
+    delete admins[id];
+    admins[SUPER_ADMIN] = 'super';
+    return { data: admins };
+  }, { empty: {} });
+  if (ma.conflict) throw new Error('다른 관리자가 동시에 수정 중입니다. 잠시 후 다시 시도해 주세요.');
   await revokeUserSessions(env, id);
-  return users[id];
+  return result;
 }
 
 export async function purgeUserAccount(env, idRaw) {
   const id = normalizeUserId(idRaw);
   if (!id) throw new Error('대상 사용자를 선택하세요.');
   if (id === SUPER_ADMIN) throw new Error('최고 관리자는 삭제할 수 없습니다.');
-  const users = await getUsers(env);
-  if (!users[id]) throw new Error('등록된 계정이 아닙니다.');
-  delete users[id];
-  users[SUPER_ADMIN] = users[SUPER_ADMIN] || { id: SUPER_ADMIN, displayName: 'mj.park', role: 'super', active: true };
-  users[SUPER_ADMIN].role = 'super';
-  users[SUPER_ADMIN].active = true;
-  await env.ENGR_KV.put('config:users', JSON.stringify(Object.values(users)));
-  const admins = await getAdmins(env, { skipUsers: true });
-  delete admins[id];
-  admins[SUPER_ADMIN] = 'super';
-  await env.ENGR_KV.put('config:admins', JSON.stringify(admins));
+  const mu = await kvMutateJson(env, 'config:users', async () => {
+    const users = await getUsers(env);
+    if (!users[id]) return { abort: { notFound: true } };
+    delete users[id];
+    users[SUPER_ADMIN] = users[SUPER_ADMIN] || { id: SUPER_ADMIN, displayName: 'mj.park', role: 'super', active: true };
+    users[SUPER_ADMIN].role = 'super';
+    users[SUPER_ADMIN].active = true;
+    return { data: Object.values(users) };
+  });
+  if (mu.abort) throw new Error('등록된 계정이 아닙니다.');
+  if (mu.conflict) throw new Error('다른 관리자가 동시에 수정 중입니다. 잠시 후 다시 시도해 주세요.');
+
+  const ma = await kvMutateJson(env, 'config:admins', async () => {
+    const admins = await getAdmins(env, { skipUsers: true });
+    delete admins[id];
+    admins[SUPER_ADMIN] = 'super';
+    return { data: admins };
+  }, { empty: {} });
+  if (ma.conflict) throw new Error('다른 관리자가 동시에 수정 중입니다. 잠시 후 다시 시도해 주세요.');
   try { await env.ENGR_KV.delete(`userpin:${id}`); } catch (_) {}
   await revokeUserSessions(env, id);
   return id;

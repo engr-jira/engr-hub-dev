@@ -8,7 +8,7 @@ import { PUSH_EVENTS, endpointHash, enqueuePending, getPushSettings, getPushSubs
 import { addCollectionComment, canModifyItem, deleteCollectionComment } from './src/items.js';
 import { auditLog, cleanupOldAudit, getAuditReadD1 } from './src/audit.js';
 import { buildDailySnapshot, getCustomersD1, handleJiraSearch, isMonitorAllowed, jiraSearchJql, jqlEsc, jqlTextEsc, mapJiraIssue, nextDayStr, okDate } from './src/jira.js';
-import { KV_CONFLICT_RESPONSE, buildHubBackup, getStorageStats, kvMutateArray, resetHubData } from './src/kv.js';
+import { KV_CONFLICT_RESPONSE, buildHubBackup, getStorageStats, kvMutateArray, kvMutateJson, resetHubData } from './src/kv.js';
 import { createSession, deactivateUserAccount, getAdmins, getDefaultResetPin, getSessionUser, getTeamNames, getUserAccount, getUserPinHash, getUsers, isAdmin, isSalesRole, isSuper, normalizeUserId, purgeUserAccount, revokeUserSessions, salesPathAllowed, saveUserAccount, setUserPin, validateUserPin } from './src/auth.js';
 import { getFeatureFlags } from './src/settings.js';
 import { getVtHistory, saveVtHistory, vtDetectType, vtPollAnalysis, vtUrlId } from './src/vt.js';
@@ -868,11 +868,14 @@ export default {
           if (String(body.initialPin).length < 6) return corsResponse({ ok: false, message: '\uCD08\uAE30 PIN\uC740 6\uC790 \uC774\uC0C1\uC774\uC5B4\uC57C \uD569\uB2C8\uB2E4.' }, 400);
           await setUserPin(env, account.id, String(body.initialPin));
         }
-        const admins = await getAdmins(env, { skipUsers: true });
-        if (account.role === 'admin' || account.role === 'super') admins[account.id] = account.role;
-        else delete admins[account.id];
-        admins[SUPER_ADMIN] = 'super';
-        await env.ENGR_KV.put('config:admins', JSON.stringify(admins));
+        const am = await kvMutateJson(env, 'config:admins', async () => {
+          const admins = await getAdmins(env, { skipUsers: true });   // 재시도 시 최신 상태로 다시 계산
+          if (account.role === 'admin' || account.role === 'super') admins[account.id] = account.role;
+          else delete admins[account.id];
+          admins[SUPER_ADMIN] = 'super';
+          return { data: admins };
+        }, { empty: {} });
+        if (am.conflict) return corsResponse(KV_CONFLICT_RESPONSE, 409);
         await auditLog(env, user, 'USER_SAVE', { target: account.id, role: account.role });
         return corsResponse({ ok: true, user: account });
       }
@@ -940,9 +943,17 @@ export default {
           const syncRole = action === 'remove' ? 'user' : ((newRole === 'super') ? 'super' : 'admin');
           await saveUserAccount(env, { id: targetId, displayName: users[targetId].displayName, role: syncRole, active: users[targetId].active !== false });
         }
-        await env.ENGR_KV.put('config:admins', JSON.stringify(admins));
+        // 유효성 검사는 위 admins 스냅샷으로 끝났고, 실제 반영은 최신 상태에 델타로 다시 적용한다
+        const am2 = await kvMutateJson(env, 'config:admins', async () => {
+          const fresh = await getAdmins(env);
+          if (action === 'add' || action === 'changeRole') fresh[targetId] = (newRole === 'super') ? 'super' : 'admin';
+          else if (action === 'remove') delete fresh[targetId];
+          fresh[SUPER_ADMIN] = 'super';
+          return { data: fresh, value: fresh };
+        }, { empty: {} });
+        if (am2.conflict) return corsResponse(KV_CONFLICT_RESPONSE, 409);
         await auditLog(env, user, 'ADMIN_CHANGE', { action, target: targetId, role: newRole });
-        return corsResponse({ ok: true, admins });
+        return corsResponse({ ok: true, admins: am2.value || admins });
       }
 
       //

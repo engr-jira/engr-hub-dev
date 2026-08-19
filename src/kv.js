@@ -199,26 +199,34 @@ export async function resetHubData(env) {
 //   중단하려면 { abort: { body, status } } 를 돌려준다(권한 없음·중복 등).
 // ⚠️ 완전한 상호배제가 아니다. 재확인과 put 사이(수 ms) 창이 남고, KV 최종 일관성 탓에
 //    재확인이 낡은 값을 볼 수도 있다. 창을 없애려면 소스를 D1로 옮겨야 한다.
-export async function kvMutateArray(env, key, apply, opts = {}) {
+// 배열이든 객체(map)든 쓸 수 있는 일반형. apply 는 { data }(또는 { list })로 새 값을 돌려준다.
+// ⚠️ config:admins 처럼 **map** 인 키에 배열 강제 버전을 쓰면 통째로 날아간다 — 반드시 이쪽을 쓸 것.
+export async function kvMutateJson(env, key, apply, opts = {}) {
   const retries = opts.retries == null ? 4 : opts.retries;
+  const empty = opts.empty === undefined ? [] : opts.empty;
   for (let attempt = 0; attempt <= retries; attempt++) {
     const raw = await env.ENGR_KV.get(key);
     const snapshot = raw == null ? '' : raw;
-    let list = [];
-    if (raw) { try { list = JSON.parse(raw); } catch (_) { list = []; } }
-    if (!Array.isArray(list)) list = [];
-    const out = await apply(list, attempt);
+    let cur = empty;
+    if (raw) { try { cur = JSON.parse(raw); } catch (_) { cur = empty; } }
+    if (opts.forceArray && !Array.isArray(cur)) cur = [];
+    const out = await apply(cur, attempt);
     if (out && out.abort) return { abort: out.abort, attempts: attempt + 1 };
-    const next = JSON.stringify((out && out.list) || []);
+    const chosen = out ? (out.data !== undefined ? out.data : out.list) : undefined;
+    const next = JSON.stringify(chosen === undefined ? empty : chosen);
     if (next === snapshot) return { ok: true, noop: true, value: out && out.value, attempts: attempt + 1 };
     const recheck = await env.ENGR_KV.get(key);
     if ((recheck == null ? '' : recheck) === snapshot) {
       await env.ENGR_KV.put(key, next);
       return { ok: true, value: out && out.value, attempts: attempt + 1, retried: attempt };
     }
-    // 그 사이 다른 요청이 썼다 → 루프 처음으로 돌아가 최신 배열에 델타를 다시 적용
+    // 그 사이 다른 요청이 썼다 → 루프 처음으로 돌아가 최신 값에 델타를 다시 적용
   }
   return { conflict: true, attempts: retries + 1 };
+}
+// 배열 전용 래퍼 (기존 호출부 호환)
+export async function kvMutateArray(env, key, apply, opts = {}) {
+  return kvMutateJson(env, key, apply, { ...opts, empty: [], forceArray: true });
 }
 // 동시 수정으로 끝내 저장하지 못했을 때의 공통 응답
 export const KV_CONFLICT_RESPONSE = { ok: false, message: '다른 사용자가 동시에 수정 중입니다. 잠시 후 다시 시도해 주세요.' };
