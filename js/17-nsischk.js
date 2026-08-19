@@ -117,13 +117,96 @@ async function nscParsePptx(buf) {
     const xml = dec.decode(files[nm]);
     const texts = [...xml.matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)]
       .map(m => m[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').trim()).filter(Boolean);
+    const g = nscSlideGraph(xml);
     return {
       name: nm.replace('ppt/slides/', ''),
       texts,
       shapes: (xml.match(/<p:sp>/g) || []).length,
       conns: (xml.match(/<p:cxnSp>/g) || []).length,
+      nodes: g.nodes, edges: g.edges,
     };
   });
+}
+
+/* ── 슬라이드 1장 → 방향 그래프 ─────────────────────────────────────────────
+   도형: <p:sp> 의 prstGeom 으로 시작/종료(Terminator) · 판단(Decision) · 처리(Process)를 가른다.
+   엣지: <p:cxnSp> 의 <a:stCxn id>/<a:endCxn id> 가 곧 출발·도착 도형 id 다.
+   Y/N : 연결선에 붙은 글자가 아니라 **별도 텍스트 상자**다. 화살표가 출발하는 쪽에 놓이므로
+         연결선의 '시작점' 기준 거리로, 판단에서 나가는 엣지에 한해, 전역 최소거리로 짝짓는다.
+         (끝점 기준이면 한 도형에서 갈라지는 두 화살표를 구분하지 못한다.) */
+function nscSlideGraph(xml) {
+  const boxOf = b => {
+    const o = b.match(/<a:off x="(-?\d+)" y="(-?\d+)"\/><a:ext cx="(\d+)" cy="(\d+)"\/>/);
+    if (!o) return null;
+    const x = +o[1], y = +o[2], cx = +o[3], cy = +o[4];
+    return { x, y, cx, cy, mx: x + cx / 2, my: y + cy / 2 };
+  };
+  const textOf = b => [...b.matchAll(/<a:t>([\s\S]*?)<\/a:t>/g)].map(m => m[1]).join(' ')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim();
+
+  const nodes = [], labels = [];
+  [...xml.matchAll(/<p:sp>[\s\S]*?<\/p:sp>/g)].forEach(m => {
+    const b = m[0];
+    const id = (b.match(/<p:cNvPr id="(\d+)"/) || [])[1]; if (!id) return;
+    const geom = (b.match(/<a:prstGeom prst="(\w+)"/) || [])[1] || '';
+    const t = textOf(b), g = boxOf(b); if (!g) return;
+    if (/^(Y|N|예|아니오|아니요|yes|no)$/i.test(t)) { labels.push({ t: /^(Y|예|yes)$/i.test(t) ? 'Y' : 'N', ...g }); return; }
+    const kind = /Terminator/i.test(geom) ? (/시작|start|begin/i.test(t) ? 'start' : 'end')
+      : /Decision/i.test(geom) ? 'decision'
+      : /Process|Predefined|Alternate|Manual/i.test(geom) ? 'process' : 'note';
+    nodes.push({ id, kind, text: t, ...g });
+  });
+
+  const edges = [];
+  [...xml.matchAll(/<p:cxnSp>[\s\S]*?<\/p:cxnSp>/g)].forEach(m => {
+    const b = m[0];
+    const from = (b.match(/<a:stCxn id="(\d+)"/) || [])[1];
+    const to = (b.match(/<a:endCxn id="(\d+)"/) || [])[1];
+    const g = boxOf(b); if (!from || !to || !g) return;
+    const fl = (b.match(/<a:xfrm([^>]*)>/) || [])[1] || '';
+    edges.push({ from, to, ...g, flipH: /flipH="1"/.test(fl), flipV: /flipV="1"/.test(fl), yn: '' });
+  });
+
+  const isDec = id => (nodes.find(n => n.id === id) || {}).kind === 'decision';
+  const pairs = [];
+  labels.forEach((L, li) => edges.forEach((e, ei) => {
+    if (!isDec(e.from)) return;
+    const sx = e.flipH ? e.x + e.cx : e.x, sy = e.flipV ? e.y + e.cy : e.y;
+    pairs.push({ li, ei, d: Math.hypot(sx - L.mx, sy - L.my) });
+  }));
+  pairs.sort((a, b) => a.d - b.d);
+  const usedL = new Set(), usedE = new Set();
+  pairs.forEach(p => {
+    if (usedL.has(p.li) || usedE.has(p.ei)) return;
+    usedL.add(p.li); usedE.add(p.ei); edges[p.ei].yn = labels[p.li].t;
+  });
+  return { nodes, edges };
+}
+
+/* 시작 → 종료 경로를 전부 전개한다(경우의 수). 순환은 방문한 노드 재진입 금지로 끊고,
+   폭발을 막으려 60개에서 자른다(잘리면 화면에 그 사실을 알린다). */
+function nscFlowPaths(slide, cap) {
+  cap = cap || 60;
+  if (!slide || !slide.nodes || !slide.nodes.length) return { paths: [], truncated: false };
+  const byId = {}; slide.nodes.forEach(n => { byId[n.id] = n; });
+  const start = slide.nodes.find(n => n.kind === 'start');
+  if (!start) return { paths: [], truncated: false };
+  const out = []; let cut = false;
+  (function walk(id, seen, acc) {
+    if (out.length >= cap) { cut = true; return; }
+    const node = byId[id]; if (!node) return;
+    const here = { text: node.text, kind: node.kind, yn: '' };
+    const path = acc.concat([here]);
+    if (node.kind === 'end') { out.push(path); return; }
+    const nx = slide.edges.filter(e => e.from === id && !seen.has(e.to));
+    if (!nx.length) { out.push(path); return; }
+    nx.forEach(e => {
+      const p2 = path.map(x => ({ ...x }));
+      p2[p2.length - 1].yn = e.yn;
+      walk(e.to, new Set([...seen, id]), p2);
+    });
+  })(start.id, new Set(), []);
+  return { paths: out, truncated: cut };
 }
 
 /* ── 제품 힌트로 슬라이드 고르기 ────────────────────────────────────────────
@@ -176,6 +259,7 @@ function nscRules(nsi, ppt) {
   const F = [];
   const steps = [];      // 단계 대조표 — 지적이 없어도 "무엇을 대조했는지" 화면에 보여준다
   const codeAt = {};
+  let flowPaths = [], flowCut = false;   // 순서도에서 전개한 경우의 수
   const add = (level, rule, title, detail, where, suggest) => F.push({ level, rule, title, detail, where: where || '', suggest: suggest || '' });
 
   // R1 — 같은 변수를 보는 분기 체인끼리 버전 집합이 다른가 (가장 치명적)
@@ -243,6 +327,13 @@ function nscRules(nsi, ppt) {
   // R8 — PPT 대조 (순서도가 있을 때만)
   if (ppt && ppt.length) {
     const pptText = ppt.map(s => s.texts.join(' ')).join(' ');
+    /* 순서도 쪽 단계 순서는 '텍스트가 XML에 실린 순서'가 아니라 **화살표를 따라간 순서**로 뽑는다.
+       예전엔 z-order 를 흐름으로 착각해 '버전 확인이 맨 마지막'처럼 엉뚱하게 판정했다. */
+    const flow = ppt.map(sl => nscFlowPaths(sl)).find(f => f.paths.length) || { paths: [], truncated: false };
+    flowPaths = flow.paths; flowCut = flow.truncated;
+    const stepOfText = t => (NSC_STEPS.find(st => st.ppt.test(t)) || {}).key || '';
+    const seqOf = p => { const o = []; p.forEach(n => { const k = stepOfText(n.text); if (k && !o.includes(k)) o.push(k); }); return o; };
+    // 가장 많은 단계를 지나는 경로 = 정상 흐름으로 본다(중간에 빠져나가는 경로는 예외 처리).
     /* 제거 실행 줄을 먼저 확정한다 — exists(제거 전)·result(제거 후)가 이 기준으로 갈린다.
        같은 IfFileExists 한 줄이 둘 다로 잡히면 순서 비교가 무의미해진다. */
     const ctx = { uninstAt: (NSC_STEPS.find(x => x.key === 'uninst').at(nsi, {}) || 0) };
@@ -260,19 +351,21 @@ function nscRules(nsi, ppt) {
        PPT 쪽 순서는 도형이 XML에 실린 순서(대체로 그린 순서)라 절대적이지 않다 →
        high 가 아니라 med 로 두고, 화살표 기준으로 확인하라고 안내한다. */
     const LBL = Object.fromEntries(NSC_STEPS.map(st => [st.key, st.label]));
-    const pptSeq = [];
-    ppt.forEach(sl => sl.texts.forEach(t => NSC_STEPS.forEach(st => {
-      if (st.ppt.test(t) && !pptSeq.includes(st.key)) pptSeq.push(st.key);
-    })));
+    let pptSeq = [];
+    if (flowPaths.length) {
+      flowPaths.forEach(p => { const q = seqOf(p); if (q.length > pptSeq.length) pptSeq = q; });
+    } else {  // 도형/연결선을 못 읽는 순서도(이미지 등) — 텍스트 순서로 폴백
+      ppt.forEach(sl => sl.texts.forEach(t => { const k = stepOfText(t); if (k && !pptSeq.includes(k)) pptSeq.push(k); }));
+    }
     const codeSeq = NSC_STEPS.filter(st => codeAt[st.key] > 0)
       .sort((a, b) => codeAt[a.key] - codeAt[b.key]).map(st => st.key);
     const pSeq = pptSeq.filter(k => codeSeq.includes(k));
     const cSeq = codeSeq.filter(k => pptSeq.includes(k));
     if (pSeq.length >= 2 && pSeq.join('>') !== cSeq.join('>')) {
-      add('med', 'R10', '순서도와 스크립트의 단계 순서가 다릅니다',
-        `순서도: ${pSeq.map(k => LBL[k]).join(' → ')}  |  스크립트: ${cSeq.map(k => LBL[k]).join(' → ')}`,
+      add('high', 'R10', '순서도와 스크립트의 단계 순서가 다릅니다',
+        `순서도(화살표 기준): ${pSeq.map(k => LBL[k]).join(' → ')}  |  스크립트(줄 순서): ${cSeq.map(k => LBL[k]).join(' → ')}`,
         cSeq.map(k => `${LBL[k]} ${codeAt[k]}행`).join(' · '),
-        '순서도의 도형 순서는 그린 순서(z-order)라 실제 화살표 흐름과 다를 수 있습니다. 화살표 기준으로 한 번 더 확인하세요.');
+        '어느 쪽이 맞는지 정하고 한쪽을 고치세요. 순서가 다르면 실제 동작도 달라집니다.');
     }
     // R9 — 버전 개수 대조 (표기법이 달라 값 비교는 사람이 판단)
     const pptVers = [...new Set((pptText.match(/\d+\.\d+(\.\d+){0,3}(MP\d+|RU\d+|HF)?/gi) || []))];
@@ -284,7 +377,7 @@ function nscRules(nsi, ppt) {
   }
   const order = { high: 0, med: 1, low: 2 };
   F.sort((a, b) => order[a.level] - order[b.level]);
-  return { findings: F, steps };
+  return { findings: F, steps, flowPaths, flowCut };
 }
 
 /* ── 화면 ───────────────────────────────────────────────────────────────── */
@@ -330,7 +423,7 @@ function nscRun() {
   const box = document.getElementById('nsc-result'); if (!box) return;
   if (!NSC.nsi) { box.innerHTML = '<div class="u-empty">.nsi 파일을 먼저 선택하세요.</div>'; return; }
   const pick = nscPickSlides(NSC.nsi, NSC.ppt);
-  const { findings: F, steps } = nscRules(NSC.nsi, pick.slides);
+  const { findings: F, steps, flowPaths, flowCut } = nscRules(NSC.nsi, pick.slides);
   const LV = { high: ['🔴', 'var(--danger)', '즉시 확인'], med: ['🟡', 'var(--warn)', '유지보수 위험'], low: ['🔵', 'var(--cyan)', '개선 제안'] };
   const cnt = { high: 0, med: 0, low: 0 }; F.forEach(f => cnt[f.level]++);
   const head = `<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin-bottom:14px">
@@ -359,7 +452,12 @@ function nscRun() {
         <td style="text-align:right" class="u-muted-10">${x.line ? x.line + '행' : '-'}</td>
       </tr>`).join('')}</tbody>
     </table></div>` : '';
-  box.innerHTML = meta + head + table + (rows || '<div class="u-empty">규칙 위반이 없습니다.</div>');
+  const flowHtml = flowPaths.length ? `<div class="panel" style="padding:10px 13px;margin-bottom:10px">
+    <div class="u-muted-10" style="margin-bottom:6px">순서도 경로 — 경우의 수 ${flowPaths.length}개${flowCut ? ' (표시 상한 도달)' : ''} · 화살표와 Y/N 을 따라 전개했습니다</div>
+    ${flowPaths.map((p, i) => `<div style="font-size:11.5px;line-height:1.7;color:var(--text2);padding:2px 0">
+      <span class="u-muted-10">${i + 1}.</span> ${p.map(n => escapeHtml(n.text) + (n.yn ? ` <b style="color:${n.yn === 'Y' ? 'var(--success)' : 'var(--danger)'}">─${n.yn}→</b> ` : '')).join('')}
+    </div>`).join('')}</div>` : '';
+  box.innerHTML = meta + head + table + flowHtml + (rows || '<div class="u-empty">규칙 위반이 없습니다.</div>');
 }
 function nscNowLabel() {
   const d = new Date(), p = n => String(n).padStart(2, '0');
