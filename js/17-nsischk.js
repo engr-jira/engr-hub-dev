@@ -289,9 +289,15 @@ function nscRules(nsi, ppt) {
 
   // R3 — 라벨 정합
   const labelNames = new Set(nsi.labels.map(l => l.name));
-  const missing = nsi.gotos.filter(g => !labelNames.has(g.target) && !/^[+-]\d+$/.test(g.target));
+  /* Goto 뿐 아니라 IfFileExists/StrCmp 같은 조건 명령의 분기 대상도 봐야 한다.
+     예전엔 gotos 만 봐서, 조건 분기가 가리키는 라벨을 지워도 조용히 통과했다. */
+  const missing = [...nsi.gotos, ...(nsi.jumpTargets || [])]
+    .filter(g => !labelNames.has(g.target) && !/^[+-]\d+$/.test(g.target))
+    .filter((g, i, a) => a.findIndex(x => x.target === g.target && x.n === g.n) === i);
+  const brokenLines = new Set(missing.map(g => g.n));
   if (missing.length) add('high', 'R3', '정의되지 않은 라벨로 점프합니다',
-    missing.map(g => `${g.target}(${g.n}행)`).join(', '), '', '라벨 이름을 확인하세요. 컴파일 에러 또는 의도치 않은 흐름이 됩니다.');
+    missing.map(g => `${g.target}(${g.n}행)`).join(', '), '',
+    '라벨을 지웠거나 이름이 틀렸습니다. 컴파일 에러가 나거나, 나더라도 그 분기는 의도한 곳으로 가지 않습니다.');
   const usedLabels = new Set([...nsi.gotos.map(g => g.target), ...(nsi.jumpTargets || []).map(j => j.target)]);
   const unused = nsi.labels.filter(l => !usedLabels.has(l.name));
   if (unused.length) add('low', 'R3', '아무도 점프하지 않는 라벨',
@@ -366,6 +372,13 @@ function nscRules(nsi, ppt) {
       const missing = ks.filter(k => !codeAt[k]);
       if (missing.length) return { mark: '✕', cls: 'var(--danger)', label: '스크립트에 없음',
         why: '못 찾은 단계: ' + missing.map(k => LBL[k]).join(', ') };
+      /* 단계가 다 있고 순서가 맞아도, 그 구간의 분기가 깨져 있으면 실제로는 그 경로로 흐르지 않는다.
+         라벨을 지운 스크립트가 '일치'로 나오던 원인이 이것이다. */
+      const ls = ks.map(k => codeAt[k]);
+      const lo = Math.min.apply(null, ls), hi = Math.max.apply(null, ls);
+      const brk = [...brokenLines].filter(n => n >= lo && n <= hi).sort((a, b) => a - b);
+      if (brk.length) return { mark: '✕', cls: 'var(--danger)', label: '흐름 끊김',
+        why: `이 구간(${lo}~${hi}행)에 정의되지 않은 라벨로 점프하는 줄이 있습니다 — ${brk.map(n => n + '행').join(', ')}` };
       const sorted = ks.slice().sort((a, b) => codeAt[a] - codeAt[b]);
       if (sorted.join('>') !== ks.join('>')) return { mark: '!', cls: 'var(--warn)', label: '순서 다름',
         why: '스크립트 줄 순서 — ' + sorted.map(k => LBL[k] + '(' + codeAt[k] + '행)').join(' → ') };
@@ -461,7 +474,7 @@ async function nscPickPpt(input) {
   input.value = '';                       // 같은 파일 재선택 대응 (위 주석 참조)
   if (NSC.nsi) nscRun();
 }
-function nscRun() {
+function nscRun(manual) {
   const box = document.getElementById('nsc-result'); if (!box) return;
   if (!NSC.nsi) { box.innerHTML = '<div class="u-empty">.nsi 파일을 먼저 선택하세요.</div>'; return; }
   const pick = nscPickSlides(NSC.nsi, NSC.ppt);
@@ -505,6 +518,9 @@ function nscRun() {
       <div class="u-muted-10" style="margin-left:14px">${escapeHtml(v.label || '')}${v.why ? ' — ' + escapeHtml(v.why) : ''}</div>
     </div>`; }).join('')}</div>` : '';
   box.innerHTML = meta + head + table + flowHtml + (rows || '<div class="u-empty">규칙 위반이 없습니다.</div>');
+  // 결과가 같으면 화면이 안 바뀐 것처럼 보인다 → 버튼으로 돌렸을 때는 명시적으로 알린다.
+  if (manual && typeof toast === 'function') toast(`검사 완료 — 지적 ${F.length}건` + (flowPaths.length ? ` · 경로 ${flowPaths.length}개` : ''));
+  if (manual) box.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function nscNowLabel() {
   const d = new Date(), p = n => String(n).padStart(2, '0');
