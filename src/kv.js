@@ -70,31 +70,13 @@ export async function getStorageStats(env) {
   const audit = await estimatePrefixBytes(env, 'auditLatest:', 1000, 5);
   const aiCache = await estimatePrefixBytes(env, 'ai:', 1000, 5);
   const usage = await estimatePrefixBytes(env, 'usage:', 1000, 5);
-  const estimatedOldAiWritesToday = aiSuccessToday * 11 + aiFailToday * 8;
-  const estimatedNewAiWritesToday = aiSuccessToday * 3 + aiFailToday * 2;
-  const estimatedSavedWritesToday = Math.max(0, estimatedOldAiWritesToday - estimatedNewAiWritesToday);
+  // 예전엔 여기서 AI 호출 수로 일일 write 를 추정했으나, 워커에 AI 코드가 없어진 뒤로
+  // 근거가 되는 카운터(aiToday/aiSuccessToday 등)가 사라져 ReferenceError 로 조회가 통째로 실패했다.
+  // 실측 가능한 값이 없는 추정치는 지우고, 참고용 한도만 남긴다.
   const operationBudget = {
     plan: 'Workers KV Free',
     resetAtUtc: '00:00',
     dailyLimits: { reads: 100000, writes: 1000, deletes: 1000, lists: 1000 },
-    aiToday,
-    aiMonth,
-    aiSuccessToday,
-    aiFailToday,
-    estimatedOldAiWritesToday,
-    estimatedNewAiWritesToday,
-    estimatedSavedWritesToday,
-    estimatedNewWritePct: estimatedNewAiWritesToday / 1000 * 100,
-    notes: [
-      'Operational usage note.',
-      'Operational usage note.',
-      'Operational usage note.',
-    ],
-    reductions: [
-      { item: 'audit log', before: 'multiple KV writes per event', after: 'one KV write per event' },
-      { item: 'AI usage counter', before: 'several usage get/put operations', after: 'one compact counter update' },
-      { item: 'AI audit log', before: 'request/success/failure logged separately', after: 'final outcome logged once' },
-    ],
   };
 
   const items = [

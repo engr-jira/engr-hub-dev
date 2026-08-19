@@ -27,7 +27,9 @@ ESCARE 보안기술팀 내부 통합 허브. **아래 수치는 2026-08-07 실�
 | dev | `engr-jira.github.io/engr-hub-dev` (repo `engr-hub-dev`) | `engr-hub-proxy-dev.engr-jira.workers.dev` | `C:\Users\passi\Downloads\engr-hub-dev` |
 | prod | `engr-jira.github.io/engr-hub` (repo `engr-hub`, origin `engr-jira/engr-hub.git`) | `engr-hub-proxy.engr-jira.workers.dev` | `C:\Users\passi\Downloads\engr-hub-prod` |
 
-**프론트 배포** = `git push origin main` (GitHub Pages 자동 빌드, **반영까지 1~2분** 소요).
+**프론트 배포** = `node scripts/stamp-assets.js` **먼저 실행** → `git push origin main` (GitHub Pages 자동 빌드, **반영까지 1~2분** 소요).
+  - ⚠️ Pages 는 js 를 `max-age=600` 으로 준다. 스탬프를 안 찍으면 index.html 만 새로 받고 **js 는 최대 10분간 예전 것**이 쓰여 "배포했는데 안 바뀐다"가 된다(2026-08-19 두 번 겪음).
+  - `scripts/stamp-assets.js` 가 `<script src="js/*.js?b=YYYYMMDDHHmm">` 을 갱신한다. js 를 하나라도 고쳤으면 반드시 실행.
 **워커 배포** = `npx wrangler deploy --config <경로>/wrangler.jsonc`
   - ⚠️ `--config` 플래그 필수. (그냥 `wrangler deploy` 하면 `C:\Users\passi\Application Data` 정션 EPERM으로 실패)
   - 워커 변경 시에만 배포 필요. 프론트만 바뀌면 git push만.

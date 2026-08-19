@@ -16,30 +16,13 @@ async function refreshStorageStats(){
     const pct=quota>0?Math.min(100,(used/quota)*100):0;
     const itemCount=summary.itemCount||'-';
     const quotaLabel=summary.quotaLabel||fmtBytes(quota);
+    // Operation 사용량은 워커가 셀 수 없다(Cloudflare 대시보드에만 있음) → 한도만 참고로 보여준다.
     const ops=summary.operationBudget||{};
     const limits=ops.dailyLimits||{};
-    const opPct=Number(ops.estimatedNewWritePct||0);
-    const opColor=opPct>=90?'var(--danger)':(opPct>=70?'var(--warn)':'var(--success)');
     const opHtml=ops.dailyLimits?`
       <div class="storage-summary u-mt-10px">
-        <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px">
-          <div>
-            <div style="font-size:12px;font-weight:800;color:var(--control-text)">Cloudflare KV Operation 사용량</div>
-            <div class="storage-note">Free 기준 일일 한도: read ${Number(limits.reads||0).toLocaleString()} / write ${Number(limits.writes||0).toLocaleString()} / list ${Number(limits.lists||0).toLocaleString()} / delete ${Number(limits.deletes||0).toLocaleString()} · UTC ${escapeHtml(ops.resetAtUtc||'00:00')} 리셋</div>
-          </div>
-          <div style="text-align:right;font-size:11px;color:var(--text3)">AI 오늘 ${ops.aiToday||0}회 · 이번달 ${ops.aiMonth||0}회</div>
-        </div>
-        <div class="storage-summary-top">
-          <div class="storage-metric"><div class="label">AI 기준 예상 write</div><div class="value" style="color:${opColor}">${ops.estimatedNewAiWritesToday||0} / ${limits.writes||1000}</div></div>
-          <div class="storage-metric"><div class="label">기존 구조였다면</div><div class="value">${ops.estimatedOldAiWritesToday||0}</div></div>
-          <div class="storage-metric"><div class="label">오늘 절감 추정</div><div class="value u-c-success">${ops.estimatedSavedWritesToday||0}</div></div>
-          <div class="storage-metric"><div class="label">AI 성공 / 실패</div><div class="value">${ops.aiSuccessToday||0} / ${ops.aiFailToday||0}</div></div>
-        </div>
-        <div class="storage-bar"><div class="storage-bar-fill" style="width:${Math.max(0.2,Math.min(100,opPct))}%;background:${opColor}"></div></div>
-        <div class="storage-grid u-mt-10px">
-          ${(ops.reductions||[]).map(x=>`<div class="storage-item"><div class="storage-item-title">${escapeHtml(x.item)}</div><small>이전: ${escapeHtml(x.before)}</small><small class="u-c-success">현재: ${escapeHtml(x.after)}</small></div>`).join('')}
-        </div>
-        <div class="storage-note">${(ops.notes||[]).map(escapeHtml).join(' · ')}</div>
+        <div style="font-size:12px;font-weight:800;color:var(--control-text);margin-bottom:4px">Cloudflare KV 일일 한도 (${escapeHtml(ops.plan||'Free')})</div>
+        <div class="storage-note">read ${Number(limits.reads||0).toLocaleString()} · write ${Number(limits.writes||0).toLocaleString()} · list ${Number(limits.lists||0).toLocaleString()} · delete ${Number(limits.deletes||0).toLocaleString()} — UTC ${escapeHtml(ops.resetAtUtc||'00:00')} 리셋. 실제 소진량은 Cloudflare 대시보드에서 확인하세요.</div>
       </div>`:'';
     const status=pct>=90?'위험':(pct>=70?'주의':'정상');
     const statusColor=pct>=90?'var(--danger)':(pct>=70?'var(--warn)':'var(--success)');
