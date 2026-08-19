@@ -2003,7 +2003,9 @@ export default {
         return corsResponse({ ok: true, items });
       }
       if (path.startsWith('/analysis/issue/') && request.method === 'GET') {
-        if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
+        // 분석 엔진도 읽어야 한다 — 「막둥」 답변을 누적하려면 기존 payload.qa 를 먼저 확보해야 함.
+        const anaOkI = !!env.ANALYSIS_WRITE_TOKEN && (request.headers.get('x-analysis-token') || '') === env.ANALYSIS_WRITE_TOKEN;
+        if (!hasSession && !anaOkI) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const key = decodeURIComponent(path.split('/')[3] || '');
         if (!/^[A-Z][A-Z0-9]*-\d+$/.test(key)) return corsResponse({ ok: false, message: '\uC798\uBABB\uB41C \uC774\uC288 \uD0A4' }, 400);
         let row = null;

@@ -306,9 +306,10 @@ function aiScheduleNoteHtml(){
   return '<div style="font-size:10.5px;line-height:1.6;color:var(--text3);background:var(--surface-tint);'
     + 'border-left:2px solid color-mix(in srgb,var(--accent) 45%,transparent);border-radius:0 8px 8px 0;'
     + 'padding:6px 10px;margin:0 0 8px">'
-    + '🕓 AI 분석은 <b style="color:var(--text2)">매일 새벽 자동 갱신</b>됩니다 · '
-    + '재분석을 요청해도 <b style="color:var(--text2)">다음 날 새벽</b>에 반영됩니다 · '
-    + '더 빨리 필요하면 <b style="color:var(--accent)">관리자(mj.park)</b>에게 문의해 주세요'
+    + '🕓 AI 분석은 <b style="color:var(--text2)">매일 07시</b> 자동 갱신 · '
+    + '재분석 요청은 <b style="color:var(--text2)">09 · 14 · 19시</b> 큐에서 처리됩니다<br>'
+    + '💬 Jira 코멘트를 <b style="color:var(--accent)">「막둥아~ …」</b>로 시작하면 다음 분석 때 여기에 답이 달립니다 '
+    + '<span style="opacity:.75">(Jira에는 답글을 달지 않습니다)</span>'
     + '</div>';
 }
 async function renderIssueAnalysis(key,secId){
@@ -321,6 +322,14 @@ async function renderIssueAnalysis(key,secId){
     const a=d.analysis;
     if(!a){sec.innerHTML=`<div class="u-fs10px-ctext3-fw700-m4px06p">🤖 AI 분석 (스케줄)</div>${aiScheduleNoteHtml()}<div style="font-size:11.5px;color:var(--text3);background:var(--surface-tint);border:1px dashed var(--border);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>이 이슈는 아직 분석 대상에 포함되지 않았습니다. 매일 새벽 분석에서 변경된 이슈 위주로 채워집니다.</span>${btn}</div>`;return;}
     const rows=[];
+    // 「막둥아~」로 물어본 것에 대한 답 — 물어본 사람이 제일 먼저 볼 것이므로 맨 위에.
+    const qaArr=Array.isArray(a.qa)?a.qa:[];
+    if(qaArr.length)rows.push('<div class="u-mb-8px"><b style="color:var(--accent2)">💬 막둥 답변</b>'
+      +qaArr.slice(-5).map(q=>'<div style="background:color-mix(in srgb,var(--accent2) 7%,transparent);border:1px solid color-mix(in srgb,var(--accent2) 22%,transparent);border-radius:8px;padding:8px 10px;margin-top:5px">'
+        +'<div class="u-muted-10">'+escapeHtml(String(q.asked_by||'팀원'))+(q.asked_at?' · '+escapeHtml(String(q.asked_at).slice(0,10)):'')+'</div>'
+        +'<div class="u-ws-prewrap" style="color:var(--text3);margin-top:2px">Q. '+escapeHtml(String(q.question||''))+'</div>'
+        +'<div class="u-ws-prewrap" style="margin-top:5px">A. '+escapeHtml(String(q.answer||''))+'</div>'
+      +'</div>').join('')+'</div>');
     if(a.summary)rows.push(`<div class="u-mb-8px"><b style="color:var(--text)">📋 내용 요약</b><div class="u-ws-prewrap">${escapeHtml(String(a.summary))}</div></div>`);
     if(a.tech_analysis)rows.push(`<div class="u-mb-8px"><b style="color:#9F6BB5">🧪 기술 분석</b><div class="u-ws-prewrap">${escapeHtml(String(a.tech_analysis))}</div></div>`);
     if(a.stall_reason)rows.push(`<div class="u-mb-8px"><b class="u-c-fbbf24">⏸ 정체 사유</b><div class="u-ws-prewrap">${escapeHtml(String(a.stall_reason))}</div></div>`);
@@ -333,7 +342,7 @@ async function renderIssueAnalysis(key,secId){
   }catch(e){sec.innerHTML=`<div class="u-muted-11">AI 분석 조회 실패: ${escapeHtml(e.message)}</div>`;}
 }
 async function requestReanalysis(key){
-  try{ await hubApi('/analysis/request/'+encodeURIComponent(key),{method:'POST'}); toast(`${key} 재분석 요청 등록 — 다음 날 새벽 분석에 우선 반영됩니다`); }
+  try{ await hubApi('/analysis/request/'+encodeURIComponent(key),{method:'POST'}); toast(`${key} 재분석 요청 등록 — 다음 큐(09·14·19시) 또는 익일 07시 분석에 우선 반영됩니다`); }
   catch(e){ toast('요청 실패: '+e.message,true); }
 }
 function showPage(name,btn){
