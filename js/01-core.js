@@ -283,7 +283,7 @@ const pageTitles={
 };
 function resetCustomerFilters(){['cust-q','cust-prod','cust-ass'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});PAGE_STATE.customers=1;renderCustomers();}
 function resetEosFilters(){
-  ['eos-q'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['eos-q','eos-net'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   PAGE_STATE.eos=1;renderEosList();
 }
 function resetLinkFilters(){['links-q','links-cat'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});PAGE_STATE.links=1;renderLinks();}
