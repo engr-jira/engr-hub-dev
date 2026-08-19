@@ -30,6 +30,7 @@ function salesRenewalRows(d){
     const perp=!!e.perpetual;
     const dd=perp?Infinity:daysUntil(e.expireDate);   // Perpetual은 항상 맨 뒤 + KPI(만료임박·경과)에서 자동 제외
     return {customer:e.customer||'-',product:prod,expire:perp?'Perpetual':e.expireDate,dd,perp,
+      networks:Array.isArray(e.networks)?e.networks:[],
       note:notes.get(salesNoteKey(e.customer,prod))||null};
   });
   rows.sort((a,b)=>a.dd-b.dd);
@@ -48,6 +49,7 @@ function salesMyName(){
        if(u)return (typeof u==='string')?u:(u.displayName||u.name||''); }catch(_){}
   return '';
 }
+// 망 무관 매핑은 ownerOf/salesOwnerOf(js/15-owners.js) 가 처리한다.
 function salesOwnerName(cust){ return (typeof salesOwnerOf==='function'?(salesOwnerOf(cust)||''):''); }
 // 기술 담당 = 담당자 관리의 정(primary)/부(secondary)
 function techOwnersOf(cust){
@@ -73,7 +75,7 @@ function qPass(q,fields){
   return fields.filter(Boolean).join(' ').toLowerCase().includes(s);
 }
 function salesRowPass(r){
-  if(!qPass(SALES_FILTER.q,[r.customer,r.product,...allOwnerNames(r.customer)]))return false;   // 담당자 이름으로도 검색
+  if(!qPass(SALES_FILTER.q,[r.customer,r.product,...(r.networks||[]),...allOwnerNames(r.customer)]))return false;   // 담당자 이름으로도 검색
   if(!ownerPass(SALES_FILTER.owner,r.customer))return false;
   if(!techPass(SALES_FILTER.tech,r.customer))return false;
   if(SALES_FILTER.status&&String((r.note&&r.note.status)||'미착수')!==SALES_FILTER.status)return false;
@@ -269,11 +271,12 @@ function renderSalesBodies(){
 
   const renew=`<div class="panel" style="overflow-x:auto;padding:0">
   <table class="sales-tbl">
-    <thead><tr><th>고객사</th><th>제품</th><th>만료</th><th>진행 상태</th><th>영업 메모</th><th>다음 컨택</th>${canEdit?'<th></th>':''}</tr></thead>
+    <thead><tr><th>고객사</th><th>망</th><th>제품</th><th>만료</th><th>진행 상태</th><th>영업 메모</th><th>다음 컨택</th>${canEdit?'<th></th>':''}</tr></thead>
     <tbody>${rows.map((r,i)=>{
       const n=r.note||{};
       return `<tr>
         <td class="u-ws-nowrap"><b>${escapeHtml(r.customer)}</b>${(typeof ownerMetaHtml==='function'&&ownerMetaHtml(r.customer))?`<div style="margin-top:3px">${ownerMetaHtml(r.customer)}</div>`:''}</td>
+        <td class="u-ws-nowrap">${r.networks.length?r.networks.map(nw=>`<span class="badge" style="background:color-mix(in srgb,var(--cyan) 14%,transparent);color:var(--cyan)">${escapeHtml(nw)}</span>`).join(' '):'<span class="u-muted-10">-</span>'}</td>
         <td>${escapeHtml(r.product)}</td>
         <td class="u-ws-nowrap">${salesDDayBadge(r.dd,r.perp)}<div class="u-muted-10">${escapeHtml(r.expire)}</div></td>
         <td>${salesStatusBadge(n.status)}</td>
@@ -281,7 +284,7 @@ function renderSalesBodies(){
         <td class="u-ws-nowrap">${escapeHtml(n.next_contact||'—')}</td>
         ${canEdit?`<td><button class="btn btn-ghost u-btn-xxs" onclick="toggleSalesEdit(${i})">✏️</button></td>`:''}
       </tr>
-      ${canEdit?`<tr id="sales-edit-${i}" style="display:none"><td colspan="7" style="background:rgba(239,131,84,.05);padding:10px 12px">
+      ${canEdit?`<tr id="sales-edit-${i}" style="display:none"><td colspan="8" style="background:rgba(239,131,84,.05);padding:10px 12px">
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <select id="se-status-${i}" class="admin-input" style="max-width:130px">${SALES_STATUS.map(s=>`<option${(n.status||'미착수')===s?' selected':''}>${s}</option>`).join('')}</select>
           <input id="se-body-${i}" class="admin-input" style="flex:1;min-width:200px" placeholder="영업 메모" value="${escapeHtml(n.body||'')}">
@@ -289,7 +292,7 @@ function renderSalesBodies(){
           <button class="btn btn-primary u-btn-xs" onclick="saveSalesNoteUI(${i},${jsAttr(r.customer)},${jsAttr(r.product)})">저장</button>
         </div>
       </td></tr>`:''}`;
-    }).join('')||`<tr><td colspan="7" class="u-empty">${salesFilterActive()?'조건에 맞는 라이선스가 없습니다':'라이선스 데이터가 없습니다'}</td></tr>`}</tbody>
+    }).join('')||`<tr><td colspan="8" class="u-empty">${salesFilterActive()?'조건에 맞는 라이선스가 없습니다':'라이선스 데이터가 없습니다'}</td></tr>`}</tbody>
   </table></div>`;
 
   const custRows=custList.map(({c,days,noAct})=>{

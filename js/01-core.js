@@ -245,6 +245,20 @@ function fmtClock(ts){
 
 
 
+/* 고객사명에서 망 표기를 떼어낸다 — "우리은행(내부망)" → "우리은행".
+   담당자 매핑은 망을 구분하지 않으므로(같은 고객사) 조회 전 이 함수를 거친다.
+   괄호 안에 '망'이 들어간 경우만 떼며, "(주)" 같은 건 그대로 둔다. */
+const NET_PRESETS = ['인터넷망', '내부망'];
+function baseCustomerName(n) {
+  const s = String(n == null ? '' : n).trim();
+  const stripped = s.replace(/\s*[（(][^)）]*망[^)）]*[)）]\s*$/, '').trim();
+  return stripped || s;
+}
+function networkLabel(it) {
+  const a = (it && Array.isArray(it.networks)) ? it.networks.filter(Boolean) : [];
+  return a.join(' · ');
+}
+
 // ── PAGE NAV ──────────────────────────────────────
 const pageTitles={
   dash:['대시보드','팀 현황 및 개인별 진행 통계'],

@@ -16,13 +16,27 @@ const VENDOR_KB_LINKS=[
 
 function renderEosList(){
   const q=(document.getElementById('eos-q')||{}).value?.toLowerCase()||'';
+  const netSel=(document.getElementById('eos-net')||{}).value||'';
+  // 망 필터 옵션은 현재 데이터에서 만든다(기본 2종 + 실제 쓰인 기타 값)
+  const netEl=document.getElementById('eos-net');
+  if(netEl){
+    const used=[...new Set(EOS_ITEMS.flatMap(it=>Array.isArray(it.networks)?it.networks:[]).filter(Boolean))];
+    const opts=[...new Set([...NET_PRESETS.filter(p=>used.includes(p)),...used.filter(u=>!NET_PRESETS.includes(u))])];
+    const sig=opts.join('|');
+    if(netEl.getAttribute('data-sig')!==sig){
+      netEl.innerHTML='<option value="">망 — 전체</option>'+opts.map(o=>`<option value="${escapeHtml(o)}">${escapeHtml(o)}</option>`).join('')+'<option value="__none__">미지정</option>';
+      netEl.setAttribute('data-sig',sig); netEl.value=netSel;
+    }
+  }
   let list=[...EOS_ITEMS];
-  if(q)list=list.filter(it=>qMatch(q,[it.customer,it.productDesc,it.product,it.siteId,it.serial]));
+  if(q)list=list.filter(it=>qMatch(q,[it.customer,it.productDesc,it.product,it.siteId,it.serial,networkLabel(it)]));
+  if(netSel==='__none__')list=list.filter(it=>!(Array.isArray(it.networks)&&it.networks.length));
+  else if(netSel)list=list.filter(it=>Array.isArray(it.networks)&&it.networks.includes(netSel));
   list.sort((a,b)=>(a.customer||'').localeCompare(b.customer||'','ko'));
   const pageList=sliceForPage(list,'eos');
   document.getElementById('eos-count').textContent=pageCountText('eos',list.length);
   const tbody=document.getElementById('eos-tbody');
-  if(!pageList.length){tbody.innerHTML=`<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--text3)">등록된 라이선스가 없습니다</td></tr>`;renderPager('eos-pager','eos',list.length,'renderEosList');return;}
+  if(!pageList.length){tbody.innerHTML=`<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--text3)">등록된 라이선스가 없습니다</td></tr>`;renderPager('eos-pager','eos',list.length,'renderEosList');return;}
   tbody.innerHTML=pageList.map(it=>{
     const perp=!!it.perpetual;
     const hasEnd=!perp&&!!it.expireDate;
@@ -43,6 +57,7 @@ function renderEosList(){
     return `<tr class="${rowClass} u-cur-pointer" onclick="openEosDetailModal('${it.id}')">
       <td onclick="event.stopPropagation()"><input type="checkbox" class="eos-pick" data-id="${it.id}"></td>
       <td style="font-weight:700">${escapeHtml(it.customer||'-')}</td>
+      <td class="u-ws-nowrap">${(Array.isArray(it.networks)&&it.networks.length)?it.networks.map(nw=>`<span class="badge" style="background:color-mix(in srgb,var(--cyan) 14%,transparent);color:var(--cyan)">${escapeHtml(nw)}</span>`).join(' '):'<span class="u-muted-10">-</span>'}</td>
       <td>${escapeHtml(pd)}</td>
       <td class="u-c-text2">${escapeHtml(it.siteId||'-')}</td>
       <td class="u-ta-right" data-sort="${parseInt(String(it.quantity).replace(/[^0-9]/g,''))||0}">${escapeHtml(String(it.quantity||'-'))}</td>
@@ -68,6 +83,7 @@ function openEosDetailModal(id){
   openGenModal('라이선스 상세',`
   <div class="rp-meta">
     <div class="rp-row"><span>고객사</span><span>${escapeHtml(it.customer||'-')}</span></div>
+    <div class="rp-row"><span>망</span><span>${networkLabel(it)||'-'}</span></div>
     <div class="rp-row"><span>Product Description</span><span>${escapeHtml(pd)}</span></div>
     <div class="rp-row"><span>Enterprise Site ID</span><span>${escapeHtml(it.siteId||'-')}</span></div>
     <div class="rp-row"><span>Quantity</span><span>${escapeHtml(String(it.quantity||'-'))}</span></div>
@@ -106,6 +122,12 @@ function addEosLine(){
       +'<label>START DATE<span class="el-date-wrap"><input type="date" class="el-start" data-date-button="1"><button type="button" class="el-cal" tabindex="-1" title="달력 열기">📅</button></span></label>'
       +'<label>END DATE (만료)<span class="el-date-wrap"><input type="date" class="el-end" data-date-button="1"><button type="button" class="el-cal" tabindex="-1" title="달력 열기">📅</button></span></label>'
     +'</div>'
+    +'<div class="el-net-row" style="display:flex;align-items:center;gap:10px;margin-top:7px;flex-wrap:wrap;font-size:11.5px;color:var(--text2)">'
+      +'<span class="u-muted-10">망</span>'
+      +'<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" class="el-net" value="인터넷망"> 인터넷망</label>'
+      +'<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" class="el-net" value="내부망"> 내부망</label>'
+      +'<input class="el-net-etc" placeholder="기타 망 이름(예: DMZ망)" style="flex:1;min-width:140px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:5px 9px;font-size:11.5px;font-family:inherit">'
+    +'</div>'
     +'<label class="el-perp-lbl" style="display:inline-flex;align-items:center;gap:6px;margin-top:7px;font-size:11.5px;color:var(--text2);cursor:pointer">'
       +'<input type="checkbox" class="el-perp"> Perpetual <span class="u-muted-10">— 만료 없음(무기한). 체크하면 만료일·D-day·갱신 대상에서 제외됩니다</span>'
     +'</label>';
@@ -127,6 +149,8 @@ async function saveEos(){
     quantity:(b.querySelector('.el-qty').value||'').trim(),
     serial:(b.querySelector('.el-serial').value||'').trim(),
     startDate:b.querySelector('.el-start').value,
+    networks:[...[...b.querySelectorAll('.el-net:checked')].map(c=>c.value),
+              ...String((b.querySelector('.el-net-etc')||{}).value||'').split(/[,·/]/).map(s=>s.trim()).filter(Boolean)],
     perpetual:!!b.querySelector('.el-perp').checked,
     expireDate:b.querySelector('.el-perp').checked?'':b.querySelector('.el-end').value
   }));
@@ -153,6 +177,10 @@ function openEosEditModal(id){
     <div class="full"><label>Serial Number</label><input id="eos-edit-serial" value="${escapeHtml(it.serial||'')}"></div>
     <div><label>Start Date</label><input type="date" id="eos-edit-start" value="${it.startDate||''}"></div>
     <div><label>End Date (만료)</label><input type="date" id="eos-edit-end" value="${it.expireDate||''}"${it.perpetual?' disabled':''}></div>
+    <div class="full"><label>망</label><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--text2)">
+      ${NET_PRESETS.map(p=>`<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" class="eos-edit-net" value="${p}"${(it.networks||[]).includes(p)?' checked':''}> ${p}</label>`).join('')}
+      <input id="eos-edit-net-etc" class="admin-input" style="flex:1;min-width:150px" placeholder="기타 망 이름" value="${escapeHtml((it.networks||[]).filter(n=>!NET_PRESETS.includes(n)).join(', '))}">
+    </div></div>
     <div class="full"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-size:11.5px;color:var(--text2)"><input type="checkbox" id="eos-edit-perp"${it.perpetual?' checked':''} onchange="toggleEosEditPerp(this)"> Perpetual <span class="u-muted-10">— 만료 없음(무기한)</span></label></div>
     <div class="full"><label>메모</label><textarea id="eos-edit-memo">${escapeHtml(it.memo||'')}</textarea></div>
   </div>`,
@@ -171,12 +199,14 @@ async function updateEos(id){
   const quantity=document.getElementById('eos-edit-qty').value.trim();
   const serial=document.getElementById('eos-edit-serial').value.trim();
   const startDate=document.getElementById('eos-edit-start').value;
+  const networks=[...[...document.querySelectorAll('.eos-edit-net:checked')].map(c=>c.value),
+    ...String(document.getElementById('eos-edit-net-etc')?.value||'').split(/[,·/]/).map(s=>s.trim()).filter(Boolean)];
   const perpetual=!!document.getElementById('eos-edit-perp')?.checked;
   const expireDate=perpetual?'':document.getElementById('eos-edit-end').value;
   const memo=document.getElementById('eos-edit-memo').value.trim();
   if(!customer||!productDesc){toast('고객사와 Product Description은 필수입니다',true);return;}
   try{
-    const r=await fetch(`${WORKERS}/eos/${id}`,{method:'PUT',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({customer,productDesc,siteId,quantity,serial,startDate,perpetual,expireDate,memo})});
+    const r=await fetch(`${WORKERS}/eos/${id}`,{method:'PUT',headers:authHeaders({'Content-Type':'application/json'}),body:JSON.stringify({customer,productDesc,siteId,quantity,serial,startDate,networks,perpetual,expireDate,memo})});
     const d=await r.json();
     if(!d.ok){toast(d.message||'수정 실패',true);return;}
     toast('수정 완료');closeGenModal();await loadEOS();renderEosList();

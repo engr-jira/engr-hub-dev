@@ -2258,14 +2258,15 @@ body.is-sales #nav-sales{display:flex!important}
       </div>
       <div class="filter-row">
         <input id="eos-q" placeholder="고객사 / 제품 / 사이트ID / 시리얼 검색..." oninput="PAGE_STATE.eos=1;renderEosList()">
+        <select id="eos-net" class="page-size-select" style="width:auto" onchange="PAGE_STATE.eos=1;renderEosList()"><option value="">망 — 전체</option></select>
         <select id="eos-pg" class="page-size-select" onchange="changePageSize('eos',this.value);renderEosList()"><option>10</option><option>20</option><option>30</option><option>50</option><option>100</option><option>200</option></select>
         <button class="filter-reset" onclick="resetEosFilters()">✕ 초기화</button>
         <span class="filter-count" id="eos-count">0건</span>
       </div>
       <table class="eos-table srt">
-        <thead><tr><th class="nosort u-w-26px"><input type="checkbox" onclick="bulkSelectAll(this,'.eos-pick')" title="전체 선택"></th><th>고객사</th><th>Product Description</th><th>Site ID</th><th>수량</th><th>Serial</th><th>기간 (시작~종료)</th><th>D-Day</th><th></th></tr></thead>
+        <thead><tr><th class="nosort u-w-26px"><input type="checkbox" onclick="bulkSelectAll(this,'.eos-pick')" title="전체 선택"></th><th>고객사</th><th>망</th><th>Product Description</th><th>Site ID</th><th>수량</th><th>Serial</th><th>기간 (시작~종료)</th><th>D-Day</th><th></th></tr></thead>
         <tbody id="eos-tbody">
-          <tr><td colspan="9" style="text-align:center;padding:40px">
+          <tr><td colspan="10" style="text-align:center;padding:40px">
             <div style="color:var(--text3);font-size:13px;margin-bottom:12px">📋 등록된 라이선스가 없습니다</div>
             <div style="font-size:11px;color:var(--text3);line-height:2;max-width:470px;margin:0 auto;text-align:left;background:var(--surface-tint);border:1px solid var(--border);border-radius:12px;padding:14px">
               <strong style="color:var(--text2);display:block;margin-bottom:6px">등록 방법:</strong>

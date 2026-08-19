@@ -392,6 +392,17 @@ async function pushPersonalDigests(env, sendList) {
   return { sent, failed, errors };
 }
 
+// 라이선스 망 값 정리 — 문자열 배열, 각 20자·최대 5개. 중복·공백 제거.
+function okNetworks(v) {
+  if (!Array.isArray(v)) return [];
+  const out = [];
+  for (const x of v) {
+    const s = String(x == null ? '' : x).trim().slice(0, 20);
+    if (s && !out.includes(s)) out.push(s);
+    if (out.length >= 5) break;
+  }
+  return out;
+}
 // ⚠️ 전사 채널 자동/수동 게시는 폐지(2026-08-07). TEAMS_WEBHOOK_URL은 이제 개인 DM flow를 가리키므로
 //    전사 다이제스트를 이 웹훅으로 보내면 팀 전체 업무가 한 사람 DM으로 쏟아진다. 개인 경로만 사용할 것.
 
@@ -1374,6 +1385,7 @@ export default {
             quantity: body.quantity || '',
             serial: body.serial || '',
             startDate: okDate(body.startDate),
+            networks: okNetworks(body.networks),                          // 망 구분(인터넷망/내부망/기타)
             perpetual: !!body.perpetual,                                  // Perpetual = 만료 없음
             expireDate: body.perpetual ? '' : okDate(body.expireDate),   // End Date (지원/만료 종료일 — D-day 기준)
             memo: body.memo || '',
@@ -1402,6 +1414,7 @@ export default {
               id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
               customer: b.customer || '', productDesc: b.productDesc || '', siteId: b.siteId || '',
               quantity: b.quantity || '', serial: b.serial || '', startDate: okDate(b.startDate),
+              networks: okNetworks(b.networks),
               perpetual: !!b.perpetual, expireDate: b.perpetual ? '' : okDate(b.expireDate),
               memo: b.memo || '', createdBy: user, createdAt: new Date().toISOString(),
             });
@@ -1443,6 +1456,7 @@ export default {
           if (!await canModifyItem(env, user, target)) return { abort: { body: { ok: false, message: '작성자 또는 관리자만 수정할 수 있습니다.' }, status: 403 } };
           const ef = {}; ['customer', 'productDesc', 'siteId', 'quantity', 'serial', 'memo'].forEach(k => { if (body[k] !== undefined) ef[k] = body[k]; });  // M-3/M-7: 허용필드+날짜검증
           if (body.startDate !== undefined) ef.startDate = okDate(body.startDate);
+          if (body.networks !== undefined) ef.networks = okNetworks(body.networks);
           if (body.perpetual !== undefined) ef.perpetual = !!body.perpetual;
           if (body.expireDate !== undefined) ef.expireDate = okDate(body.expireDate);
           if (ef.perpetual) ef.expireDate = '';   // Perpetual이면 만료일은 항상 비운다(D-day·갱신 대상에서 제외)

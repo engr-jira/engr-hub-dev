@@ -27,10 +27,19 @@ async function loadHubUsers(){
   return (HUB_USERS&&HUB_USERS.length)?HUB_USERS:OWNER_TEAM_FALLBACK;
 }
 
+// 담당자는 망을 구분하지 않는다 — "우리은행(내부망)" 은 "우리은행" 담당자를 그대로 쓴다.
+// 이름 그대로 → 별칭 정규화 → 망 표기를 뗀 이름 순으로 찾는다.
 function ownerOf(name){
   if(!OWNER_MAP||!name)return null;
-  const c=(typeof canonCustomer==='function'?canonCustomer(name):name);
-  return OWNER_MAP[c]||OWNER_MAP[name]||null;
+  const cands=[name];
+  const base=(typeof baseCustomerName==='function')?baseCustomerName(name):name;
+  if(base&&base!==name)cands.push(base);
+  for(const n of cands){
+    const c=(typeof canonCustomer==='function'?canonCustomer(n):n);
+    if(OWNER_MAP[c])return OWNER_MAP[c];
+    if(OWNER_MAP[n])return OWNER_MAP[n];
+  }
+  return null;
 }
 // Jira 범주(customfield_10036 → ISSUES[].category)가 영업담당자명. 고객사별 최빈 범주로 자동 도출.
 function salesRepFromIssues(name){
@@ -47,7 +56,12 @@ function salesRepFromIssues(name){
   return best;
 }
 // 명시 저장값(관리자 지정) 우선, 없으면 Jira 범주에서 자동 도출
-function salesOwnerOf(name){ const o=ownerOf(name); const explicit=o?(o.sales_owner||''):''; return explicit||salesRepFromIssues(name); }
+function salesOwnerOf(name){
+  const o=ownerOf(name); const explicit=o?(o.sales_owner||''):'';
+  if(explicit)return explicit;
+  const base=(typeof baseCustomerName==='function')?baseCustomerName(name):name;
+  return salesRepFromIssues(name)||(base!==name?salesRepFromIssues(base):'');
+}
 function isOwnerInactive(name){ const o=ownerOf(name); return !!(o&&(o.active===0||o.active===false)); }
 // 정/부 담당 배지 (고객사 프로필/영업에 자동 반영)
 function ownerMetaHtml(name){
