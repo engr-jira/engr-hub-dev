@@ -2279,6 +2279,31 @@ body.is-sales #nav-sales{display:flex!important}
       <div id="eos-pager" class="pager"></div>
     </div>
 
+    <div class="page" id="page-nsischk">
+      <div class="sec-title">🧩 NSIS 정합성 검사 <span class="sec-en">NSIS CHECK</span></div>
+      <div class="panel" style="padding:14px 16px;margin-bottom:12px">
+        <div class="u-muted-10" style="margin-bottom:10px">삭제 툴 스크립트(.nsi)와 그 순서도(.pptx)를 대조해 어긋난 곳과 개선점을 찾습니다 · 규칙 기반(AI 미사용) · <b style="color:var(--text2)">파일은 브라우저 밖으로 나가지 않습니다</b></div>
+        <div class="two-col" style="gap:12px">
+          <div>
+            <label class="u-muted-10">① NSIS 스크립트 (.nsi) — 필수</label>
+            <input type="file" id="nsc-nsi-file" accept=".nsi,.nsh,.txt" class="admin-input" style="padding:7px" onchange="nscPickNsi(this)">
+            <div id="nsc-nsi-info" style="font-size:11px;margin-top:5px"><span class="u-muted-10">선택 안 됨</span></div>
+          </div>
+          <div>
+            <label class="u-muted-10">② 순서도 (.pptx) — 선택</label>
+            <input type="file" id="nsc-ppt-file" accept=".pptx" class="admin-input" style="padding:7px" onchange="nscPickPpt(this)">
+            <div id="nsc-ppt-info" style="font-size:11px;margin-top:5px"><span class="u-muted-10">선택 안 됨</span></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center">
+          <button class="btn btn-primary u-btn-xs" onclick="nscRun()">🔍 검사 실행</button>
+          <button class="btn btn-ghost u-btn-xs" onclick="nscCopyReport()">📋 결과 복사</button>
+          <button class="btn btn-ghost u-btn-xs" onclick="nscReset()">초기화</button>
+          <span class="u-muted-10" style="margin-left:auto">순서도는 <b style="color:var(--text2)">도형으로 그린 PPT</b>만 읽습니다 — 캡처 이미지는 인식하지 못합니다</span>
+        </div>
+      </div>
+      <div id="nsc-result"></div>
+    </div>
     <div class="page" id="page-vt">
       <div class="u-bgrgba24-bor1pxsol-br12px-p12px16-fs12px">🛡 VirusTotal 통합 조회 — <b>파일해시 · IP · 도메인 · URL</b>을 자동 인식해 조회하고, 실제 파일을 업로드해 검사할 수 있습니다. <span class="u-curpointe-op6-fs13px" onclick="showStorageInfo('vt')" title="데이터 저장 안내">ℹ</span></div>
       <div class="u-bgcard-bor1pxsol-br14px-p20px-mb16px">
@@ -2776,5 +2801,6 @@ body.is-sales #nav-sales{display:flex!important}
 <script src="js/14-ia.js"></script>
 <script src="js/15-owners.js"></script>
 <script src="js/16-quiz.js"></script>
+<script src="js/17-nsischk.js"></script>
 </body>
 </html>
