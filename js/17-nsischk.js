@@ -149,16 +149,33 @@ function nscPickSlides(nsi, slides) {
 }
 
 /* ── 규칙 ───────────────────────────────────────────────────────────────── */
+/* 각 단계가 코드 '어디에' 있는지(줄번호)까지 찾는다. 0 이면 없음.
+   존재 여부만 보면 순서가 뒤바뀐 스크립트를 잡지 못하고, result 를 exists 와 같은
+   IfFileExists 로 판정하면 둘이 항상 함께 잡혀 대조가 무의미해진다.
+   → result 는 '제거 실행 이후의' 존재 확인으로 정의한다. */
+function nscFirstLine(nsi, re) {
+  const lines = (nsi._raw || '').split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) if (re.test(lines[i])) return i + 1;
+  return 0;
+}
 const NSC_STEPS = [
-  { key: 'arch', ppt: /아키텍처|비트|64/, code: /WindowsPlatformArchitecture/i, label: 'OS 아키텍처 확인' },
-  { key: 'exists', ppt: /유무\s*확인|설치\s*유무/, code: /IfFileExists/i, label: '설치 유무 확인' },
-  { key: 'ver', ppt: /버전\s*(체크|확인)/, code: /GetFileVersion/i, label: '버전 확인' },
-  { key: 'uninst', ppt: /삭제|제거|레지스트리/, code: /msiexec/i, label: '제거 실행' },
-  { key: 'clean', ppt: /clean\s*agent|cleanagent/i, code: /clean_agent|cleanagent/i, label: '강제 제거(Cleanagent)' },
-  { key: 'result', ppt: /성공|실패/, code: /IfFileExists/i, label: '결과 확인' },
+  { key: 'arch', label: 'OS 아키텍처 확인', ppt: /아키텍처|비트|64\s*bit|x64|32\s*bit/i,
+    at: n => nscFirstLine(n, /WindowsPlatformArchitecture|RunningX64|GetVersion::WindowsPlatform/i) },
+  { key: 'exists', label: '설치 유무 확인(제거 전)', ppt: /유무\s*확인|설치\s*(유무|여부)|존재\s*(유무|여부|확인)/i,
+    at: (n, ctx) => { const f = n.fileChecks.find(x => !ctx.uninstAt || x.n < ctx.uninstAt); return f ? f.n : 0; } },
+  { key: 'ver', label: '버전 확인', ppt: /버전\s*(체크|확인|분기|판별)/i,
+    at: n => nscFirstLine(n, /GetFileVersion|GetDLLVersion/i) || ((n.chains[0] || {}).start || 0) },
+  { key: 'uninst', label: '제거 실행', ppt: /삭제|제거|언인스톨|uninstall/i,
+    at: n => (n.execs.find(e => /msiexec|uninstall|removal|setup\.exe/i.test(e.cmd)) || {}).n || 0 },
+  { key: 'clean', label: '강제 제거(Cleanagent)', ppt: /clean\s*agent|cleanagent|cleanwipe|강제\s*(삭제|제거)/i,
+    at: n => (n.execs.find(e => /clean_?agent|cleanwipe/i.test(e.cmd)) || {}).n || 0 },
+  { key: 'result', label: '결과 확인(제거 후)', ppt: /성공|실패|결과\s*확인/i,
+    at: (n, ctx) => { if (!ctx.uninstAt) return 0; const f = n.fileChecks.find(x => x.n > ctx.uninstAt); return f ? f.n : 0; } },
 ];
 function nscRules(nsi, ppt) {
   const F = [];
+  const steps = [];      // 단계 대조표 — 지적이 없어도 "무엇을 대조했는지" 화면에 보여준다
+  const codeAt = {};
   const add = (level, rule, title, detail, where, suggest) => F.push({ level, rule, title, detail, where: where || '', suggest: suggest || '' });
 
   // R1 — 같은 변수를 보는 분기 체인끼리 버전 집합이 다른가 (가장 치명적)
@@ -226,14 +243,37 @@ function nscRules(nsi, ppt) {
   // R8 — PPT 대조 (순서도가 있을 때만)
   if (ppt && ppt.length) {
     const pptText = ppt.map(s => s.texts.join(' ')).join(' ');
-    const codeText = nsi._raw || '';
+    /* 제거 실행 줄을 먼저 확정한다 — exists(제거 전)·result(제거 후)가 이 기준으로 갈린다.
+       같은 IfFileExists 한 줄이 둘 다로 잡히면 순서 비교가 무의미해진다. */
+    const ctx = { uninstAt: (NSC_STEPS.find(x => x.key === 'uninst').at(nsi, {}) || 0) };
+    NSC_STEPS.forEach(st => { codeAt[st.key] = st.at(nsi, ctx) || 0; });
     NSC_STEPS.forEach(st => {
-      const inPpt = st.ppt.test(pptText), inCode = st.code.test(codeText);
+      const inPpt = st.ppt.test(pptText), inCode = codeAt[st.key] > 0;
+      steps.push({ key: st.key, label: st.label, ppt: inPpt, code: inCode, line: codeAt[st.key] });
       if (inPpt && !inCode) add('high', 'R8', `순서도에만 있는 단계: ${st.label}`,
         '순서도에는 그려져 있는데 스크립트에서 해당 처리를 찾지 못했습니다.', '', '스크립트에 단계를 추가하거나 순서도를 수정하세요.');
       if (!inPpt && inCode) add('med', 'R8', `스크립트에만 있는 단계: ${st.label}`,
-        '스크립트는 이 처리를 하는데 순서도에는 없습니다.', '', '순서도를 갱신하면 인수인계·검토가 쉬워집니다.');
+        '스크립트는 이 처리를 하는데 순서도에는 없습니다.', `${codeAt[st.key]}행`, '순서도를 갱신하면 인수인계·검토가 쉬워집니다.');
     });
+
+    /* R10 — 흐름(순서) 대조. 양쪽 모두에 있는 단계만 놓고 상대 순서를 비교한다.
+       PPT 쪽 순서는 도형이 XML에 실린 순서(대체로 그린 순서)라 절대적이지 않다 →
+       high 가 아니라 med 로 두고, 화살표 기준으로 확인하라고 안내한다. */
+    const LBL = Object.fromEntries(NSC_STEPS.map(st => [st.key, st.label]));
+    const pptSeq = [];
+    ppt.forEach(sl => sl.texts.forEach(t => NSC_STEPS.forEach(st => {
+      if (st.ppt.test(t) && !pptSeq.includes(st.key)) pptSeq.push(st.key);
+    })));
+    const codeSeq = NSC_STEPS.filter(st => codeAt[st.key] > 0)
+      .sort((a, b) => codeAt[a.key] - codeAt[b.key]).map(st => st.key);
+    const pSeq = pptSeq.filter(k => codeSeq.includes(k));
+    const cSeq = codeSeq.filter(k => pptSeq.includes(k));
+    if (pSeq.length >= 2 && pSeq.join('>') !== cSeq.join('>')) {
+      add('med', 'R10', '순서도와 스크립트의 단계 순서가 다릅니다',
+        `순서도: ${pSeq.map(k => LBL[k]).join(' → ')}  |  스크립트: ${cSeq.map(k => LBL[k]).join(' → ')}`,
+        cSeq.map(k => `${LBL[k]} ${codeAt[k]}행`).join(' · '),
+        '순서도의 도형 순서는 그린 순서(z-order)라 실제 화살표 흐름과 다를 수 있습니다. 화살표 기준으로 한 번 더 확인하세요.');
+    }
     // R9 — 버전 개수 대조 (표기법이 달라 값 비교는 사람이 판단)
     const pptVers = [...new Set((pptText.match(/\d+\.\d+(\.\d+){0,3}(MP\d+|RU\d+|HF)?/gi) || []))];
     if (nsi.versions.length && pptVers.length && nsi.versions.length !== pptVers.length) {
@@ -244,7 +284,7 @@ function nscRules(nsi, ppt) {
   }
   const order = { high: 0, med: 1, low: 2 };
   F.sort((a, b) => order[a.level] - order[b.level]);
-  return F;
+  return { findings: F, steps };
 }
 
 /* ── 화면 ───────────────────────────────────────────────────────────────── */
@@ -263,8 +303,13 @@ async function nscPickNsi(input) {
     const parsed = nscParseNsi(text); parsed._raw = text;
     NSC.nsi = parsed; NSC.nsiName = file.name;
     info.innerHTML = `<b style="color:var(--text2)">${escapeHtml(file.name)}</b> · ${parsed.lines}줄 · 인코딩 ${enc}`
-      + ` · 분기 ${parsed.chains.length} · 버전 ${parsed.versions.length} · 실행 ${parsed.execs.length}`;
+      + ` · 분기 ${parsed.chains.length} · 버전 ${parsed.versions.length} · 실행 ${parsed.execs.length}`
+      + ` <span class="u-muted-10">· ${nscNowLabel()} 읽음</span>`;
   } catch (e) { info.innerHTML = `<span style="color:var(--danger)">읽기 실패: ${escapeHtml(e.message)}</span>`; }
+  /* ⚠️ 값을 비워야 '같은 파일'을 다시 골랐을 때도 change 가 뜬다.
+     안 비우면 파일 내용을 고쳐도 브라우저가 이벤트를 안 쏴서 예전 파싱 결과가 그대로 남는다. */
+  input.value = '';
+  if (NSC.nsi) nscRun();
 }
 async function nscPickPpt(input) {
   const file = input.files && input.files[0]; if (!file) return;
@@ -275,20 +320,23 @@ async function nscPickPpt(input) {
     NSC.ppt = slides; NSC.pptName = file.name;
     const shp = slides.reduce((s, x) => s + x.shapes, 0), cn = slides.reduce((s, x) => s + x.conns, 0);
     info.innerHTML = `<b style="color:var(--text2)">${escapeHtml(file.name)}</b> · 슬라이드 ${slides.length} · 도형 ${shp} · 연결선 ${cn}`
+      + ` <span class="u-muted-10">· ${nscNowLabel()} 읽음</span>`
       + (shp === 0 ? ' <span style="color:var(--warn)">— 도형이 없습니다(이미지 순서도는 읽지 못합니다)</span>' : '');
   } catch (e) { info.innerHTML = `<span style="color:var(--danger)">읽기 실패: ${escapeHtml(e.message)}</span>`; }
+  input.value = '';                       // 같은 파일 재선택 대응 (위 주석 참조)
+  if (NSC.nsi) nscRun();
 }
 function nscRun() {
   const box = document.getElementById('nsc-result'); if (!box) return;
   if (!NSC.nsi) { box.innerHTML = '<div class="u-empty">.nsi 파일을 먼저 선택하세요.</div>'; return; }
   const pick = nscPickSlides(NSC.nsi, NSC.ppt);
-  const F = nscRules(NSC.nsi, pick.slides);
+  const { findings: F, steps } = nscRules(NSC.nsi, pick.slides);
   const LV = { high: ['🔴', 'var(--danger)', '즉시 확인'], med: ['🟡', 'var(--warn)', '유지보수 위험'], low: ['🔵', 'var(--cyan)', '개선 제안'] };
   const cnt = { high: 0, med: 0, low: 0 }; F.forEach(f => cnt[f.level]++);
   const head = `<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin-bottom:14px">
     ${['high', 'med', 'low'].map(k => `<div class="kpi"><div class="kpi-val" style="color:${LV[k][1]}">${cnt[k]}</div><div class="kpi-label">${LV[k][0]} ${LV[k][2]}</div></div>`).join('')}
   </div>`;
-  const meta = `<div class="u-muted-10" style="margin-bottom:10px">${escapeHtml(NSC.nsiName)}${NSC.pptName ? ' ↔ ' + escapeHtml(NSC.pptName) : ' <span style="color:var(--warn)">(순서도 없음 — 코드 규칙만 검사)</span>'} · 규칙 기반 검사(AI 미사용) · 파일은 브라우저 밖으로 나가지 않습니다${pick.note ? '<br>' + escapeHtml(pick.note) : ''}</div>`;
+  const meta = `<div class="u-muted-10" style="margin-bottom:10px">${escapeHtml(NSC.nsiName)}${NSC.pptName ? ' ↔ ' + escapeHtml(NSC.pptName) : ' <span style="color:var(--warn)">(순서도 없음 — 코드 규칙만 검사)</span>'} · ${nscNowLabel()} 검사 · 규칙 기반(AI 미사용) · 파일은 브라우저 밖으로 나가지 않습니다${pick.note ? '<br>' + escapeHtml(pick.note) : ''}</div>`;
   const rows = F.map(f => `<div class="panel" style="padding:11px 13px;margin-bottom:8px;border-left:3px solid ${LV[f.level][1]}">
       <div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">
         <span>${LV[f.level][0]}</span>
@@ -299,11 +347,27 @@ function nscRun() {
       ${f.where ? `<div class="u-muted-10" style="margin-top:4px;font-family:var(--mono,monospace)">${escapeHtml(f.where)}</div>` : ''}
       ${f.suggest ? `<div style="font-size:11.5px;color:var(--success);margin-top:5px">💡 ${escapeHtml(f.suggest)}</div>` : ''}
     </div>`).join('');
-  box.innerHTML = meta + head + (rows || '<div class="u-empty">규칙 위반이 없습니다.</div>');
+  // 지적이 없어도 무엇을 대조했는지 보여준다 — "비교를 안 한 것 같다"는 오해를 막는다.
+  const table = steps.length ? `<div class="panel" style="padding:10px 13px;margin-bottom:10px">
+    <div class="u-muted-10" style="margin-bottom:6px">단계별 대조 — 순서도 ↔ 스크립트</div>
+    <table class="srt" style="width:100%;border-collapse:collapse;font-size:12px">
+      <thead><tr><th style="text-align:left;padding:4px 0">단계</th><th>순서도</th><th>스크립트</th><th style="text-align:right">위치</th></tr></thead>
+      <tbody>${steps.map(x => `<tr>
+        <td style="padding:3px 0">${escapeHtml(x.label)}</td>
+        <td style="text-align:center">${x.ppt ? '✅' : '<span class="u-muted-10">—</span>'}</td>
+        <td style="text-align:center">${x.code ? '✅' : '<span class="u-muted-10">—</span>'}</td>
+        <td style="text-align:right" class="u-muted-10">${x.line ? x.line + '행' : '-'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>` : '';
+  box.innerHTML = meta + head + table + (rows || '<div class="u-empty">규칙 위반이 없습니다.</div>');
+}
+function nscNowLabel() {
+  const d = new Date(), p = n => String(n).padStart(2, '0');
+  return `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;
 }
 function nscCopyReport() {
   if (!NSC.nsi) { toast('검사 결과가 없습니다', true); return; }
-  const F = nscRules(NSC.nsi, nscPickSlides(NSC.nsi, NSC.ppt).slides);
+  const { findings: F } = nscRules(NSC.nsi, nscPickSlides(NSC.nsi, NSC.ppt).slides);
   const t = [`NSIS 정합성 검사 — ${NSC.nsiName}${NSC.pptName ? ' ↔ ' + NSC.pptName : ''}`, ''];
   F.forEach(f => { t.push(`[${f.level.toUpperCase()}] ${f.rule} ${f.title}`); t.push(`  ${f.detail}`); if (f.where) t.push(`  위치: ${f.where}`); if (f.suggest) t.push(`  제안: ${f.suggest}`); t.push(''); });
   if (!F.length) t.push('규칙 위반 없음');
