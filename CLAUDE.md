@@ -13,7 +13,7 @@ ESCARE 보안기술팀 내부 통합 허브. **아래 수치는 2026-08-07 실�
   **`index.html`의 `<script src>` 순서가 곧 의존 순서.** `<script>` 19개는 **전부 `src=`** 라 인라인 스크립트는 0개.
 - **워커**: `worker.js`(2,130줄) + `src/` 11모듈(audit auth config items jira kb kv push sales settings vt), 엔드포인트 **71개**.
 - **페이지**: dash issues cases customers owners sales eos vt nsischk links knowledge audit settings mydesk compat monitor quiz quizadmin
-현재 버전: **v1.9.0** (웹 푸시 알림)
+현재 버전: **v2.0** · 화면 우상단/사이드바에 개발·운영 배지(html[data-env], js/00-theme-init.js)
 
 **문법 검사 CI**: `.github/workflows/syntax.yml`(push·PR마다). **검사만** 하고 배포는 안 한다 — Pages 자동 빌드는 Actions 결과와 무관하므로 차단이 아니라 알림이다.
 

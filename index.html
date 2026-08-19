@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
-<title>ENGR AI v1.9.0 - ESCARE Security Hub</title>
+<title>ENGR AI v2.0 - ESCARE Security Hub</title>
 <!-- PWA: 홈 화면에 추가 시 앱처럼 실행 (URL 입력 불필요) -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#211D22">
@@ -371,6 +371,12 @@ html[data-theme="light"] .btn-primary:hover,html[data-theme="light"] .btn-succes
 .danger-section{border-color:rgba(248,113,113,.28)}
 .danger-section>summary:after{color:#F3CFC9;border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.08)}
 .danger-card{border-color:rgba(248,113,113,.28);background:rgba(248,113,113,.045)}
+/* 개발/운영 구분 배지 — 문구는 <html data-env>(js/00-theme-init.js)가 정한다 */
+.sb-env{display:inline-block;margin-left:5px;font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:1px 6px;border-radius:8px;vertical-align:middle}
+.sb-env::after{content:'운영'}
+html[data-env="prod"] .sb-env{background:color-mix(in srgb,var(--success) 18%,transparent);color:var(--success)}
+html[data-env="dev"] .sb-env{background:color-mix(in srgb,var(--warn) 22%,transparent);color:var(--warn)}
+html[data-env="dev"] .sb-env::after{content:'개발'}
 /* ── 관리자 설정 레이아웃 ──
    접힌 섹션은 2열로 늘어놓고, 펼친 섹션만 전폭 + 내부 카드도 2열.
    #page-settings 로 시작해 뒤쪽 v158/모바일 블록보다 우선한다. */
@@ -1082,7 +1088,7 @@ html[data-theme="light"] .top-clock .tc-time{color:var(--card)}
 }
 </style>
 
-<script src="js/00-theme-init.js?b=202608191247"></script>
+<script src="js/00-theme-init.js?b=202608191254"></script>
 <style id="theme-style">
 .top-theme{height:34px;border-radius:12px;border:1px solid var(--control-border);background:var(--surface-tint-2);color:var(--control-text);font-family:inherit;font-size:11px;font-weight:800;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;white-space:nowrap}
 .top-theme:hover{background:rgba(239,131,84,.2);border-color:rgba(239,131,84,.42)}
@@ -1850,7 +1856,7 @@ body.is-sales #nav-sales{display:flex!important}
     <div class="sb-top">
       <div class="sb-brand">
         <div class="sb-icon"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div>
-        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(217,96,59,.25);color:var(--accent3);font-size:10px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v1.9.0</span></div></div>
+        <div><div class="sb-name">ENGR AI</div><div class="sb-sub">Security Hub <span style="background:rgba(217,96,59,.25);color:var(--accent3);font-size:10px;padding:1px 6px;border-radius:8px;font-weight:700;letter-spacing:.5px">v2.0</span><span class="sb-env"></span></div></div>
       </div>
       <div class="sb-nav">
         <button class="sb-btn active" id="nav-dash" onclick="showPage('dash',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>홈</button>
@@ -2792,22 +2798,22 @@ body.is-sales #nav-sales{display:flex!important}
   </main>
 </div>
 
-<script src="js/01-core.js?b=202608191247"></script>
-<script src="js/02-issues-ai.js?b=202608191247"></script>
-<script src="js/03-eos-links.js?b=202608191247"></script>
-<script src="js/04-vt-audit.js?b=202608191247"></script>
-<script src="js/05-admin-knowledge.js?b=202608191247"></script>
-<script src="js/06-storage-mydesk.js?b=202608191247"></script>
-<script src="js/07-jira-sync.js?b=202608191247"></script>
-<script src="js/08-filters-vt.js?b=202608191247"></script>
-<script src="js/09-render-topbar.js?b=202608191247"></script>
-<script src="js/10-features-monitor.js?b=202608191247"></script>
-<script src="js/11-mobile.js?b=202608191247"></script>
-<script src="js/12-mydesk.js?b=202608191247"></script>
-<script src="js/13-sales.js?b=202608191247"></script>
-<script src="js/14-ia.js?b=202608191247"></script>
-<script src="js/15-owners.js?b=202608191247"></script>
-<script src="js/16-quiz.js?b=202608191247"></script>
-<script src="js/17-nsischk.js?b=202608191247"></script>
+<script src="js/01-core.js?b=202608191254"></script>
+<script src="js/02-issues-ai.js?b=202608191254"></script>
+<script src="js/03-eos-links.js?b=202608191254"></script>
+<script src="js/04-vt-audit.js?b=202608191254"></script>
+<script src="js/05-admin-knowledge.js?b=202608191254"></script>
+<script src="js/06-storage-mydesk.js?b=202608191254"></script>
+<script src="js/07-jira-sync.js?b=202608191254"></script>
+<script src="js/08-filters-vt.js?b=202608191254"></script>
+<script src="js/09-render-topbar.js?b=202608191254"></script>
+<script src="js/10-features-monitor.js?b=202608191254"></script>
+<script src="js/11-mobile.js?b=202608191254"></script>
+<script src="js/12-mydesk.js?b=202608191254"></script>
+<script src="js/13-sales.js?b=202608191254"></script>
+<script src="js/14-ia.js?b=202608191254"></script>
+<script src="js/15-owners.js?b=202608191254"></script>
+<script src="js/16-quiz.js?b=202608191254"></script>
+<script src="js/17-nsischk.js?b=202608191254"></script>
 </body>
 </html>
