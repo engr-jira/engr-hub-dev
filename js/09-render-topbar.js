@@ -298,7 +298,18 @@ function renderAIBriefing(d){
   if(t.focus)secs.push(`<div class="chart-card"><h4>🚨 지금 관리 필요</h4>${briefList(t.focus,'line','#E06A63')}</div>`);
   if(t.patterns)secs.push(`<div class="chart-card"><h4>🏢 고객사 이슈·응답 패턴</h4>${briefList(t.patterns,'sent','#9F6BB5')}</div>`);
   if(t.monthly||hasArch)secs.push(`<div class="chart-card"><h4>📰 월간 헤드라인</h4>${t.monthly?briefList(t.monthly,'sent','#3FA3C4'):''}${archiveBriefBlock(arch)}</div>`);
-  wrap.innerHTML=`<div class="u-fs11px-ctext3-mb8px">🕐 ${fmtBuiltAt(d.last_run||d.built_at)} 최근 분석 · 우리팀 보안 브리핑 · 매일 오전 자동 분석 · 이슈 ${(d.issueKeys||[]).length}건 · 이슈키 클릭 시 이동</div><div class="chart-grid u-gridtemplatecolumns-repeatautofi">${secs.join('')||'<div class="chart-card"><div class="u-fs12px-ctext3">팀 리포트가 아직 없습니다</div></div>'}</div>`;
+  wrap.innerHTML=`<div class="u-fs11px-ctext3-mb8px">🕐 ${fmtBuiltAt(d.last_run||d.built_at)} 최근 분석 · 우리팀 보안 브리핑 · 매일 새벽 자동 갱신 · 이슈 ${(d.issueKeys||[]).length}건 · 이슈키 클릭 시 이동</div><div class="chart-grid u-gridtemplatecolumns-repeatautofi">${secs.join('')||'<div class="chart-card"><div class="u-fs12px-ctext3">팀 리포트가 아직 없습니다</div></div>'}</div>`;
+}
+// AI 분석 갱신 주기 안내 — 팀원이 "왜 아직 안 바뀌지?" 로 헤매지 않도록 분석 화면에 상시 노출.
+// 디자인 간섭을 줄이려고 본문 톤(작은 글씨 + 좌측 강조선)만 쓰고 배경 카드는 만들지 않는다.
+function aiScheduleNoteHtml(){
+  return '<div style="font-size:10.5px;line-height:1.6;color:var(--text3);background:var(--surface-tint);'
+    + 'border-left:2px solid color-mix(in srgb,var(--accent) 45%,transparent);border-radius:0 8px 8px 0;'
+    + 'padding:6px 10px;margin:0 0 8px">'
+    + '🕓 AI 분석은 <b style="color:var(--text2)">매일 새벽 자동 갱신</b>됩니다 · '
+    + '재분석을 요청해도 <b style="color:var(--text2)">다음 날 새벽</b>에 반영됩니다 · '
+    + '더 빨리 필요하면 <b style="color:var(--accent)">관리자(mj.park)</b>에게 문의해 주세요'
+    + '</div>';
 }
 async function renderIssueAnalysis(key,secId){
   const sec=document.getElementById(secId||'ai-analysis-sec'); if(!sec||!key)return;
@@ -308,7 +319,7 @@ async function renderIssueAnalysis(key,secId){
   try{
     const d=await hubApi('/analysis/issue/'+encodeURIComponent(key));
     const a=d.analysis;
-    if(!a){sec.innerHTML=`<div class="u-fs10px-ctext3-fw700-m4px06p">🤖 AI 분석 (스케줄)</div><div style="font-size:11.5px;color:var(--text3);background:var(--surface-tint);border:1px dashed var(--border);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>이 이슈는 최근 분석 대상에 포함되지 않았습니다. 다음 주기(07:00/15:30)에 변경된 이슈 위주로 분석됩니다.</span>${btn}</div>`;return;}
+    if(!a){sec.innerHTML=`<div class="u-fs10px-ctext3-fw700-m4px06p">🤖 AI 분석 (스케줄)</div>${aiScheduleNoteHtml()}<div style="font-size:11.5px;color:var(--text3);background:var(--surface-tint);border:1px dashed var(--border);border-radius:8px;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px"><span>이 이슈는 아직 분석 대상에 포함되지 않았습니다. 매일 새벽 분석에서 변경된 이슈 위주로 채워집니다.</span>${btn}</div>`;return;}
     const rows=[];
     if(a.summary)rows.push(`<div class="u-mb-8px"><b style="color:var(--text)">📋 내용 요약</b><div class="u-ws-prewrap">${escapeHtml(String(a.summary))}</div></div>`);
     if(a.tech_analysis)rows.push(`<div class="u-mb-8px"><b style="color:#9F6BB5">🧪 기술 분석</b><div class="u-ws-prewrap">${escapeHtml(String(a.tech_analysis))}</div></div>`);
@@ -318,11 +329,11 @@ async function renderIssueAnalysis(key,secId){
     if(a.reply_draft){const rid=(secId||'ai-analysis-sec')+'-reply';rows.push(`<div class="u-mb-8px"><div style="display:flex;justify-content:space-between;align-items:center"><b style="color:var(--cyan)">✉️ 고객사 회신 멘트</b><button class="btn btn-ghost" style="width:auto;padding:2px 9px;font-size:10px" onclick="copyText(document.getElementById('${rid}').innerText)">📋 복사</button></div><div id="${rid}" style="white-space:pre-wrap;background:rgba(63,163,196,.06);border:1px solid rgba(63,163,196,.2);border-radius:8px;padding:9px 11px;margin-top:5px">${escapeHtml(String(a.reply_draft))}</div></div>`);}
     if(a.log_findings)rows.push(`<div style="margin-bottom:8px"><b style="color:var(--cyan)">📎 첨부 로그 분석</b><div style="white-space:pre-wrap">${escapeHtml(String(a.log_findings))}</div></div>`);
     if(a.due_risk)rows.push(`<div><b class="u-c-f87171">⏰ 기한 리스크</b><div class="u-ws-prewrap">${escapeHtml(String(a.due_risk))}</div></div>`);
-    sec.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 6px"><span style="font-size:10px;color:var(--text3);font-weight:700">🤖 AI 분석 · ${fmtBuiltAt(a.built_at)} 기준</span>${btn}</div><div style="font-size:12px;line-height:1.65;color:var(--text2);background:rgba(239,131,84,.06);border:1px solid rgba(239,131,84,.22);border-radius:12px;padding:12px 14px">${rows.join('')||'<span class="u-muted">내용 없음</span>'}</div>`;
+    sec.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin:4px 0 6px"><span style="font-size:10px;color:var(--text3);font-weight:700">🤖 AI 분석 · ${fmtBuiltAt(a.built_at)} 기준</span>${btn}</div>${aiScheduleNoteHtml()}<div style="font-size:12px;line-height:1.65;color:var(--text2);background:rgba(239,131,84,.06);border:1px solid rgba(239,131,84,.22);border-radius:12px;padding:12px 14px">${rows.join('')||'<span class="u-muted">내용 없음</span>'}</div>`;
   }catch(e){sec.innerHTML=`<div class="u-muted-11">AI 분석 조회 실패: ${escapeHtml(e.message)}</div>`;}
 }
 async function requestReanalysis(key){
-  try{ await hubApi('/analysis/request/'+encodeURIComponent(key),{method:'POST'}); toast(`${key} 재분석 요청 등록 — 다음 실행 시 우선 분석됩니다`); }
+  try{ await hubApi('/analysis/request/'+encodeURIComponent(key),{method:'POST'}); toast(`${key} 재분석 요청 등록 — 다음 날 새벽 분석에 우선 반영됩니다`); }
   catch(e){ toast('요청 실패: '+e.message,true); }
 }
 function showPage(name,btn){
