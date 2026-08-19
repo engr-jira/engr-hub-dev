@@ -1277,21 +1277,22 @@ export default {
       if (path === '/knowledge' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const body = await request.json().catch(() => ({}));
-        const raw = await env.ENGR_KV.get('config:knowledge');
-        let items = raw ? JSON.parse(raw) : [];
-        const newItem = {
-          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-          product: body.product || '\uAE30\uD0C0',
-          category: body.category || '\uD301',
-          title: body.title || '',
-          content: body.content || '',
-          link: body.link || '',
-          comments: [],
-          createdBy: user,
-          createdAt: new Date().toISOString(),
-        };
-        items.push(newItem);
-        await env.ENGR_KV.put('config:knowledge', JSON.stringify(items));
+        const m = await kvMutateArray(env, 'config:knowledge', (items) => {
+          const it = {
+            id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+            product: body.product || '기타',
+            category: body.category || '팁',
+            title: body.title || '',
+            content: body.content || '',
+            link: body.link || '',
+            comments: [],
+            createdBy: user,
+            createdAt: new Date().toISOString(),
+          };
+          return { list: [...items, it], value: it };
+        });
+        if (m.conflict) return corsResponse(KV_CONFLICT_RESPONSE, 409);
+        const newItem = m.value;
         await auditLog(env, user, 'KNOWLEDGE_ADD', { product: newItem.product, title: newItem.title });
         ctx.waitUntil(pushNotify(env, 'knowledge', user, { target: newItem.title || newItem.product || '노하우' }));
         return corsResponse({ ok: true, item: newItem });
@@ -1316,27 +1317,29 @@ export default {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const id = decodeURIComponent(path.split('/')[2]);  // L-10: \uB313\uAE00 \uB77C\uC6B0\uD2B8\uC640 \uB514\uCF54\uB529 \uD1B5\uC77C
         const body = await request.json().catch(() => ({}));
-        const raw = await env.ENGR_KV.get('config:knowledge');
-        let items = raw ? JSON.parse(raw) : [];
-        const target = items.find(it => it.id === id);
-        if (!await canModifyItem(env, user, target)) return corsResponse({ ok: false, message: '\uC791\uC131\uC790 \uB610\uB294 \uAD00\uB9AC\uC790\uB9CC \uC218\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
-        const kf = {}; ['product', 'category', 'title', 'content', 'link'].forEach(k => { if (body[k] !== undefined) kf[k] = body[k]; });  // M-4: 허용 필드만(createdBy/createdAt/comments 보존)
-        items = items.map(it => it.id === id ? { ...it, ...kf, id, updatedBy: user, updatedAt: new Date().toISOString() } : it);
-        await env.ENGR_KV.put('config:knowledge', JSON.stringify(items));
-        await auditLog(env, user, 'KNOWLEDGE_UPDATE', { id, title: body.title || target?.title });
+        const m = await kvMutateArray(env, 'config:knowledge', async (items) => {
+          const target = items.find(it => it.id === id);
+          if (!await canModifyItem(env, user, target)) return { abort: { body: { ok: false, message: '작성자 또는 관리자만 수정할 수 있습니다.' }, status: 403 } };
+          const kf = {}; ['product', 'category', 'title', 'content', 'link'].forEach(k => { if (body[k] !== undefined) kf[k] = body[k]; });
+          return { list: items.map(it => it.id === id ? { ...it, ...kf, id, updatedBy: user, updatedAt: new Date().toISOString() } : it), value: { title: target && target.title } };
+        });
+        if (m.abort) return corsResponse(m.abort.body, m.abort.status);
+        if (m.conflict) return corsResponse(KV_CONFLICT_RESPONSE, 409);
+        await auditLog(env, user, 'KNOWLEDGE_UPDATE', { id, title: body.title || (m.value && m.value.title) });
         return corsResponse({ ok: true });
       }
       //
       if (path.startsWith('/knowledge/') && request.method === 'DELETE') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const id = decodeURIComponent(path.split('/')[2]);  // L-10: \uB313\uAE00 \uB77C\uC6B0\uD2B8\uC640 \uB514\uCF54\uB529 \uD1B5\uC77C
-        const raw = await env.ENGR_KV.get('config:knowledge');
-        let items = raw ? JSON.parse(raw) : [];
-        const target = items.find(it => it.id === id);
-        if (!await canModifyItem(env, user, target)) return corsResponse({ ok: false, message: '\uC791\uC131\uC790 \uB610\uB294 \uAD00\uB9AC\uC790\uB9CC \uC0AD\uC81C\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
-        items = items.filter(it => it.id !== id);
-        await env.ENGR_KV.put('config:knowledge', JSON.stringify(items));
-        await auditLog(env, user, 'KNOWLEDGE_DELETE', { id, title: target?.title });
+        const m = await kvMutateArray(env, 'config:knowledge', async (items) => {
+          const target = items.find(it => it.id === id);
+          if (!await canModifyItem(env, user, target)) return { abort: { body: { ok: false, message: '작성자 또는 관리자만 삭제할 수 있습니다.' }, status: 403 } };
+          return { list: items.filter(it => it.id !== id), value: { title: target && target.title } };
+        });
+        if (m.abort) return corsResponse(m.abort.body, m.abort.status);
+        if (m.conflict) return corsResponse(KV_CONFLICT_RESPONSE, 409);
+        await auditLog(env, user, 'KNOWLEDGE_DELETE', { id, title: m.value && m.value.title });
         return corsResponse({ ok: true });
       }
 
@@ -1351,24 +1354,25 @@ export default {
       if (path === '/eos' && request.method === 'POST') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const body = await request.json().catch(() => ({}));
-        const raw = await env.ENGR_KV.get('config:eos');
-        let items = raw ? JSON.parse(raw) : [];
-        const newItem = {
-          id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
-          customer: body.customer || '',
-          productDesc: body.productDesc || '',
-          siteId: body.siteId || '',
-          quantity: body.quantity || '',
-          serial: body.serial || '',
-          startDate: okDate(body.startDate),
-          perpetual: !!body.perpetual,                                  // Perpetual = 만료 없음
-          expireDate: body.perpetual ? '' : okDate(body.expireDate),   // End Date (지원/만료 종료일 — D-day 기준)
-          memo: body.memo || '',
-          createdBy: user,
-          createdAt: new Date().toISOString(),
-        };
-        items.push(newItem);
-        await env.ENGR_KV.put('config:eos', JSON.stringify(items));
+        const m = await kvMutateArray(env, 'config:eos', (items) => {
+          const it = {
+            id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+            customer: body.customer || '',
+            productDesc: body.productDesc || '',
+            siteId: body.siteId || '',
+            quantity: body.quantity || '',
+            serial: body.serial || '',
+            startDate: okDate(body.startDate),
+            perpetual: !!body.perpetual,                                  // Perpetual = 만료 없음
+            expireDate: body.perpetual ? '' : okDate(body.expireDate),   // End Date (지원/만료 종료일 — D-day 기준)
+            memo: body.memo || '',
+            createdBy: user,
+            createdAt: new Date().toISOString(),
+          };
+          return { list: [...items, it], value: it };
+        });
+        if (m.conflict) return corsResponse(KV_CONFLICT_RESPONSE, 409);
+        const newItem = m.value;
         await auditLog(env, user, 'EOS_ADD', { customer: newItem.customer, product: newItem.productDesc, expire: newItem.expireDate });
         ctx.waitUntil(pushNotify(env, 'eos', user, { target: [newItem.productDesc, newItem.customer].filter(Boolean).join(' / ') || '라이선스' }));
         return corsResponse({ ok: true, item: newItem });
@@ -1379,22 +1383,24 @@ export default {
         const items = Array.isArray(body.items) ? body.items : [];
         if (!items.length) return corsResponse({ ok: false, message: '등록할 항목이 없습니다.' }, 400);
         if (items.length > 200) return corsResponse({ ok: false, message: '한 번에 최대 200건까지 등록할 수 있습니다.' }, 400);  // M-8: KV 비대화 방지
-        const raw = await env.ENGR_KV.get('config:eos');
-        let store = raw ? JSON.parse(raw) : [];
-        const created = [];
-        for (const b of items) {
-          if (!b || !b.productDesc) continue;
-          const it = {
-            id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-            customer: b.customer || '', productDesc: b.productDesc || '', siteId: b.siteId || '',
-            quantity: b.quantity || '', serial: b.serial || '', startDate: okDate(b.startDate),
-            perpetual: !!b.perpetual, expireDate: b.perpetual ? '' : okDate(b.expireDate),
-            memo: b.memo || '', createdBy: user, createdAt: new Date().toISOString(),
-          };
-          store.push(it); created.push(it);
-        }
-        if (!created.length) return corsResponse({ ok: false, message: 'Product Description이 있는 항목이 없습니다.' }, 400);
-        await env.ENGR_KV.put('config:eos', JSON.stringify(store));
+        const m = await kvMutateArray(env, 'config:eos', (store) => {
+          const made = [];
+          for (const b of items) {
+            if (!b || !b.productDesc) continue;
+            made.push({
+              id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+              customer: b.customer || '', productDesc: b.productDesc || '', siteId: b.siteId || '',
+              quantity: b.quantity || '', serial: b.serial || '', startDate: okDate(b.startDate),
+              perpetual: !!b.perpetual, expireDate: b.perpetual ? '' : okDate(b.expireDate),
+              memo: b.memo || '', createdBy: user, createdAt: new Date().toISOString(),
+            });
+          }
+          if (!made.length) return { abort: { body: { ok: false, message: 'Product Description이 있는 항목이 없습니다.' }, status: 400 } };
+          return { list: [...store, ...made], value: made };
+        });
+        if (m.abort) return corsResponse(m.abort.body, m.abort.status);
+        if (m.conflict) return corsResponse(KV_CONFLICT_RESPONSE, 409);
+        const created = m.value;
         await auditLog(env, user, 'EOS_ADD_BULK', { count: created.length, customer: created[0].customer });
         const cust = created[0].customer || '';
         const tgt = created.length > 1 ? `${cust} ${created[0].productDesc} 외 ${created.length - 1}건` : [created[0].productDesc, cust].filter(Boolean).join(' / ');
@@ -1405,33 +1411,36 @@ export default {
       if (path.startsWith('/eos/') && request.method === 'DELETE') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const id = path.split('/')[2];
-        const raw = await env.ENGR_KV.get('config:eos');
-        let items = raw ? JSON.parse(raw) : [];
-        const target = items.find(it => it.id === id);
-        if (!await canModifyItem(env, user, target)) return corsResponse({ ok: false, message: '\uC791\uC131\uC790 \uB610\uB294 \uAD00\uB9AC\uC790\uB9CC \uC0AD\uC81C\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
-        const before = items.length;
-        items = items.filter(it => it.id !== id);
-        await env.ENGR_KV.put('config:eos', JSON.stringify(items));
+        const m = await kvMutateArray(env, 'config:eos', async (items) => {
+          const target = items.find(it => it.id === id);
+          if (!await canModifyItem(env, user, target)) return { abort: { body: { ok: false, message: '작성자 또는 관리자만 삭제할 수 있습니다.' }, status: 403 } };
+          const next = items.filter(it => it.id !== id);
+          return { list: next, value: { deleted: items.length - next.length } };
+        });
+        if (m.abort) return corsResponse(m.abort.body, m.abort.status);
+        if (m.conflict) return corsResponse(KV_CONFLICT_RESPONSE, 409);
         await auditLog(env, user, 'EOS_DELETE', { id });
-        return corsResponse({ ok: true, deleted: before - items.length });
+        return corsResponse({ ok: true, deleted: m.value ? m.value.deleted : 0 });
       }
       //
       if (path.startsWith('/eos/') && request.method === 'PUT') {
         if (!hasSession) return corsResponse({ ok: false, message: '\uB85C\uADF8\uC778\uC774 \uD544\uC694\uD569\uB2C8\uB2E4.' }, 401);
         const id = path.split('/')[2];
         const body = await request.json().catch(() => ({}));
-        const raw = await env.ENGR_KV.get('config:eos');
-        let items = raw ? JSON.parse(raw) : [];
-        const target = items.find(it => it.id === id);
-        if (!await canModifyItem(env, user, target)) return corsResponse({ ok: false, message: '\uC791\uC131\uC790 \uB610\uB294 \uAD00\uB9AC\uC790\uB9CC \uC218\uC815\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.' }, 403);
-        const ef = {}; ['customer', 'productDesc', 'siteId', 'quantity', 'serial', 'memo'].forEach(k => { if (body[k] !== undefined) ef[k] = body[k]; });  // M-3/M-7: 허용필드+날짜검증
-        if (body.startDate !== undefined) ef.startDate = okDate(body.startDate);
-        if (body.perpetual !== undefined) ef.perpetual = !!body.perpetual;
-        if (body.expireDate !== undefined) ef.expireDate = okDate(body.expireDate);
-        if (ef.perpetual) ef.expireDate = '';   // Perpetual이면 만료일은 항상 비운다(D-day·갱신 대상에서 제외)
-        items = items.map(it => it.id === id ? { ...it, ...ef, id, updatedBy: user, updatedAt: new Date().toISOString() } : it);
-        await env.ENGR_KV.put('config:eos', JSON.stringify(items));
-        await auditLog(env, user, 'EOS_UPDATE', { id, customer: target?.customer, product: body.productDesc || target?.productDesc, expire: body.expireDate || target?.expireDate });
+        const m = await kvMutateArray(env, 'config:eos', async (items) => {
+          const target = items.find(it => it.id === id);
+          if (!await canModifyItem(env, user, target)) return { abort: { body: { ok: false, message: '작성자 또는 관리자만 수정할 수 있습니다.' }, status: 403 } };
+          const ef = {}; ['customer', 'productDesc', 'siteId', 'quantity', 'serial', 'memo'].forEach(k => { if (body[k] !== undefined) ef[k] = body[k]; });  // M-3/M-7: 허용필드+날짜검증
+          if (body.startDate !== undefined) ef.startDate = okDate(body.startDate);
+          if (body.perpetual !== undefined) ef.perpetual = !!body.perpetual;
+          if (body.expireDate !== undefined) ef.expireDate = okDate(body.expireDate);
+          if (ef.perpetual) ef.expireDate = '';   // Perpetual이면 만료일은 항상 비운다(D-day·갱신 대상에서 제외)
+          return { list: items.map(it => it.id === id ? { ...it, ...ef, id, updatedBy: user, updatedAt: new Date().toISOString() } : it), value: { customer: target && target.customer, productDesc: target && target.productDesc, expireDate: target && target.expireDate } };
+        });
+        if (m.abort) return corsResponse(m.abort.body, m.abort.status);
+        if (m.conflict) return corsResponse(KV_CONFLICT_RESPONSE, 409);
+        const prev = m.value || {};
+        await auditLog(env, user, 'EOS_UPDATE', { id, customer: prev.customer, product: body.productDesc || prev.productDesc, expire: body.expireDate || prev.expireDate });
         return corsResponse({ ok: true });
       }
 

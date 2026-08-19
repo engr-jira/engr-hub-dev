@@ -2,6 +2,7 @@
 // (worker.js에서 이동. 로직 변경 없음)
 
 import { auditLog } from './audit.js';
+import { kvMutateArray } from './kv.js';
 
 export const KB_PRODUCT_SEED = [
   { product:'DLP', q:'Symantec Data Loss Prevention DLP', topics:['install upgrade','agent endpoint','policy detection','incident response','enforce server','database oracle','email prevent','network prevent','discover scan','troubleshooting logs'] },
@@ -160,6 +161,7 @@ export async function importFreeKbLinks(env, user, years=5, opts={}){
   const raw = await env.ENGR_KV.get('config:links') || await env.ENGR_KV.get('links');
   const links = raw ? JSON.parse(raw) : [];
   const cutoff = new Date(); cutoff.setUTCFullYear(cutoff.getUTCFullYear() - years);
+  const addedEntries = [];   // 마지막에 최신 배열로 병합할 신규 항목
   const limit = Math.max(1, Math.min(120, parseInt(opts.limit || '80', 10) || 80));
   const candidates = [
     ...KB_VERIFIED_SEED.map(x=>({ ...x, source:'curated_seed' })),
@@ -181,7 +183,7 @@ export async function importFreeKbLinks(env, user, years=5, opts={}){
     const article = await verifyKbArticle({ ...candidate, url:normalized.url, product:candidate.product || 'Broadcom', title:candidate.title || '' }, cutoff);
     if(!article.ok){ inaccessible++; continue; }
     const now = new Date().toISOString();
-    links.unshift({
+    const entry = {
       id: crypto.randomUUID(),
       category:'Broadcom KB',
       product:article.product,
@@ -195,12 +197,22 @@ export async function importFreeKbLinks(env, user, years=5, opts={}){
       verifiedAt:now,
       createdBy:user || 'system',
       createdAt:now
-    });
+    };
+    links.unshift(entry);
+    addedEntries.push(entry);
     existingArticleIds.add(article.articleId);
     existingUrls.add(article.url);
     imported++;
   }
-  if(imported > 0)await env.ENGR_KV.put('config:links', JSON.stringify(links));
+  if(addedEntries.length){
+    const m = await kvMutateArray(env, 'config:links', (cur) => {
+      const ids = new Set(cur.map(l => String(l.articleId || '')).filter(Boolean));
+      const urls = new Set(cur.map(l => String(l.url || '').replace(/[?#].*$/, '')));
+      const fresh = addedEntries.filter(e => !ids.has(String(e.articleId || '')) && !urls.has(String(e.url || '').replace(/[?#].*$/, '')));
+      return { list: fresh.length ? [...fresh, ...cur] : cur, value: { added: fresh.length } };
+    });
+    if(m && m.value) imported = m.value.added;   // 실제로 저장된 건수로 보정
+  }
   await auditLog(env, user || 'system', 'LINK_KB_IMPORT', { years, imported, duplicated, inaccessible, scanned, discovered, mode:'free_verified' });
   return { ok:true, imported, added:imported, duplicated, skipped:duplicated, inaccessible, scanned, discovered, years, total:links.length, attempts:0, errors:0, nextCursor:null, mode:'free_verified', cost:'free' };
 }
@@ -247,6 +259,7 @@ export async function importPaidKbLinks(env, user, years=5, opts={}){
   }
   const raw = await env.ENGR_KV.get('config:links') || await env.ENGR_KV.get('links');
   const links = raw ? JSON.parse(raw) : [];
+  const addedEntries = [];   // 마지막에 최신 배열로 병합할 신규 항목
   let imported = 0, duplicated = 0, inaccessible = 0, scanned = 0, discovered = 0, attempts = 0, errors = 0;
   const cutoff = new Date(); cutoff.setUTCFullYear(cutoff.getUTCFullYear() - years);
   const limit = Math.max(1, Math.min(50, parseInt(opts.limit || '20', 10) || 20));
@@ -295,6 +308,7 @@ export async function importPaidKbLinks(env, user, years=5, opts={}){
           createdAt: now
         };
         links.unshift(item);
+        addedEntries.push(item);
         existingArticleIds.add(article.articleId);
         existingUrls.add(article.url);
         imported++;
@@ -307,7 +321,15 @@ export async function importPaidKbLinks(env, user, years=5, opts={}){
       if(page >= maxPagesPerTask){ taskIndex++; page = 0; }
     }
   }
-  if(imported > 0)await env.ENGR_KV.put('config:links', JSON.stringify(links));
+  if(addedEntries.length){
+    const m = await kvMutateArray(env, 'config:links', (cur) => {
+      const ids = new Set(cur.map(l => String(l.articleId || '')).filter(Boolean));
+      const urls = new Set(cur.map(l => String(l.url || '').replace(/[?#].*$/, '')));
+      const fresh = addedEntries.filter(e => !ids.has(String(e.articleId || '')) && !urls.has(String(e.url || '').replace(/[?#].*$/, '')));
+      return { list: fresh.length ? [...fresh, ...cur] : cur, value: { added: fresh.length } };
+    });
+    if(m && m.value) imported = m.value.added;   // 실제로 저장된 건수로 보정
+  }
   const nextCursor = taskIndex < tasks.length ? kbCursorEncode({ task:taskIndex, page }) : null;
   await auditLog(env, user || 'system', 'LINK_KB_IMPORT', { years, imported, duplicated, inaccessible, scanned, discovered, attempts, errors, nextCursor:!!nextCursor, mode:'articles' });
   return { ok:true, imported, added:imported, duplicated, skipped:duplicated, inaccessible, scanned, discovered, years, total:links.length, attempts, errors, nextCursor, mode:'articles' };
