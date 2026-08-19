@@ -20,7 +20,7 @@ function renderEosList(){
   // 망 필터 옵션은 현재 데이터에서 만든다(기본 2종 + 실제 쓰인 기타 값)
   const netEl=document.getElementById('eos-net');
   if(netEl){
-    const used=[...new Set(EOS_ITEMS.flatMap(it=>Array.isArray(it.networks)?it.networks:[]).filter(Boolean))];
+    const used=[...new Set(EOS_ITEMS.flatMap(it=>itemNetworks(it)))];
     const opts=[...new Set([...NET_PRESETS.filter(p=>used.includes(p)),...used.filter(u=>!NET_PRESETS.includes(u))])];
     const sig=opts.join('|');
     if(netEl.getAttribute('data-sig')!==sig){
@@ -30,8 +30,8 @@ function renderEosList(){
   }
   let list=[...EOS_ITEMS];
   if(q)list=list.filter(it=>qMatch(q,[it.customer,it.productDesc,it.product,it.siteId,it.serial,networkLabel(it)]));
-  if(netSel==='__none__')list=list.filter(it=>!(Array.isArray(it.networks)&&it.networks.length));
-  else if(netSel)list=list.filter(it=>Array.isArray(it.networks)&&it.networks.includes(netSel));
+  if(netSel==='__none__')list=list.filter(it=>!itemNetworks(it).length);
+  else if(netSel)list=list.filter(it=>itemNetworks(it).includes(netSel));
   list.sort((a,b)=>(a.customer||'').localeCompare(b.customer||'','ko'));
   const pageList=sliceForPage(list,'eos');
   document.getElementById('eos-count').textContent=pageCountText('eos',list.length);
@@ -57,7 +57,7 @@ function renderEosList(){
     return `<tr class="${rowClass} u-cur-pointer" onclick="openEosDetailModal('${it.id}')">
       <td onclick="event.stopPropagation()"><input type="checkbox" class="eos-pick" data-id="${it.id}"></td>
       <td style="font-weight:700">${escapeHtml(it.customer||'-')}</td>
-      <td class="u-ws-nowrap">${(Array.isArray(it.networks)&&it.networks.length)?it.networks.map(nw=>`<span class="badge" style="background:color-mix(in srgb,var(--cyan) 14%,transparent);color:var(--cyan)">${escapeHtml(nw)}</span>`).join(' '):'<span class="u-muted-10">-</span>'}</td>
+      <td class="u-ws-nowrap">${itemNetworks(it).length?itemNetworks(it).map(nw=>`<span class="badge" style="background:color-mix(in srgb,var(--cyan) 14%,transparent);color:var(--cyan)">${escapeHtml(nw)}</span>`).join(' '):'<span class="u-muted-10">-</span>'}</td>
       <td>${escapeHtml(pd)}</td>
       <td class="u-c-text2">${escapeHtml(it.siteId||'-')}</td>
       <td class="u-ta-right" data-sort="${parseInt(String(it.quantity).replace(/[^0-9]/g,''))||0}">${escapeHtml(String(it.quantity||'-'))}</td>
@@ -178,8 +178,8 @@ function openEosEditModal(id){
     <div><label>Start Date</label><input type="date" id="eos-edit-start" value="${it.startDate||''}"></div>
     <div><label>End Date (만료)</label><input type="date" id="eos-edit-end" value="${it.expireDate||''}"${it.perpetual?' disabled':''}></div>
     <div class="full"><label>망</label><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--text2)">
-      ${NET_PRESETS.map(p=>`<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" class="eos-edit-net" value="${p}"${(it.networks||[]).includes(p)?' checked':''}> ${p}</label>`).join('')}
-      <input id="eos-edit-net-etc" class="admin-input" style="flex:1;min-width:150px" placeholder="기타 망 이름" value="${escapeHtml((it.networks||[]).filter(n=>!NET_PRESETS.includes(n)).join(', '))}">
+      ${NET_PRESETS.map(p=>`<label style="display:inline-flex;align-items:center;gap:5px;cursor:pointer"><input type="checkbox" class="eos-edit-net" value="${p}"${itemNetworks(it).includes(p)?' checked':''}> ${p}</label>`).join('')}
+      <input id="eos-edit-net-etc" class="admin-input" style="flex:1;min-width:150px" placeholder="기타 망 이름" value="${escapeHtml(itemNetworks(it).filter(n=>!NET_PRESETS.includes(n)).join(', '))}">
     </div></div>
     <div class="full"><label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;text-transform:none;font-size:11.5px;color:var(--text2)"><input type="checkbox" id="eos-edit-perp"${it.perpetual?' checked':''} onchange="toggleEosEditPerp(this)"> Perpetual <span class="u-muted-10">— 만료 없음(무기한)</span></label></div>
     <div class="full"><label>메모</label><textarea id="eos-edit-memo">${escapeHtml(it.memo||'')}</textarea></div>

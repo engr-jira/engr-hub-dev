@@ -30,7 +30,7 @@ function salesRenewalRows(d){
     const perp=!!e.perpetual;
     const dd=perp?Infinity:daysUntil(e.expireDate);   // Perpetual은 항상 맨 뒤 + KPI(만료임박·경과)에서 자동 제외
     return {customer:e.customer||'-',product:prod,expire:perp?'Perpetual':e.expireDate,dd,perp,
-      networks:Array.isArray(e.networks)?e.networks:[],
+      networks:(typeof itemNetworks==='function')?itemNetworks(e):[],
       note:notes.get(salesNoteKey(e.customer,prod))||null};
   });
   rows.sort((a,b)=>a.dd-b.dd);

@@ -254,10 +254,18 @@ function baseCustomerName(n) {
   const stripped = s.replace(/\s*[（(][^)）]*망[^)）]*[)）]\s*$/, '').trim();
   return stripped || s;
 }
-function networkLabel(it) {
-  const a = (it && Array.isArray(it.networks)) ? it.networks.filter(Boolean) : [];
-  return a.join(' · ');
+/* 고객사명 끝의 (…망…) 에서 망 이름을 뽑는다 — "우리은행(내부망)" → ["내부망"].
+   망 필드가 생기기 전 등록분은 망이 이름에 박혀 있어서, 필드가 비면 여기로 폴백한다. */
+function netsFromName(n) {
+  const m = String(n == null ? '' : n).match(/[（(]([^)）]*망[^)）]*)[)）]\s*$/);
+  if (!m) return [];
+  return m[1].split(/[,·/]/).map(s => s.trim()).filter(Boolean);
 }
+function itemNetworks(it) {
+  const a = (it && Array.isArray(it.networks)) ? it.networks.filter(Boolean) : [];
+  return a.length ? a : netsFromName(it && it.customer);
+}
+function networkLabel(it) { return itemNetworks(it).join(' · '); }
 
 // ── PAGE NAV ──────────────────────────────────────
 const pageTitles={
