@@ -34,6 +34,11 @@ ESCARE 보안기술팀 내부 통합 허브. **아래 수치는 2026-08-07 실�
   - ⚠️ `--config` 플래그 필수. (그냥 `wrangler deploy` 하면 `C:\Users\passi\Application Data` 정션 EPERM으로 실패)
   - 워커 변경 시에만 배포 필요. 프론트만 바뀌면 git push만.
 
+**⚠️ 개발·운영은 같게 동작해야 한다(2026-08-19 이관 완료).** 운영이 정본, 개발은 같은 데이터로 테스트하는 곳.
+  코드·워커·cron·시크릿·app_settings·D1 데이터가 모두 동일하다. **개인 데이터만 환경별**(mydesk/userpin/push/auditLatest).
+  스케줄 분석 엔진은 **양쪽에 같은 결과를 저장**한다(읽기는 운영만, 쓰기는 둘 다 — 분석은 1회).
+  차이가 나면 안 되는 항목과 유지 절차는 .
+
 **dev → prod 동기화** (정석 순서):
 ```bash
 cp dev/worker.js  prod/worker.js              # 워커는 그대로 복사

@@ -252,14 +252,14 @@ const NSC_STEPS = [
     at: n => (n.execs.find(e => /msiexec|uninstall|removal|setup\.exe/i.test(e.cmd)) || {}).n || 0 },
   { key: 'clean', label: '강제 제거(Cleanagent)', ppt: /clean\s*agent|cleanagent|cleanwipe|강제\s*(삭제|제거)/i,
     at: n => (n.execs.find(e => /clean_?agent|cleanwipe/i.test(e.cmd)) || {}).n || 0 },
-  { key: 'result', label: '결과 확인(제거 후)', ppt: /성공|실패|결과\s*확인/i,
+  { key: 'result', label: '결과 확인(제거 후)', ppt: /성공|실패|결과\s*확인|(삭제|제거)\s*여부\s*확인/i,
     at: (n, ctx) => { if (!ctx.uninstAt) return 0; const f = n.fileChecks.find(x => x.n > ctx.uninstAt); return f ? f.n : 0; } },
 ];
 function nscRules(nsi, ppt) {
   const F = [];
   const steps = [];      // 단계 대조표 — 지적이 없어도 "무엇을 대조했는지" 화면에 보여준다
   const codeAt = {};
-  let flowPaths = [], flowCut = false;   // 순서도에서 전개한 경우의 수
+  let flowPaths = [], flowCut = false, flowVerdicts = [];   // 순서도에서 전개한 경우의 수 + 경로별 대조 판정
   const add = (level, rule, title, detail, where, suggest) => F.push({ level, rule, title, detail, where: where || '', suggest: suggest || '' });
 
   // R1 — 같은 변수를 보는 분기 체인끼리 버전 집합이 다른가 (가장 치명적)
@@ -331,15 +331,57 @@ function nscRules(nsi, ppt) {
        예전엔 z-order 를 흐름으로 착각해 '버전 확인이 맨 마지막'처럼 엉뚱하게 판정했다. */
     const flow = ppt.map(sl => nscFlowPaths(sl)).find(f => f.paths.length) || { paths: [], truncated: false };
     flowPaths = flow.paths; flowCut = flow.truncated;
-    const stepOfText = t => (NSC_STEPS.find(st => st.ppt.test(t)) || {}).key || '';
-    const seqOf = p => { const o = []; p.forEach(n => { const k = stepOfText(n.text); if (k && !o.includes(k)) o.push(k); }); return o; };
+    const LBL = Object.fromEntries(NSC_STEPS.map(st => [st.key, st.label]));
+    /* 매칭은 NSC_STEPS 배열 순서가 아니라 '좁은 규칙 → 넓은 규칙' 순으로 한다.
+       uninst 의 /삭제|제거/ 가 가장 넓어서, 먼저 두면 "Cleanagent 삭제"·"삭제 여부 확인"까지
+       전부 제거 실행으로 삼켜 순서도에 있는 단계를 없다고 판정하게 된다. */
+    const MATCH_ORDER = ['arch', 'clean', 'result', 'exists', 'ver', 'uninst'];
+    const stepOfText = t => {
+      for (const k of MATCH_ORDER) {
+        const st = NSC_STEPS.find(x => x.key === k);
+        if (st && st.ppt.test(t)) return k;
+      }
+      return '';
+    };
+    /* 순서도 경로를 단계 배열로. exists(제거 전 확인)와 result(제거 후 확인)는 코드와 같은 규칙 —
+       '제거 실행'을 지나기 전이면 exists, 지난 뒤면 result 로 본다. 도형 이름이 같아도 위치로 가른다. */
+    const seqOf = p => {
+      const o = []; let passedUninst = false;
+      p.forEach(n => {
+        let k = stepOfText(n.text); if (!k) return;
+        if (k === 'uninst') passedUninst = true;
+        else if (k === 'exists' || k === 'result') k = passedUninst ? 'result' : 'exists';
+        if (!o.includes(k)) o.push(k);
+      });
+      return o;
+    };
     // 가장 많은 단계를 지나는 경로 = 정상 흐름으로 본다(중간에 빠져나가는 경로는 예외 처리).
+
+    /* 경로별 판정 — 나열만 해서는 '의도대로 짜였는지' 확인할 수 없다.
+       경로가 지나는 단계들이 (1) 스크립트에 다 있는지 (2) 줄 순서가 같은지를 본다.
+       단계가 1개 이하인 경로(시작 직후 빠져나가는 예외 흐름)는 대조 대상이 아니다. */
+    const verdictOf = p => {
+      const ks = seqOf(p);
+      if (ks.length < 2) return { mark: '—', cls: 'var(--text3)', label: '대조 대상 아님', why: '이 경로가 지나는 단계가 1개 이하입니다(예외로 빠지는 짧은 흐름).' };
+      const missing = ks.filter(k => !codeAt[k]);
+      if (missing.length) return { mark: '✕', cls: 'var(--danger)', label: '스크립트에 없음',
+        why: '못 찾은 단계: ' + missing.map(k => LBL[k]).join(', ') };
+      const sorted = ks.slice().sort((a, b) => codeAt[a] - codeAt[b]);
+      if (sorted.join('>') !== ks.join('>')) return { mark: '!', cls: 'var(--warn)', label: '순서 다름',
+        why: '스크립트 줄 순서 — ' + sorted.map(k => LBL[k] + '(' + codeAt[k] + '행)').join(' → ') };
+      return { mark: '✓', cls: 'var(--success)', label: '일치',
+        why: ks.map(k => LBL[k] + ' ' + codeAt[k] + '행').join(' · ') };
+    };
     /* 제거 실행 줄을 먼저 확정한다 — exists(제거 전)·result(제거 후)가 이 기준으로 갈린다.
        같은 IfFileExists 한 줄이 둘 다로 잡히면 순서 비교가 무의미해진다. */
     const ctx = { uninstAt: (NSC_STEPS.find(x => x.key === 'uninst').at(nsi, {}) || 0) };
     NSC_STEPS.forEach(st => { codeAt[st.key] = st.at(nsi, ctx) || 0; });
+    /* 순서도에 그 단계가 있는지도 경로 기준으로 본다(그래프를 못 읽으면 텍스트로 폴백).
+       텍스트만 보면 '삭제 뒤 확인'이 '제거 전 확인'으로 잡혀 없는 결함이 생긴다. */
+    const pptHas = new Set();
+    if (flowPaths.length) flowPaths.forEach(p => seqOf(p).forEach(k => pptHas.add(k)));
     NSC_STEPS.forEach(st => {
-      const inPpt = st.ppt.test(pptText), inCode = codeAt[st.key] > 0;
+      const inPpt = flowPaths.length ? pptHas.has(st.key) : st.ppt.test(pptText), inCode = codeAt[st.key] > 0;
       steps.push({ key: st.key, label: st.label, ppt: inPpt, code: inCode, line: codeAt[st.key] });
       if (inPpt && !inCode) add('high', 'R8', `순서도에만 있는 단계: ${st.label}`,
         '순서도에는 그려져 있는데 스크립트에서 해당 처리를 찾지 못했습니다.', '', '스크립트에 단계를 추가하거나 순서도를 수정하세요.');
@@ -350,7 +392,6 @@ function nscRules(nsi, ppt) {
     /* R10 — 흐름(순서) 대조. 양쪽 모두에 있는 단계만 놓고 상대 순서를 비교한다.
        PPT 쪽 순서는 도형이 XML에 실린 순서(대체로 그린 순서)라 절대적이지 않다 →
        high 가 아니라 med 로 두고, 화살표 기준으로 확인하라고 안내한다. */
-    const LBL = Object.fromEntries(NSC_STEPS.map(st => [st.key, st.label]));
     let pptSeq = [];
     if (flowPaths.length) {
       flowPaths.forEach(p => { const q = seqOf(p); if (q.length > pptSeq.length) pptSeq = q; });
@@ -361,6 +402,7 @@ function nscRules(nsi, ppt) {
       .sort((a, b) => codeAt[a.key] - codeAt[b.key]).map(st => st.key);
     const pSeq = pptSeq.filter(k => codeSeq.includes(k));
     const cSeq = codeSeq.filter(k => pptSeq.includes(k));
+    flowVerdicts = flowPaths.map(verdictOf);
     if (pSeq.length >= 2 && pSeq.join('>') !== cSeq.join('>')) {
       add('high', 'R10', '순서도와 스크립트의 단계 순서가 다릅니다',
         `순서도(화살표 기준): ${pSeq.map(k => LBL[k]).join(' → ')}  |  스크립트(줄 순서): ${cSeq.map(k => LBL[k]).join(' → ')}`,
@@ -377,7 +419,7 @@ function nscRules(nsi, ppt) {
   }
   const order = { high: 0, med: 1, low: 2 };
   F.sort((a, b) => order[a.level] - order[b.level]);
-  return { findings: F, steps, flowPaths, flowCut };
+  return { findings: F, steps, flowPaths, flowCut, flowVerdicts };
 }
 
 /* ── 화면 ───────────────────────────────────────────────────────────────── */
@@ -423,7 +465,7 @@ function nscRun() {
   const box = document.getElementById('nsc-result'); if (!box) return;
   if (!NSC.nsi) { box.innerHTML = '<div class="u-empty">.nsi 파일을 먼저 선택하세요.</div>'; return; }
   const pick = nscPickSlides(NSC.nsi, NSC.ppt);
-  const { findings: F, steps, flowPaths, flowCut } = nscRules(NSC.nsi, pick.slides);
+  const { findings: F, steps, flowPaths, flowCut, flowVerdicts } = nscRules(NSC.nsi, pick.slides);
   const LV = { high: ['🔴', 'var(--danger)', '즉시 확인'], med: ['🟡', 'var(--warn)', '유지보수 위험'], low: ['🔵', 'var(--cyan)', '개선 제안'] };
   const cnt = { high: 0, med: 0, low: 0 }; F.forEach(f => cnt[f.level]++);
   const head = `<div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin-bottom:14px">
@@ -452,11 +494,16 @@ function nscRun() {
         <td style="text-align:right" class="u-muted-10">${x.line ? x.line + '행' : '-'}</td>
       </tr>`).join('')}</tbody>
     </table></div>` : '';
+  const vs = flowVerdicts || [];
+  const okN = vs.filter(v => v.mark === '✓').length, ngN = vs.filter(v => v.mark === '✕' || v.mark === '!').length;
   const flowHtml = flowPaths.length ? `<div class="panel" style="padding:10px 13px;margin-bottom:10px">
-    <div class="u-muted-10" style="margin-bottom:6px">순서도 경로 — 경우의 수 ${flowPaths.length}개${flowCut ? ' (표시 상한 도달)' : ''} · 화살표와 Y/N 을 따라 전개했습니다</div>
-    ${flowPaths.map((p, i) => `<div style="font-size:11.5px;line-height:1.7;color:var(--text2);padding:2px 0">
-      <span class="u-muted-10">${i + 1}.</span> ${p.map(n => escapeHtml(n.text) + (n.yn ? ` <b style="color:${n.yn === 'Y' ? 'var(--success)' : 'var(--danger)'}">─${n.yn}→</b> ` : '')).join('')}
-    </div>`).join('')}</div>` : '';
+    <div class="u-muted-10" style="margin-bottom:8px">순서도 경로 ↔ 스크립트 대조 — 경우의 수 ${flowPaths.length}개${flowCut ? ' (표시 상한 도달)' : ''} ·
+      <b style="color:var(--success)">일치 ${okN}</b> · <b style="color:${ngN ? 'var(--danger)' : 'var(--text3)'}">불일치 ${ngN}</b> · 화살표와 Y/N 을 따라 전개했습니다</div>
+    ${flowPaths.map((p, i) => { const v = vs[i] || {}; return `<div style="font-size:11.5px;line-height:1.7;padding:4px 0;border-top:1px solid var(--border)">
+      <div style="color:var(--text2)"><b style="color:${v.cls || 'var(--text3)'}">${v.mark || '—'}</b>
+        <span class="u-muted-10">${i + 1}.</span> ${p.map(n => escapeHtml(n.text) + (n.yn ? ` <b style="color:${n.yn === 'Y' ? 'var(--success)' : 'var(--danger)'}">─${n.yn}→</b> ` : '')).join('')}</div>
+      <div class="u-muted-10" style="margin-left:14px">${escapeHtml(v.label || '')}${v.why ? ' — ' + escapeHtml(v.why) : ''}</div>
+    </div>`; }).join('')}</div>` : '';
   box.innerHTML = meta + head + table + flowHtml + (rows || '<div class="u-empty">규칙 위반이 없습니다.</div>');
 }
 function nscNowLabel() {
@@ -465,8 +512,17 @@ function nscNowLabel() {
 }
 function nscCopyReport() {
   if (!NSC.nsi) { toast('검사 결과가 없습니다', true); return; }
-  const { findings: F } = nscRules(NSC.nsi, nscPickSlides(NSC.nsi, NSC.ppt).slides);
+  const { findings: F, flowPaths: FP, flowVerdicts: FV } = nscRules(NSC.nsi, nscPickSlides(NSC.nsi, NSC.ppt).slides);
   const t = [`NSIS 정합성 검사 — ${NSC.nsiName}${NSC.pptName ? ' ↔ ' + NSC.pptName : ''}`, ''];
+  if (FP && FP.length) {
+    t.push(`[순서도 경로 대조] 경우의 수 ${FP.length}개`);
+    FP.forEach((p, i) => {
+      const v = (FV || [])[i] || {};
+      t.push(`  ${v.mark || '-'} ${i + 1}. ` + p.map(n => n.text + (n.yn ? ` -${n.yn}-> ` : '')).join(''));
+      if (v.label) t.push(`      ${v.label}${v.why ? ' — ' + v.why : ''}`);
+    });
+    t.push('');
+  }
   F.forEach(f => { t.push(`[${f.level.toUpperCase()}] ${f.rule} ${f.title}`); t.push(`  ${f.detail}`); if (f.where) t.push(`  위치: ${f.where}`); if (f.suggest) t.push(`  제안: ${f.suggest}`); t.push(''); });
   if (!F.length) t.push('규칙 위반 없음');
   navigator.clipboard.writeText(t.join('\n')).then(() => toast('검사 결과를 복사했습니다')).catch(() => toast('복사 실패', true));
