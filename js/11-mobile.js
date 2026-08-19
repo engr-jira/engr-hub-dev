@@ -51,48 +51,18 @@ function syncMobileMoreState(page){
   if(more)more.classList.toggle('active',MOBILE_MORE_NAV.includes('nav-'+activePage));
   document.querySelectorAll('.mobile-more-item').forEach(btn=>btn.classList.toggle('active',btn.dataset.page===activePage));
 }
-function normalizeAdminSettingsUI(){
-  const root=document.getElementById('page-settings');
-  if(!root)return;
-  const title=root.querySelector('.sec-title');
-  if(title)title.textContent='관리자 설정';
-  const summaries=[
-    ['기본 설정','조회 기간, 세션, 라이선스, AI 지침'],
-    ['사용자 / 권한','계정 등록과 역할 관리'],
-    ['PIN 관리','사용자 PIN 초기화'],
-    ['저장소','KV 사용량, 백업'],
-    ['위험 작업','캐시, 감사 로그, 전체 초기화']
-  ];
-  root.querySelectorAll('.admin-section:not(.np)').forEach((section,idx)=>{
-    const s=section.querySelector('summary');
-    if(s&&summaries[idx])s.innerHTML=`<span>${summaries[idx][0]}</span><small>${summaries[idx][1]}</small>`;
-    if(idx>0)section.open=false;
-  });
-  const heads=['운영 기본값','사용자 계정','관리자 권한','권한 안내','사용자 PIN 초기화','저장소 / KV 사용량','주의 작업'];
-  root.querySelectorAll('.admin-section:not(.np) .admin-card h3').forEach((h,idx)=>{if(heads[idx])h.textContent=heads[idx];});
-  const guide=root.querySelector('.admin-section:not(.np) .admin-card.soft');
-  if(guide)guide.style.display='none';
-  const labels=[['cfg-range','데이터 조회 기간'],['cfg-session','세션 타임아웃'],['cfg-eos-warn','라이선스 경고 일수']];
-  labels.forEach(([id,text])=>{const input=document.getElementById(id);const label=input?.closest('.admin-row')?.querySelector('label');if(label)label.textContent=text;});
-  const placeholders={'cfg-eos-warn':'60,30,7','user-add-id':'계정 ID (예: mj.park)','user-add-display':'표시 이름','user-add-pin':'초기 PIN (선택)'};
-  Object.entries(placeholders).forEach(([id,text])=>{const el=document.getElementById(id);if(el)el.placeholder=text;});
-  const btnText={'storage-stats-btn':'저장소 / KV 사용량 조회','storage-backup-btn':'전체 HUB 데이터 백업','storage-audit-btn':'감사 로그 90일 초과 정리','storage-reset-btn':'전체 데이터 초기화'};
-  Object.entries(btnText).forEach(([id,text])=>{const el=document.getElementById(id);if(el)el.textContent=text;});
-}
 const showPageBeforeMobilePolish=showPage;
 showPage=function(name,btn){
   const pageName=name==='dashboard'?'dash':(name==='admin'?'settings':name);
   const result=showPageBeforeMobilePolish(name,btn);
   ensureMobileMoreMenu();
   syncMobileMoreState(pageName);
-  normalizeAdminSettingsUI();
   return result;
 };
 const enterAppBeforeMobilePolish=enterApp;
 enterApp=function(){
   const result=enterAppBeforeMobilePolish();
   ensureMobileMoreMenu();
-  normalizeAdminSettingsUI();
   try{ if(typeof initPushOnLogin==='function')setTimeout(initPushOnLogin,400); }catch(_){}
   try{ if(typeof loadFeatureFlags==='function')setTimeout(loadFeatureFlags,300); }catch(_){}
   try{ if(typeof loadAnalysisLatest==='function')setTimeout(loadAnalysisLatest,600); }catch(_){}

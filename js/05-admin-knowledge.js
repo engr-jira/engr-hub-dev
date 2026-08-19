@@ -79,9 +79,10 @@ async function changeMyPin(){
     closeGenModal();toast('PIN이 변경됐습니다');
   }catch(e){toast('PIN 변경 실패: '+e.message,true);}
 }
-async function resetUserPin(){
-  const target=document.getElementById('pin-reset-user')?.value||'';
-  if(!target){toast('팀원을 선택하세요',true);return;}
+// 사용자 목록 행의 'PIN 초기화' 버튼이 대상 id 를 넘긴다.
+async function resetUserPin(target){
+  target=String(target||'').trim();
+  if(!target){toast('대상 사용자를 찾을 수 없습니다',true);return;}
   if(!confirm(`${target}님의 PIN을 초기값으로 변경할까요?`))return;
   try{
     await hubApi('/admin/user-pin/reset',{method:'POST',body:JSON.stringify({user:target})});

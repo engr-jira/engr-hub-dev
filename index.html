@@ -371,6 +371,22 @@ html[data-theme="light"] .btn-primary:hover,html[data-theme="light"] .btn-succes
 .danger-section{border-color:rgba(248,113,113,.28)}
 .danger-section>summary:after{color:#F3CFC9;border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.08)}
 .danger-card{border-color:rgba(248,113,113,.28);background:rgba(248,113,113,.045)}
+/* ── 관리자 설정 레이아웃 ──
+   접힌 섹션은 2열로 늘어놓고, 펼친 섹션만 전폭 + 내부 카드도 2열.
+   #page-settings 로 시작해 뒤쪽 v158/모바일 블록보다 우선한다. */
+#page-settings .admin-grid{display:grid;grid-template-columns:1fr;gap:12px;align-items:start}
+#page-settings .admin-cards{display:grid;grid-template-columns:1fr;gap:12px;padding:12px}
+#page-settings .admin-cards>.admin-card{margin:0!important}
+#page-settings .admin-2col{display:grid;grid-template-columns:1fr;gap:0 20px}
+@media(min-width:1101px){
+  #page-settings .admin-grid{grid-template-columns:1fr 1fr}
+  #page-settings .admin-section[open]{grid-column:1/-1}
+  #page-settings .admin-section[open] .admin-cards{grid-template-columns:1fr 1fr}
+  #page-settings .admin-cards>.admin-card:only-child{grid-column:1/-1}
+  #page-settings .admin-2col{grid-template-columns:1fr 1fr}
+  #page-settings .admin-section>summary{min-height:42px;padding:9px 14px}
+}
+@media(max-width:700px){#page-settings .admin-cards{padding:10px;gap:10px}}
 .safe-actions .btn,.danger-actions .btn,.admin-add-row .btn{width:auto;padding:9px 14px}
 .storage-summary{border:1px solid var(--accent-border);background:var(--accent-soft);border-radius:12px;padding:12px;margin-bottom:10px}
 .storage-summary-top{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px;margin-bottom:10px}
@@ -2590,60 +2606,60 @@ body.is-sales #nav-sales{display:flex!important}
     </div>
 
     <div class="page" id="page-settings">
-      <div class="sec-title">⚙ 관리자 설정 <span class="sec-en">ADMIN</span></div>
       <div id="admin-action-status" class="admin-action-status" role="status" aria-live="polite"></div>
 
-      <details class="admin-section" open>
-        <summary><span>시스템 설정</span><small>조회 기간 · 세션 · 라이선스 · AI 지침</small></summary>
+      <div class="admin-grid">
+
+      <details class="admin-section np" open>
+        <summary><span>⚙️ 운영 기본값</span><small>조회 기간 · 세션 · 라이선스 경고 · 영업 정체</small></summary>
+        <div class="admin-cards">
         <div class="admin-card">
-          <h3>🔧 시스템 설정</h3>
-          <div class="admin-row">
-            <label>데이터 조회 기간</label>
-            <select id="cfg-range" class="admin-input u-mw-240px">
-              <option value="1">1개월</option><option value="2">2개월</option><option value="3" selected>3개월</option>
-              <option value="4">4개월</option><option value="5">5개월</option><option value="6">6개월</option><option value="12">1년</option>
-            </select>
+          <div class="admin-2col">
+            <div class="admin-row">
+              <label>데이터 조회 기간</label>
+              <select id="cfg-range" class="admin-input u-mw-240px">
+                <option value="1">1개월</option><option value="2">2개월</option><option value="3" selected>3개월</option>
+                <option value="4">4개월</option><option value="5">5개월</option><option value="6">6개월</option><option value="12">1년</option>
+              </select>
+            </div>
+            <div class="admin-row">
+              <label>세션 타임아웃</label>
+              <select id="cfg-session" class="admin-input u-mw-240px">
+                <option value="30">30분</option><option value="60">1시간</option><option value="120" selected>2시간</option>
+                <option value="240">4시간</option><option value="480">8시간</option>
+              </select>
+            </div>
+            <div class="admin-row">
+              <label>라이선스 경고 일수</label>
+              <input id="cfg-eos-warn" class="admin-input u-mw-240px" placeholder="60,30,7">
+              <span class="u-muted-10">콤마로 구분</span>
+            </div>
+            <div class="admin-row">
+              <label>영업 정체 기준 일수</label>
+              <input id="cfg-sales-stale" class="admin-input u-mw-240px" type="number" min="1" max="365" placeholder="14">
+              <span class="u-muted-10">장기 정체 판정 기준</span>
+            </div>
           </div>
-          <div class="admin-row">
-            <label>세션 타임아웃</label>
-            <select id="cfg-session" class="admin-input u-mw-240px">
-              <option value="30">30분</option><option value="60">1시간</option><option value="120" selected>2시간</option>
-              <option value="240">4시간</option><option value="480">8시간</option>
-            </select>
-          </div>
-          <div class="admin-row">
-            <label>라이선스 경고 일수</label>
-            <input id="cfg-eos-warn" class="admin-input u-mw-240px" placeholder="60,30,7">
-            <span class="u-muted-10">콤마로 구분</span>
-          </div>
-          <div class="admin-row">
-            <label>영업 정체 기준 일수</label>
-            <input id="cfg-sales-stale" class="admin-input u-mw-240px" type="number" min="1" max="365" placeholder="14">
-            <span class="u-muted-10">영업 현황의 장기 정체 판정 기준</span>
-          </div>
-          
           <div class="storage-actions safe-actions">
             <button class="btn btn-primary" onclick="saveConfig()">💾 저장</button>
           </div>
         </div>
+        </div>
       </details>
 
       <details class="admin-section np">
-        <summary><span>🧩 기능 토글</span><small>신규 기능 표시 on/off</small></summary>
+        <summary><span>🧩 기능</span><small>표시 on/off · 사용 현황(컷 판단용)</small></summary>
+        <div class="admin-cards">
         <div class="admin-card">
-          <h3>🧩 기능 표시</h3>
+          <h3>표시 on/off</h3>
           <div style="font-size:11.5px;color:var(--text2,#CBB79A);line-height:1.7;margin-bottom:10px">끄면 모든 사용자의 사이드바에서 숨겨집니다(표시 제어). <b>호환성 매트릭스·고객사 이력·팀 모니터</b>는 서버에서도 차단됩니다. 대시보드·관리자 설정은 락아웃 방지로 잠금.</div>
           <div id="feature-flags-wrap" class="push-people"><div class="loading">로딩...</div></div>
           <div class="storage-actions safe-actions u-mt-12px">
             <button class="btn btn-primary" onclick="saveFeatureFlags()">💾 저장</button>
           </div>
         </div>
-      </details>
-
-      <details class="admin-section np" id="usage-stats-section">
-        <summary><span>📊 기능 사용 현황</span><small>기능별 호출수 · 최근 사용 · 사용자수 (컷 판단용)</small></summary>
         <div class="admin-card">
-          <h3>📊 기능 사용 현황</h3>
+          <h3>사용 현황</h3>
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
             <label class="u-fs11px-ctext3-fw700">집계 기간</label>
             <select id="usage-days" class="admin-input" style="max-width:140px" onchange="loadUsageStats()">
@@ -2657,33 +2673,20 @@ body.is-sales #nav-sales{display:flex!important}
           <div id="usage-stats-wrap"><div class="loading">로딩...</div></div>
           <div style="font-size:11px;color:var(--text3);line-height:1.7;margin-top:10px">🔴 최근 기간 호출 0 = 컷 후보 · 🟡 1인만 사용 = 개인도구화 후보. <b>대시보드·고객사</b> 등 열람형은 페이지 방문 비콘(PAGE_VIEW)으로 집계됩니다(비콘은 감사로그 기본 뷰에서 제외). 사용자수는 근사 하한(≥).</div>
         </div>
-      </details>
-
-      <details class="admin-section np" id="audit-mig-section" style="display:none">
-        <summary><span>🗄️ 감사로그 D1 이전</span><small>§H KV→D1 마이그레이션 (슈퍼)</small></summary>
-        <div class="admin-card">
-          <h3>🗄️ 감사로그 마이그레이션</h3>
-          <div id="audit-mig-status" style="font-size:12px;color:var(--text2,#CBB79A);margin-bottom:10px">상태 불러오는 중...</div>
-          <div class="storage-actions" style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn" onclick="auditMigBackfill()">과거 KV→D1 백필</button>
-            <button class="btn btn-primary" onclick="auditMigReadSource(true)">읽기 D1 전환</button>
-            <button class="btn" onclick="auditMigReadSource(false)">읽기 KV 복귀</button>
-            <button class="btn" onclick="loadAuditMigStatus()">상태 새로고침</button>
-          </div>
-          <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6">이중쓰기(1단계)는 상시 적용 중(KV+D1 동시). 백필 → '읽기 D1 전환' 후 검증하세요. <strong>운영(prod) 반영은 별도 명시 요청 시에만.</strong></div>
         </div>
       </details>
 
       <details class="admin-section np">
-        <summary><span>🔔 푸시 알림</span><small>기능별 on/off · 멘트 수정 · 수신 대상</small></summary>
+        <summary><span>🔔 알림</span><small>기능별 on/off · 멘트 · 수신 대상 · 직접 발송</small></summary>
+        <div class="admin-cards">
         <div class="admin-card">
-          <h3>🔔 기능별 알림 / 멘트</h3>
+          <h3>기능별 알림 / 멘트</h3>
           <div id="push-config-status" style="font-size:11px;color:var(--text3);margin-bottom:10px"></div>
           <div id="push-events-wrap"><div class="loading">로딩...</div></div>
           <div style="font-size:11px;color:var(--text3);line-height:1.7;margin-top:2px">치환 변수: <code>{user}</code>=등록자 이름, <code>{target}</code>=등록 대상명, <code>{event}</code>=기능명</div>
         </div>
         <div class="admin-card">
-          <h3>👥 수신 대상</h3>
+          <h3>수신 대상</h3>
           <div style="font-size:11.5px;color:var(--text2);line-height:1.7;margin-bottom:10px">· <b>받을 사람</b>을 체크하면 그 인원에게만 발송됩니다(아무도 체크 안 하면 전체 발송).<br>· <b>제외할 사람</b>은 항상 발송에서 빠집니다.<br>· <b>본인이 등록한 알림은 본인에게 가지 않습니다.</b></div>
           <div style="margin-bottom:6px;font-weight:800;font-size:12px;color:var(--accent2)">받을 사람 (지정 시 이 인원만)</div>
           <div id="push-include-wrap" class="push-people"></div>
@@ -2691,7 +2694,7 @@ body.is-sales #nav-sales{display:flex!important}
           <div id="push-exclude-wrap" class="push-people"></div>
         </div>
         <div class="admin-card soft">
-          <h3>📋 구독 현황 / 테스트</h3>
+          <h3>구독 현황 / 테스트</h3>
           <div id="push-subscribers" style="font-size:12px;color:var(--text2);line-height:1.8">-</div>
           <div class="storage-actions safe-actions u-mt-12px">
             <button class="btn btn-ghost" onclick="sendPushTest()">🔔 내게 테스트 알림</button>
@@ -2699,7 +2702,7 @@ body.is-sales #nav-sales{display:flex!important}
           </div>
         </div>
         <div class="admin-card">
-          <h3>✉️ 직접 알림 보내기</h3>
+          <h3>직접 알림 보내기</h3>
           <div style="font-size:11.5px;color:var(--text2);line-height:1.7;margin-bottom:8px">선택한 사람에게 <b>즉시</b> 푸시 알림을 보냅니다. <b>알림을 끈 사람에겐 가지 않습니다</b>(중요 공지는 아래 체크). 미구독자는 자동 제외됩니다.</div>
           <input id="push-send-title" class="admin-input" placeholder="제목 (예: 📢 긴급 공지)" style="width:100%;max-width:none;margin-bottom:8px">
           <textarea id="push-send-body" class="admin-textarea" placeholder="알림 내용"></textarea>
@@ -2711,12 +2714,14 @@ body.is-sales #nav-sales{display:flex!important}
             <button class="btn btn-primary" type="button" onclick="sendDirectPush()">📨 알림 보내기</button>
           </div>
         </div>
+        </div>
       </details>
 
-      <details class="admin-section">
-        <summary><span>사용자 / 권한 관리</span><small>사용자 계정 · 관리자 권한</small></summary>
+      <details class="admin-section np">
+        <summary><span>👥 사용자</span><small>계정 등록 · 관리자 권한 · PIN 초기화</small></summary>
+        <div class="admin-cards">
         <div class="admin-card">
-          <h3>👥 사용자 계정</h3>
+          <h3>사용자 계정</h3>
           <div class="u-mb-12px" id="user-list-wrap"></div>
           <div class="admin-add-row">
             <input id="user-add-id" placeholder="계정 ID (예: mj.park)" autocomplete="off" autocapitalize="none" spellcheck="false">
@@ -2725,46 +2730,31 @@ body.is-sales #nav-sales{display:flex!important}
             <input id="user-add-pin" type="password" placeholder="초기 PIN (선택)">
             <button class="btn btn-primary" onclick="saveUserAccount()">사용자 저장</button>
           </div>
+          <div class="storage-toolbar-note">PIN을 잊은 사용자는 목록의 <b>PIN 초기화</b>로 되돌립니다. 초기화 PIN은 Worker 환경변수에서 관리됩니다.</div>
         </div>
         <div class="admin-card">
-          <h3>👑 관리자 권한</h3>
+          <h3>관리자 권한</h3>
           <div id="admin-list-wrap"></div>
           <div class="admin-add-row compact-admin-row">
             <select id="admin-add-name"><option value="">팀원 선택</option></select>
             <select id="admin-add-role"><option value="admin">일반 관리자</option><option value="super">최상위 관리자</option></select>
             <button class="btn btn-primary" onclick="addAdmin()">+ 추가</button>
           </div>
-        </div>
-        <div class="admin-card soft">
-          <h3>ℹ 권한 안내</h3>
-          <div style="font-size:12px;color:var(--text2);line-height:2">
-            <div>• <strong>일반 사용자</strong> — 대시보드, 이슈, 케이스 트래커, 라이선스, VT, 업무 링크</div>
-            <div>• <strong class="u-c-warn">일반 관리자</strong> — + 감사 로그 열람, 업무 링크 등록/삭제</div>
-            <div>• <strong class="u-c-accent3">최상위 관리자</strong> — + 시스템 설정, 권한 부여</div>
+          <div class="u-muted-10" style="margin-top:12px;line-height:1.8">
+            <b>일반 사용자</b> — 대시보드 · 이슈 · 케이스 · 라이선스 · VT · 업무 링크<br>
+            <b class="u-c-warn">일반 관리자</b> — + 감사 로그 열람, 업무 링크 등록/삭제<br>
+            <b class="u-c-accent3">최상위 관리자</b> — + 시스템 설정, 권한 부여
           </div>
+        </div>
         </div>
       </details>
 
-      <details class="admin-section">
-        <summary><span>PIN 관리</span><small>사용자 PIN 초기화</small></summary>
+      <details class="admin-section np">
+        <summary><span>🗄️ 데이터</span><small>KV 현황 · 백업 · 감사 로그 정리 · 초기화</small></summary>
+        <div class="admin-cards">
         <div class="admin-card">
-          <h3>🔐 사용자 PIN 관리</h3>
-          <p class="u-fs12px-ctext2-mb12px-lh17">사용자가 PIN을 잊은 경우 선택한 사용자의 PIN을 초기값으로 되돌립니다.</p>
-          <div class="admin-add-row compact-admin-row">
-            <select id="pin-reset-user"><option value="">팀원 선택</option></select>
-            <button class="btn btn-danger" onclick="resetUserPin()">PIN 초기화</button>
-          </div>
-          <div class="storage-toolbar-note">초기화 PIN은 Worker 환경변수에서 관리됩니다.</div>
-        </div>
-      </details>
-
-      <details class="admin-section">
-        <summary><span>저장소</span><small>KV 현황 · 백업</small></summary>
-        <div class="admin-card">
-          <h3>🗄 저장소 관리</h3>
-          <p class="u-fs12px-ctext2-mb12px-lh17">
-            Cloudflare KV에 저장된 HUB 데이터 현황과 사용량 기준을 조회합니다. 정리 작업은 관리자 확인 후 수동으로만 수행합니다.
-          </p>
+          <h3>저장소 / 백업</h3>
+          <p class="u-fs12px-ctext2-mb12px-lh17">Cloudflare KV에 저장된 HUB 데이터 현황과 사용량 기준을 조회합니다. 정리 작업은 관리자 확인 후 수동으로만 수행합니다.</p>
           <div id="storage-stats-wrap" style="font-size:12px;color:var(--text3);line-height:1.8;margin-bottom:12px">아직 조회하지 않았습니다.</div>
           <div class="storage-actions safe-actions">
             <button id="storage-stats-btn" class="btn btn-primary" onclick="refreshStorageStats()">🗄 저장소 / KV 사용량 조회</button>
@@ -2772,10 +2762,6 @@ body.is-sales #nav-sales{display:flex!important}
           </div>
           <div class="storage-toolbar-note">백업은 링크/노하우/라이선스/관리자 설정만 포함합니다. Secret, PIN, JIRA Token 등 Cloudflare 환경 변수는 포함하지 않습니다.</div>
         </div>
-      </details>
-
-      <details class="admin-section danger-section">
-        <summary><span>위험 작업</span><small>캐시 · 감사 로그 · 전체 데이터 초기화</small></summary>
         <div class="admin-card danger-card">
           <h3>⚠ 위험 작업</h3>
           <p class="u-fs12px-ctext2-mb12px-lh17">삭제성 작업입니다. 실행 전 전체 HUB 데이터 백업을 먼저 다운로드하세요.</p>
@@ -2784,7 +2770,21 @@ body.is-sales #nav-sales{display:flex!important}
             <button id="storage-reset-btn" class="btn btn-danger" onclick="resetAllHubData()">⚠ 전체 데이터 초기화</button>
           </div>
         </div>
+        <div class="admin-card" id="audit-mig-section" style="display:none">
+          <h3>🗄️ 감사로그 D1 이전 <span class="u-muted-10">(슈퍼)</span></h3>
+          <div id="audit-mig-status" style="font-size:12px;color:var(--text2,#CBB79A);margin-bottom:10px">상태 불러오는 중...</div>
+          <div class="storage-actions" style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn" onclick="auditMigBackfill()">과거 KV→D1 백필</button>
+            <button class="btn btn-primary" onclick="auditMigReadSource(true)">읽기 D1 전환</button>
+            <button class="btn" onclick="auditMigReadSource(false)">읽기 KV 복귀</button>
+            <button class="btn" onclick="loadAuditMigStatus()">상태 새로고침</button>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:10px;line-height:1.6">이중쓰기(1단계)는 상시 적용 중(KV+D1 동시). 백필 → '읽기 D1 전환' 후 검증하세요. <strong>운영(prod) 반영은 별도 명시 요청 시에만.</strong></div>
+        </div>
+        </div>
       </details>
+
+      </div>
     </div>
   </main>
 </div>

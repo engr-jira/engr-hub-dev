@@ -352,8 +352,6 @@ async function loadSettings(){
     const adminNames=Object.keys(admins);
     const candidates=TEAM_NAMES.filter(n=>!adminNames.includes(n));
     document.getElementById('admin-add-name').innerHTML='<option value="">팀원 선택</option>'+candidates.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(userLabel(n))}</option>`).join('');
-    const pinReset=document.getElementById('pin-reset-user');
-    if(pinReset)pinReset.innerHTML='<option value="">팀원 선택</option>'+TEAM_NAMES.map(n=>`<option value="${escapeHtml(n)}">${escapeHtml(userLabel(n))}</option>`).join('');
     window.__userMap=userMap; window.__teamNames=TEAM_NAMES;
     if(typeof loadPushSettings==='function')loadPushSettings();
     if(typeof loadUsageStats==='function')loadUsageStats();
@@ -396,6 +394,7 @@ function renderUserAccounts(users=[]){
     </div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
       <button class="btn btn-ghost u-btn-xxs" onclick="fillUserForm(${jsAttr(u.id)},${jsAttr(u.displayName||'')},${jsAttr(u.role||'user')})">수정</button>
+      <button class="btn btn-ghost u-btn-xxs" onclick="resetUserPin(${jsAttr(u.id)})">PIN 초기화</button>
       ${u.id!==SUPER_ADMIN&&u.active!==false?`<button class="btn btn-danger u-btn-xxs" onclick="deleteUserAccount('${escapeHtml(u.id)}')">로그인 차단</button>`:''}
       ${u.id!==SUPER_ADMIN?`<button class="btn btn-danger" onclick="purgeUserAccount('${escapeHtml(u.id)}')" style="width:auto;padding:4px 12px;font-size:11px;opacity:.7">계정 삭제</button>`:''}
     </div>

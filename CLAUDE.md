@@ -8,11 +8,11 @@
 
 ESCARE 보안기술팀 내부 통합 허브. **아래 수치는 2026-08-07 실측.**
 
-- **프론트**: `index.html`(2,779줄 / 235KB, `<style>` 15블록) + `js/00~16` **17파일 6,662줄**.
+- **프론트**: `index.html`(2,779줄 / 235KB, `<style>` 15블록) + `js/00~17` **18파일**.
   `js/*.js`는 **클래식 스크립트(전역 스코프 공유)** — 예외는 `00-theme-init.js`·`12-mydesk.js`(IIFE).
-  **`index.html`의 `<script src>` 순서가 곧 의존 순서.** `<script>` 18개는 **전부 `src=`** 라 인라인 스크립트는 0개.
+  **`index.html`의 `<script src>` 순서가 곧 의존 순서.** `<script>` 19개는 **전부 `src=`** 라 인라인 스크립트는 0개.
 - **워커**: `worker.js`(2,130줄) + `src/` 11모듈(audit auth config items jira kb kv push sales settings vt), 엔드포인트 **71개**.
-- **페이지**: dash issues cases customers owners sales eos vt links knowledge audit settings mydesk compat monitor quiz quizadmin
+- **페이지**: dash issues cases customers owners sales eos vt nsischk links knowledge audit settings mydesk compat monitor quiz quizadmin
 현재 버전: **v1.9.0** (웹 푸시 알림)
 
 **문법 검사 CI**: `.github/workflows/syntax.yml`(push·PR마다). **검사만** 하고 배포는 안 한다 — Pages 자동 빌드는 Actions 결과와 무관하므로 차단이 아니라 알림이다.
@@ -84,7 +84,10 @@ node -e 'const fs=require("fs"),vm=require("vm");const h=fs.readFileSync("index.
   · `renderCustomerRight`/`renderVTHistory`/`issueRowHTML` 중복은 해소됨
   · **유지 필수 별칭 1건**: `js/09-render-topbar.js`의 `renderTopbarStatus=renderTopbarStatusV159;` — 호출부 4곳이 이 별칭에 의존
 - **My Desk JS는 IIFE 스코프**: `init/applyLayout/COLS/saveLayout/setMyDeskCols` 등은 `window`에 없음. 인라인 `onclick`에서 쓰려면 `window.fn=fn`으로 노출 필요. (단, `resetMyDesk`는 메인 스크립트에 있어 전역)
-- **⚠️ `normalizeAdminSettingsUI()` 함정**: 관리자 설정의 `.admin-section` summary/`.admin-card h3`/`.admin-card.soft`를 **DOM 순서(index) 기준으로 덮어씀**. 설정 페이지에 새 섹션/카드 추가 시 인덱스가 밀려 라벨이 깨짐. **새 섹션은 반드시 `class="admin-section np"`** 부여(정규화 셀렉터가 `:not(.np)`로 제외). 푸시 섹션이 이 방식으로 보호됨.
+- **관리자 설정 구조(2026-08-19 개편)**: 아코디언 **5개**(운영 기본값 / 기능 / 알림 / 사용자 / 데이터). 전부 `.admin-section.np`이고 각 `<details>` 안은 `<div class="admin-cards">`로 카드를 감싼다. `#page-settings .admin-grid`가 접힌 섹션을 2열로 늘어놓고, 펼친 섹션만 `grid-column:1/-1`로 전폭 + 내부 카드 2열이 된다(≥1101px).
+  - ~~`normalizeAdminSettingsUI()`~~ **제거됨**. 이전엔 summary/h3/버튼 문구를 DOM 순서(index)로 덮어써서 섹션을 추가하면 라벨이 밀려 깨졌다. 이제 문구는 마크업이 유일한 소스다 — **JS로 라벨을 다시 덮지 말 것.**
+  - 설정 페이지엔 `.sec-title`이 없다(상단 페이지 헤더와 중복이라 삭제).
+  - PIN 초기화는 사용자 목록 행 버튼(`resetUserPin(id)`)이다. 별도 섹션·`#pin-reset-user` 셀렉트는 없다.
 - **⚠️ `auditLog(env,user,type,detail)` 함정**: 저장 시 `{...user, type, ...detail}`라 **detail에 `type` 키가 있으면 액션 type을 덮어씀**(감사로그 뱃지/필터 깨짐). detail엔 `type` 대신 `vtType`/`itemType` 등 다른 키 사용. (과거 VT가 `type:'hash'`로 덮어써 'hash' 뱃지로 보이던 버그 수정함)
 - **My Desk @scope**: `@scope (#page-mydesk){...}` + 별도 `--serif/--sans/--gold` 등 자체 변수. 라이트모드는 `#mydesk-light` 스타일에서 스코프 변수 재정의.
 - **My Desk 저장**: 서버 KV `mydesk:<user>` ↔ `/mydesk` GET/PUT. 클라 헬퍼 `load/save/saveNow`, `window.__MD_STORE` 캐시. 카드순서=`layout3`, 숨김=`hidden`, 열수=`mdCols`.
