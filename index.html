@@ -2287,7 +2287,7 @@ body.is-sales #nav-sales{display:flex!important}
       <div class="sec-title">🧩 NSIS 정합성 검사 <span class="sec-en">NSIS CHECK</span></div>
       <div class="panel" style="padding:14px 16px;margin-bottom:12px">
         <div class="u-muted-10" style="margin-bottom:10px">삭제 툴 스크립트(.nsi)와 그 순서도(.pptx)를 대조해 어긋난 곳과 개선점을 찾습니다 · 규칙 기반(AI 미사용) · <b style="color:var(--text2)">파일은 브라우저 밖으로 나가지 않습니다</b></div>
-        <div class="two-col" style="gap:12px">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;align-items:start">
           <div>
             <label class="u-muted-10">① NSIS 스크립트 (.nsi) — 필수</label>
             <input type="file" id="nsc-nsi-file" accept=".nsi,.nsh,.txt" class="admin-input" style="padding:7px" onchange="nscPickNsi(this)">
